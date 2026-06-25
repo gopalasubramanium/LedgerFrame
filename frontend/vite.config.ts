@@ -16,6 +16,15 @@ export default defineConfig({
     outDir: "dist",
     // Keep chunks reasonable for the Pi's modest CPU.
     chunkSizeWarningLimit: 1200,
+    // Stable (un-hashed) output names so the prebuilt dist committed to the repo
+    // doesn't churn on every rebuild — only content changes show up in git.
+    rollupOptions: {
+      output: {
+        entryFileNames: "assets/index.js",
+        chunkFileNames: "assets/[name].js",
+        assetFileNames: "assets/[name][extname]",
+      },
+    },
   },
   test: {
     environment: "jsdom",

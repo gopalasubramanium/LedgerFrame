@@ -224,11 +224,19 @@ if [[ "$INSTALL_DEPS" == true && "$PKG" == "apt" ]]; then
   info "Installing: ${PKGS[*]}"
   for p in "${PKGS[@]}"; do apt_one "$p"; done
 
-  # If Node still missing or ancient, the frontend can't be (re)built — but a
-  # prebuilt dashboard ships in the repo, so this is only a warning.
-  if have node; then
-    NODE_MAJOR="$(node -v 2>/dev/null | sed 's/[^0-9.]//g' | cut -d. -f1)"
-    [[ "${NODE_MAJOR:-0}" -lt 18 ]] && warn "Node $(node -v) is old (<18); using the prebuilt dashboard instead."
+  # Debian Trixie often ships Node without a standalone 'npm' package. If npm is
+  # missing but Node + corepack are present, enable npm via corepack (bundled).
+  if (have node || have nodejs) && ! have npm && have corepack; then
+    $SUDO corepack enable npm >/dev/null 2>&1 || $SUDO corepack enable >/dev/null 2>&1 || true
+    have npm && ok "npm enabled via corepack"
+  fi
+
+  # If Node is still missing/old, the frontend can't be rebuilt — but a prebuilt
+  # dashboard ships in the repo, so this is only informational.
+  NODE_CMD="$(command -v node || command -v nodejs || true)"
+  if [[ -n "$NODE_CMD" ]]; then
+    NODE_MAJOR="$("$NODE_CMD" -v 2>/dev/null | sed 's/[^0-9.]//g' | cut -d. -f1)"
+    [[ "${NODE_MAJOR:-0}" -lt 18 ]] && warn "Node $("$NODE_CMD" -v) is old (<18); will use the prebuilt dashboard."
   fi
 elif [[ "$INSTALL_DEPS" == true ]]; then
   warn "No apt detected — ensure curl, git, Node 18+, a C toolchain, and (optionally) age are installed."

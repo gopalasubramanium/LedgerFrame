@@ -128,12 +128,14 @@ it — copy each line, paste with **Ctrl + Shift + V**, then press **Enter**.
 
 ### Step 5 — Download and install LedgerFrame
 
-Paste these three commands one at a time (wait for each to finish):
+Paste these commands one at a time (wait for each to finish). The first line
+(`cd ~`) makes sure you start from your home folder:
 
 ```bash
+cd ~
 sudo apt update && sudo apt install -y git
 git clone https://github.com/gopalasubramanium/LedgerFrame.git
-cd LedgerFrame && ./scripts/install.sh
+cd ~/LedgerFrame && ./scripts/install.sh
 ```
 
 The installer now **guides you with simple questions** and sensible defaults — you

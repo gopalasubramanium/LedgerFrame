@@ -273,9 +273,21 @@ ok "Data folders ready under $DATA_DIR"
 
 # =============================================================================
 step "Write configuration (.env)"
+# Strip any trailing inline comment from a KEY=value line. systemd's EnvironmentFile
+# treats "KEY=value  # note" as the literal value "value  # note", which breaks
+# numeric/boolean settings. Only touches LEDGERFRAME_* lines whose value has no
+# spaces (true for all our settings), so it can't corrupt a real value.
+sanitize_env() {
+  sed -i -E 's/^(LEDGERFRAME_[A-Z0-9_]+=[^[:space:]#]*)[[:space:]]+#.*$/\1/' "$1"
+}
 if [[ -f "$REPO_DIR/.env" ]]; then
   cp -n "$REPO_DIR/.env" "$REPO_DIR/.env.bak.$(date +%s)" 2>/dev/null || true
-  ok "Existing .env kept (a timestamped backup was made)."
+  if grep -qE '^LEDGERFRAME_[A-Z0-9_]+=[^[:space:]#]*[[:space:]]+#' "$REPO_DIR/.env"; then
+    sanitize_env "$REPO_DIR/.env"
+    ok "Existing .env had inline comments — cleaned them (backup saved)."
+  else
+    ok "Existing .env kept (a timestamped backup was made)."
+  fi
 else
   cp "$REPO_DIR/.env.example" "$REPO_DIR/.env"
   SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))' 2>/dev/null || head -c 48 /dev/urandom | base64 | tr -d '/+=')"

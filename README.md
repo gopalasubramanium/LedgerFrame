@@ -21,7 +21,10 @@ configure it.
 ![LedgerFrame portfolio page](docs/screenshots/portfolio.png)
 <sub>Portfolio page: allocation, currency exposure, and FIFO-valued holdings.</sub>
 
-<sub>More views — markets, heatmap, news, snapshot, settings, and the grounded AI "Ask" panel — in [`docs/screenshots/`](docs/screenshots/).</sub>
+![LedgerFrame grounded AI Ask panel](docs/screenshots/ask.png)
+<sub>Grounded AI "Ask" panel: every answer cites the verified facts it was built from, with source + timestamp, and never invents numbers.</sub>
+
+<sub>More views — markets, heatmap, news, snapshot, and settings — in [`docs/screenshots/`](docs/screenshots/).</sub>
 
 ---
 

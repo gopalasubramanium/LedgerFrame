@@ -24,7 +24,10 @@ configure it.
 ![LedgerFrame grounded AI Ask panel](docs/screenshots/ask.png)
 <sub>Grounded AI "Ask" panel: every answer cites the verified facts it was built from, with source + timestamp, and never invents numbers.</sub>
 
-<sub>More views — markets, heatmap, news, snapshot, and settings — in [`docs/screenshots/`](docs/screenshots/).</sub>
+![LedgerFrame performance heatmap](docs/screenshots/heatmap.png)
+<sub>Performance heatmap: treemap sized by value, coloured by daily change, with an explicit data-coverage note.</sub>
+
+<sub>More views — markets, news, snapshot, and settings — in [`docs/screenshots/`](docs/screenshots/).</sub>
 
 ---
 

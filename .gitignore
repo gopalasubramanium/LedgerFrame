@@ -1,0 +1,59 @@
+# --- Secrets & local config (NEVER commit) ---
+.env
+.env.*
+!.env.example
+config/secrets.toml
+config/secrets.*.toml
+*.key
+*.pem
+*.age
+age-identity.txt
+
+# --- User data / runtime artifacts ---
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+backups/
+*.backup
+logs/
+*.log
+generated-audio/
+imports/*.csv
+!imports/.gitkeep
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+dist/
+build/
+
+# --- Frontend ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+node_modules/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# --- Models (large; tracked via path config) ---
+models/*.hef
+models/*.gguf
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

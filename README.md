@@ -16,8 +16,12 @@ configure it.
 > no brokerage integration, and gives no buy/sell recommendations or financial advice.
 
 ![LedgerFrame home dashboard](docs/screenshots/home.png)
+<sub>Home dashboard in DEMO mode.</sub>
 
-<sub>Home dashboard in DEMO mode. More views — portfolio, markets, heatmap, news, snapshot, settings, and the grounded AI "Ask" panel — in [`docs/screenshots/`](docs/screenshots/).</sub>
+![LedgerFrame portfolio page](docs/screenshots/portfolio.png)
+<sub>Portfolio page: allocation, currency exposure, and FIFO-valued holdings.</sub>
+
+<sub>More views — markets, heatmap, news, snapshot, settings, and the grounded AI "Ask" panel — in [`docs/screenshots/`](docs/screenshots/).</sub>
 
 ---
 

@@ -41,7 +41,13 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 # --- defaults & arg parsing -------------------------------------------------
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SERVICE_USER="${SERVICE_USER:-ledgerframe}"
+# Default to the current login user. Running as the same user that owns the cloned
+# repo avoids home-directory permission problems (a separate system account can't
+# read an app installed under /home/<you>/). Override with --service-user for an
+# isolated account, but then install the app to a shared path like /opt.
+RUN_USER="${SUDO_USER:-$USER}"
+SERVICE_USER="${SERVICE_USER:-}"
+SET_USER=false
 DATA_DIR="${LEDGERFRAME_DATA_DIR:-}"
 ENABLE_KIOSK=""; ENABLE_VOICE=""; DEMO_MODE=""
 ASSUME_YES=false; DRY_RUN=false; INSTALL_DEPS=true
@@ -55,7 +61,7 @@ while [[ $# -gt 0 ]]; do
     --enable-kiosk) if [[ "${2:-}" =~ ^(true|false|yes|no)$ ]]; then ENABLE_KIOSK=$(bool "$2"); shift 2; else ENABLE_KIOSK=true; shift; fi; SET_KIOSK=true ;;
     --enable-voice) ENABLE_VOICE=$(bool "${2:-true}"); SET_VOICE=true; shift 2 ;;
     --demo-mode)    DEMO_MODE=$(bool "${2:-true}"); SET_DEMO=true; shift 2 ;;
-    --service-user) SERVICE_USER="$2"; shift 2 ;;
+    --service-user) SERVICE_USER="$2"; SET_USER=true; shift 2 ;;
     --no-deps)      INSTALL_DEPS=false; shift ;;
     --yes|-y)       ASSUME_YES=true; shift ;;
     --dry-run)      DRY_RUN=true; shift ;;
@@ -66,6 +72,12 @@ done
 
 INTERACTIVE=false
 [[ -t 0 && "$ASSUME_YES" == false ]] && INTERACTIVE=true
+
+# Resolve which account runs the services. Default = current user (works with a
+# home-dir install); only a custom --service-user creates a system account.
+[[ -z "$SERVICE_USER" ]] && SERVICE_USER="$RUN_USER"
+
+SUDO=""; [[ $EUID -ne 0 ]] && SUDO="sudo"
 
 ask() { # ask "Question" "default"  -> echoes answer
   local q="$1" def="$2" reply
@@ -125,7 +137,7 @@ if [[ "$IS_PI" == true && "$INTERACTIVE" == true ]]; then
 fi
 [[ "$SET_DATA" == false ]] && DATA_DIR="$(ask "Data folder" "$DATA_DIR")"
 
-# Create the folder only if its parent already exists & is writable. Never format.
+# Create the folder only if its parent already exists. Never format a drive.
 PARENT="$(dirname "$DATA_DIR")"
 if [[ ! -d "$DATA_DIR" ]]; then
   if [[ ! -d "$PARENT" ]]; then
@@ -133,20 +145,25 @@ if [[ ! -d "$DATA_DIR" ]]; then
        (This installer never creates or formats drives — only a folder on an existing one.)"
   fi
   if ask_yn "Folder '$DATA_DIR' doesn't exist. Create it now?" "y"; then
-    [[ "$DRY_RUN" == false ]] && { mkdir -p "$DATA_DIR" || sudo mkdir -p "$DATA_DIR"; }
-    ok "Will create: $DATA_DIR"
+    if [[ "$DRY_RUN" == false ]]; then
+      # Use sudo only if a plain mkdir would fail (e.g. creating under /mnt).
+      mkdir -p "$DATA_DIR" 2>/dev/null || $SUDO mkdir -p "$DATA_DIR" || die "could not create '$DATA_DIR'"
+      $SUDO chown "$SERVICE_USER":"$SERVICE_USER" "$DATA_DIR" 2>/dev/null || true
+      ok "Created: $DATA_DIR"
+    else
+      ok "Would create: $DATA_DIR"
+    fi
   else
     die "Need a data folder to continue."
   fi
 fi
 if [[ "$DRY_RUN" == false ]]; then
-  TESTF="$DATA_DIR/.lf-write-test"
-  if ! touch "$TESTF" 2>/dev/null; then
-    sudo mkdir -p "$DATA_DIR" 2>/dev/null || true
-    sudo chmod 777 "$DATA_DIR" 2>/dev/null || true
-    touch "$TESTF" 2>/dev/null || die "Cannot write to '$DATA_DIR'. Check the drive is mounted read-write."
+  # Make sure the account that will RUN the services can write here.
+  $SUDO chown "$SERVICE_USER":"$SERVICE_USER" "$DATA_DIR" 2>/dev/null || true
+  if ! $SUDO -u "$SERVICE_USER" test -w "$DATA_DIR" 2>/dev/null; then
+    warn "fixing permissions on $DATA_DIR for user '$SERVICE_USER'"
+    $SUDO chmod 700 "$DATA_DIR" 2>/dev/null || true
   fi
-  rm -f "$TESTF"
 fi
 ok "Data folder: $DATA_DIR"
 
@@ -176,25 +193,45 @@ if [[ "$DRY_RUN" == true ]]; then
 fi
 ask_yn "Proceed with installation?" "y" || die "Cancelled. Nothing was changed."
 
-SUDO=""; [[ $EUID -ne 0 ]] && SUDO="sudo"
 if [[ -n "$SUDO" ]] && ! sudo -n true 2>/dev/null; then
   info "Some steps need administrator rights; you may be asked for your password."
 fi
 
 # =============================================================================
 step "Install system prerequisites"
+apt_has() { apt-cache show "$1" >/dev/null 2>&1; }   # is this package name available?
+apt_one() { # install one package, tolerate failure, report it
+  local p="$1"
+  if $SUDO apt-get install -y "$p" >/dev/null 2>&1; then ok "$p"; else warn "could not install '$p' (skipped)"; fi
+}
 if [[ "$INSTALL_DEPS" == true && "$PKG" == "apt" ]]; then
-  PKGS=(curl ca-certificates git build-essential libffi-dev)
-  [[ "$ENABLE_KIOSK" == true && "$HAS_CHROMIUM" == false ]] && PKGS+=(chromium-browser)
-  [[ "$ENABLE_VOICE" == true ]] && PKGS+=(portaudio19-dev libsndfile1 alsa-utils)
-  have node || PKGS+=(nodejs npm)
-  have age  || PKGS+=(age)
-  info "Installing: ${PKGS[*]}"
+  info "Updating package lists…"
   $SUDO apt-get update -qq || warn "apt update failed (continuing)"
-  $SUDO apt-get install -y "${PKGS[@]}" >/dev/null 2>&1 || warn "Some packages failed to install; continuing."
-  ok "System packages handled."
+
+  # Core build/runtime deps. Install one at a time so a single bad name can't
+  # abort the whole batch (the original bug on Debian Trixie).
+  PKGS=(curl ca-certificates git build-essential libffi-dev python3-venv)
+  have node || PKGS+=(nodejs npm)
+  if ! have age && apt_has age; then PKGS+=(age); fi
+  [[ "$ENABLE_VOICE" == true ]] && PKGS+=(portaudio19-dev libsndfile1 alsa-utils)
+  # Chromium package name differs across distros: 'chromium' (Debian) vs
+  # 'chromium-browser' (some Raspberry Pi OS images). Pick whichever exists.
+  if [[ "$ENABLE_KIOSK" == true && "$HAS_CHROMIUM" == false ]]; then
+    if apt_has chromium; then PKGS+=(chromium)
+    elif apt_has chromium-browser; then PKGS+=(chromium-browser)
+    else warn "no chromium package found in apt — install a browser manually for kiosk mode"; fi
+  fi
+  info "Installing: ${PKGS[*]}"
+  for p in "${PKGS[@]}"; do apt_one "$p"; done
+
+  # If Node still missing or ancient, the frontend can't be (re)built — but a
+  # prebuilt dashboard ships in the repo, so this is only a warning.
+  if have node; then
+    NODE_MAJOR="$(node -v 2>/dev/null | sed 's/[^0-9.]//g' | cut -d. -f1)"
+    [[ "${NODE_MAJOR:-0}" -lt 18 ]] && warn "Node $(node -v) is old (<18); using the prebuilt dashboard instead."
+  fi
 elif [[ "$INSTALL_DEPS" == true ]]; then
-  warn "No apt detected — please ensure curl, git, Node 18+, a C toolchain, and (optionally) age are installed."
+  warn "No apt detected — ensure curl, git, Node 18+, a C toolchain, and (optionally) age are installed."
 else
   info "Skipping system package install (--no-deps)."
 fi
@@ -208,12 +245,17 @@ fi
 have uv && ok "uv $(uv --version 2>/dev/null | awk '{print $2}')" || warn "uv unavailable — will fall back to system python3."
 
 # =============================================================================
-step "Create the service account and data folders"
-if ! id "$SERVICE_USER" &>/dev/null; then
+step "Set up the service account and data folders"
+if id "$SERVICE_USER" &>/dev/null; then
+  ok "Services will run as '$SERVICE_USER'."
+  # Warn if a non-login user would be running an app stored under someone's home.
+  if [[ "$SERVICE_USER" != "$RUN_USER" && "$REPO_DIR" == /home/* ]]; then
+    warn "App is under /home but will run as '$SERVICE_USER'. If it can't start, move the"
+    warn "app to /opt/ledgerframe, or re-run without --service-user to run as '$RUN_USER'."
+  fi
+else
   $SUDO useradd --system --create-home --shell /usr/sbin/nologin "$SERVICE_USER" 2>/dev/null || true
   ok "Created service user '$SERVICE_USER'."
-else
-  ok "Service user '$SERVICE_USER' already exists."
 fi
 for sub in db cache imports logs backups generated-audio; do
   $SUDO mkdir -p "$DATA_DIR/$sub"
@@ -257,13 +299,21 @@ fi
 ok "Backend installed."
 
 # =============================================================================
-step "Build the dashboard (frontend)"
-if have npm; then
-  ( cd frontend && (npm ci --no-audit --no-fund >/dev/null 2>&1 || npm install >/dev/null 2>&1) && npm run build >/dev/null 2>&1 ) \
-    && ok "Dashboard built." \
-    || warn "Frontend build failed — install Node 18+ then run: (cd frontend && npm install && npm run build)"
-else
-  warn "Node/npm not found — the dashboard wasn't built. Install Node 18+ and run: (cd frontend && npm install && npm run build)"
+step "Prepare the dashboard (frontend)"
+BUILT=false
+if have npm && [[ "${NODE_MAJOR:-0}" -ge 18 || -z "${NODE_MAJOR:-}" ]]; then
+  info "Building the latest dashboard from source…"
+  if ( cd frontend && (npm ci --no-audit --no-fund >/dev/null 2>&1 || npm install >/dev/null 2>&1) && npm run build >/dev/null 2>&1 ); then
+    BUILT=true; ok "Dashboard built from source."
+  fi
+fi
+if [[ "$BUILT" == false ]]; then
+  if [[ -f "$REPO_DIR/frontend/dist/index.html" ]]; then
+    ok "Using the existing built dashboard (skipped rebuild)."
+  else
+    warn "Dashboard not built (Node 18+ needed). The API will still run; finish the UI later with:"
+    warn "   (cd $REPO_DIR/frontend && npm install && npm run build) && sudo systemctl restart ledgerframe-api"
+  fi
 fi
 
 # =============================================================================

@@ -20,10 +20,11 @@ TimeoutStartSec=30
 MemoryMax=400M
 CPUQuota=120%
 
+# ProtectHome=read-only so a home-dir install is readable; data dir stays writable.
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=read-only
 ReadWritePaths=@DATA_DIR@ @REPO_DIR@
 ProtectKernelTunables=true
 RestrictSUIDSGID=true

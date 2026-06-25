@@ -370,10 +370,16 @@ $SUDO chown -R "$SERVICE_USER":"$SERVICE_USER" "$DATA_DIR" 2>/dev/null || true
 $SUDO chown -R "$SERVICE_USER":"$SERVICE_USER" "$REPO_DIR/.venv" "$REPO_DIR/frontend/dist" 2>/dev/null || true
 
 $SUDO systemctl daemon-reload
-$SUDO systemctl enable --now ledgerframe-api ledgerframe-worker >/dev/null 2>&1
+# enable = start on boot; restart = apply the freshly-rendered unit + .env NOW
+# (plain `enable --now` won't restart a service that's already running).
+$SUDO systemctl enable ledgerframe-api ledgerframe-worker >/dev/null 2>&1
+$SUDO systemctl restart ledgerframe-api ledgerframe-worker
 [[ "$ENABLE_KIOSK" == true ]] && $SUDO systemctl enable ledgerframe-kiosk >/dev/null 2>&1 || true
-[[ "$ENABLE_VOICE" == true ]] && $SUDO systemctl enable --now ledgerframe-voice >/dev/null 2>&1 || true
-ok "Services installed and started."
+if [[ "$ENABLE_VOICE" == true ]]; then
+  $SUDO systemctl enable ledgerframe-voice >/dev/null 2>&1 || true
+  $SUDO systemctl restart ledgerframe-voice >/dev/null 2>&1 || true
+fi
+ok "Services installed and (re)started."
 
 # =============================================================================
 step "Final check"

@@ -43,6 +43,9 @@ build/
 frontend/node_modules/
 # frontend/dist/ is intentionally COMMITTED: a prebuilt dashboard so the Pi can
 # run without Node/npm. Rebuild with `npm run build` (stable filenames, low churn).
+# (The generic `dist/` rule above would otherwise exclude it — re-include here.)
+!frontend/dist/
+!frontend/dist/**
 frontend/.vite/
 node_modules/
 *.tsbuildinfo

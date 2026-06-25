@@ -1,5 +1,9 @@
 # LedgerFrame
 
+[![Repository](https://img.shields.io/badge/GitHub-LedgerFrame-d9a566?logo=github&logoColor=white)](https://github.com/gopalasubramanium/LedgerFrame)
+[![License: MIT](https://img.shields.io/badge/License-MIT-4ea88b)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%205-c51a4a?logo=raspberrypi&logoColor=white)](ARCHITECTURE.md)
+
 **A local-first, always-on personal financial intelligence display for Raspberry Pi 5 + Hailo AI HAT+ 2.**
 
 LedgerFrame is a private, self-hosted financial command centre: market monitoring,

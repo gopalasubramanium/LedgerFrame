@@ -15,6 +15,10 @@ configure it.
 > This is **not** a trading or execution platform. It contains no order placement,
 > no brokerage integration, and gives no buy/sell recommendations or financial advice.
 
+![LedgerFrame home dashboard](docs/screenshots/home.png)
+
+<sub>Home dashboard in DEMO mode. More views — portfolio, markets, heatmap, news, snapshot, settings, and the grounded AI "Ask" panel — in [`docs/screenshots/`](docs/screenshots/).</sub>
+
 ---
 
 ## Highlights

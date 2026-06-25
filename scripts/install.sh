@@ -12,6 +12,7 @@
 #     --data-dir DIR        Where to store data (default: /mnt/ledgerframe-data on a Pi)
 #     --enable-kiosk [BOOL] Launch the full-screen display on boot (auto-detected)
 #     --enable-voice [BOOL] Install optional local voice (default: false)
+#     --enable-lan  [BOOL]  Allow access from other devices on your network (default: false)
 #     --demo-mode   [BOOL]  Start with safe synthetic data, no API keys (default: true)
 #     --service-user NAME   System account to run the services (default: ledgerframe)
 #     --no-deps             Don't install system packages (assume they're present)
@@ -49,9 +50,9 @@ RUN_USER="${SUDO_USER:-$USER}"
 SERVICE_USER="${SERVICE_USER:-}"
 SET_USER=false
 DATA_DIR="${LEDGERFRAME_DATA_DIR:-}"
-ENABLE_KIOSK=""; ENABLE_VOICE=""; DEMO_MODE=""
+ENABLE_KIOSK=""; ENABLE_VOICE=""; DEMO_MODE=""; ENABLE_LAN=""
 ASSUME_YES=false; DRY_RUN=false; INSTALL_DEPS=true
-SET_KIOSK=false; SET_VOICE=false; SET_DEMO=false; SET_DATA=false
+SET_KIOSK=false; SET_VOICE=false; SET_DEMO=false; SET_DATA=false; SET_LAN=false
 
 bool() { case "${1,,}" in true|yes|y|1|on) echo true ;; *) echo false ;; esac; }
 
@@ -59,13 +60,14 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --data-dir)     DATA_DIR="$2"; SET_DATA=true; shift 2 ;;
     --enable-kiosk) if [[ "${2:-}" =~ ^(true|false|yes|no)$ ]]; then ENABLE_KIOSK=$(bool "$2"); shift 2; else ENABLE_KIOSK=true; shift; fi; SET_KIOSK=true ;;
-    --enable-voice) ENABLE_VOICE=$(bool "${2:-true}"); SET_VOICE=true; shift 2 ;;
-    --demo-mode)    DEMO_MODE=$(bool "${2:-true}"); SET_DEMO=true; shift 2 ;;
+    --enable-voice) if [[ "${2:-}" =~ ^(true|false|yes|no)$ ]]; then ENABLE_VOICE=$(bool "$2"); shift 2; else ENABLE_VOICE=true; shift; fi; SET_VOICE=true ;;
+    --enable-lan)   if [[ "${2:-}" =~ ^(true|false|yes|no)$ ]]; then ENABLE_LAN=$(bool "$2"); shift 2; else ENABLE_LAN=true; shift; fi; SET_LAN=true ;;
+    --demo-mode)    if [[ "${2:-}" =~ ^(true|false|yes|no)$ ]]; then DEMO_MODE=$(bool "$2"); shift 2; else DEMO_MODE=true; shift; fi; SET_DEMO=true ;;
     --service-user) SERVICE_USER="$2"; SET_USER=true; shift 2 ;;
     --no-deps)      INSTALL_DEPS=false; shift ;;
     --yes|-y)       ASSUME_YES=true; shift ;;
     --dry-run)      DRY_RUN=true; shift ;;
-    --help|-h)      sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --help|-h)      sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument: $1 (try --help)" ;;
   esac
 done
@@ -176,6 +178,13 @@ if [[ "$SET_KIOSK" == false ]]; then
   ask_yn "Auto-launch the full-screen dashboard on this device (kiosk mode)?" "$local_default" && ENABLE_KIOSK=true || ENABLE_KIOSK=false
 fi
 [[ "$SET_VOICE" == false ]] && { ask_yn "Install optional local voice control (microphone)?" "n" && ENABLE_VOICE=true || ENABLE_VOICE=false; }
+if [[ "$SET_LAN" == false ]]; then
+  ask_yn "Allow access from OTHER devices on your network (phone/laptop)? Off = this device only." "n" && ENABLE_LAN=true || ENABLE_LAN=false
+fi
+[[ "$ENABLE_LAN" == true ]] && warn "LAN access is on — set a PIN in Settings right after install so others can't change your data."
+# The API binds to localhost unless LAN access was explicitly chosen.
+API_HOST=127.0.0.1
+[[ "$ENABLE_LAN" == true ]] && API_HOST=0.0.0.0
 
 # =============================================================================
 step "Review the plan"
@@ -183,6 +192,7 @@ cat <<EOF
    ${C_BOLD}Data folder:${C_RESET}   $DATA_DIR
    ${C_BOLD}Demo mode:${C_RESET}     $DEMO_MODE   ${C_DIM}(synthetic data, no API keys)${C_RESET}
    ${C_BOLD}Kiosk mode:${C_RESET}    $ENABLE_KIOSK
+   ${C_BOLD}Network access:${C_RESET} $([[ "$ENABLE_LAN" == true ]] && echo "LAN (other devices) — set a PIN!" || echo "this device only (localhost)")
    ${C_BOLD}Voice:${C_RESET}         $ENABLE_VOICE
    ${C_BOLD}Service user:${C_RESET}  $SERVICE_USER
    ${C_BOLD}Install deps:${C_RESET}  $INSTALL_DEPS   ${C_DIM}(uv, Node, build tools, age$([[ "$ENABLE_KIOSK" == true ]] && echo ", Chromium"))${C_RESET}
@@ -280,6 +290,10 @@ step "Write configuration (.env)"
 sanitize_env() {
   sed -i -E 's/^(LEDGERFRAME_[A-Z0-9_]+=[^[:space:]#]*)[[:space:]]+#.*$/\1/' "$1"
 }
+set_env_key() { # set_env_key FILE KEY VALUE  (update in place, or append if absent)
+  local f="$1" k="$2" v="$3"
+  if grep -q "^$k=" "$f"; then sed -i "s|^$k=.*|$k=$v|" "$f"; else printf '%s=%s\n' "$k" "$v" >> "$f"; fi
+}
 if [[ -f "$REPO_DIR/.env" ]]; then
   cp -n "$REPO_DIR/.env" "$REPO_DIR/.env.bak.$(date +%s)" 2>/dev/null || true
   if grep -qE '^LEDGERFRAME_[A-Z0-9_]+=[^[:space:]#]*[[:space:]]+#' "$REPO_DIR/.env"; then
@@ -298,6 +312,8 @@ else
   chmod 600 "$REPO_DIR/.env"
   ok "Created .env with a freshly generated secret key."
 fi
+# Apply the LAN choice to .env every run so it reflects the latest decision.
+set_env_key "$REPO_DIR/.env" LEDGERFRAME_ALLOW_LAN "$ENABLE_LAN"
 
 # =============================================================================
 step "Install the application (backend)"
@@ -342,6 +358,7 @@ render_unit() { # render_unit name use-service-user?
   local name="$1" user_kind="$2" run_user
   [[ "$user_kind" == "desktop" ]] && run_user="${SUDO_USER:-$USER}" || run_user="$SERVICE_USER"
   sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$run_user|g" \
+      -e "s|@API_HOST@|$API_HOST|g" \
       "$REPO_DIR/systemd/$name.service" | $SUDO tee "/etc/systemd/system/$name.service" >/dev/null
 }
 render_unit ledgerframe-api service
@@ -378,7 +395,12 @@ ${C_GREEN}${C_BOLD}✓ All done!${C_RESET}
 
    Open the dashboard in a browser:
       ${C_BOLD}http://127.0.0.1:8321${C_RESET}   (on this device)
-$( [[ -n "$LAN_IP" ]] && printf '      %shttp://%s:8321%s   (from another device — enable LAN access first)\n' "$C_DIM" "$LAN_IP" "$C_RESET" )
+$( if [[ "$ENABLE_LAN" == true && -n "$LAN_IP" ]]; then
+     printf '      %shttp://%s:8321%s   (from any device on your network)\n' "$C_BOLD" "$LAN_IP" "$C_RESET"
+     printf '      %s⚠ LAN access is ON — open Settings and set a PIN now.%s\n' "$C_YELLOW" "$C_RESET"
+   else
+     printf '      %s(Network access is off — this device only. Re-run with --enable-lan to allow other devices.)%s\n' "$C_DIM" "$C_RESET"
+   fi )
 
    Handy commands:
       Verify everything:   ./scripts/doctor.sh

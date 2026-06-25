@@ -13,7 +13,7 @@ WorkingDirectory=@REPO_DIR@
 Environment=LEDGERFRAME_ENV=production
 Environment=LEDGERFRAME_DATA_DIR=@DATA_DIR@
 EnvironmentFile=-@REPO_DIR@/.env
-ExecStart=@REPO_DIR@/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8321 --workers 1
+ExecStart=@REPO_DIR@/.venv/bin/uvicorn app.main:app --host @API_HOST@ --port 8321 --workers 1
 Restart=on-failure
 RestartSec=3
 TimeoutStartSec=30

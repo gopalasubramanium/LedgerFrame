@@ -207,6 +207,26 @@ Then verify the hardware & runtime:
 Full operational guide: [`OPERATIONS.md`](OPERATIONS.md). Hardware/AI setup and
 constraints: [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md).
 
+### View it on your phone or laptop
+
+By default LedgerFrame listens on `127.0.0.1` — reachable **only on the Pi itself**
+(this is the secure default, since your finances shouldn't be on the network
+uninvited). To open it from other devices on your home network:
+
+```bash
+# Re-run the installer with LAN access enabled:
+cd ~/LedgerFrame && ./scripts/install.sh --enable-lan --yes
+```
+
+Then, from any device on the same Wi-Fi, browse to `http://<your-pi-ip>:8321`
+(the installer prints the exact address, e.g. `http://192.168.0.14:8321`).
+
+> **Set a PIN first.** With LAN access on, open **Settings → set a PIN** immediately
+> so others on your network can't change your data. LedgerFrame refuses to enable LAN
+> binding for mutations without one. Only enable this on a network you trust.
+
+To turn it back off: `./scripts/install.sh --enable-lan false --yes`.
+
 ### Going beyond demo mode
 
 - **Live prices:** edit `.env` → set `LEDGERFRAME_MARKET_PROVIDER` and a key. See
@@ -223,6 +243,7 @@ constraints: [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/ASSUMPTIONS.md`](do
 | What you see | What to do |
 |--------------|------------|
 | The browser says “can't connect” | Wait 30 seconds and refresh. Still stuck? Run `./scripts/doctor.sh` in the Terminal — it checks everything and tells you what's missing |
+| Works on the Pi but not from my phone/laptop | That's on purpose — by default the app is reachable **only on the Pi**. To open it from other devices, see [View it on your phone or laptop](#view-it-on-your-phone-or-laptop) |
 | Installer said the data folder doesn't exist | Your USB drive isn't mounted. Open the **Files** app, click the drive once so it mounts, then re-run the install command |
 | It asks for a password | That's normal — type your Pi login password (the letters won't show as you type) and press Enter |
 | Want to start over | Just run `cd ~/LedgerFrame && ./scripts/install.sh` again — it's safe to re-run |

@@ -7,7 +7,7 @@ plain text in settings so the Home page can show it instantly even offline.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +31,7 @@ async def generate_briefing(session: AsyncSession) -> str:
     if gainers:
         parts.append("Leading: " + ", ".join(f"{g.label} ({g.day_change_base:+,.0f})" for g in gainers) + ".")
     if losers:
-        parts.append("Lagging: " + ", ".join(f"{l.label} ({l.day_change_base:+,.0f})" for l in losers) + ".")
+        parts.append("Lagging: " + ", ".join(f"{x.label} ({x.day_change_base:+,.0f})" for x in losers) + ".")
     if val.has_stale:
         parts.append("Some prices may be out of date.")
     parts.append("Information only, not financial advice.")
@@ -41,7 +41,7 @@ async def generate_briefing(session: AsyncSession) -> str:
 async def refresh_briefing(session: AsyncSession) -> str:
     text = await generate_briefing(session)
     await _set(session, BRIEFING_KEY, text)
-    await _set(session, BRIEFING_TS_KEY, datetime.now(timezone.utc).isoformat())
+    await _set(session, BRIEFING_TS_KEY, datetime.now(UTC).isoformat())
     return text
 
 

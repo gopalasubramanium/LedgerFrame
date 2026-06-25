@@ -7,7 +7,7 @@ providers directly and never computes values itself.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +26,7 @@ def _fmt(value, ccy: str) -> str:
 async def portfolio_facts(session: AsyncSession) -> list[GroundingFact]:
     base = get_settings().base_currency
     val = await value_portfolio(session, base)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     facts = [
         GroundingFact(label="Portfolio total value", value=_fmt(val.total_value, base), timestamp=now),
         GroundingFact(label="Total unrealised P/L", value=_fmt(val.unrealised_pl, base), timestamp=now),
@@ -42,14 +42,14 @@ async def movers_facts(session: AsyncSession) -> list[GroundingFact]:
     base = get_settings().base_currency
     val = await value_portfolio(session, base)
     gainers, losers = top_movers(val, n=3)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     facts: list[GroundingFact] = []
     for g in gainers:
         facts.append(GroundingFact(label=f"Gainer {g.label}", value=_fmt(g.day_change_base, base),
                                    timestamp=now, is_stale=g.is_stale))
-    for l in losers:
-        facts.append(GroundingFact(label=f"Detractor {l.label}", value=_fmt(l.day_change_base, base),
-                                   timestamp=now, is_stale=l.is_stale))
+    for loser in losers:
+        facts.append(GroundingFact(label=f"Detractor {loser.label}", value=_fmt(loser.day_change_base, base),
+                                   timestamp=now, is_stale=loser.is_stale))
     return facts
 
 
@@ -58,7 +58,7 @@ async def allocation_facts(session: AsyncSession, key: str = "asset_class") -> l
     val = await value_portfolio(session, base)
     alloc = val.allocation(key)
     total = sum(alloc.values()) or 1
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return [
         GroundingFact(label=f"Allocation ({key}) — {k}",
                       value=f"{_fmt(v, base)} ({v / total * 100:.1f}%)", timestamp=now)

@@ -17,7 +17,7 @@ from app.core.money import ZERO, D, money, pct_change
 from app.models import AssetClass, Holding, Instrument, TxnType
 from app.models import Transaction as Txn
 from app.services import fx
-from app.services.market import get_cached_quote
+from app.services.market import get_cached_quote, refresh_quote
 
 
 @dataclass
@@ -115,11 +115,15 @@ class PortfolioValuation:
         return dict(out)
 
 
-async def value_portfolio(session: AsyncSession, base_currency: str) -> PortfolioValuation:
+async def value_portfolio(
+    session: AsyncSession, base_currency: str, warm: bool = True
+) -> PortfolioValuation:
     """Value every holding at its latest cached quote, converted to base currency.
 
     Manual-priced and unpriced assets use ``manual_value`` (or cost) so private
-    assets, cash, and property still contribute to net worth.
+    assets, cash, and property still contribute to net worth. With ``warm=True``
+    (default) a held instrument with no cached quote is fetched on demand so a
+    cold start still shows priced positions and movers.
     """
     val = PortfolioValuation(base_currency=base_currency)
     rows = (await session.execute(select(Holding))).scalars().all()
@@ -135,14 +139,19 @@ async def value_portfolio(session: AsyncSession, base_currency: str) -> Portfoli
         is_stale = False
         is_priced = True
 
+        quote = None
         if h.manual_value is not None:
             mv_native = D(h.manual_value)
         elif symbol and instrument and not instrument.is_manual_price:
-            q = await get_cached_quote(session, symbol, instrument.exchange)
-            if q.price is not None:
-                price_native = D(q.price)
+            quote = await get_cached_quote(session, symbol, instrument.exchange)
+            if quote.price is None and warm:
+                # No cached quote yet (cold start) — fetch one. Cheap for local
+                # providers; the external adapter rate-limits and degrades safely.
+                quote = await refresh_quote(session, symbol, instrument.exchange)
+            if quote.price is not None:
+                price_native = D(quote.price)
                 mv_native = D(h.quantity) * price_native
-                is_stale = q.is_stale
+                is_stale = quote.is_stale
             else:
                 mv_native = D(h.quantity) * D(h.avg_cost)  # fall back to cost; mark unpriced
                 is_priced = False
@@ -152,12 +161,10 @@ async def value_portfolio(session: AsyncSession, base_currency: str) -> Portfoli
 
         cost_native = D(h.quantity) * D(h.avg_cost)
 
-        # Day change from previous close where we have a live-ish quote.
+        # Day change from previous close where we have a quote.
         day_change_native = ZERO
-        if price_native is not None and symbol and instrument:
-            q = await get_cached_quote(session, symbol, instrument.exchange)
-            if q.previous_close:
-                day_change_native = (price_native - D(q.previous_close)) * D(h.quantity)
+        if price_native is not None and quote is not None and quote.previous_close:
+            day_change_native = (price_native - D(quote.previous_close)) * D(h.quantity)
 
         mv_base = await fx.convert(mv_native, native_ccy, base_currency)
         cost_base = await fx.convert(cost_native, native_ccy, base_currency)
@@ -212,9 +219,9 @@ async def rebuild_holdings_from_transactions(session: AsyncSession) -> int:
             continue
         by_key[(t.account_id, t.instrument_id)].append(t)
 
-    # Clear existing transaction-derived holdings (those linked to an instrument).
+    # Clear existing transaction-derived holdings (those linked to an instrument),
+    # but preserve any with a manual_value override.
     existing = (await session.execute(select(Holding).where(Holding.instrument_id.isnot(None)))).scalars().all()
-    keep_manual = {h.id: h for h in existing if h.manual_value is not None}
     for h in existing:
         if h.manual_value is None:
             await session.delete(h)
@@ -248,4 +255,4 @@ def top_movers(val: PortfolioValuation, n: int = 5) -> tuple[list[HoldingValue],
     priced = [h for h in val.holdings if h.is_priced]
     gainers = sorted(priced, key=lambda h: h.day_change_base, reverse=True)[:n]
     losers = sorted(priced, key=lambda h: h.day_change_base)[:n]
-    return gainers, [h for h in losers if h.day_change_base < ZERO]
+    return gainers, [hv for hv in losers if hv.day_change_base < ZERO]

@@ -13,7 +13,7 @@ labelled accordingly so the UI never implies real-time entitlement.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -54,7 +54,7 @@ class ExternalMarketDataProvider:
                     if not px:
                         raise ValueError("empty quote (rate limited or unknown symbol)")
                     prev = data.get("08. previous close")
-                    now = datetime.now(timezone.utc)
+                    now = datetime.now(UTC)
                     return Quote(
                         symbol=symbol.upper(),
                         exchange=exchange,

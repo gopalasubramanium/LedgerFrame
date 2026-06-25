@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select
@@ -46,7 +46,7 @@ async def generate_snapshots() -> None:
     base = settings.base_currency
     async with get_sessionmaker()() as session:
         val = await value_portfolio(session, base)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session.add(PortfolioSnapshot(
             ts=now, base_currency=base, total_value=val.total_value,
             cost_basis=val.cost_basis, unrealised_pl=val.unrealised_pl, day_change=val.day_change,

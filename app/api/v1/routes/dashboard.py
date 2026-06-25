@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,9 +45,16 @@ async def dashboard_home(session: AsyncSession = Depends(get_db)) -> dict:
 
     status = await provider.get_market_status("US")
     briefing = await get_briefing(session)
+    if not briefing.get("generated_at"):
+        # Generate once lazily on first load so the card isn't empty before the
+        # worker's scheduled run (the worker refreshes it daily thereafter).
+        from app.services.briefing import refresh_briefing
+
+        text = await refresh_briefing(session)
+        briefing = {"text": text, "generated_at": datetime.now(UTC).isoformat()}
 
     return {
-        "now": datetime.now(timezone.utc).isoformat(),
+        "now": datetime.now(UTC).isoformat(),
         "timezone": settings.timezone,
         "demo_mode": settings.is_demo,
         "market_status": status.model_dump(mode="json"),

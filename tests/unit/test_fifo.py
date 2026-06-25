@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.models import Transaction, TxnType
@@ -11,7 +11,7 @@ from app.services.portfolio import compute_fifo
 
 def _txn(ttype, date, qty, price, fees=0, amount=0):
     return Transaction(
-        type=TxnType(ttype), ts=datetime.fromisoformat(date).replace(tzinfo=timezone.utc),
+        type=TxnType(ttype), ts=datetime.fromisoformat(date).replace(tzinfo=UTC),
         quantity=Decimal(str(qty)), price=Decimal(str(price)), fees=Decimal(str(fees)),
         amount=Decimal(str(amount)), currency="USD", account_id=1,
     )

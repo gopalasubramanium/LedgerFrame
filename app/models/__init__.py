@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
@@ -18,7 +19,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, DecimalText, utcnow
-from decimal import Decimal
 
 
 class AssetClass(str, enum.Enum):
@@ -88,7 +88,7 @@ class Account(Base):
     currency: Mapped[str] = mapped_column(String(3), default="SGD")
     institution: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-    holdings: Mapped[list["Holding"]] = relationship(back_populates="account")
+    holdings: Mapped[list[Holding]] = relationship(back_populates="account")
 
 
 class Instrument(Base):
@@ -203,7 +203,7 @@ class Watchlist(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
-    items: Mapped[list["WatchlistItem"]] = relationship(
+    items: Mapped[list[WatchlistItem]] = relationship(
         back_populates="watchlist", cascade="all, delete-orphan"
     )
 
@@ -251,7 +251,7 @@ class DashboardConfig(Base):
     name: Mapped[str] = mapped_column(String(80), default="default")
     rotation_seconds: Mapped[int] = mapped_column(Integer, default=30)
     focus_page: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    items: Mapped[list["DashboardRotationItem"]] = relationship(
+    items: Mapped[list[DashboardRotationItem]] = relationship(
         back_populates="config", cascade="all, delete-orphan"
     )
 
@@ -276,7 +276,7 @@ class AIConversation(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(160), default="Conversation")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-    messages: Mapped[list["AIMessage"]] = relationship(
+    messages: Mapped[list[AIMessage]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan"
     )
 

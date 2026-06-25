@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,7 +55,7 @@ async def instrument_history(
     interval: str = Query("1d"),
     days: int = Query(180, ge=1, le=3650),
 ) -> dict:
-    end = datetime.now(timezone.utc)
+    end = datetime.now(UTC)
     start = end - timedelta(days=days)
     candles = await get_provider().get_history(symbol, interval, start, end)
     return {

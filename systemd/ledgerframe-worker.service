@@ -1,0 +1,37 @@
+# LedgerFrame background worker: market refresh, snapshots, briefing, backups.
+[Unit]
+Description=LedgerFrame Worker (APScheduler)
+After=network-online.target ledgerframe-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@REPO_DIR@
+Environment=LEDGERFRAME_ENV=production
+Environment=LEDGERFRAME_DATA_DIR=@DATA_DIR@
+EnvironmentFile=-@REPO_DIR@/.env
+ExecStart=@REPO_DIR@/.venv/bin/python -m app.worker
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+
+MemoryMax=400M
+CPUQuota=120%
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=@DATA_DIR@ @REPO_DIR@
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ledgerframe-worker
+
+[Install]
+WantedBy=multi-user.target

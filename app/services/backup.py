@@ -13,7 +13,7 @@ import logging
 import shutil
 import sqlite3
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.core.config import get_settings
@@ -32,7 +32,7 @@ def _sha256(path: Path) -> str:
 def create_backup() -> dict:
     settings = get_settings()
     settings.backups_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     raw = settings.backups_dir / f"ledgerframe-{stamp}.db"
 
     # Consistent snapshot even while the app is running (WAL-safe).

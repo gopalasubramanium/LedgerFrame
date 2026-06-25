@@ -9,7 +9,7 @@ mock provider for any symbol without a CSV so dashboards never go blank.
 from __future__ import annotations
 
 import csv
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.core.money import D, price
@@ -47,7 +47,7 @@ class CSVMarketDataProvider:
                 try:
                     candles.append(
                         Candle(
-                            ts=datetime.fromisoformat(row["date"]).replace(tzinfo=timezone.utc),
+                            ts=datetime.fromisoformat(row["date"]).replace(tzinfo=UTC),
                             open=price(row["open"]),
                             high=price(row["high"]),
                             low=price(row["low"]),
@@ -77,7 +77,7 @@ class CSVMarketDataProvider:
             source="csv",
             entitlement=EntitlementStatus.END_OF_DAY,
             market_time=last.ts,
-            received_at=datetime.now(timezone.utc),
+            received_at=datetime.now(UTC),
         )
 
     async def get_history(

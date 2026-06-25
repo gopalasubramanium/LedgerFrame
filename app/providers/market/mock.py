@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.core.money import D, price
 from app.schemas.common import (
@@ -73,7 +73,7 @@ class MockMarketDataProvider:
 
     async def get_quote(self, symbol: str, exchange: str | None = None) -> Quote:
         info = self._info(symbol)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         day = now.toordinal()
         cur = info["base"] * _walk(symbol, day)
         prev = info["base"] * _walk(symbol, day - 1)
@@ -133,7 +133,7 @@ class MockMarketDataProvider:
         return out[:25]
 
     async def get_market_status(self, market: str) -> MarketStatus:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Rough demo schedule: US equities open 13:30–20:00 UTC on weekdays.
         weekday = now.weekday() < 5
         state = MarketState.OPEN if (weekday and 13 <= now.hour < 20) else MarketState.CLOSED
@@ -141,14 +141,14 @@ class MockMarketDataProvider:
 
     async def get_fx_rate(self, base: str, quote: str) -> FxRate:
         b, qc = base.upper(), quote.upper()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         rate = _USD_RATES.get(qc, 1.0) / _USD_RATES.get(b, 1.0)
         # Small deterministic daily wobble.
         rate *= 1 + math.sin((now.toordinal() + _seed(b + qc)) / 15.0) * 0.01
         return FxRate(base=b, quote=qc, rate=price(rate), source="mock", received_at=now)
 
     async def get_news(self, instruments: list[str]) -> list[NewsItem]:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         items: list[NewsItem] = []
         templates = [
             "{name} steadies as broad market digests rate expectations",

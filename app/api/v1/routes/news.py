@@ -14,9 +14,10 @@ router = APIRouter()
 
 @router.get("/news")
 async def news(session: AsyncSession = Depends(get_db)) -> dict:
-    from app.models import Watchlist
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
+
+    from app.models import Watchlist
 
     wl = (
         await session.execute(

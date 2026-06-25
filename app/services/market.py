@@ -7,14 +7,15 @@ returned explicitly on every quote.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.money import pct_change
-from app.models import Instrument, Quote as QuoteRow
+from app.models import Instrument
+from app.models import Quote as QuoteRow
 from app.providers.market import get_provider
 from app.schemas.common import EntitlementStatus, Quote
 
@@ -23,8 +24,8 @@ log = logging.getLogger(__name__)
 
 def _is_stale(received_at: datetime) -> bool:
     if received_at.tzinfo is None:
-        received_at = received_at.replace(tzinfo=timezone.utc)
-    age = (datetime.now(timezone.utc) - received_at).total_seconds()
+        received_at = received_at.replace(tzinfo=UTC)
+    age = (datetime.now(UTC) - received_at).total_seconds()
     return age > get_settings().stale_after_seconds
 
 
@@ -45,7 +46,7 @@ async def refresh_quote(session: AsyncSession, symbol: str, exchange: str | None
         row.source = q.source
         row.entitlement = q.entitlement.value
         row.market_time = q.market_time
-        row.received_at = datetime.now(timezone.utc)
+        row.received_at = datetime.now(UTC)
         await session.flush()
         q.is_stale = False
         return q
@@ -61,7 +62,7 @@ async def get_cached_quote(
     If nothing is cached, mark the symbol UNAVAILABLE (no fabricated price)."""
     instrument = await _get_or_create_instrument(session, symbol, exchange)
     row = await session.get(QuoteRow, instrument.id)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if row is None:
         return Quote(
             symbol=symbol.upper(), exchange=exchange, price=None,  # type: ignore[arg-type]

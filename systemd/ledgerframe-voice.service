@@ -1,0 +1,32 @@
+# LedgerFrame voice service (OPTIONAL). Only installed/enabled when voice is on.
+# Push-to-talk by default; never records continuously. See docs/VOICE_SETUP.md.
+[Unit]
+Description=LedgerFrame Voice (local STT/TTS)
+After=ledgerframe-api.service sound.target
+Wants=ledgerframe-api.service
+ConditionPathExists=@REPO_DIR@/.venv/bin/python
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@REPO_DIR@
+Environment=LEDGERFRAME_DATA_DIR=@DATA_DIR@
+Environment=LEDGERFRAME_VOICE_ENABLED=true
+EnvironmentFile=-@REPO_DIR@/.env
+ExecStart=@REPO_DIR@/.venv/bin/python -m app.providers.voice.service
+Restart=on-failure
+RestartSec=5
+
+MemoryMax=500M
+NoNewPrivileges=true
+PrivateTmp=true
+# Audio devices require access to /dev/snd; do not over-restrict.
+SupplementaryGroups=audio
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ledgerframe-voice
+
+[Install]
+WantedBy=multi-user.target

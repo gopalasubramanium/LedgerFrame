@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import PlainTextResponse
@@ -86,7 +86,7 @@ async def add_transaction(payload: TransactionIn, session: AsyncSession = Depend
         account_id=account.id,
         instrument_id=instrument.id if instrument else None,
         type=payload.type,
-        ts=payload.ts.replace(tzinfo=payload.ts.tzinfo or timezone.utc),
+        ts=payload.ts.replace(tzinfo=payload.ts.tzinfo or UTC),
         quantity=D(payload.quantity), price=D(payload.price), fees=D(payload.fees),
         amount=money(D(payload.quantity) * D(payload.price)),
         currency=payload.currency.upper(), note=payload.note,

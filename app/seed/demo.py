@@ -4,7 +4,7 @@ dashboard rotation config. Idempotent — skips if data already exists.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,7 +67,7 @@ async def seed_demo_data(session: AsyncSession) -> bool:
         acc = sg_account if ccy == "SGD" else brokerage
         session.add(Transaction(
             account_id=acc.id, instrument_id=instruments[sym].id, type=TxnType(ttype),
-            ts=datetime.fromisoformat(date).replace(tzinfo=timezone.utc),
+            ts=datetime.fromisoformat(date).replace(tzinfo=UTC),
             quantity=D(qty), price=D(price), fees=D(fees), currency=ccy,
             amount=D(qty) * D(price),
         ))

@@ -13,13 +13,13 @@ from __future__ import annotations
 import csv
 import io
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.money import D, money
 from app.models import Account, Instrument, Transaction, TxnType
-from sqlalchemy import select
 
 MAX_BYTES = 5 * 1024 * 1024
 MAX_ROWS = 20_000
@@ -64,7 +64,7 @@ async def import_transactions_csv(
             ttype = TxnType(type_str)
             symbol = _clean(row.get("symbol")).upper()
             instrument = await _ensure_instrument(session, symbol) if symbol else None
-            ts = datetime.fromisoformat(_clean(row.get("date"))).replace(tzinfo=timezone.utc)
+            ts = datetime.fromisoformat(_clean(row.get("date"))).replace(tzinfo=UTC)
             qty = D(_clean(row.get("quantity")) or 0)
             price = D(_clean(row.get("price")) or 0)
             fees = D(_clean(row.get("fees")) or 0)

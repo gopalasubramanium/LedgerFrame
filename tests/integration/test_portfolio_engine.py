@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from app.core.config import get_settings
@@ -35,7 +35,7 @@ async def test_stale_quote_is_flagged_and_marked_cached(session):
     instr = Instrument(symbol="AAPL", currency="USD")
     session.add(instr)
     await session.flush()
-    old = datetime.now(timezone.utc) - timedelta(seconds=get_settings().stale_after_seconds + 60)
+    old = datetime.now(UTC) - timedelta(seconds=get_settings().stale_after_seconds + 60)
     session.add(QuoteRow(instrument_id=instr.id, price=Decimal("100"),
                          previous_close=Decimal("99"), currency="USD",
                          source="mock", entitlement="delayed", received_at=old))

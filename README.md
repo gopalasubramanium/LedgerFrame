@@ -15,19 +15,18 @@ configure it.
 > This is **not** a trading or execution platform. It contains no order placement,
 > no brokerage integration, and gives no buy/sell recommendations or financial advice.
 
-![LedgerFrame home dashboard](docs/screenshots/home.png)
-<sub>Home dashboard in DEMO mode.</sub>
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/home.png" alt="LedgerFrame home dashboard"><br><sub><b>Home</b> — dashboard in DEMO mode.</sub></td>
+    <td width="50%"><img src="docs/screenshots/portfolio.png" alt="LedgerFrame portfolio page"><br><sub><b>Portfolio</b> — allocation, currency exposure, and FIFO-valued holdings.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/ask.png" alt="LedgerFrame grounded AI Ask panel"><br><sub><b>Ask</b> — grounded AI: every answer cites the verified facts it was built from, with source + timestamp, and never invents numbers.</sub></td>
+    <td width="50%"><img src="docs/screenshots/heatmap.png" alt="LedgerFrame performance heatmap"><br><sub><b>Heatmap</b> — treemap sized by value, coloured by daily change, with a data-coverage note.</sub></td>
+  </tr>
+</table>
 
-![LedgerFrame portfolio page](docs/screenshots/portfolio.png)
-<sub>Portfolio page: allocation, currency exposure, and FIFO-valued holdings.</sub>
-
-![LedgerFrame grounded AI Ask panel](docs/screenshots/ask.png)
-<sub>Grounded AI "Ask" panel: every answer cites the verified facts it was built from, with source + timestamp, and never invents numbers.</sub>
-
-![LedgerFrame performance heatmap](docs/screenshots/heatmap.png)
-<sub>Performance heatmap: treemap sized by value, coloured by daily change, with an explicit data-coverage note.</sub>
-
-<sub>More views — markets, news, snapshot, and settings — in [`docs/screenshots/`](docs/screenshots/).</sub>
+<sub>More views — markets, news, snapshot, and settings — in <a href="docs/screenshots/"><code>docs/screenshots/</code></a>.</sub>
 
 ---
 

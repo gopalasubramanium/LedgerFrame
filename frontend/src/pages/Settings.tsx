@@ -196,7 +196,15 @@ export default function Settings() {
         <p className="text-xs text-faint mt-2">For live market prices and paid providers, set keys in <code>.env</code> — see docs/DATA_SOURCES.md.</p>
       </Card>
 
-      {msg && <div className="col-span-12 lf-chip bg-accent/15 text-accent">{msg}</div>}
+      {msg && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm">
+          <div className="lf-card bg-elevated border-accent text-ink shadow-card flex items-start gap-3 px-4 py-3">
+            <span className="text-accent">●</span>
+            <span className="flex-1 text-sm">{msg}</span>
+            <button className="text-faint hover:text-ink" onClick={() => setMsg("")} aria-label="Dismiss">✕</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

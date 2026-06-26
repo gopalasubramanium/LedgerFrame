@@ -64,3 +64,22 @@ async def test_wrong_pin_rejected(app_client):
     app_client.cookies.clear()
     bad = await app_client.post("/api/v1/auth/unlock", json={"pin": "0000"})
     assert bad.status_code == 401
+
+
+async def test_can_set_first_pin_even_with_lan_enabled(app_client, monkeypatch):
+    """Regression: LAN-on + no-PIN must NOT block setting the first PIN."""
+    from app.core.config import get_settings
+
+    get_settings().allow_lan = True
+    try:
+        # Before a PIN exists, a mutation is refused (LAN safety)…
+        blocked = await app_client.post("/api/v1/watchlists", json={"name": "X", "symbols": []})
+        assert blocked.status_code == 403
+        # …but setting the FIRST PIN must still succeed (no chicken-and-egg).
+        r = await app_client.post("/api/v1/auth/set-pin", json={"pin": "5678"})
+        assert r.status_code == 200
+        # Now authenticated via the returned cookie → mutations work.
+        ok = await app_client.post("/api/v1/watchlists", json={"name": "Y", "symbols": []})
+        assert ok.status_code == 200
+    finally:
+        get_settings().allow_lan = False

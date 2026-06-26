@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import SESSION_COOKIE, get_db, pin_is_set, require_auth
+from app.api.deps import SESSION_COOKIE, get_db, pin_is_set
 from app.core.config import get_settings
-from app.core.security import hash_pin, issue_token, verify_pin
+from app.core.security import hash_pin, issue_token, verify_pin, verify_token
 from app.models import AuditEvent, User
 
 router = APIRouter()
@@ -31,9 +31,22 @@ async def set_pin(
     payload: PinPayload,
     response: Response,
     session: AsyncSession = Depends(get_db),
-    _: None = Depends(require_auth),  # if a PIN already exists, must be unlocked to change it
+    lf_session: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
 ) -> dict:
+    """Set the local PIN.
+
+    The FIRST PIN can always be set locally (initial setup) — this must not be
+    blocked by the "LAN needs a PIN" rule, or you could never set one. CHANGING an
+    existing PIN requires an unlocked session (valid token).
+    """
     user = (await session.execute(select(User).limit(1))).scalars().first()
+    if user and user.pin_hash:
+        token = lf_session
+        if not token and authorization and authorization.lower().startswith("bearer "):
+            token = authorization[7:]
+        if not token or not verify_token(token):
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unlock first to change the PIN")
     if user is None:
         user = User(name="Owner")
         session.add(user)

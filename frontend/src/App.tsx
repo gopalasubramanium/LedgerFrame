@@ -45,7 +45,9 @@ export default function App() {
     onChange: onRotate,
   });
 
-  if (locked) return <LockScreen />;
+  // Force PIN setup when LAN is on but none is set (prevents a locked-out state).
+  if (status?.allow_lan && status?.pin_set === false) return <LockScreen mode="setup" />;
+  if (locked) return <LockScreen mode="unlock" />;
 
   return (
     <div className="h-screen flex flex-col bg-base text-ink">

@@ -1,19 +1,35 @@
-"""System status, health, and AI status endpoints."""
+"""System status, health, AI status, and scoped admin controls."""
 
 from __future__ import annotations
 
+import asyncio
 import os
+import shutil
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
-from app.api.deps import get_db, pin_is_set
+from app.api.deps import get_db, pin_is_set, require_auth
 from app.core.config import get_settings
 from app.providers.ai import get_ai_provider
 
 router = APIRouter()
+
+# Allow-list of admin actions the Settings page may trigger via the root helper.
+# Maps action -> allowed argument values (None = no argument).
+_ADMIN_ACTIONS: dict[str, set[str] | None] = {
+    "status": None,
+    "restart": None,
+    "doctor": None,
+    "backup": None,
+    "lan": {"on", "off"},
+    "voice": {"on", "off"},
+    "ai": {"on", "off"},
+}
+_ADMIN_BIN = "/usr/local/sbin/ledgerframe-admin"
 
 
 @router.get("/system/status")
@@ -48,3 +64,49 @@ async def ai_status() -> dict:
     provider = get_ai_provider()
     health = await provider.health()
     return health.model_dump()
+
+
+@router.get("/system/admin/available")
+async def admin_available() -> dict:
+    """Whether in-app system controls are wired (root helper + sudoers present)."""
+    return {"available": bool(shutil.which("sudo")) and os.path.exists(_ADMIN_BIN)}
+
+
+class AdminAction(BaseModel):
+    action: str
+    arg: str | None = None
+
+
+@router.post("/system/admin", dependencies=[Depends(require_auth)])
+async def run_admin(payload: AdminAction) -> dict:
+    """Run a scoped, allow-listed admin action via the root helper.
+
+    Refuses anything not in the allow-list; never passes free-form input to a
+    shell. Requires authentication (PIN).
+    """
+    allowed_args = _ADMIN_ACTIONS.get(payload.action, "INVALID")
+    if allowed_args == "INVALID":
+        raise HTTPException(400, f"unknown action: {payload.action}")
+    if allowed_args is not None and payload.arg not in allowed_args:
+        raise HTTPException(400, f"invalid argument for {payload.action}")
+    if not os.path.exists(_ADMIN_BIN):
+        raise HTTPException(503, "system controls not installed (run the installer)")
+
+    cmd = ["sudo", "-n", _ADMIN_BIN, payload.action]
+    if payload.arg:
+        cmd.append(payload.arg)
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
+        )
+        out, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
+        return {
+            "ok": proc.returncode == 0,
+            "action": payload.action,
+            "arg": payload.arg,
+            "output": (out or b"").decode(errors="replace")[-4000:],
+        }
+    except TimeoutError:
+        raise HTTPException(504, "admin action timed out") from None
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"admin action failed: {exc}") from exc

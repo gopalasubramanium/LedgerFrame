@@ -382,6 +382,25 @@ fi
 ok "Services installed and (re)started."
 
 # =============================================================================
+step "Enable in-app system controls (Settings page)"
+# A root-owned helper + a scoped sudoers rule let the Settings page restart
+# services and toggle LAN/voice/AI without granting the web app general root.
+$SUDO mkdir -p /etc/ledgerframe
+printf 'REPO_DIR=%s\nDATA_DIR=%s\nRUN_USER=%s\n' "$REPO_DIR" "$DATA_DIR" "$RUN_USER" \
+  | $SUDO tee /etc/ledgerframe/admin.env >/dev/null
+$SUDO chmod 600 /etc/ledgerframe/admin.env
+$SUDO install -m 0755 -o root -g root "$REPO_DIR/scripts/lf-admin.sh" /usr/local/sbin/ledgerframe-admin
+SUDOERS=/etc/sudoers.d/ledgerframe
+echo "$RUN_USER ALL=(root) NOPASSWD: /usr/local/sbin/ledgerframe-admin" | $SUDO tee "$SUDOERS" >/dev/null
+$SUDO chmod 440 "$SUDOERS"
+if $SUDO visudo -cf "$SUDOERS" >/dev/null 2>&1; then
+  ok "Settings can now control services (scoped sudoers installed)."
+else
+  $SUDO rm -f "$SUDOERS"
+  warn "sudoers validation failed — in-app service controls disabled (CLI still works)."
+fi
+
+# =============================================================================
 step "Final check"
 HEALTHY=false
 for i in $(seq 1 30); do

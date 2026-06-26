@@ -69,6 +69,16 @@ export const api = {
   },
   csvTemplateUrl: "/api/v1/portfolio/import/template",
 
+  // --- News feeds (free RSS) ---
+  feeds: () => req<{ feeds: string[]; defaults: string[] }>("/api/v1/news/feeds"),
+  setFeeds: (feeds: string[]) =>
+    req<{ ok: boolean; feeds: string[] }>("/api/v1/news/feeds", { method: "PUT", body: JSON.stringify({ feeds }) }),
+
+  // --- System admin (scoped root helper) ---
+  adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),
+  admin: (action: string, arg?: string) =>
+    req<{ ok: boolean; output: string }>("/api/v1/system/admin", { method: "POST", body: JSON.stringify({ action, arg }) }),
+
   // --- Manual assets / liabilities ---
   manualHoldings: () => req<{ holdings: ManualRow[] }>("/api/v1/portfolio/manual-holdings"),
   addManualHolding: (h: ManualInput) =>

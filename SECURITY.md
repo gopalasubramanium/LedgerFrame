@@ -66,6 +66,25 @@ place.
 - The installer **never** formats, repartitions, or modifies the NVMe filesystem.
   It validates that the data dir exists and is writable, and aborts otherwise.
 
+## In-app system controls (privileged helper)
+
+The Settings page can restart services and toggle LAN/voice/AI. Because the web
+app runs as your (unprivileged) user, these go through a **scoped root helper**:
+
+- `/usr/local/sbin/ledgerframe-admin` is root-owned (`0755`) and accepts only a
+  fixed allow-list of actions (`status|restart|lan|voice|ai|doctor|backup`).
+- A single `/etc/sudoers.d/ledgerframe` rule grants the service user `NOPASSWD`
+  for **only that one binary** — not general sudo. Validated with `visudo -c`.
+- The API endpoint (`POST /api/v1/system/admin`) is **PIN-gated**, validates the
+  action and argument against the allow-list, and never passes free-form input to
+  a shell (`create_subprocess_exec`, no shell).
+- **Package/Hailo installation is deliberately NOT exposed** to the web app
+  (no `apt`/installer from the browser) — those remain CLI-only, which matters
+  most when LAN access is enabled. The UI shows the command to run instead.
+
+If the helper or sudoers rule is absent, the endpoints return `503` and the UI
+disables the buttons — the app still works, you just use the CLI.
+
 ## What is intentionally NOT here (v1)
 
 - No bank/broker credential storage; no Plaid-style account aggregation.

@@ -48,9 +48,18 @@ Included as a worked example of integrating a real vendor.
 
 ## News
 
-The demo/CSV providers return synthetic or empty headlines. Live news requires a
-provider that implements `get_news`; each item shows its source and timestamp. The
-AI briefing summarises only retrieved articles + computed market/portfolio facts.
+Two free, no-key sources feed the News page, merged and shown with source + time:
+
+1. **RSS/Atom feeds (free, no key).** A configurable list of feed URLs (Settings →
+   *News feeds*) is fetched and parsed locally. Ships with a small set of broadly
+   available finance feeds as defaults; replace them with your own at any time, or
+   clear the list to disable RSS. Unreachable/malformed feeds are skipped, never
+   fatal. This is the recommended way to get real headlines for free.
+2. **Provider news.** The demo/CSV providers return synthetic or empty headlines;
+   an external provider that implements `get_news` adds vendor headlines.
+
+The AI briefing summarises only retrieved articles + computed market/portfolio
+facts — it never invents a headline.
 
 ## AI models (Hailo)
 

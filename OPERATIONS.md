@@ -93,6 +93,17 @@ Observed on the x86_64 dev machine in demo mode: `/health` ~2 ms,
 `/dashboard/home` ~38 ms (2.2 KB), app RSS ~79 MB. On a Pi 5 expect higher but
 well within the < 700 MB / < 4 s first-render targets.
 
+## Managing data & system from the UI
+
+- **Edit holdings:** Portfolio → **Edit / Add** opens a manager for transactions
+  (date/time, type, symbol, quantity, price, fees, taxes, currency, note — add,
+  edit, delete, or CSV-import) and manual assets/liabilities (cash, property, loans).
+- **News feeds:** Settings → *News feeds* — paste free RSS/Atom URLs (one per line).
+- **System controls:** Settings → *System controls* / *Service & maintenance* can
+  enable/disable LAN, voice, and AI, restart services, run diagnostics, and create
+  backups (requires the installer to have set up the scoped helper; see SECURITY.md).
+  Package/Hailo **installation stays on the CLI** by design.
+
 ## Switching out of demo mode
 
 1. Edit `.env`: set `LEDGERFRAME_MARKET_PROVIDER` (e.g. `csv` or an external

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -38,6 +38,64 @@ _CSP = (
 )
 
 
+class SecurityHeadersMiddleware:
+    """Pure-ASGI middleware that adds security headers to every HTTP response.
+
+    Implemented at the ASGI layer (not Starlette's BaseHTTPMiddleware) to avoid the
+    anyio task-group overhead/edge cases of the latter under heavy requests.
+    """
+
+    _HEADERS = [
+        (b"x-content-type-options", b"nosniff"),
+        (b"x-frame-options", b"DENY"),
+        (b"referrer-policy", b"no-referrer"),
+        (b"permissions-policy", b"geolocation=(), camera=(), microphone=(self)"),
+        (b"content-security-policy", _CSP.encode()),
+    ]
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                headers = message.setdefault("headers", [])
+                existing = {k.lower() for k, _ in headers}
+                for key, value in self._HEADERS:
+                    if key not in existing:
+                        headers.append((key, value))
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+def _ensure_additive_columns(connection) -> None:
+    """Idempotently add columns introduced after the initial schema.
+
+    create_all never ALTERs existing tables, so on an already-installed database we
+    add new additive columns here. Safe to run every boot; checks before adding.
+    SQLite-only (the deployment target).
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(connection)
+    additive = {
+        "transactions": {"taxes": "TEXT DEFAULT '0'"},
+    }
+    for table, cols in additive.items():
+        if table not in inspector.get_table_names():
+            continue
+        existing = {c["name"] for c in inspector.get_columns(table)}
+        for col, ddl in cols.items():
+            if col not in existing:
+                connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}"))
+                log.info("schema: added %s.%s", table, col)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
@@ -47,6 +105,7 @@ async def lifespan(app: FastAPI):
     # Create tables (Alembic is provided for migrations; create_all bootstraps fresh installs).
     async with get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_ensure_additive_columns)
 
     # Seed demo data when in demo/mock mode and the DB is empty.
     if settings.is_demo:
@@ -86,15 +145,7 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
 
-    @app.middleware("http")
-    async def security_headers(request: Request, call_next):
-        response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=(self)"
-        response.headers["Content-Security-Policy"] = _CSP
-        return response
+    app.add_middleware(SecurityHeadersMiddleware)
 
     @app.get("/health")
     async def health() -> JSONResponse:

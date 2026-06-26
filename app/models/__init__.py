@@ -166,7 +166,8 @@ class Transaction(Base):
     ts: Mapped[datetime] = mapped_column(DateTime, index=True)
     quantity: Mapped[Decimal] = mapped_column(DecimalText, default=Decimal("0"))
     price: Mapped[Decimal] = mapped_column(DecimalText, default=Decimal("0"))
-    fees: Mapped[Decimal] = mapped_column(DecimalText, default=Decimal("0"))
+    fees: Mapped[Decimal] = mapped_column(DecimalText, default=Decimal("0"))  # commissions/charges
+    taxes: Mapped[Decimal] = mapped_column(DecimalText, default=Decimal("0"))  # stamp duty / withholding
     amount: Mapped[Decimal] = mapped_column(DecimalText, default=Decimal("0"))  # cash impact, signed
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     note: Mapped[str | None] = mapped_column(String(255), nullable=True)

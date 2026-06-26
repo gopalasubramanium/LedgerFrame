@@ -13,7 +13,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db, require_auth
 from app.core.config import get_settings
 from app.core.money import D, money, to_display
-from app.models import AuditEvent, NetWorthSnapshot, Transaction, TxnType
+from app.models import (
+    Account,
+    AssetClass,
+    AuditEvent,
+    Holding,
+    Instrument,
+    NetWorthSnapshot,
+    Transaction,
+    TxnType,
+)
 from app.services.csv_import import TRANSACTION_TEMPLATE, import_transactions_csv
 from app.services.portfolio import (
     rebuild_holdings_from_transactions,
@@ -72,8 +81,53 @@ class TransactionIn(BaseModel):
     quantity: float = 0
     price: float = 0
     fees: float = 0
+    taxes: float = 0
     currency: str = "USD"
     note: str | None = None
+
+
+def _naive_utc(dt: datetime) -> datetime:
+    """Store timestamps as naive UTC for consistency with SQLite reads."""
+    if dt.tzinfo is not None:
+        return dt.astimezone(UTC).replace(tzinfo=None)
+    return dt
+
+
+def _txn_cash_impact(t: TransactionIn):
+    """Signed cash impact, mirroring the CSV importer's convention."""
+    gross = D(t.quantity) * D(t.price)
+    costs = D(t.fees) + D(t.taxes)
+    if t.type == TxnType.BUY:
+        return -(gross + costs)
+    if t.type == TxnType.SELL:
+        return gross - costs
+    if t.type in (TxnType.DIVIDEND, TxnType.INTEREST, TxnType.DEPOSIT):
+        return gross - costs if gross else -costs
+    if t.type in (TxnType.WITHDRAWAL, TxnType.FEE):
+        return -(gross + costs) if gross else -costs
+    return D(0)
+
+
+@router.get("/portfolio/transactions")
+async def list_transactions(limit: int = 500, session: AsyncSession = Depends(get_db)) -> dict:
+    rows = (
+        await session.execute(select(Transaction).order_by(Transaction.ts.desc()).limit(limit))
+    ).scalars().all()
+    out = []
+    for t in rows:
+        symbol = None
+        if t.instrument_id:
+            instr = await session.get(Instrument, t.instrument_id)
+            symbol = instr.symbol if instr else None
+        out.append({
+            "id": t.id, "account_id": t.account_id, "symbol": symbol,
+            "type": t.type.value if hasattr(t.type, "value") else str(t.type),
+            "ts": t.ts.isoformat(),
+            "quantity": to_display(D(t.quantity)), "price": to_display(D(t.price)),
+            "fees": to_display(D(t.fees)), "taxes": to_display(D(getattr(t, "taxes", 0) or 0)),
+            "amount": to_display(D(t.amount)), "currency": t.currency, "note": t.note,
+        })
+    return {"transactions": out}
 
 
 @router.post("/portfolio/transactions", dependencies=[Depends(require_auth)])
@@ -86,9 +140,10 @@ async def add_transaction(payload: TransactionIn, session: AsyncSession = Depend
         account_id=account.id,
         instrument_id=instrument.id if instrument else None,
         type=payload.type,
-        ts=payload.ts.replace(tzinfo=payload.ts.tzinfo or UTC),
-        quantity=D(payload.quantity), price=D(payload.price), fees=D(payload.fees),
-        amount=money(D(payload.quantity) * D(payload.price)),
+        ts=_naive_utc(payload.ts),
+        quantity=D(payload.quantity), price=D(payload.price),
+        fees=D(payload.fees), taxes=D(payload.taxes),
+        amount=money(_txn_cash_impact(payload)),
         currency=payload.currency.upper(), note=payload.note,
     )
     session.add(txn)
@@ -97,6 +152,129 @@ async def add_transaction(payload: TransactionIn, session: AsyncSession = Depend
     await session.flush()
     rebuilt = await rebuild_holdings_from_transactions(session)
     return {"ok": True, "transaction_id": txn.id, "holdings_rebuilt": rebuilt}
+
+
+@router.put("/portfolio/transactions/{txn_id}", dependencies=[Depends(require_auth)])
+async def update_transaction(
+    txn_id: int, payload: TransactionIn, session: AsyncSession = Depends(get_db)
+) -> dict:
+    from app.services.csv_import import _ensure_instrument
+
+    txn = await session.get(Transaction, txn_id)
+    if txn is None:
+        raise HTTPException(404, "transaction not found")
+    instrument = await _ensure_instrument(session, payload.symbol.upper()) if payload.symbol else None
+    txn.instrument_id = instrument.id if instrument else None
+    txn.type = payload.type
+    txn.ts = _naive_utc(payload.ts)
+    txn.quantity = D(payload.quantity)
+    txn.price = D(payload.price)
+    txn.fees = D(payload.fees)
+    txn.taxes = D(payload.taxes)
+    txn.amount = money(_txn_cash_impact(payload))
+    txn.currency = payload.currency.upper()
+    txn.note = payload.note
+    if payload.account_id:
+        txn.account_id = payload.account_id
+    session.add(AuditEvent(category="mutation", action="edit_transaction", detail=str(txn_id)))
+    await session.flush()
+    rebuilt = await rebuild_holdings_from_transactions(session)
+    return {"ok": True, "holdings_rebuilt": rebuilt}
+
+
+@router.delete("/portfolio/transactions/{txn_id}", dependencies=[Depends(require_auth)])
+async def delete_transaction(txn_id: int, session: AsyncSession = Depends(get_db)) -> dict:
+    txn = await session.get(Transaction, txn_id)
+    if txn is None:
+        raise HTTPException(404, "transaction not found")
+    await session.delete(txn)
+    session.add(AuditEvent(category="mutation", action="delete_transaction", detail=str(txn_id)))
+    await session.flush()
+    rebuilt = await rebuild_holdings_from_transactions(session)
+    return {"ok": True, "holdings_rebuilt": rebuilt}
+
+
+# --------------------------------------------------------------------------- #
+# Manual assets & liabilities (cash, fixed deposits, property, private, loans).
+# These carry a manual_value and are preserved across holdings rebuilds.
+# --------------------------------------------------------------------------- #
+class ManualHoldingIn(BaseModel):
+    label: str
+    asset_class: AssetClass = AssetClass.OTHER
+    value: float
+    currency: str = "SGD"
+    account_id: int | None = None
+
+
+async def _ensure_manual_account(session: AsyncSession) -> Account:
+    acc = (
+        await session.execute(select(Account).where(Account.kind == "manual"))
+    ).scalars().first()
+    if acc is None:
+        acc = Account(name="Manual Assets", kind="manual", currency=get_settings().base_currency)
+        session.add(acc)
+        await session.flush()
+    return acc
+
+
+@router.get("/portfolio/manual-holdings")
+async def list_manual_holdings(session: AsyncSession = Depends(get_db)) -> dict:
+    rows = (
+        await session.execute(select(Holding).where(Holding.manual_value.isnot(None)))
+    ).scalars().all()
+    return {"holdings": [
+        {
+            "id": h.id, "label": h.label,
+            "asset_class": h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class),
+            "value": to_display(D(h.manual_value)), "currency": h.currency,
+            "account_id": h.account_id,
+        }
+        for h in rows
+    ]}
+
+
+@router.post("/portfolio/manual-holdings", dependencies=[Depends(require_auth)])
+async def add_manual_holding(payload: ManualHoldingIn, session: AsyncSession = Depends(get_db)) -> dict:
+    account = (
+        await session.get(Account, payload.account_id) if payload.account_id else None
+    ) or await _ensure_manual_account(session)
+    holding = Holding(
+        account_id=account.id, label=payload.label, asset_class=payload.asset_class,
+        quantity=D(1), avg_cost=D(payload.value), manual_value=D(payload.value),
+        currency=payload.currency.upper(),
+    )
+    session.add(holding)
+    session.add(AuditEvent(category="mutation", action="add_manual_holding", detail=payload.label))
+    await session.flush()
+    return {"ok": True, "id": holding.id}
+
+
+@router.put("/portfolio/manual-holdings/{holding_id}", dependencies=[Depends(require_auth)])
+async def update_manual_holding(
+    holding_id: int, payload: ManualHoldingIn, session: AsyncSession = Depends(get_db)
+) -> dict:
+    h = await session.get(Holding, holding_id)
+    if h is None or h.manual_value is None:
+        raise HTTPException(404, "manual holding not found")
+    h.label = payload.label
+    h.asset_class = payload.asset_class
+    h.avg_cost = D(payload.value)
+    h.manual_value = D(payload.value)
+    h.currency = payload.currency.upper()
+    session.add(AuditEvent(category="mutation", action="edit_manual_holding", detail=str(holding_id)))
+    await session.flush()
+    return {"ok": True}
+
+
+@router.delete("/portfolio/manual-holdings/{holding_id}", dependencies=[Depends(require_auth)])
+async def delete_manual_holding(holding_id: int, session: AsyncSession = Depends(get_db)) -> dict:
+    h = await session.get(Holding, holding_id)
+    if h is None or h.manual_value is None:
+        raise HTTPException(404, "manual holding not found")
+    await session.delete(h)
+    session.add(AuditEvent(category="mutation", action="delete_manual_holding", detail=str(holding_id)))
+    await session.flush()
+    return {"ok": True}
 
 
 @router.get("/portfolio/import/template", response_class=PlainTextResponse)

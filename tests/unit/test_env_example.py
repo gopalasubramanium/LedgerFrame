@@ -22,7 +22,7 @@ def test_env_example_has_no_trailing_inline_comments():
     ]
     assert not offenders, (
         "These .env.example lines have trailing inline comments that systemd would "
-        f"treat as part of the value:\n  " + "\n  ".join(offenders)
+        "treat as part of the value:\n  " + "\n  ".join(offenders)
     )
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from datetime import UTC
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -34,6 +35,15 @@ class FifoResult:
         return (self.cost_basis / self.quantity) if self.quantity > ZERO else ZERO
 
 
+def _sort_ts(ts):
+    """Normalise a datetime to naive-UTC so naive (from SQLite) and aware (freshly
+    created) timestamps can be ordered together without a TypeError."""
+
+    if ts.tzinfo is not None:
+        return ts.astimezone(UTC).replace(tzinfo=None)
+    return ts
+
+
 def compute_fifo(transactions: list[Txn]) -> FifoResult:
     """Replay a single instrument's transactions in time order under FIFO.
 
@@ -43,16 +53,18 @@ def compute_fifo(transactions: list[Txn]) -> FifoResult:
     """
     lots: deque[list[Decimal]] = deque()  # each lot = [qty, unit_cost]
     res = FifoResult()
-    for t in sorted(transactions, key=lambda x: x.ts):
-        qty, px, fees = D(t.quantity), D(t.price), D(t.fees)
+    for t in sorted(transactions, key=lambda x: _sort_ts(x.ts)):
+        qty, px = D(t.quantity), D(t.price)
+        # Fees (commissions/charges) and taxes both add to cost / reduce proceeds.
+        costs = D(t.fees) + D(getattr(t, "taxes", 0) or 0)
         if t.type == TxnType.BUY:
             if qty <= ZERO:
                 continue
-            unit_cost = px + (fees / qty if qty else ZERO)
+            unit_cost = px + (costs / qty if qty else ZERO)
             lots.append([qty, unit_cost])
         elif t.type == TxnType.SELL:
             remaining = qty
-            proceeds = qty * px - fees
+            proceeds = qty * px - costs
             cost_of_sold = ZERO
             while remaining > ZERO and lots:
                 lot = lots[0]

@@ -26,9 +26,10 @@ MAX_ROWS = 20_000
 _DANGEROUS_PREFIX = ("=", "+", "-", "@", "\t", "\r")
 
 TRANSACTION_TEMPLATE = (
-    "date,symbol,type,quantity,price,fees,currency,note\n"
-    "2024-01-15,AAPL,buy,10,185.50,1.00,USD,Initial purchase\n"
-    "2024-03-01,AAPL,dividend,0,0,0,USD,Q1 dividend|amount=2.40\n"
+    "date,symbol,type,quantity,price,fees,taxes,currency,note\n"
+    "2024-01-15,AAPL,buy,10,185.50,1.00,0.00,USD,Initial purchase\n"
+    "2024-03-01,AAPL,dividend,0,0,0,0,USD,Q1 dividend\n"
+    "2024-06-20,AAPL,sell,5,210.00,1.00,0.50,USD,Trim position\n"
 )
 
 
@@ -68,15 +69,16 @@ async def import_transactions_csv(
             qty = D(_clean(row.get("quantity")) or 0)
             price = D(_clean(row.get("price")) or 0)
             fees = D(_clean(row.get("fees")) or 0)
+            taxes = D(_clean(row.get("taxes")) or 0)
             ccy = (_clean(row.get("currency")) or "USD").upper()
 
             # Cash impact (signed): buys/fees/withdrawals negative; sells/income positive.
-            amount = _cash_impact(ttype, qty, price, fees)
+            amount = _cash_impact(ttype, qty, price, fees + taxes)
 
             session.add(Transaction(
                 account_id=account.id,
                 instrument_id=instrument.id if instrument else None,
-                type=ttype, ts=ts, quantity=qty, price=price, fees=fees,
+                type=ttype, ts=ts, quantity=qty, price=price, fees=fees, taxes=taxes,
                 amount=money(amount), currency=ccy,
                 note=sanitize_cell(_clean(row.get("note")))[:255] or None,
                 import_batch=batch,

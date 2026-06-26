@@ -1,45 +1,53 @@
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill } from "../components/ui";
 import { money } from "../lib/format";
-import type { Quote } from "../lib/types";
 
-// Cross-asset overview grouped by asset class. Correlations are intentionally
-// omitted: with demo/limited history they would be misleading, and correlation
-// is not causation. Documented as a v1 limitation.
-const GROUPS: { label: string; match: (q: Quote) => boolean }[] = [
-  { label: "Equities & Indices", match: (q) => ["AAPL", "MSFT", "NVDA", "^GSPC", "^STI", "VOO"].includes(q.symbol) },
-  { label: "Commodities", match: (q) => ["GLD"].includes(q.symbol) },
-  { label: "Crypto", match: (q) => ["BTC", "ETH"].includes(q.symbol) },
-];
+// Cross-asset overview grouped by the instrument's own asset class, so every
+// held / watchlisted / default instrument appears under the right bucket.
+// Correlations are intentionally omitted (limited history; correlation ≠ causation).
+const GROUP_LABELS: Record<string, string> = {
+  equity: "Equities", etf: "ETFs & Indices", mutual_fund: "Funds", bond: "Bonds",
+  commodity: "Commodities", crypto: "Crypto", cash: "Cash", fixed_deposit: "Deposits",
+  property: "Property", private: "Private", retirement: "Retirement", liability: "Liabilities",
+  other: "Other",
+};
 
 export default function GlobalAssets() {
   const { data } = useApi(api.marketsOverview, 60000);
-  const quotes = data?.quotes ?? [];
+  const instruments = data?.instruments ?? [];
+
+  const groups = new Map<string, typeof instruments>();
+  for (const it of instruments) {
+    const key = it.asset_class || "other";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(it);
+  }
+  const orderedKeys = [...groups.keys()].sort((a, b) => (groups.get(b)!.length - groups.get(a)!.length));
 
   return (
     <div className="grid grid-cols-12 gap-4 auto-rows-min">
-      {GROUPS.map((g) => {
-        const rows = quotes.filter(g.match);
-        return (
-          <Card key={g.label} title={g.label} className="col-span-12 lg:col-span-4">
-            <ul className="space-y-2">
-              {rows.map((q) => (
-                <li key={q.symbol} className="flex items-center justify-between">
-                  <span className="text-sm text-muted">{q.symbol}</span>
-                  <span className="tnum">{q.price === null ? "—" : money(q.price, q.currency, true)}</span>
-                  <ChangePill value={q.change_pct} />
-                </li>
-              ))}
-              {rows.length === 0 && <li className="text-muted text-sm">No data.</li>}
-            </ul>
-          </Card>
-        );
-      })}
+      {orderedKeys.map((key) => (
+        <Card key={key} title={GROUP_LABELS[key] ?? key} className="col-span-12 lg:col-span-4">
+          <ul className="space-y-2">
+            {groups.get(key)!.map((it) => (
+              <li key={it.symbol} className="flex items-center justify-between">
+                <Link to={`/instrument/${it.symbol}`} className="text-sm text-muted hover:text-accent">
+                  {it.symbol}{it.held && <span className="text-accent text-xs ml-1">●</span>}
+                </Link>
+                <span className="tnum">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+                <ChangePill value={it.quote.change_pct} />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ))}
       <Card title="Coverage note" className="col-span-12">
         <p className="text-sm text-muted">
-          Cross-asset correlations are shown only when sufficient historical data exists. They are
-          omitted here for the demo dataset. {data?.demo_mode && <span className="text-accent">DEMO data.</span>}
+          Grouped by asset class across your holdings, watchlist, and default instruments.
+          Cross-asset correlations are shown only when sufficient history exists (omitted here).
+          {data?.demo_mode && <span className="text-accent"> DEMO data.</span>}
         </p>
       </Card>
     </div>

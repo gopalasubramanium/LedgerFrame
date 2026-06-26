@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge, Figure, Skeleton } from "../components/ui";
@@ -38,7 +39,7 @@ export default function Home() {
         <ul className="space-y-2">
           {data.markets.slice(0, 4).map((q) => (
             <li key={q.symbol} className="flex items-center justify-between">
-              <span className="text-muted text-sm">{q.symbol}</span>
+              <Link to={`/instrument/${q.symbol}`} className="text-muted text-sm hover:text-accent">{q.symbol}</Link>
               <span className="tnum">{q.price === null ? "—" : money(q.price, q.currency, true)}</span>
               <ChangePill value={q.change_pct} />
             </li>
@@ -74,7 +75,7 @@ export default function Home() {
   );
 }
 
-function Movers({ title, rows, ccy }: { title: string; rows: { label: string; day_change: number; is_stale: boolean }[]; ccy: string }) {
+function Movers({ title, rows, ccy }: { title: string; rows: { label: string; symbol: string | null; day_change: number; is_stale: boolean }[]; ccy: string }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-faint mb-2">{title}</div>
@@ -82,7 +83,11 @@ function Movers({ title, rows, ccy }: { title: string; rows: { label: string; da
       <ul className="space-y-1">
         {rows.map((r) => (
           <li key={r.label} className="flex justify-between text-sm">
-            <span className="truncate mr-2">{r.label}{r.is_stale ? " ⚠" : ""}</span>
+            {r.symbol ? (
+              <Link to={`/instrument/${r.symbol}`} className="truncate mr-2 hover:text-accent">{r.label}{r.is_stale ? " ⚠" : ""}</Link>
+            ) : (
+              <span className="truncate mr-2">{r.label}{r.is_stale ? " ⚠" : ""}</span>
+            )}
             <span className={`tnum ${toneClass(r.day_change)}`}>{signedMoney(r.day_change, ccy)}</span>
           </li>
         ))}

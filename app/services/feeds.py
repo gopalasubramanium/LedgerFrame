@@ -29,16 +29,17 @@ log = logging.getLogger(__name__)
 
 FEEDS_SETTING_KEY = "news_feeds"
 
-# Conservative defaults: broadly-available free finance/markets RSS feeds.
-# Users can replace these entirely in Settings.
+# Defaults chosen for reliability: these publishers serve standard RSS without
+# blocking non-browser clients (the previous WSJ/Investing.com defaults often
+# return 403/HTML to bots, which is why headlines didn't load). Replace freely.
 DEFAULT_FEEDS = [
-    "https://www.investing.com/rss/news_25.rss",
-    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+    "https://feeds.bbci.co.uk/news/business/rss.xml",
     "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
 ]
 
 MAX_ITEMS_PER_FEED = 10
-FETCH_TIMEOUT = 8.0
+FETCH_TIMEOUT = 6.0
 
 
 async def get_feed_urls(session: AsyncSession) -> list[str]:

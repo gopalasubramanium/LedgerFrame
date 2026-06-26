@@ -34,7 +34,12 @@ export const api = {
   portfolioSummary: () => req<PortfolioSummary>("/api/v1/portfolio/summary"),
   holdings: () => req<{ base_currency: string; holdings: import("./types").HoldingRow[] }>("/api/v1/portfolio/holdings"),
   marketsOverview: () =>
-    req<{ quotes: Quote[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/overview"),
+    req<{
+      quotes: Quote[];
+      instruments: { symbol: string; name: string; asset_class: string; currency: string; held: boolean; quote: Quote }[];
+      market_status: { state: string };
+      demo_mode: boolean;
+    }>("/api/v1/markets/overview"),
   history: (symbol: string, days = 180) =>
     req<{ symbol: string; candles: { ts: string; open: number; high: number; low: number; close: number; volume: number | null }[] }>(
       `/api/v1/instruments/${encodeURIComponent(symbol)}/history?days=${days}`,

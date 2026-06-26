@@ -41,8 +41,15 @@ async def news(session: AsyncSession = Depends(get_db)) -> dict:
             if instr:
                 symbols.append(instr.symbol)
 
-    # Free RSS feeds first (no key needed), then any provider news.
-    rss = await fetch_feeds(session, limit=30)
+    # Free RSS feeds first (no key needed), then any provider news. The RSS fetch
+    # is capped so a slow/blocked feed can never stall the News page; on timeout we
+    # simply show provider headlines.
+    import asyncio
+
+    try:
+        rss = await asyncio.wait_for(fetch_feeds(session, limit=30), timeout=12)
+    except (TimeoutError, Exception):  # noqa: BLE001
+        rss = []
     provider_items = await get_provider().get_news(symbols or ["AAPL", "MSFT", "NVDA"])
     items = rss + list(provider_items)
     return {

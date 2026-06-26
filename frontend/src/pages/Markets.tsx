@@ -8,21 +8,20 @@ export default function Markets() {
   const { data, stale } = useApi(api.marketsOverview, 60000);
   const wl = useApi(api.watchlists, 60000);
 
+  const instruments = data?.instruments ?? [];
+  const held = instruments.filter((i) => i.held);
+  const others = instruments.filter((i) => !i.held);
+
   return (
     <div className="grid grid-cols-12 gap-4 auto-rows-min">
-      <Card title="Market overview" className="col-span-12 lg:col-span-7">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {data?.quotes.map((q) => (
-            <Link key={q.symbol} to={`/instrument/${q.symbol}`} className="bg-base rounded-card p-3 border border-line hover:border-accent transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="text-muted text-sm">{q.symbol}</span>
-                <DataBadge entitlement={q.entitlement} stale={q.is_stale} source={q.source} asOf={q.received_at} />
-              </div>
-              <div className="tnum text-lg mt-1">{q.price === null ? "—" : money(q.price, q.currency)}</div>
-              <ChangePill value={q.change_pct} />
-            </Link>
-          ))}
-        </div>
+      {held.length > 0 && (
+        <Card title="Your holdings" className="col-span-12 lg:col-span-7">
+          <Grid items={held} />
+        </Card>
+      )}
+
+      <Card title="Market overview" className={`col-span-12 ${held.length > 0 ? "lg:col-span-5" : "lg:col-span-7"}`}>
+        <Grid items={others} />
         {stale && <div className="mt-3"><DataBadge stale /></div>}
       </Card>
 
@@ -47,6 +46,28 @@ export default function Markets() {
           </div>
         ))}
       </Card>
+    </div>
+  );
+}
+
+function Grid({ items }: { items: { symbol: string; name: string; held: boolean; quote: import("../lib/types").Quote }[] }) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {items.map((it) => (
+        <Link
+          key={it.symbol}
+          to={`/instrument/${it.symbol}`}
+          className="bg-base rounded-card p-3 border border-line hover:border-accent transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-muted text-sm">{it.symbol}{it.held && <span className="text-accent text-xs ml-1">●</span>}</span>
+            <DataBadge entitlement={it.quote.entitlement} stale={it.quote.is_stale} source={it.quote.source} asOf={it.quote.received_at} />
+          </div>
+          <div className="tnum text-lg mt-1">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency)}</div>
+          <ChangePill value={it.quote.change_pct} />
+        </Link>
+      ))}
+      {items.length === 0 && <p className="text-muted text-sm col-span-full">Nothing to show.</p>}
     </div>
   );
 }

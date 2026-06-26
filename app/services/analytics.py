@@ -20,10 +20,93 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.money import D, to_display
+from app.core.money import ZERO, D, money, to_display
 from app.models import AssetClass, Holding, Instrument
+from app.models import Transaction as Txn
 from app.providers.market import get_provider
 from app.services import fx
+from app.services.portfolio import compute_fifo, value_portfolio
+
+
+async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = "^GSPC") -> dict:
+    """A panel of deterministic portfolio metrics.
+
+    Only computes what we can derive honestly from the data — no fabricated Sharpe
+    ratio or bond durations (we have no risk-free rate / instrument durations). The
+    return/volatility ratio is labelled as such, not as a true Sharpe.
+    """
+    from collections import defaultdict
+
+    val = await value_portfolio(session, base_currency)
+    total = val.total_value or D("1")
+    # Gross assets (exclude liabilities) — the right denominator for weights and
+    # concentration, so a large mortgage can't push a position above 100%.
+    gross = sum((h.market_value_base for h in val.holdings if h.market_value_base > 0), ZERO) or D("1")
+
+    # Realised P/L and income (dividends/interest) from the transaction ledger,
+    # converted to base currency at current FX.
+    txns = (await session.execute(select(Txn).where(Txn.instrument_id.isnot(None)))).scalars().all()
+    by_instr: dict[int, list[Txn]] = defaultdict(list)
+    for t in txns:
+        by_instr[t.instrument_id].append(t)
+    realised = ZERO
+    income = ZERO
+    for group in by_instr.values():
+        res = compute_fifo(group)
+        ccy = group[0].currency or base_currency
+        rate = await fx.get_rate(ccy, base_currency)
+        realised += res.realised_pl * rate
+        income += res.income * rate
+
+    # Allocation weights.
+    alloc = val.allocation("asset_class")
+
+    def weight(*cls: str) -> float:
+        return float(sum((alloc.get(c, ZERO) for c in cls), ZERO) / gross * 100)
+
+    cash_pct = weight("cash", "fixed_deposit")
+    equity_pct = weight("equity", "etf", "mutual_fund")
+    crypto_pct = weight("crypto")
+    alt_pct = weight("commodity", "property", "private")
+
+    # Concentration.
+    priced = sorted((h for h in val.holdings if h.market_value_base > 0),
+                    key=lambda h: h.market_value_base, reverse=True)
+    largest = priced[0] if priced else None
+    top5 = sum((h.market_value_base for h in priced[:5]), ZERO)
+
+    # 1Y risk/return metrics from the invested performance series.
+    perf = await performance_series(session, base_currency, 365, benchmark)
+    ps = perf.get("stats") or {}
+    vol = ps.get("volatility_pct") or 0.0
+    ret = ps.get("return_pct") or 0.0
+    ret_vol = round(ret / vol, 2) if vol else None
+
+    income_yield = float(income / total * 100) if total else 0.0
+
+    return {
+        "base_currency": base_currency,
+        "metrics": [
+            {"label": "Total value", "value": to_display(val.total_value), "kind": "money"},
+            {"label": "Unrealised P/L", "value": to_display(val.unrealised_pl), "kind": "money", "signed": True},
+            {"label": "Realised P/L", "value": to_display(money(realised)), "kind": "money", "signed": True},
+            {"label": "Income (div/int)", "value": to_display(money(income)), "kind": "money", "signed": True},
+            {"label": "Income yield", "value": round(income_yield, 2), "kind": "pct"},
+            {"label": "Total return", "value": to_display(val.total_return_pct), "kind": "pct", "signed": True},
+            {"label": "1Y return", "value": ret, "kind": "pct", "signed": True},
+            {"label": "1Y volatility", "value": vol, "kind": "pct"},
+            {"label": "Return / volatility", "value": ret_vol, "kind": "ratio"},
+            {"label": "Max drawdown (1Y)", "value": ps.get("max_drawdown_pct", 0.0), "kind": "pct", "signed": True},
+            {"label": "Cash & deposits", "value": round(cash_pct, 1), "kind": "pct"},
+            {"label": "Equities & ETFs", "value": round(equity_pct, 1), "kind": "pct"},
+            {"label": "Crypto", "value": round(crypto_pct, 1), "kind": "pct"},
+            {"label": "Alternatives", "value": round(alt_pct, 1), "kind": "pct"},
+            {"label": "Largest position", "value": (float(largest.market_value_base / gross * 100) if largest else 0.0), "kind": "pct",
+             "note": largest.label if largest else None},
+            {"label": "Top 5 concentration", "value": float(top5 / gross * 100), "kind": "pct"},
+            {"label": "Positions", "value": len(val.holdings), "kind": "count"},
+        ],
+    }
 
 
 def _carry_forward(dates: list[datetime], series: dict[datetime, Decimal]) -> list[Decimal]:

@@ -45,6 +45,11 @@ export const api = {
         worst_day_pct: number; start_value: number; end_value: number;
       };
     }>(`/api/v1/portfolio/performance?days=${days}&benchmark=${encodeURIComponent(benchmark)}`),
+  benchmarks: () => req<{ benchmarks: { symbol: string; label: string }[] }>("/api/v1/portfolio/benchmarks"),
+  stats: (benchmark = "^GSPC") =>
+    req<{ base_currency: string; metrics: { label: string; value: number | null; kind: string; signed?: boolean; note?: string | null }[] }>(
+      `/api/v1/portfolio/stats?benchmark=${encodeURIComponent(benchmark)}`,
+    ),
   marketsOverview: () =>
     req<{
       quotes: Quote[];

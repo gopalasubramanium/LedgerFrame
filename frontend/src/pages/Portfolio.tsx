@@ -5,6 +5,7 @@ import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge } from "../components/ui";
 import { Donut } from "../components/Chart";
 import { PerformancePanel } from "../components/PerformancePanel";
+import { KeyStatsPanel } from "../components/KeyStatsPanel";
 import { PortfolioEditor } from "../components/PortfolioEditor";
 import { money, pct, signedMoney, toneClass } from "../lib/format";
 
@@ -49,6 +50,8 @@ export default function Portfolio() {
           {allocCcy.length ? <Donut data={allocCcy} /> : <p className="text-muted">No holdings.</p>}
           <Legend items={allocCcy} ccy={ccy} />
         </Card>
+
+        <KeyStatsPanel className="col-span-12 lg:col-span-8" />
 
         <Card title="Concentration" className="col-span-12 lg:col-span-4">
           <Concentration holdings={holdings.data?.holdings ?? []} total={s?.total_value ?? 0} />

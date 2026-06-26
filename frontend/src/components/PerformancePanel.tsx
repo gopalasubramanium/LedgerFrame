@@ -17,7 +17,9 @@ const PERIODS = [
 // selector and a row of computed stats (return, vs-benchmark, drawdown, volatility).
 export function PerformancePanel({ height = 300, className = "" }: { height?: number; className?: string }) {
   const [p, setP] = useState(3); // 1Y
-  const perf = useApi(() => api.performance(PERIODS[p].days), 0, [p]);
+  const [benchmark, setBenchmark] = useState("^GSPC");
+  const benches = useApi(api.benchmarks, 0);
+  const perf = useApi(() => api.performance(PERIODS[p].days, benchmark), 0, [p, benchmark]);
   const d = perf.data;
   const stats = d?.stats;
 
@@ -26,16 +28,28 @@ export function PerformancePanel({ height = 300, className = "" }: { height?: nu
       title="Performance vs benchmark"
       className={className}
       action={
-        <div className="flex gap-1">
-          {PERIODS.map((per, i) => (
-            <button
-              key={per.label}
-              className={`touch px-3 py-1 rounded-card text-sm ${i === p ? "bg-accent text-base" : "bg-elevated text-muted hover:text-ink"}`}
-              onClick={() => setP(i)}
-            >
-              {per.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <select
+            className="touch rounded-card bg-elevated border border-line text-sm px-2 text-muted"
+            value={benchmark}
+            onChange={(e) => setBenchmark(e.target.value)}
+            title="Benchmark"
+          >
+            {(benches.data?.benchmarks ?? [{ symbol: "^GSPC", label: "S&P 500" }]).map((b) => (
+              <option key={b.symbol} value={b.symbol}>vs {b.label}</option>
+            ))}
+          </select>
+          <div className="flex gap-1">
+            {PERIODS.map((per, i) => (
+              <button
+                key={per.label}
+                className={`touch px-3 py-1 rounded-card text-sm ${i === p ? "bg-accent text-base" : "bg-elevated text-muted hover:text-ink"}`}
+                onClick={() => setP(i)}
+              >
+                {per.label}
+              </button>
+            ))}
+          </div>
         </div>
       }
     >

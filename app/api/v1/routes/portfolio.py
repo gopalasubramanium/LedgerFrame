@@ -85,6 +85,25 @@ async def portfolio_performance(
     return data
 
 
+# Benchmarks the picker offers (symbol -> label). All exist in the demo catalog.
+_BENCHMARKS = {
+    "^GSPC": "S&P 500", "^STI": "Straits Times", "VOO": "S&P 500 ETF",
+    "VWRA": "World Equity", "GLD": "Gold", "BTC": "Bitcoin",
+}
+
+
+@router.get("/portfolio/benchmarks")
+async def list_benchmarks() -> dict:
+    return {"benchmarks": [{"symbol": s, "label": label} for s, label in _BENCHMARKS.items()]}
+
+
+@router.get("/portfolio/stats")
+async def portfolio_stats(benchmark: str = "^GSPC", session: AsyncSession = Depends(get_db)) -> dict:
+    from app.services.analytics import key_stats
+
+    return await key_stats(session, get_settings().base_currency, benchmark)
+
+
 class TransactionIn(BaseModel):
     account_id: int | None = None
     symbol: str | None = None

@@ -1,15 +1,20 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge, Figure } from "../components/ui";
 import { Donut } from "../components/Chart";
+import { PortfolioEditor } from "../components/PortfolioEditor";
 import { money, pct, signedMoney, toneClass } from "../lib/format";
 
 export default function Portfolio() {
   const summary = useApi(api.portfolioSummary, 60000);
   const holdings = useApi(api.holdings, 60000);
+  const [editing, setEditing] = useState(false);
   const s = summary.data;
   const ccy = s?.base_currency ?? "SGD";
+
+  const refresh = () => { summary.refetch(); holdings.refetch(); };
 
   const alloc = s ? Object.entries(s.allocation_by_class).map(([name, value]) => ({ name, value: Math.abs(value) })) : [];
 
@@ -45,7 +50,16 @@ export default function Portfolio() {
         </ul>
       </Card>
 
-      <Card title="Holdings" className="col-span-12" action={s?.has_stale ? <DataBadge stale /> : undefined}>
+      <Card
+        title="Holdings"
+        className="col-span-12"
+        action={
+          <div className="flex items-center gap-2">
+            {s?.has_stale && <DataBadge stale />}
+            <button className="lf-btn-accent" onClick={() => setEditing(true)}>✎ Edit / Add</button>
+          </div>
+        }
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-faint text-xs uppercase">
@@ -81,6 +95,8 @@ export default function Portfolio() {
           </table>
         </div>
       </Card>
+
+      {editing && <PortfolioEditor onClose={() => setEditing(false)} onChanged={refresh} />}
     </div>
   );
 }

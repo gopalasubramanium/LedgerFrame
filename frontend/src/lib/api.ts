@@ -33,6 +33,18 @@ export const api = {
   home: () => req<HomeDashboard>("/api/v1/dashboard/home"),
   portfolioSummary: () => req<PortfolioSummary>("/api/v1/portfolio/summary"),
   holdings: () => req<{ base_currency: string; holdings: import("./types").HoldingRow[] }>("/api/v1/portfolio/holdings"),
+  performance: (days = 365, benchmark = "^GSPC") =>
+    req<{
+      base_currency: string;
+      benchmark_symbol: string;
+      series: { ts: string; value: number }[];
+      benchmark: { ts: string; value: number }[];
+      stats: null | {
+        return_pct: number; benchmark_return_pct: number; excess_pct: number;
+        max_drawdown_pct: number; volatility_pct: number; best_day_pct: number;
+        worst_day_pct: number; start_value: number; end_value: number;
+      };
+    }>(`/api/v1/portfolio/performance?days=${days}&benchmark=${encodeURIComponent(benchmark)}`),
   marketsOverview: () =>
     req<{
       quotes: Quote[];

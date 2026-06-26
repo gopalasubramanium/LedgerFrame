@@ -60,6 +60,60 @@ export function LineSeries({ x, y, height = 280 }: { x: string[]; y: number[]; h
   return <ReactECharts echarts={echarts} option={option} style={{ height, width: "100%" }} />;
 }
 
+export function BenchmarkChart({
+  x,
+  portfolio,
+  benchmark,
+  benchmarkLabel = "Benchmark",
+  height = 300,
+}: {
+  x: string[];
+  portfolio: number[];
+  benchmark: number[];
+  benchmarkLabel?: string;
+  height?: number;
+}) {
+  const up = portfolio.length > 1 && portfolio[portfolio.length - 1] >= portfolio[0];
+  const option = useMemo(
+    () => ({
+      animation: false,
+      grid: { left: 56, right: 16, top: 16, bottom: 28 },
+      legend: {
+        data: ["Portfolio", benchmarkLabel],
+        textStyle: { color: "#8a93a6" },
+        right: 10, top: 0, icon: "roundRect",
+      },
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "#1c2230",
+        borderColor: LINE,
+        textStyle: { color: "#e8ecf2" },
+      },
+      xAxis: {
+        type: "category", data: x, boundaryGap: false,
+        axisLine: { lineStyle: { color: LINE } }, axisLabel: { color: AXIS },
+      },
+      yAxis: {
+        type: "value", scale: true,
+        splitLine: { lineStyle: { color: LINE } }, axisLabel: { color: AXIS },
+      },
+      series: [
+        {
+          name: "Portfolio", type: "line", data: portfolio, smooth: true, symbol: "none",
+          lineStyle: { width: 2.5, color: up ? "#4ea88b" : "#d2685f" },
+          areaStyle: { opacity: 0.1, color: up ? "#4ea88b" : "#d2685f" },
+        },
+        {
+          name: benchmarkLabel, type: "line", data: benchmark, smooth: true, symbol: "none",
+          lineStyle: { width: 1.5, color: ACCENT, type: "dashed" },
+        },
+      ],
+    }),
+    [x, portfolio, benchmark, benchmarkLabel, up],
+  );
+  return <ReactECharts echarts={echarts} option={option} style={{ height, width: "100%" }} />;
+}
+
 export function Donut({ data }: { data: { name: string; value: number }[] }) {
   const palette = ["#d9a566", "#4ea88b", "#5b8bd9", "#a673c4", "#d2685f", "#6ec0c4", "#c4a36e", "#7a8499"];
   const option = useMemo(

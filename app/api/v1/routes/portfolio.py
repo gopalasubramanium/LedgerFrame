@@ -73,6 +73,18 @@ async def portfolio_holdings(session: AsyncSession = Depends(get_db)) -> dict:
     return {"base_currency": base, "holdings": [_hv(h) for h in val.holdings]}
 
 
+@router.get("/portfolio/performance")
+async def portfolio_performance(
+    days: int = 365, benchmark: str = "^GSPC", session: AsyncSession = Depends(get_db)
+) -> dict:
+    from app.services.analytics import performance_series
+
+    base = get_settings().base_currency
+    data = await performance_series(session, base, max(7, min(days, 3650)), benchmark)
+    data["base_currency"] = base
+    return data
+
+
 class TransactionIn(BaseModel):
     account_id: int | None = None
     symbol: str | None = None

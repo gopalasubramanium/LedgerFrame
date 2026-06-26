@@ -32,10 +32,19 @@ async def session():
 
 @pytest.fixture
 async def app_client():
-    """An httpx client wired to the ASGI app with lifespan (seeds demo data)."""
+    """An httpx client wired to the ASGI app with lifespan (seeds demo data).
+
+    Resets the database first so each test starts from a clean, freshly-seeded
+    state with no PIN — preventing cross-test contamination from auth tests.
+    """
     from httpx import ASGITransport, AsyncClient
 
+    from app.db.base import Base, get_engine
     from app.main import create_app
+
+    engine = get_engine()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
     app = create_app()
     async with app.router.lifespan_context(app), AsyncClient(

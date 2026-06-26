@@ -130,6 +130,33 @@ async def _fetch_one(client: httpx.AsyncClient, url: str) -> list[NewsItem]:
         return []
 
 
+async def test_feeds(session: AsyncSession) -> list[dict]:
+    """Per-feed diagnostics: did it fetch, how many items, and any error.
+
+    Used by Settings to explain why headlines might be empty (blocked, redirected,
+    non-XML, etc.) — the most common cause of "I added feeds but see nothing".
+    """
+    urls = await get_feed_urls(session)
+    headers = {"User-Agent": "LedgerFrame/1.0 (+local)"}
+    results: list[dict] = []
+    async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, headers=headers) as client:
+        for url in urls:
+            entry = {"url": url, "ok": False, "count": 0, "error": None, "status": None}
+            try:
+                r = await client.get(url, follow_redirects=True)
+                entry["status"] = r.status_code
+                r.raise_for_status()
+                items = _parse_feed(url, r.content)
+                entry["count"] = len(items)
+                entry["ok"] = len(items) > 0
+                if not items:
+                    entry["error"] = "fetched but no items parsed (not RSS/Atom?)"
+            except Exception as exc:  # noqa: BLE001
+                entry["error"] = str(exc)[:200]
+            results.append(entry)
+    return results
+
+
 async def fetch_feeds(session: AsyncSession, limit: int = 30) -> list[NewsItem]:
     urls = await get_feed_urls(session)
     if not urls:

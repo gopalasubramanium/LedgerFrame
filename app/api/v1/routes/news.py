@@ -9,7 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db, require_auth
 from app.providers.market import get_provider
 from app.services.briefing import get_briefing, refresh_briefing
-from app.services.feeds import DEFAULT_FEEDS, fetch_feeds, get_feed_urls, set_feed_urls
+from app.services.feeds import (
+    DEFAULT_FEEDS,
+    fetch_feeds,
+    get_feed_urls,
+    set_feed_urls,
+    test_feeds,
+)
 
 router = APIRouter()
 
@@ -58,6 +64,11 @@ class FeedsIn(BaseModel):
 async def put_feeds(payload: FeedsIn, session: AsyncSession = Depends(get_db)) -> dict:
     await set_feed_urls(session, payload.feeds)
     return {"ok": True, "feeds": await get_feed_urls(session)}
+
+
+@router.get("/news/feeds/test")
+async def test_news_feeds(session: AsyncSession = Depends(get_db)) -> dict:
+    return {"results": await test_feeds(session)}
 
 
 @router.get("/briefing")

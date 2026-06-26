@@ -36,11 +36,11 @@ export const api = {
   marketsOverview: () =>
     req<{ quotes: Quote[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/overview"),
   history: (symbol: string, days = 180) =>
-    req<{ symbol: string; candles: { ts: string; close: number }[] }>(
+    req<{ symbol: string; candles: { ts: string; open: number; high: number; low: number; close: number; volume: number | null }[] }>(
       `/api/v1/instruments/${encodeURIComponent(symbol)}/history?days=${days}`,
     ),
   news: () =>
-    req<{ items: { headline: string; source: string; published_at: string; symbols: string[] }[] }>("/api/v1/news"),
+    req<{ items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string; symbols: string[] }[]; rss_count: number }>("/api/v1/news"),
   watchlists: () => req<{ watchlists: { id: number; name: string; items: { symbol: string; name: string; quote: Quote }[] }[] }>("/api/v1/watchlists"),
   createWatchlist: (name: string, symbols: string[]) =>
     req("/api/v1/watchlists", { method: "POST", body: JSON.stringify({ name, symbols }) }),
@@ -73,6 +73,13 @@ export const api = {
   feeds: () => req<{ feeds: string[]; defaults: string[] }>("/api/v1/news/feeds"),
   setFeeds: (feeds: string[]) =>
     req<{ ok: boolean; feeds: string[] }>("/api/v1/news/feeds", { method: "PUT", body: JSON.stringify({ feeds }) }),
+
+  feedsTest: () => req<{ results: { url: string; ok: boolean; count: number; error: string | null; status: number | null }[] }>("/api/v1/news/feeds/test"),
+
+  // --- Data source (mock ↔ live) ---
+  dataSource: () => req<{ provider: string; has_api_key: boolean; base_currency: string; stale_after_seconds: string; providers: string[]; admin_available: boolean }>("/api/v1/system/data-source"),
+  setDataSource: (d: { provider: string; api_key?: string; base_currency?: string; stale_after_seconds?: number }) =>
+    req<{ ok: boolean; applied: boolean; note: string }>("/api/v1/system/data-source", { method: "PUT", body: JSON.stringify(d) }),
 
   // --- System admin (scoped root helper) ---
   adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),

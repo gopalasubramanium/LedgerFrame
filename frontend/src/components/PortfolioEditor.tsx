@@ -89,7 +89,7 @@ function TxnManager({ onChanged }: { onChanged: () => void }) {
   }
 
   if (editing) {
-    return <TxnForm initial={editing} busy={busy} onCancel={() => { setEditing(null); setEditId(null); }} onSave={save} />;
+    return <TxnForm initial={editing} busy={busy} error={err} onCancel={() => { setEditing(null); setEditId(null); setErr(""); }} onSave={save} />;
   }
 
   return (
@@ -140,12 +140,13 @@ function TxnManager({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function TxnForm({ initial, busy, onCancel, onSave }: { initial: TxnInput; busy: boolean; onCancel: () => void; onSave: (t: TxnInput) => void }) {
+function TxnForm({ initial, busy, error, onCancel, onSave }: { initial: TxnInput; busy: boolean; error?: string; onCancel: () => void; onSave: (t: TxnInput) => void }) {
   const [f, setF] = useState<TxnInput>(initial);
   const set = (k: keyof TxnInput, v: string | number) => setF((p) => ({ ...p, [k]: v }));
   return (
     <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(f); }}>
       <h3 className="text-lg font-semibold">Transaction details</h3>
+      {error && <div className="lf-chip bg-down/15 text-down">{error}</div>}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Field label="Date & time">
           <input type="datetime-local" className="lf-input" value={f.ts} onChange={(e) => set("ts", e.target.value)} required />
@@ -225,6 +226,7 @@ function AssetManager({ onChanged }: { onChanged: () => void }) {
     return (
       <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save(editing); }}>
         <h3 className="text-lg font-semibold">Asset / liability details</h3>
+        {err && <div className="lf-chip bg-down/15 text-down">{err}</div>}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Label"><input className="lf-input" value={editing.label} onChange={(e) => setEditing({ ...editing, label: e.target.value })} required /></Field>
           <Field label="Type">

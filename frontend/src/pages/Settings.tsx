@@ -10,6 +10,11 @@ export default function Settings() {
   const aiStatus = useApi(api.aiStatus, 0);
   const adminAvail = useApi(api.adminAvailable, 0);
   const feeds = useApi(api.feeds, 0);
+  const ds = useApi(api.dataSource, 0);
+
+  const [provider, setProvider] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [feedTest, setFeedTest] = useState<{ url: string; ok: boolean; count: number; error: string | null }[] | null>(null);
 
   const [baseCcy, setBaseCcy] = useState("");
   const [rotation, setRotation] = useState("30");
@@ -31,6 +36,14 @@ export default function Settings() {
     }
   }, [settings.data]);
   useEffect(() => { if (feeds.data) setFeedText(feeds.data.feeds.join("\n")); }, [feeds.data]);
+  useEffect(() => { if (ds.data) setProvider(ds.data.provider); }, [ds.data]);
+
+  async function saveDataSource() {
+    try {
+      const r = await api.setDataSource({ provider, api_key: apiKey || undefined });
+      setMsg(r.note); setApiKey(""); ds.refetch(); refreshStatus();
+    } catch (e) { setMsg(e instanceof Error ? e.message : "Save failed (locked?)"); }
+  }
 
   const ccys = (settings.data?.defaults.supported_currencies as string[]) ?? ["SGD", "USD", "INR", "EUR", "GBP"];
   const adminOn = adminAvail.data?.available ?? false;
@@ -74,6 +87,26 @@ export default function Settings() {
           <Num label="Screen sleep (min, 0=off)" v={sleepMin} set={setSleepMin} min={0} max={180} />
         </div>
         <button className="lf-btn-accent mt-3" onClick={saveConfig}>Save</button>
+      </Card>
+
+      {/* Data source (mock <-> live) */}
+      <Card title="Data source (demo ↔ live prices)" className="col-span-12 lg:col-span-6">
+        <label className="block text-sm text-muted mb-1">Market data provider</label>
+        <select className="lf-input mb-3" value={provider} onChange={(e) => setProvider(e.target.value)}>
+          {(ds.data?.providers ?? ["mock"]).map((p) => (
+            <option key={p} value={p}>
+              {p === "mock" ? "mock — demo / synthetic (no key)" : p === "csv" ? "csv — local files" : `${p} — live (needs API key)`}
+            </option>
+          ))}
+        </select>
+        {provider !== "mock" && provider !== "csv" && (
+          <>
+            <label className="block text-sm text-muted mb-1">API key {ds.data?.has_api_key && <span className="text-up">(saved)</span>}</label>
+            <input className="lf-input mb-3" type="password" placeholder={ds.data?.has_api_key ? "•••••• (leave blank to keep)" : "paste key"} value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+          </>
+        )}
+        <button className="lf-btn-accent" onClick={saveDataSource}>Save & apply</button>
+        <p className="text-xs text-faint mt-2">Switching providers restarts the API. See docs/DATA_SOURCES.md for keys & limits.</p>
       </Card>
 
       {/* Accessibility */}
@@ -126,7 +159,20 @@ export default function Settings() {
         <div className="flex gap-2 mt-2">
           <button className="lf-btn-accent" onClick={saveFeeds}>Save feeds</button>
           <button className="lf-btn" onClick={() => setFeedText((feeds.data?.defaults ?? []).join("\n"))}>Reset to defaults</button>
+          <button className="lf-btn" onClick={async () => { setFeedTest(null); setMsg("Testing feeds…"); try { const r = await api.feedsTest(); setFeedTest(r.results); setMsg(""); } catch (e) { setMsg(String(e)); } }}>Test feeds</button>
         </div>
+        {feedTest && (
+          <ul className="mt-3 space-y-1 text-xs">
+            {feedTest.map((t, i) => (
+              <li key={i} className="flex justify-between gap-2 border-b border-line/40 py-1">
+                <span className="truncate text-muted">{t.url}</span>
+                <span className={t.ok ? "text-up whitespace-nowrap" : "text-down whitespace-nowrap"}>
+                  {t.ok ? `✓ ${t.count} items` : `✗ ${t.error ?? "failed"}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       {/* Security */}

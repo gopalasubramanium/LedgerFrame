@@ -2,6 +2,17 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.4 — 2026-06-27
+
+- **Fixed one-click "Update now"** (previously failed with "Update could not run").
+  The update now launches **detached in its own systemd transient unit**, so it
+  survives the API/worker restart it performs (a child process was being killed
+  mid-update). `update.sh` is now privilege-aware: when the root helper runs it,
+  code/build/git steps drop to the owning user (correct file ownership, no git
+  "dubious ownership"), while the service restart runs as root. The UI now **polls
+  the version endpoint until the new build is live**, then reloads — no longer
+  bound by the request timeout, and works through the brief restart.
+
 ## v1.0.3 — 2026-06-27
 
 - Added a minimal, responsive credit footer on every page: "Concept & direction by

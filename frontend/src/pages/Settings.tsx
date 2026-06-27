@@ -218,7 +218,20 @@ export default function Settings() {
             setBusy("version"); try {
               const v = await api.versionCheck();
               if (!v.update_available) { setAdminOut(`Up to date (v${v.current}).`); }
-              else if (adminOn) { setAdminOut(`Updating v${v.current} → v${v.latest}…`); await api.admin("update"); setAdminOut("Update started — reload in a moment."); }
+              else if (adminOn) {
+                const r = await api.admin("update");
+                if (r.ok) {
+                  setAdminOut(`Updating v${v.current} → v${v.latest} in the background…\nThis can take a few minutes; the page reloads automatically when done.`);
+                  let tries = 0;
+                  const iv = setInterval(async () => {
+                    tries += 1;
+                    try { const c = await api.versionCheck(); if (!c.update_available) { clearInterval(iv); window.location.reload(); return; } } catch { /* restarting */ }
+                    if (tries > 120) { clearInterval(iv); setAdminOut("Update is taking a while — refresh the page in a moment."); }
+                  }, 5000);
+                } else {
+                  setAdminOut(`Update could not run: ${r.output || "use the CLI: ./scripts/update.sh"}`);
+                }
+              }
               else { setAdminOut(`Update available: v${v.latest}. Run ./scripts/update.sh on the device.`); }
             } catch { setAdminOut("version check failed"); } finally { setBusy(""); }
           }}>Check &amp; update</button>

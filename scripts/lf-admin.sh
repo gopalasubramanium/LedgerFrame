@@ -12,7 +12,7 @@
 #
 #   Usage: ledgerframe-admin <action> [arg]
 #   Actions: status | restart | lan <on|off> | voice <on|off> | ai <on|off>
-#            | doctor | backup
+#            | kiosk <on|off> | update | doctor | backup
 # =============================================================================
 set -euo pipefail
 
@@ -90,7 +90,22 @@ case "$action" in
       *) echo "usage: kiosk <on|off>"; exit 1 ;;
     esac ;;
   update)
-    as_user bash "$REPO_DIR/scripts/update.sh" ;;
+    # The update restarts ledgerframe-api/worker — so it must run OUTSIDE this
+    # process tree, or it would be killed mid-flight when the API (its parent)
+    # restarts. Launch it detached as root; update.sh drops to the owning user for
+    # code/build steps and uses root for the service restart. Returns immediately;
+    # the UI polls the version endpoint until the new build is live.
+    if command -v systemd-run >/dev/null 2>&1; then
+      systemd-run --collect --quiet \
+        --setenv=RUN_USER="$RUN_USER" --setenv=REPO_DIR="$REPO_DIR" --setenv=DATA_DIR="$DATA_DIR" \
+        bash "$REPO_DIR/scripts/update.sh" \
+        && echo "update started in the background (transient unit); services will restart when done" \
+        || { echo "could not launch background update"; exit 1; }
+    else
+      setsid bash "$REPO_DIR/scripts/update.sh" >/var/log/ledgerframe-update.log 2>&1 < /dev/null &
+      echo "update started in the background (detached); log: /var/log/ledgerframe-update.log"
+    fi
+    ;;
   doctor)
     as_user bash "$REPO_DIR/scripts/doctor.sh" || true ;;
   backup)

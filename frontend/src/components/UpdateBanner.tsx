@@ -19,15 +19,36 @@ export function UpdateBanner() {
 
   if (!info) return null;
 
+  // Poll the version endpoint until the running app reports it's up to date
+  // (the build + restart can take a few minutes on a Pi); then reload. The API
+  // is briefly unreachable while it restarts — those errors are expected.
+  function pollUntilUpdated() {
+    let tries = 0;
+    const iv = setInterval(async () => {
+      tries += 1;
+      try {
+        const v = await api.versionCheck();
+        if (!v.update_available) { clearInterval(iv); window.location.reload(); return; }
+      } catch { /* API restarting — keep waiting */ }
+      if (tries > 120) { clearInterval(iv); setMsg("Update is taking a while — refresh the page in a moment."); }
+    }, 5000);
+  }
+
   async function update() {
-    setBusy(true); setMsg("Updating… the app will restart.");
+    setBusy(true); setMsg("Starting update…");
     try {
       const r = await api.admin("update");
-      setMsg(r.ok ? "Update started — reloading shortly." : "Update could not run (use the CLI: ./scripts/update.sh).");
-      if (r.ok) setTimeout(() => window.location.reload(), 8000);
+      if (r.ok) {
+        setMsg("Updating in the background — this can take a few minutes. The page reloads automatically when it's done.");
+        pollUntilUpdated();
+      } else {
+        setMsg("Update could not run (use the CLI: ./scripts/update.sh).");
+        setBusy(false);
+      }
     } catch {
       setMsg("Update needs the in-app helper. Run ./scripts/update.sh on the device.");
-    } finally { setBusy(false); }
+      setBusy(false);
+    }
   }
   function snooze() {
     localStorage.setItem("lf_update_snooze", String(Date.now() + 24 * 3600 * 1000));

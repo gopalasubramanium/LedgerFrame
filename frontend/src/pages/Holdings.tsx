@@ -58,7 +58,10 @@ export default function Holdings() {
                   <tr key={h.id} className="border-b border-line/50">
                     <td className="py-2">
                       {h.symbol ? (
-                        <Link to={`/instrument/${h.symbol}`} className="text-ink hover:text-accent">{h.label}</Link>
+                        <Link to={`/instrument/${h.symbol}`} className="group block">
+                          <span className="text-ink group-hover:text-accent">{h.name || h.label}</span>
+                          {h.name && <span className="text-faint text-xs ml-2">{h.symbol}</span>}
+                        </Link>
                       ) : (h.label)}
                       {!h.is_priced && <span className="text-faint text-xs ml-2">manual</span>}
                       {h.is_stale && <span className="text-warn text-xs ml-1">⚠</span>}

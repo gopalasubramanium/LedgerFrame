@@ -2,6 +2,27 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.10 — 2026-06-28
+
+- **Base currency & AI config now apply in-process — no restart needed.** Root
+  cause: systemd starts the service with `.env` loaded as an `EnvironmentFile`, so
+  each `LEDGERFRAME_*` is an OS env var that pydantic ranks **above** the `.env`
+  file — so rewriting the file alone did nothing until a restart. A new `apply_env`
+  helper updates `os.environ` too, so `reload_settings()` actually takes effect.
+  This fixes both the base-currency save and the AI provider switch.
+- **Remote Ollama / OpenAI-compatible AI now works.** Because of the bug above,
+  saving a new AI provider rebuilt the *old* one and the connection test reported
+  the wrong thing. Now the new provider is built and **really probed** — Settings
+  shows *reachable* / *unreachable* / *model-not-found* (with the server's model
+  list). Point it at `http://<host>:11434/v1` with a pulled model and Ask uses it.
+- **Instrument names shown, not just tickers.** Holdings, movers, Markets, Global
+  and the instrument page now show the company/fund **name** with the ticker as a
+  secondary label (names are resolved from the provider and cached). Falls back to
+  the ticker when no name is known.
+- **Aligned figures.** Compact quote lists (Home Markets/Watchlist/FX, Global,
+  movers) now use a shared CSS grid so price and change columns line up across
+  rows instead of drifting with each row's width.
+
 ## v1.0.9 — 2026-06-28
 
 - **Actually fixes the "table accounts already exists" migration error.** v1.0.8's

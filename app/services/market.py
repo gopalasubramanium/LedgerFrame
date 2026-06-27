@@ -193,6 +193,37 @@ async def get_history_cached(
     return candles
 
 
+def _has_real_name(instr: Instrument) -> bool:
+    """True when the instrument already has a human name (not just its ticker)."""
+    n = (instr.name or "").strip()
+    return bool(n) and n.upper() != instr.symbol.upper() and "(DEMO)" not in n and "(CSV)" not in n
+
+
+async def backfill_instrument_name(session: AsyncSession, symbol: str) -> str | None:
+    """Best-effort: fill an instrument's display name from the provider's search.
+
+    Quotes (e.g. Alpha Vantage GLOBAL_QUOTE) don't carry names, so a ticker added
+    by symbol shows only the ticker. This resolves the company/fund name once and
+    persists it. Cheap on repeat calls (skips instruments that already have a name).
+    """
+    instr = (
+        await session.execute(select(Instrument).where(Instrument.symbol == symbol.upper()))
+    ).scalars().first()
+    if instr is None or _has_real_name(instr):
+        return instr.name if instr else None
+    try:
+        results = await get_provider().search_instruments(symbol)
+        match = next((r for r in results if r.symbol.upper() == symbol.upper()), None) or (
+            results[0] if results else None
+        )
+        if match and match.name and match.name.strip().upper() != symbol.upper():
+            instr.name = match.name.strip()[:160]
+            await session.flush()
+    except Exception:  # noqa: BLE001 — names are cosmetic; never fail a refresh
+        pass
+    return instr.name
+
+
 async def _get_or_create_instrument(
     session: AsyncSession, symbol: str, exchange: str | None
 ) -> Instrument:

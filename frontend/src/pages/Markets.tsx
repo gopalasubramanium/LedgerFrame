@@ -90,8 +90,11 @@ export default function Markets() {
                 <button className="absolute top-2 right-2 text-faint hover:text-accent text-sm" title="Add to watchlist"
                   onClick={() => addToWatch(it.symbol)}>{watchSymbols.has(it.symbol) ? "★" : "☆"}</button>
                 <Link to={`/instrument/${it.symbol}`} className="block">
-                  <div className="text-muted text-sm truncate pr-6">{it.symbol}{it.held && <span className="text-accent text-xs ml-1">●</span>}</div>
-                  <div className="text-xs text-faint truncate">{it.name}</div>
+                  <div className="text-ink text-sm truncate pr-6" title={it.name || it.symbol}>
+                    {it.name && it.name.toUpperCase() !== it.symbol ? it.name : it.symbol}
+                    {it.held && <span className="text-accent text-xs ml-1">●</span>}
+                  </div>
+                  <div className="text-xs text-faint truncate">{it.symbol}</div>
                   <div className="tnum text-lg mt-1">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency)}</div>
                   <ChangePill value={it.quote.change_pct} />
                 </Link>

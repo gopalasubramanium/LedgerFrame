@@ -35,7 +35,7 @@ router = APIRouter()
 
 def _hv(h) -> dict:
     return {
-        "id": h.holding_id, "label": h.label, "symbol": h.symbol,
+        "id": h.holding_id, "label": h.label, "name": h.name, "symbol": h.symbol,
         "asset_class": h.asset_class, "quantity": to_display(h.quantity),
         "currency": h.native_currency, "price": to_display(h.price),
         "market_value": to_display(h.market_value_base),

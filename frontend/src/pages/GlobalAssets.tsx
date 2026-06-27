@@ -23,17 +23,15 @@ export default function GlobalAssets() {
       <div className="grid grid-cols-12 gap-4 auto-rows-min">
         {data?.groups.map((g) => (
           <Card key={g.region} title={g.region} className="col-span-12 md:col-span-6 lg:col-span-4">
-            <ul className="divide-y divide-line/50">
+            <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-2.5">
               {g.items.map((it) => (
-                <li key={it.symbol} className="flex items-center justify-between py-2">
-                  <Link to={`/instrument/${it.symbol}`} className="hover:text-accent">
-                    <div className="text-sm">{it.label}</div>
+                <li key={it.symbol} className="contents">
+                  <Link to={`/instrument/${it.symbol}`} className="hover:text-accent min-w-0">
+                    <div className="text-sm truncate">{it.label}</div>
                     <div className="text-xs text-faint">{it.symbol}</div>
                   </Link>
-                  <div className="flex items-center gap-3">
-                    <span className="tnum text-sm">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
-                    <ChangePill value={it.quote.change_pct} />
-                  </div>
+                  <span className="tnum text-sm text-right">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+                  <span className="justify-self-end"><ChangePill value={it.quote.change_pct} /></span>
                 </li>
               ))}
             </ul>

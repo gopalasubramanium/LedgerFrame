@@ -53,6 +53,7 @@ export interface PortfolioSummary {
 export interface HoldingRow {
   id: number;
   label: string;
+  name?: string | null;
   symbol: string | null;
   asset_class: string;
   quantity: number;

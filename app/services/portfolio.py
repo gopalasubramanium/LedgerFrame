@@ -99,6 +99,7 @@ def compute_fifo(transactions: list[Txn]) -> FifoResult:
 class HoldingValue:
     holding_id: int
     label: str
+    name: str | None
     symbol: str | None
     asset_class: str
     quantity: Decimal
@@ -201,9 +202,15 @@ async def value_portfolio(
         mv_base *= sign
         cost_base *= sign
 
+        # A human name (company/fund), only when it's more than the bare ticker.
+        iname = (instrument.name or "").strip() if instrument else ""
+        display_name = iname if (iname and symbol and iname.upper() != symbol.upper()
+                                 and "(DEMO)" not in iname and "(CSV)" not in iname) else None
+
         hv = HoldingValue(
             holding_id=h.id,
             label=h.label or (symbol or "Manual asset"),
+            name=display_name,
             symbol=symbol,
             asset_class=h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class),
             quantity=D(h.quantity),

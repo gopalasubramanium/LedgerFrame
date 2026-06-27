@@ -100,7 +100,7 @@ class DataSourceIn(BaseModel):
 
 @router.put("/system/data-source", dependencies=[Depends(require_auth)])
 async def set_data_source(payload: DataSourceIn) -> dict:
-    from app.core.envfile import update_env
+    from app.core.envfile import apply_env
 
     if payload.provider not in _MARKET_PROVIDERS:
         raise HTTPException(400, f"unknown provider; choose one of {sorted(_MARKET_PROVIDERS)}")
@@ -111,7 +111,7 @@ async def set_data_source(payload: DataSourceIn) -> dict:
         updates["LEDGERFRAME_BASE_CURRENCY"] = payload.base_currency.upper()
     if payload.stale_after_seconds:
         updates["LEDGERFRAME_STALE_AFTER_SECONDS"] = str(payload.stale_after_seconds)
-    update_env(updates)
+    apply_env(updates)
     # Apply immediately in this process (no restart needed): re-read .env and reset
     # provider/FX caches. Restart only the WORKER (never the API — that would drop
     # this response) so its background refreshes use the new provider too.
@@ -165,7 +165,7 @@ class ConfigIn(BaseModel):
 @router.put("/system/config", dependencies=[Depends(require_auth)])
 async def set_config(payload: ConfigIn) -> dict:
     from app.core.config import reload_settings
-    from app.core.envfile import update_env
+    from app.core.envfile import apply_env
 
     updates, restart_needed = {}, []
     for key, value in payload.values.items():
@@ -177,7 +177,7 @@ async def set_config(payload: ConfigIn) -> dict:
             restart_needed.append(key)
     if not updates:
         raise HTTPException(400, "no recognised config keys")
-    update_env(updates)
+    apply_env(updates)
     reload_settings()
     note = "Saved."
     if "data_dir" in payload.values:
@@ -220,7 +220,7 @@ class AIConfigIn(BaseModel):
 @router.put("/system/ai-config", dependencies=[Depends(require_auth)])
 async def set_ai_config(payload: AIConfigIn) -> dict:
     from app.core.config import reload_settings
-    from app.core.envfile import update_env
+    from app.core.envfile import apply_env
 
     if payload.provider not in _AI_PROVIDERS:
         raise HTTPException(400, f"unknown AI provider; choose one of {sorted(_AI_PROVIDERS)}")
@@ -236,10 +236,14 @@ async def set_ai_config(payload: AIConfigIn) -> dict:
         updates["LEDGERFRAME_OPENAI_BASE_URL"] = payload.openai_base_url.strip()
     if payload.openai_api_key is not None:
         updates["LEDGERFRAME_OPENAI_API_KEY"] = payload.openai_api_key.strip()
-    update_env(updates)
+    apply_env(updates)
     reload_settings()
-    # Report whether the new config can reach a model.
+    # Report whether the new config can reach a model (tests the NEW provider now
+    # that os.environ is updated), then restart the worker so its briefings use it.
     health = await get_ai_provider().health()
+    from app.core.service_control import restart_worker
+
+    await restart_worker()
     return {"ok": True, "available": health.available, "detail": health.detail}
 
 
@@ -314,7 +318,7 @@ async def _display_symbols(session: AsyncSession) -> list[str]:
 async def refresh_data(session: AsyncSession = Depends(get_db)) -> dict:
     """Force-refresh quotes for everything shown (holdings, watchlist, market &
     global tiles) from the current provider. Reports exactly what updated/failed."""
-    from app.services.market import refresh_quote
+    from app.services.market import backfill_instrument_name, refresh_quote
 
     provider = get_settings().market_provider
     symbols = await _display_symbols(session)
@@ -322,6 +326,7 @@ async def refresh_data(session: AsyncSession = Depends(get_db)) -> dict:
     for sym in symbols:
         try:
             q = await refresh_quote(session, sym)
+            await backfill_instrument_name(session, sym)  # cosmetic; fills the display name once
             if q.price is not None and q.entitlement.value != "unavailable":
                 refreshed += 1
                 succeeded.append(sym)

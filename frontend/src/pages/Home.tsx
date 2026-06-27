@@ -77,14 +77,14 @@ export default function Home() {
           </div>
         </Card>
 
-        {/* Markets */}
+        {/* Markets — grid (with li:contents) so price & change columns align across rows */}
         <Card title="Markets" className="col-span-12 lg:col-span-4">
-          <ul className="space-y-2">
+          <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-3 gap-y-2 text-sm">
             {data.markets.map((q) => (
-              <li key={q.symbol} className="flex items-center justify-between">
-                <Link to={`/instrument/${q.symbol}`} className="text-muted text-sm hover:text-accent">{q.symbol}</Link>
-                <span className="tnum text-sm">{q.price === null ? "—" : money(q.price, q.currency, true)}</span>
-                <ChangePill value={q.change_pct} />
+              <li key={q.symbol} className="contents">
+                <Link to={`/instrument/${q.symbol}`} className="text-muted hover:text-accent truncate">{q.symbol}</Link>
+                <span className="tnum text-right">{q.price === null ? "—" : money(q.price, q.currency, true)}</span>
+                <span className="justify-self-end"><ChangePill value={q.change_pct} /></span>
               </li>
             ))}
           </ul>
@@ -94,12 +94,12 @@ export default function Home() {
         <Card title="Watchlist" className="col-span-12 lg:col-span-4"
           action={<Link to="/markets" className="lf-chip bg-elevated text-accent">All →</Link>}>
           {watch.length === 0 && <p className="text-muted text-sm">No watchlist items.</p>}
-          <ul className="space-y-2">
+          <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-3 gap-y-2 text-sm">
             {watch.slice(0, 7).map((it) => (
-              <li key={it.symbol} className="flex items-center justify-between">
-                <Link to={`/instrument/${it.symbol}`} className="text-sm hover:text-accent">{it.symbol}</Link>
-                <span className="tnum text-sm">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
-                <ChangePill value={it.quote.change_pct} />
+              <li key={it.symbol} className="contents">
+                <Link to={`/instrument/${it.symbol}`} className="hover:text-accent truncate">{it.symbol}</Link>
+                <span className="tnum text-right">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+                <span className="justify-self-end"><ChangePill value={it.quote.change_pct} /></span>
               </li>
             ))}
           </ul>
@@ -107,11 +107,11 @@ export default function Home() {
 
         {/* FX */}
         <Card title="FX" className="col-span-12 lg:col-span-4">
-          <ul className="grid grid-cols-2 gap-3">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-3">
             {data.fx.map((f) => (
-              <li key={`${f.base}${f.quote}`} className="flex items-center justify-between">
+              <li key={`${f.base}${f.quote}`} className="flex items-baseline justify-between gap-2">
                 <span className="text-xs text-faint">{f.base}/{f.quote}</span>
-                <span className="tnum">{f.rate.toFixed(4)}</span>
+                <span className="tnum text-right">{f.rate.toFixed(4)}</span>
               </li>
             ))}
           </ul>
@@ -158,20 +158,20 @@ function Mini({ label, value, tone }: { label: string; value: string; tone: numb
   );
 }
 
-function Movers({ title, rows, ccy }: { title: string; rows: { label: string; symbol: string | null; day_change: number; is_stale: boolean }[]; ccy: string }) {
+function Movers({ title, rows, ccy }: { title: string; rows: { label: string; name?: string | null; symbol: string | null; day_change: number; is_stale: boolean }[]; ccy: string }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-faint mb-2">{title}</div>
       {rows.length === 0 && <div className="text-muted text-sm">No priced positions.</div>}
-      <ul className="space-y-1">
+      <ul className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 text-sm">
         {rows.map((r) => (
-          <li key={r.label} className="flex justify-between text-sm">
+          <li key={r.label} className="contents">
             {r.symbol ? (
-              <Link to={`/instrument/${r.symbol}`} className="truncate mr-2 hover:text-accent">{r.label}{r.is_stale ? " ⚠" : ""}</Link>
+              <Link to={`/instrument/${r.symbol}`} className="truncate hover:text-accent" title={r.name || r.label}>{r.name || r.label}{r.is_stale ? " ⚠" : ""}</Link>
             ) : (
-              <span className="truncate mr-2">{r.label}{r.is_stale ? " ⚠" : ""}</span>
+              <span className="truncate" title={r.name || r.label}>{r.name || r.label}{r.is_stale ? " ⚠" : ""}</span>
             )}
-            <span className={`tnum ${toneClass(r.day_change)}`}>{signedMoney(r.day_change, ccy)}</span>
+            <span className={`tnum text-right ${toneClass(r.day_change)}`}>{signedMoney(r.day_change, ccy)}</span>
           </li>
         ))}
       </ul>

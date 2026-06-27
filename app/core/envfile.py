@@ -45,3 +45,18 @@ def update_env(updates: dict[str, str]) -> None:
         ENV_PATH.chmod(0o600)
     except OSError:
         pass
+
+
+def apply_env(updates: dict[str, str]) -> None:
+    """Persist to .env AND set os.environ so an in-process reload actually takes effect.
+
+    Critical on systemd: the service is started with the .env file loaded as an
+    ``EnvironmentFile``, so each ``LEDGERFRAME_*`` key is an OS environment variable.
+    pydantic-settings ranks env vars ABOVE the .env file, so rewriting the file
+    alone is invisible until a restart. Updating ``os.environ`` here lets
+    ``reload_settings()`` pick the change up immediately — no restart needed.
+    """
+    import os
+
+    update_env(updates)
+    os.environ.update({k: str(v) for k, v in updates.items()})

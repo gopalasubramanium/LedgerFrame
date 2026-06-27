@@ -65,12 +65,17 @@ export default function InstrumentDetail() {
       <Card className="col-span-12">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight">{symbol}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {meta?.name && meta.name.toUpperCase() !== symbol.toUpperCase() ? meta.name : symbol}
+              </h1>
+              {meta?.name && meta.name.toUpperCase() !== symbol.toUpperCase() && (
+                <span className="text-muted text-sm font-medium">{symbol}</span>
+              )}
               {q && <DataBadge entitlement={q.entitlement} stale={q.is_stale} source={q.source} asOf={q.received_at} />}
             </div>
             <div className="text-muted text-sm mt-1">
-              {meta?.name ?? ""}{meta?.exchange ? ` · ${meta.exchange}` : ""}{meta?.sector ? ` · ${meta.sector}` : ""}
+              {[meta?.exchange, meta?.sector, meta?.country].filter(Boolean).join(" · ")}
             </div>
           </div>
           <div className="text-right">

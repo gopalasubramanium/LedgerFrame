@@ -127,6 +127,9 @@ async def instrument_detail(symbol: str, session: AsyncSession = Depends(get_db)
         await session.execute(select(Instrument).where(Instrument.symbol == symbol.upper()))
     ).scalars().first()
     if instr is not None:
+        from app.services.market import backfill_instrument_name
+
+        await backfill_instrument_name(session, instr.symbol)  # fill the display name once
         meta = {
             "symbol": instr.symbol, "name": instr.name,
             "asset_class": instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class),

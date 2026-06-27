@@ -76,11 +76,11 @@ async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(
     restarted = False
     if "base_currency" in applied:
         from app.core.config import reload_settings
-        from app.core.envfile import update_env
+        from app.core.envfile import apply_env
         from app.core.service_control import restart_worker
         from app.services import fx
 
-        update_env({"LEDGERFRAME_BASE_CURRENCY": applied["base_currency"].upper()})
+        apply_env({"LEDGERFRAME_BASE_CURRENCY": applied["base_currency"].upper()})
         reload_settings()
         fx.clear_cache()
         restarted = await restart_worker()

@@ -16,8 +16,17 @@ from app.services.portfolio import top_movers, value_portfolio
 
 router = APIRouter()
 
-_HOME_MARKETS = ["^GSPC", "^STI", "GLD", "BTC"]
-_HOME_FX = [("USD", "SGD"), ("EUR", "USD"), ("USD", "INR")]
+# AV-friendly proxies (raw indices like ^GSPC aren't served by live providers).
+_HOME_MARKETS = ["SPY", "QQQ", "GLD", "BTC"]
+
+
+async def _holding_currencies(session: AsyncSession) -> list[str]:
+    """Distinct native currencies of the user's holdings (for smart FX)."""
+    from sqlalchemy import select
+
+    from app.models import Holding
+
+    return list({c for c in (await session.execute(select(Holding.currency))).scalars().all() if c})
 
 
 @router.get("/dashboard/home")
@@ -35,8 +44,12 @@ async def dashboard_home(session: AsyncSession = Depends(get_db)) -> dict:
         q = await display_quote(session, sym)
         markets.append(q.model_dump(mode="json"))
 
+    # Smart FX: base currency vs each foreign currency the user actually holds.
+    pairs = [(c, base) for c in await _holding_currencies(session) if c != base]
+    if not pairs:  # sensible defaults before any holdings exist
+        pairs = [("USD", base)] if base != "USD" else [("EUR", "USD"), ("GBP", "USD")]
     fx = []
-    for b, qc in _HOME_FX:
+    for b, qc in pairs[:6]:
         try:
             rate = await provider.get_fx_rate(b, qc)
             fx.append(rate.model_dump(mode="json"))

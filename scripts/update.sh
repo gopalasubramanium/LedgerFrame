@@ -46,10 +46,13 @@ if [[ -r /etc/ledgerframe/admin.env ]]; then
   . /etc/ledgerframe/admin.env   # REPO_DIR, DATA_DIR, RUN_USER
   API_HOST=127.0.0.1
   grep -q '^LEDGERFRAME_ALLOW_LAN=true' "$REPO_DIR/.env" 2>/dev/null && API_HOST=0.0.0.0
-  for unit in ledgerframe-api ledgerframe-worker; do
+  API_PORT="$(sed -n 's/^LEDGERFRAME_API_PORT=//p' "$REPO_DIR/.env" 2>/dev/null | head -1)"
+  API_PORT="${API_PORT:-8321}"
+  for unit in ledgerframe-api ledgerframe-worker ledgerframe-kiosk; do
     [[ -f /etc/systemd/system/$unit.service ]] || continue
-    sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$RUN_USER|g" \
-        -e "s|@API_HOST@|$API_HOST|g" "$REPO_DIR/systemd/$unit.service" \
+    desktop_user="$RUN_USER"
+    sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$desktop_user|g" \
+        -e "s|@API_HOST@|$API_HOST|g" -e "s|@API_PORT@|$API_PORT|g" "$REPO_DIR/systemd/$unit.service" \
       | sudo tee "/etc/systemd/system/$unit.service" >/dev/null
   done
   sudo systemctl daemon-reload 2>/dev/null || true

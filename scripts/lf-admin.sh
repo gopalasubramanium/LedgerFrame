@@ -89,6 +89,8 @@ case "$action" in
       off) systemctl disable --now ledgerframe-kiosk 2>/dev/null || true; echo "kiosk off" ;;
       *) echo "usage: kiosk <on|off>"; exit 1 ;;
     esac ;;
+  update)
+    as_user bash "$REPO_DIR/scripts/update.sh" ;;
   doctor)
     as_user bash "$REPO_DIR/scripts/doctor.sh" || true ;;
   backup)

@@ -17,7 +17,7 @@ const PERIODS = [
 // selector and a row of computed stats (return, vs-benchmark, drawdown, volatility).
 export function PerformancePanel({ height = 300, className = "" }: { height?: number; className?: string }) {
   const [p, setP] = useState(3); // 1Y
-  const [benchmark, setBenchmark] = useState("^GSPC");
+  const [benchmark, setBenchmark] = useState("SPY");
   const benches = useApi(api.benchmarks, 0);
   const perf = useApi(() => api.performance(PERIODS[p].days, benchmark), 0, [p, benchmark]);
   const d = perf.data;
@@ -35,7 +35,7 @@ export function PerformancePanel({ height = 300, className = "" }: { height?: nu
             onChange={(e) => setBenchmark(e.target.value)}
             title="Benchmark"
           >
-            {(benches.data?.benchmarks ?? [{ symbol: "^GSPC", label: "S&P 500" }]).map((b) => (
+            {(benches.data?.benchmarks ?? [{ symbol: "SPY", label: "S&P 500" }]).map((b) => (
               <option key={b.symbol} value={b.symbol}>vs {b.label}</option>
             ))}
           </select>

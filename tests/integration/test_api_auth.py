@@ -83,3 +83,15 @@ async def test_can_set_first_pin_even_with_lan_enabled(app_client, monkeypatch):
         assert ok.status_code == 200
     finally:
         get_settings().allow_lan = False
+
+
+async def test_watchlist_add_and_remove(app_client):
+    create = await app_client.post("/api/v1/watchlists", json={"name": "WL", "symbols": []})
+    wl_id = create.json()["id"]
+    add = await app_client.post(f"/api/v1/watchlists/{wl_id}/items", json={"symbol": "tsla"})
+    assert add.status_code == 200
+    lists = (await app_client.get("/api/v1/watchlists")).json()["watchlists"]
+    wl = next(w for w in lists if w["id"] == wl_id)
+    assert any(i["symbol"] == "TSLA" for i in wl["items"])
+    rm = await app_client.delete(f"/api/v1/watchlists/{wl_id}/items/TSLA")
+    assert rm.status_code == 200

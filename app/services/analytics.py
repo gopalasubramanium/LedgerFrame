@@ -27,7 +27,7 @@ from app.services import fx
 from app.services.portfolio import compute_fifo, value_portfolio
 
 
-async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = "^GSPC") -> dict:
+async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = "SPY") -> dict:
     """A panel of deterministic portfolio metrics.
 
     Only computes what we can derive honestly from the data — no fabricated Sharpe
@@ -133,7 +133,7 @@ async def performance_series(
     session: AsyncSession,
     base_currency: str,
     days: int,
-    benchmark: str = "^GSPC",
+    benchmark: str = "SPY",
     include_manual: bool = False,
 ) -> dict:
     """Performance of the *invested* portfolio (priced market holdings) vs a

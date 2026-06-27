@@ -14,6 +14,16 @@ on the device by default; nothing leaves it unless you configure it to.
 > **Not a trading platform.** No order placement, no brokerage integration, no
 > buy/sell recommendations, no financial advice.
 
+**Contents:** [Screenshots](#screenshots) · [Highlights](#highlights) ·
+[The pages](#the-pages) · [Runs anywhere](#runs-anywhere) · [Install](#install) ·
+[Data providers](#data-providers-settings--data-source) ·
+[AI providers](#ai-providers-settings--ai-assistant) · [Usage](#usage-typical-flow) ·
+[Maintenance](#maintenance) · [Limitations](#limitations) · [License](#license)
+· [Operations](OPERATIONS.md) · [Architecture](ARCHITECTURE.md) ·
+[Security](SECURITY.md) · [Data sources](docs/DATA_SOURCES.md) · [Changelog](CHANGELOG.md)
+
+## Screenshots
+
 ![LedgerFrame home dashboard](docs/screenshots/home.png)
 
 | | |

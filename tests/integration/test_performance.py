@@ -25,7 +25,7 @@ async def test_benchmarks_endpoint(app_client):
     r = await app_client.get("/api/v1/portfolio/benchmarks")
     assert r.status_code == 200
     syms = [b["symbol"] for b in r.json()["benchmarks"]]
-    assert "^GSPC" in syms
+    assert "SPY" in syms
 
 
 async def test_key_stats_endpoint(app_client):

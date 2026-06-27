@@ -39,10 +39,16 @@ export default function Markets() {
     return instruments.filter((i) => i.asset_class === view);
   }, [instruments, view, watchSymbols]);
 
+  const [newWl, setNewWl] = useState("");
+  const watchlists = wl.data?.watchlists ?? [];
+
   async function runSearch(q: string) {
     setQuery(q);
     if (q.trim().length < 1) { setResults([]); return; }
     try { setResults((await api.search(q)).results.slice(0, 8)); } catch { setResults([]); }
+  }
+  async function addToWatch(symbol: string, wlId = 0) {
+    try { await api.addWatchItem(wlId, symbol); wl.refetch(); } catch { /* shows lock if 401 */ }
   }
 
   return (
@@ -59,10 +65,13 @@ export default function Markets() {
           {results.length > 0 && (
             <div className="absolute z-20 mt-1 w-full bg-elevated border border-line rounded-card shadow-card max-h-72 overflow-auto">
               {results.map((r) => (
-                <Link key={r.symbol} to={`/instrument/${r.symbol}`} onClick={() => { setResults([]); setQuery(""); }}
-                  className="block px-3 py-2 hover:bg-line text-sm">
-                  <span className="text-ink">{r.symbol}</span> <span className="text-faint">{r.name}</span>
-                </Link>
+                <div key={r.symbol} className="flex items-center justify-between px-3 py-2 hover:bg-line text-sm">
+                  <Link to={`/instrument/${r.symbol}`} onClick={() => { setResults([]); setQuery(""); }} className="truncate">
+                    <span className="text-ink">{r.symbol}</span> <span className="text-faint">{r.name}</span>
+                  </Link>
+                  <button className="text-accent text-xs ml-2 shrink-0" title="Add to watchlist"
+                    onClick={() => addToWatch(r.symbol)}>★ watch</button>
+                </div>
               ))}
             </div>
           )}
@@ -77,19 +86,50 @@ export default function Markets() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {shown.map((it) => (
-              <Link key={it.symbol} to={`/instrument/${it.symbol}`}
-                className="bg-base rounded-card p-3 border border-line hover:border-accent transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted text-sm truncate">{it.symbol}{it.held && <span className="text-accent text-xs ml-1">●</span>}</span>
-                  <DataBadge entitlement={it.quote.entitlement} stale={it.quote.is_stale} source={it.quote.source} asOf={it.quote.received_at} />
-                </div>
-                <div className="text-xs text-faint truncate">{it.name}</div>
-                <div className="tnum text-lg mt-1">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency)}</div>
-                <ChangePill value={it.quote.change_pct} />
-              </Link>
+              <div key={it.symbol} className="bg-base rounded-card p-3 border border-line hover:border-accent transition-colors relative">
+                <button className="absolute top-2 right-2 text-faint hover:text-accent text-sm" title="Add to watchlist"
+                  onClick={() => addToWatch(it.symbol)}>{watchSymbols.has(it.symbol) ? "★" : "☆"}</button>
+                <Link to={`/instrument/${it.symbol}`} className="block">
+                  <div className="text-muted text-sm truncate pr-6">{it.symbol}{it.held && <span className="text-accent text-xs ml-1">●</span>}</div>
+                  <div className="text-xs text-faint truncate">{it.name}</div>
+                  <div className="tnum text-lg mt-1">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency)}</div>
+                  <ChangePill value={it.quote.change_pct} />
+                </Link>
+              </div>
             ))}
           </div>
         )}
+      </Card>
+
+      {/* Watchlist management */}
+      <Card title="Watchlists">
+        <div className="flex gap-2 mb-3">
+          <input className="lf-input" placeholder="New watchlist name…" value={newWl} onChange={(e) => setNewWl(e.target.value)} />
+          <button className="lf-btn-accent" onClick={async () => { if (newWl.trim()) { await api.createWatchlist(newWl.trim(), []); setNewWl(""); wl.refetch(); } }}>Create</button>
+        </div>
+        {watchlists.length === 0 && <p className="text-muted text-sm">No watchlists yet. Create one, then add symbols with ☆ above.</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {watchlists.map((list) => (
+            <div key={list.id} className="border border-line/60 rounded-card p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">{list.name}</span>
+                <button className="text-down text-xs hover:underline" onClick={async () => { if (confirm(`Delete watchlist "${list.name}"?`)) { await api.deleteWatchlist(list.id); wl.refetch(); } }}>Delete</button>
+              </div>
+              {list.items.length === 0 && <p className="text-faint text-xs">Empty — add symbols with ☆.</p>}
+              <ul className="space-y-1">
+                {list.items.map((it) => (
+                  <li key={it.symbol} className="flex items-center justify-between text-sm">
+                    <Link to={`/instrument/${it.symbol}`} className="hover:text-accent">{it.symbol} <span className="text-faint text-xs">{it.name}</span></Link>
+                    <div className="flex items-center gap-2">
+                      <ChangePill value={it.quote.change_pct} />
+                      <button className="text-faint hover:text-down" title="Remove" onClick={async () => { await api.removeWatchItem(list.id, it.symbol); wl.refetch(); }}>✕</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );

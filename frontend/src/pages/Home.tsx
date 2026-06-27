@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge, Figure, Skeleton } from "../components/ui";
 import { TickerStrip } from "../components/TickerStrip";
 import { money, pct, signedMoney, timeAgo, toneClass } from "../lib/format";
+import type { Quote } from "../lib/types";
+
+type TickerSrc = "markets" | "holdings" | "global" | "watchlist";
 
 // Home = the glanceable "command centre": what's happening right now across your
 // portfolio and the markets. Deep analytics (performance, allocation, key stats)
@@ -12,6 +16,11 @@ export default function Home() {
   const { data, loading, stale } = useApi(api.home, 60000);
   const wl = useApi(api.watchlists, 60000);
   const news = useApi(api.news, 180000);
+  const overview = useApi(api.marketsOverview, 60000);
+  const glob = useApi(api.marketsGlobal, 60000);
+  const [tickerSrc, setTickerSrc] = useState<TickerSrc>(
+    (localStorage.getItem("lf_ticker") as TickerSrc) || "markets",
+  );
   if (loading && !data) return <HomeSkeleton />;
   if (!data) return <p className="text-muted">Unable to load dashboard.</p>;
 
@@ -19,10 +28,28 @@ export default function Home() {
   const open = data.market_status.state === "open";
   const watch = wl.data?.watchlists.flatMap((l) => l.items) ?? [];
 
+  const tickerQuotes: Quote[] =
+    tickerSrc === "holdings"
+      ? (overview.data?.instruments ?? []).filter((i) => i.held).map((i) => i.quote)
+      : tickerSrc === "global"
+        ? (glob.data?.groups ?? []).flatMap((g) => g.items.map((i) => i.quote))
+        : tickerSrc === "watchlist"
+          ? watch.map((i) => i.quote)
+          : data.markets;
+  const setTicker = (s: TickerSrc) => { localStorage.setItem("lf_ticker", s); setTickerSrc(s); };
+
   return (
     <div className="space-y-4">
       {stale && <div className="lf-chip bg-warn/15 text-warn">⚠ Offline — showing last known data.</div>}
-      <TickerStrip quotes={data.markets} fx={data.fx} />
+      <div className="flex items-center gap-2">
+        <select className="lf-input w-auto py-1 text-sm" value={tickerSrc} onChange={(e) => setTicker(e.target.value as TickerSrc)} title="Ticker source">
+          <option value="markets">Markets</option>
+          <option value="holdings">My holdings</option>
+          <option value="global">Global</option>
+          <option value="watchlist">Watchlist</option>
+        </select>
+        <div className="flex-1 min-w-0"><TickerStrip quotes={tickerQuotes} fx={data.fx} /></div>
+      </div>
 
       <div className="grid grid-cols-12 gap-4 auto-rows-min">
         {/* Portfolio headline */}

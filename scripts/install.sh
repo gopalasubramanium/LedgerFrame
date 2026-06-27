@@ -185,6 +185,9 @@ fi
 # The API binds to localhost unless LAN access was explicitly chosen.
 API_HOST=127.0.0.1
 [[ "$ENABLE_LAN" == true ]] && API_HOST=0.0.0.0
+# Port: from .env if present, else flag/default. Asked in the wizard below.
+API_PORT="${LEDGERFRAME_API_PORT:-8321}"
+[[ "$SET_DATA" == false && "$INTERACTIVE" == true ]] && API_PORT="$(ask "Web port" "$API_PORT")"
 
 # =============================================================================
 step "Review the plan"
@@ -201,6 +204,14 @@ if [[ "$DRY_RUN" == true ]]; then
   warn "Dry run complete — no changes made. Re-run without --dry-run to install."
   exit 0
 fi
+cat <<EOF
+
+   ${C_DIM}By proceeding you accept the disclaimer & MIT license: LedgerFrame is
+   information/tracking only — NOT financial advice, NOT real-time, NOT a trading
+   platform, and provided "as is" without warranty. Full terms: LICENSE + the
+   in-app Legal page.${C_RESET}
+EOF
+ask_yn "I have read and agree to the disclaimer & license" "y" || die "Cancelled — agreement required."
 ask_yn "Proceed with installation?" "y" || die "Cancelled. Nothing was changed."
 
 if [[ -n "$SUDO" ]] && ! sudo -n true 2>/dev/null; then
@@ -314,6 +325,7 @@ else
 fi
 # Apply the LAN choice to .env every run so it reflects the latest decision.
 set_env_key "$REPO_DIR/.env" LEDGERFRAME_ALLOW_LAN "$ENABLE_LAN"
+set_env_key "$REPO_DIR/.env" LEDGERFRAME_API_PORT "$API_PORT"
 
 # =============================================================================
 step "Install the application (backend)"
@@ -358,7 +370,7 @@ render_unit() { # render_unit name use-service-user?
   local name="$1" user_kind="$2" run_user
   [[ "$user_kind" == "desktop" ]] && run_user="${SUDO_USER:-$USER}" || run_user="$SERVICE_USER"
   sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$run_user|g" \
-      -e "s|@API_HOST@|$API_HOST|g" \
+      -e "s|@API_HOST@|$API_HOST|g" -e "s|@API_PORT@|$API_PORT|g" \
       "$REPO_DIR/systemd/$name.service" | $SUDO tee "/etc/systemd/system/$name.service" >/dev/null
 }
 render_unit ledgerframe-api service
@@ -404,7 +416,7 @@ fi
 step "Final check"
 HEALTHY=false
 for i in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:8321/health" >/dev/null 2>&1; then HEALTHY=true; break; fi
+  if curl -fsS "http://127.0.0.1:$API_PORT/health" >/dev/null 2>&1; then HEALTHY=true; break; fi
   sleep 1
 done
 LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
@@ -419,9 +431,9 @@ cat <<EOF
 ${C_GREEN}${C_BOLD}✓ All done!${C_RESET}
 
    Open the dashboard in a browser:
-      ${C_BOLD}http://127.0.0.1:8321${C_RESET}   (on this device)
+      ${C_BOLD}http://127.0.0.1:${API_PORT}${C_RESET}   (on this device)
 $( if [[ "$ENABLE_LAN" == true && -n "$LAN_IP" ]]; then
-     printf '      %shttp://%s:8321%s   (from any device on your network)\n' "$C_BOLD" "$LAN_IP" "$C_RESET"
+     printf '      %shttp://%s:%s%s   (from any device on your network)\n' "$C_BOLD" "$LAN_IP" "$API_PORT" "$C_RESET"
      printf '      %s⚠ LAN access is ON — open Settings and set a PIN now.%s\n' "$C_YELLOW" "$C_RESET"
    else
      printf '      %s(Network access is off — this device only. Re-run with --enable-lan to allow other devices.)%s\n' "$C_DIM" "$C_RESET"

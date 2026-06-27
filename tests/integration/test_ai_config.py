@@ -40,3 +40,15 @@ async def test_set_config_writes_env(app_client, tmp_path, monkeypatch):
     content = (tmp_path / ".env").read_text()
     assert "LEDGERFRAME_TIMEZONE=Europe/London" in content
     assert "LEDGERFRAME_AUTOLOCK_MINUTES=30" in content
+
+
+async def test_version_check(app_client):
+    r = await app_client.get("/api/v1/system/version-check")
+    assert r.status_code == 200
+    assert "current" in r.json() and "update_available" in r.json()
+
+
+async def test_config_includes_port(app_client):
+    r = await app_client.get("/api/v1/system/config")
+    assert r.status_code == 200
+    assert "api_port" in r.json()

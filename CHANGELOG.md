@@ -2,6 +2,26 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.1 — 2026-06-27
+
+- **Consistent live data:** Home/Markets/Global/benchmark now use live-provider-friendly
+  ETF proxies (no raw `^GSPC` "—"); all displayed symbols are refreshed & cached;
+  performance vs benchmark defaults to SPY so it renders on live providers.
+- **Heatmap** reflects your actual holdings (size = position value).
+- **Smart FX** on Home derives pairs from your holdings' currencies.
+- **Net-worth history** is reconstructed from holdings × price history (shows immediately).
+- **Watchlist management** — create/delete watchlists, add (☆) / remove symbols on Markets.
+- **Configurable ticker** source (Markets / Holdings / Global / Watchlist).
+- **Richer AI briefing** — narrates the day's portfolio moves when an AI provider is set.
+- **Settings completeness** — timezone, staleness, auto-lock, **kiosk**, **web port**,
+  **data folder**, backup keep/recipient; plus **Check & update** with a snoozable
+  update banner (auto-checks the latest release).
+- **Runs anywhere** — added Docker (`Dockerfile` + `docker-compose.yml`); Pi/HAT optional.
+- **Legal** page (disclaimer/terms/MIT) + an install-time acknowledgement.
+- **Browser icon** (favicon) and richer page metadata.
+- Docs: refreshed README (with a table of contents), ARCHITECTURE, DELIVERY; added
+  PROMOTION playbook. 75 backend tests + e2e green.
+
 ## v1.0.0 — 2026-06-27
 
 First public release. A private, local-first personal financial intelligence

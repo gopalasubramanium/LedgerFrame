@@ -57,3 +57,59 @@ async def create_watchlist(payload: WatchlistIn, session: AsyncSession = Depends
         session.add(WatchlistItem(watchlist_id=wl.id, instrument_id=instr.id, sort_order=i))
     await session.flush()
     return {"ok": True, "id": wl.id}
+
+
+class SymbolIn(BaseModel):
+    symbol: str
+
+
+async def _default_watchlist(session: AsyncSession) -> Watchlist:
+    wl = (await session.execute(select(Watchlist).order_by(Watchlist.sort_order))).scalars().first()
+    if wl is None:
+        wl = Watchlist(name="Watchlist")
+        session.add(wl)
+        await session.flush()
+    return wl
+
+
+@router.post("/watchlists/{wl_id}/items", dependencies=[Depends(require_auth)])
+async def add_item(wl_id: int, payload: SymbolIn, session: AsyncSession = Depends(get_db)) -> dict:
+    sym = payload.symbol.strip().upper()
+    if not sym:
+        return {"ok": False}
+    wl = await session.get(Watchlist, wl_id) if wl_id else None
+    if wl is None:
+        wl = await _default_watchlist(session)
+    instr = (await session.execute(select(Instrument).where(Instrument.symbol == sym))).scalars().first()
+    if instr is None:
+        instr = Instrument(symbol=sym, name=sym)
+        session.add(instr)
+        await session.flush()
+    exists = (await session.execute(
+        select(WatchlistItem).where(WatchlistItem.watchlist_id == wl.id, WatchlistItem.instrument_id == instr.id)
+    )).scalars().first()
+    if not exists:
+        session.add(WatchlistItem(watchlist_id=wl.id, instrument_id=instr.id, sort_order=999))
+        await session.flush()
+    return {"ok": True, "watchlist_id": wl.id}
+
+
+@router.delete("/watchlists/{wl_id}/items/{symbol}", dependencies=[Depends(require_auth)])
+async def remove_item(wl_id: int, symbol: str, session: AsyncSession = Depends(get_db)) -> dict:
+    instr = (await session.execute(select(Instrument).where(Instrument.symbol == symbol.upper()))).scalars().first()
+    if instr:
+        for it in (await session.execute(
+            select(WatchlistItem).where(WatchlistItem.watchlist_id == wl_id, WatchlistItem.instrument_id == instr.id)
+        )).scalars().all():
+            await session.delete(it)
+        await session.flush()
+    return {"ok": True}
+
+
+@router.delete("/watchlists/{wl_id}", dependencies=[Depends(require_auth)])
+async def delete_watchlist(wl_id: int, session: AsyncSession = Depends(get_db)) -> dict:
+    wl = await session.get(Watchlist, wl_id)
+    if wl:
+        await session.delete(wl)
+        await session.flush()
+    return {"ok": True}

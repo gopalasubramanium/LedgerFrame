@@ -20,22 +20,73 @@ BRIEFING_KEY = "daily_briefing"
 BRIEFING_TS_KEY = "daily_briefing_ts"
 
 
-async def generate_briefing(session: AsyncSession) -> str:
+def _mover_str(h, base: str) -> str:
+    from app.core.money import pct_change
+
+    pct = pct_change(h.price, h.price - (h.day_change_base / h.quantity)) if h.quantity else None
+    pctf = f" {pct:+.1f}%" if pct is not None else ""
+    return f"{h.label} ({h.day_change_base:+,.0f} {base}{pctf})"
+
+
+async def _deterministic_briefing(session: AsyncSession) -> tuple[str, list[str]]:
+    """A factual briefing + the underlying fact lines (also fed to the AI)."""
     base = get_settings().base_currency
     val = await value_portfolio(session, base)
-    gainers, losers = top_movers(val, n=2)
-    parts = [
-        f"Portfolio value {val.total_value:,.2f} {base}, "
-        f"today {val.day_change:+,.2f} {base}."
+    gainers, losers = top_movers(val, n=3)
+    facts = [
+        f"Portfolio value: {val.total_value:,.2f} {base}",
+        f"Today's change: {val.day_change:+,.2f} {base}",
     ]
+    if val.total_return_pct is not None:
+        facts.append(f"Total return: {val.total_return_pct:+.2f}%")
     if gainers:
-        parts.append("Leading: " + ", ".join(f"{g.label} ({g.day_change_base:+,.0f})" for g in gainers) + ".")
+        facts.append("Top movers up: " + "; ".join(_mover_str(g, base) for g in gainers))
     if losers:
-        parts.append("Lagging: " + ", ".join(f"{x.label} ({x.day_change_base:+,.0f})" for x in losers) + ".")
+        facts.append("Top movers down: " + "; ".join(_mover_str(x, base) for x in losers))
+
+    parts = [f"Portfolio {val.total_value:,.2f} {base}, today {val.day_change:+,.2f} {base}."]
+    if gainers:
+        parts.append("Leading your holdings: " + ", ".join(_mover_str(g, base) for g in gainers) + ".")
+    if losers:
+        parts.append("Weighing on it: " + ", ".join(_mover_str(x, base) for x in losers) + ".")
     if val.has_stale:
         parts.append("Some prices may be out of date.")
     parts.append("Information only, not financial advice.")
-    return " ".join(parts)
+    return " ".join(parts), facts
+
+
+async def generate_briefing(session: AsyncSession) -> str:
+    template, facts = await _deterministic_briefing(session)
+    # If an AI provider is reachable, let it narrate the SAME facts (it may not add
+    # any numbers of its own). Otherwise use the deterministic template.
+    try:
+        from app.ai.prompts import SYSTEM_PROMPT
+        from app.providers.ai import get_ai_provider
+        from app.schemas.ai import AIRequest, ChatMessage
+
+        provider = get_ai_provider()
+        health = await provider.health()
+        if health.available and facts:
+            messages = [
+                ChatMessage(role="system", content=SYSTEM_PROMPT),
+                ChatMessage(role="system", content="FACTS (the only data you may use):\n" + "\n".join(f"- {f}" for f in facts)),
+                ChatMessage(role="user", content="Write a concise 2-3 sentence daily briefing for the desk display, "
+                            "highlighting the portfolio's notable moves today. Plain English."),
+            ]
+            text = ""
+            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=220)):
+                if chunk.delta:
+                    text += chunk.delta
+                if chunk.done:
+                    break
+            text = text.strip()
+            if text:
+                if "not financial advice" not in text.lower():
+                    text += "\n\nInformation only, not financial advice."
+                return text
+    except Exception:  # noqa: BLE001 — narration is best-effort
+        pass
+    return template
 
 
 async def refresh_briefing(session: AsyncSession) -> str:

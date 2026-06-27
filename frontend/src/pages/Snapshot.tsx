@@ -7,7 +7,9 @@ import { money, signedMoney, toneClass } from "../lib/format";
 export default function Snapshot() {
   const summary = useApi(api.portfolioSummary, 60000);
   const holdings = useApi(api.holdings, 60000);
-  const nw = useApi(() => fetch("/api/v1/net-worth/history").then((r) => r.json()), 0);
+  // Net-worth history reconstructed from holdings × price history (include manual
+  // assets) — available immediately, not only after the worker accumulates snapshots.
+  const nw = useApi(() => api.performance(365, "SPY", true), 0);
 
   const ccy = summary.data?.base_currency ?? "SGD";
   const h = holdings.data?.holdings ?? [];
@@ -15,7 +17,7 @@ export default function Snapshot() {
   const liabilities = h.filter((x) => x.market_value < 0).reduce((s, x) => s + Math.abs(x.market_value), 0);
   const cash = h.filter((x) => x.asset_class === "cash" || x.asset_class === "fixed_deposit").reduce((s, x) => s + x.market_value, 0);
 
-  const history = (nw.data?.history ?? []) as { ts: string; net_worth: number }[];
+  const history = (nw.data?.series ?? []) as { ts: string; value: number }[];
 
   return (
     <div className="grid grid-cols-12 gap-4 auto-rows-min">
@@ -32,9 +34,9 @@ export default function Snapshot() {
 
       <Card title="Net-worth history" className="col-span-12 lg:col-span-8">
         {history.length > 1 ? (
-          <LineSeries x={history.map((p) => new Date(p.ts).toLocaleDateString())} y={history.map((p) => p.net_worth)} />
+          <LineSeries x={history.map((p) => new Date(p.ts).toLocaleDateString())} y={history.map((p) => p.value)} />
         ) : (
-          <p className="text-muted">History accumulates as the worker generates snapshots (every 6h by default).</p>
+          <p className="text-muted">{nw.loading ? "Loading…" : "Add holdings to see your net-worth trend."}</p>
         )}
       </Card>
 

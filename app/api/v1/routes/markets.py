@@ -16,9 +16,9 @@ from app.services.market import display_quote, refresh_quote
 
 router = APIRouter()
 
-# Baseline symbols always shown (indices + popular instruments). The user's held
-# and watchlisted instruments are merged in on top of these.
-_DEFAULT_OVERVIEW = ["^GSPC", "^STI", "AAPL", "MSFT", "NVDA", "VOO", "GLD", "BTC", "ETH"]
+# Baseline symbols always shown. Uses live-provider-friendly ETF proxies instead of
+# raw indices (^GSPC etc.), which Alpha Vantage doesn't serve.
+_DEFAULT_OVERVIEW = ["SPY", "QQQ", "DIA", "EWS", "AAPL", "MSFT", "NVDA", "GLD", "BTC", "ETH"]
 
 
 async def _overview_instruments(session: AsyncSession) -> list[Instrument]:

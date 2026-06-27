@@ -75,20 +75,23 @@ async def portfolio_holdings(session: AsyncSession = Depends(get_db)) -> dict:
 
 @router.get("/portfolio/performance")
 async def portfolio_performance(
-    days: int = 365, benchmark: str = "^GSPC", session: AsyncSession = Depends(get_db)
+    days: int = 365, benchmark: str = "SPY", include_manual: bool = False,
+    session: AsyncSession = Depends(get_db),
 ) -> dict:
     from app.services.analytics import performance_series
 
     base = get_settings().base_currency
-    data = await performance_series(session, base, max(7, min(days, 3650)), benchmark)
+    data = await performance_series(
+        session, base, max(7, min(days, 3650)), benchmark, include_manual=include_manual
+    )
     data["base_currency"] = base
     return data
 
 
-# Benchmarks the picker offers (symbol -> label). All exist in the demo catalog.
+# Benchmarks the picker offers (symbol -> label). ETF proxies so live providers work.
 _BENCHMARKS = {
-    "^GSPC": "S&P 500", "^STI": "Straits Times", "VOO": "S&P 500 ETF",
-    "VWRA": "World Equity", "GLD": "Gold", "BTC": "Bitcoin",
+    "SPY": "S&P 500", "QQQ": "Nasdaq 100", "DIA": "Dow 30",
+    "EWS": "Singapore", "GLD": "Gold", "BTC": "Bitcoin",
 }
 
 
@@ -98,7 +101,7 @@ async def list_benchmarks() -> dict:
 
 
 @router.get("/portfolio/stats")
-async def portfolio_stats(benchmark: str = "^GSPC", session: AsyncSession = Depends(get_db)) -> dict:
+async def portfolio_stats(benchmark: str = "SPY", session: AsyncSession = Depends(get_db)) -> dict:
     from app.services.analytics import key_stats
 
     return await key_stats(session, get_settings().base_currency, benchmark)

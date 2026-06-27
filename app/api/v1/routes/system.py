@@ -29,7 +29,9 @@ _ADMIN_ACTIONS: dict[str, set[str] | None] = {
     "voice": {"on", "off"},
     "ai": {"on", "off"},
     "kiosk": {"on", "off"},
+    "update": None,
 }
+_GITHUB_REPO = "gopalasubramanium/LedgerFrame"
 _ADMIN_BIN = "/usr/local/sbin/ledgerframe-admin"
 
 
@@ -130,6 +132,7 @@ async def set_data_source(payload: DataSourceIn) -> dict:
 # Env-backed app config the Settings page may edit (key -> env var).
 _CONFIG_KEYS = {
     "timezone": "LEDGERFRAME_TIMEZONE",
+    "api_port": "LEDGERFRAME_API_PORT",
     "stale_after_seconds": "LEDGERFRAME_STALE_AFTER_SECONDS",
     "autolock_minutes": "LEDGERFRAME_AUTOLOCK_MINUTES",
     "rotation_default_seconds": "LEDGERFRAME_ROTATION_DEFAULT_SECONDS",
@@ -148,6 +151,7 @@ async def get_config() -> dict:
     s = get_settings()
     return {
         "timezone": env.get("LEDGERFRAME_TIMEZONE", s.timezone),
+        "api_port": env.get("LEDGERFRAME_API_PORT", str(s.api_port)),
         "stale_after_seconds": env.get("LEDGERFRAME_STALE_AFTER_SECONDS", str(s.stale_after_seconds)),
         "autolock_minutes": env.get("LEDGERFRAME_AUTOLOCK_MINUTES", str(s.autolock_minutes)),
         "rotation_default_seconds": env.get("LEDGERFRAME_ROTATION_DEFAULT_SECONDS", str(s.rotation_default_seconds)),
@@ -173,7 +177,7 @@ async def set_config(payload: ConfigIn) -> dict:
         if not env_key:
             continue
         updates[env_key] = value.strip()
-        if key in ("data_dir", "backup_keep", "rotation_default_seconds"):
+        if key in ("data_dir", "backup_keep", "rotation_default_seconds", "api_port"):
             restart_needed.append(key)
     if not updates:
         raise HTTPException(400, "no recognised config keys")
@@ -357,6 +361,41 @@ async def fetch_history(days: int = 365, session: AsyncSession = Depends(get_db)
         except Exception:  # noqa: BLE001
             empty.append(sym)
     return {"ok": True, "with_history": fetched, "no_history": empty, "total": len(symbols)}
+
+
+def _parse_ver(tag: str) -> tuple:
+    nums = "".join(ch if (ch.isdigit() or ch == ".") else " " for ch in tag.lstrip("vV")).split(".")
+    try:
+        return tuple(int(x) for x in nums[:3] if x.strip())
+    except ValueError:
+        return (0,)
+
+
+@router.get("/system/version-check")
+async def version_check() -> dict:
+    """Compare the running version to the latest GitHub release. Best-effort; never
+    fails the call (offline → update_available False)."""
+    import httpx
+
+    current = __version__
+    latest = current
+    available = False
+    url = f"https://github.com/{_GITHUB_REPO}/releases/latest"
+    try:
+        async with httpx.AsyncClient(timeout=6) as client:
+            r = await client.get(
+                f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest",
+                headers={"Accept": "application/vnd.github+json"},
+            )
+            if r.status_code == 200:
+                tag = r.json().get("tag_name", "")
+                if tag:
+                    latest = tag.lstrip("vV")
+                    available = _parse_ver(latest) > _parse_ver(current)
+                    url = r.json().get("html_url", url)
+    except Exception:  # noqa: BLE001
+        pass
+    return {"current": current, "latest": latest, "update_available": available, "url": url}
 
 
 @router.get("/system/admin/available")

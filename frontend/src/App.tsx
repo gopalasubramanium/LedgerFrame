@@ -16,6 +16,8 @@ import Snapshot from "./pages/Snapshot";
 import GlobalAssets from "./pages/GlobalAssets";
 import InstrumentDetail from "./pages/InstrumentDetail";
 import Settings from "./pages/Settings";
+import Legal from "./pages/Legal";
+import { UpdateBanner } from "./components/UpdateBanner";
 
 const NAV = [
   { path: "/", label: "Home" },
@@ -27,6 +29,7 @@ const NAV = [
   { path: "/news", label: "News" },
   { path: "/snapshot", label: "Snapshot" },
   { path: "/settings", label: "Settings" },
+  { path: "/legal", label: "Legal" },
 ];
 
 const ROTATION_PAGES = ["/", "/portfolio", "/markets", "/heatmap", "/news"];
@@ -126,6 +129,7 @@ export default function App() {
             <Route path="/snapshot" element={<Snapshot />} />
             <Route path="/instrument/:symbol" element={<InstrumentDetail />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/legal" element={<Legal />} />
           </Routes>
         </main>
       </div>
@@ -139,6 +143,7 @@ export default function App() {
       )}
 
       {asking && <AskPanel onClose={() => setAsking(false)} />}
+      <UpdateBanner />
     </div>
   );
 }

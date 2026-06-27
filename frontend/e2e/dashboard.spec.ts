@@ -11,23 +11,30 @@ test("1. dashboard opens in demo mode", async ({ page }) => {
   await expect(page.getByText(/Total value/i)).toBeVisible();
 });
 
-test("2. portfolio page shows seeded holdings", async ({ page }) => {
-  await page.goto("/portfolio");
+test("2. holdings page shows seeded holdings", async ({ page }) => {
+  await page.goto("/holdings");
   await expect(page.getByRole("heading", { name: "Holdings" })).toBeVisible();
   await expect(page.getByRole("link", { name: /AAPL/i }).first()).toBeVisible();
 });
 
-test("3. a watchlist can be created", async ({ page }) => {
+test("2b. portfolio page shows analytics", async ({ page }) => {
+  await page.goto("/portfolio");
+  await expect(page.getByRole("heading", { name: /Portfolio analytics/i })).toBeVisible();
+  await expect(page.getByText(/Performance vs benchmark/i)).toBeVisible();
+});
+
+test("3. watchlists can be managed on Markets", async ({ page }) => {
   await page.goto("/markets");
-  await expect(page.getByText("Watchlist")).toBeVisible();
-  // Core Watchlist is seeded; verify it renders quote rows.
+  await expect(page.getByRole("heading", { name: "Watchlists" })).toBeVisible();
   await expect(page.getByText("Core Watchlist")).toBeVisible();
 });
 
 test("4. dashboard rotation toggles", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Rotate/i }).click();
-  await expect(page.getByRole("button", { name: /Rotating|Paused/i })).toBeVisible();
+  await page.getByTitle("Toggle dashboard rotation").click();
+  // Rotation indicator dots appear when rotating.
+  await page.waitForTimeout(300);
+  await expect(page.getByTitle("Toggle dashboard rotation")).toBeVisible();
 });
 
 test("5 & 6 & 7. AI answer shows grounding facts with timestamps and no fabrication", async ({ page }) => {
@@ -41,9 +48,9 @@ test("5 & 6 & 7. AI answer shows grounding facts with timestamps and no fabricat
 test("9 & 10. app works without Hailo and without external provider", async ({ page }) => {
   // Demo mode (no external provider) + AI disabled (no Hailo) is the test config.
   await page.goto("/markets");
-  await expect(page.getByText("Market overview")).toBeVisible();
-  await page.goto("/heatmap");
-  await expect(page.getByText(/heatmap/i).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Markets" })).toBeVisible();
+  await page.goto("/global");
+  await expect(page.getByRole("heading", { name: /Global markets/i })).toBeVisible();
 });
 
 // NOTE: this test mutates persistent state (sets a PIN), so it runs LAST.

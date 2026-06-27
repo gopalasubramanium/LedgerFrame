@@ -12,14 +12,14 @@ Type=simple
 User=@USER@
 Environment=DISPLAY=:0
 # For Wayland sessions, set: Environment=WAYLAND_DISPLAY=wayland-0
-ExecStartPre=/bin/sh -c 'until curl -fsS http://127.0.0.1:8321/health; do sleep 1; done'
+ExecStartPre=/bin/sh -c 'until curl -fsS http://127.0.0.1:@API_PORT@/health; do sleep 1; done'
 ExecStart=/bin/sh -c 'exec $(command -v chromium-browser || command -v chromium) \
   --kiosk --noerrdialogs --disable-infobars --disable-translate \
   --check-for-update-interval=31536000 \
   --overscroll-history-navigation=0 \
   --autoplay-policy=no-user-gesture-required \
   --touch-events=enabled \
-  http://127.0.0.1:8321'
+  http://127.0.0.1:@API_PORT@'
 Restart=on-failure
 RestartSec=5
 

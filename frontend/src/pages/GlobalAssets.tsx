@@ -15,7 +15,7 @@ export default function GlobalAssets() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Global markets</h1>
-          <p className="text-sm text-muted">Major world indices & cross-asset benchmarks</p>
+          <p className="text-sm text-muted">Tracked via liquid ETFs — % change mirrors the index; prices are the ETF (USD).</p>
         </div>
         <span className={`lf-chip ${open ? "bg-up/15 text-up" : "bg-elevated text-muted"}`}>{open ? "● US open" : "○ US closed"}</span>
       </div>

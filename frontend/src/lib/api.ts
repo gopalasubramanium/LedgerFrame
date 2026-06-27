@@ -37,7 +37,7 @@ export const api = {
   home: () => req<HomeDashboard>("/api/v1/dashboard/home"),
   portfolioSummary: () => req<PortfolioSummary>("/api/v1/portfolio/summary"),
   holdings: () => req<{ base_currency: string; holdings: import("./types").HoldingRow[] }>("/api/v1/portfolio/holdings"),
-  performance: (days = 365, benchmark = "^GSPC") =>
+  performance: (days = 365, benchmark = "SPY", includeManual = false) =>
     req<{
       base_currency: string;
       benchmark_symbol: string;
@@ -48,9 +48,9 @@ export const api = {
         max_drawdown_pct: number; volatility_pct: number; best_day_pct: number;
         worst_day_pct: number; start_value: number; end_value: number;
       };
-    }>(`/api/v1/portfolio/performance?days=${days}&benchmark=${encodeURIComponent(benchmark)}`),
+    }>(`/api/v1/portfolio/performance?days=${days}&benchmark=${encodeURIComponent(benchmark)}&include_manual=${includeManual}`),
   benchmarks: () => req<{ benchmarks: { symbol: string; label: string }[] }>("/api/v1/portfolio/benchmarks"),
-  stats: (benchmark = "^GSPC") =>
+  stats: (benchmark = "SPY") =>
     req<{ base_currency: string; metrics: { label: string; value: number | null; kind: string; signed?: boolean; note?: string | null }[] }>(
       `/api/v1/portfolio/stats?benchmark=${encodeURIComponent(benchmark)}`,
     ),
@@ -73,7 +73,13 @@ export const api = {
     req<{ items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string; symbols: string[] }[]; rss_count: number }>("/api/v1/news"),
   watchlists: () => req<{ watchlists: { id: number; name: string; items: { symbol: string; name: string; quote: Quote }[] }[] }>("/api/v1/watchlists"),
   createWatchlist: (name: string, symbols: string[]) =>
-    req("/api/v1/watchlists", { method: "POST", body: JSON.stringify({ name, symbols }) }),
+    req<{ ok: boolean; id: number }>("/api/v1/watchlists", { method: "POST", body: JSON.stringify({ name, symbols }) }),
+  addWatchItem: (wlId: number, symbol: string) =>
+    req<{ ok: boolean; watchlist_id: number }>(`/api/v1/watchlists/${wlId}/items`, { method: "POST", body: JSON.stringify({ symbol }) }),
+  removeWatchItem: (wlId: number, symbol: string) =>
+    req<{ ok: boolean }>(`/api/v1/watchlists/${wlId}/items/${encodeURIComponent(symbol)}`, { method: "DELETE" }),
+  deleteWatchlist: (wlId: number) =>
+    req<{ ok: boolean }>(`/api/v1/watchlists/${wlId}`, { method: "DELETE" }),
   settings: () => req<{ stored: Record<string, string>; defaults: Record<string, unknown> }>("/api/v1/settings"),
   updateSettings: (values: Record<string, string>) =>
     req("/api/v1/settings", { method: "PUT", body: JSON.stringify({ values }) }),
@@ -119,6 +125,8 @@ export const api = {
   resetData: () => req<{ ok: boolean; note: string }>("/api/v1/system/reset-data", { method: "POST" }),
   refreshData: () => req<{ ok: boolean; refreshed: number; total: number; succeeded: string[]; failed: { symbol: string; reason: string }[]; errors: string[] }>("/api/v1/system/refresh-data", { method: "POST" }),
   fetchHistory: () => req<{ ok: boolean; with_history: string[]; no_history: string[]; total: number }>("/api/v1/system/fetch-history", { method: "POST" }),
+
+  versionCheck: () => req<{ current: string; latest: string; update_available: boolean; url: string }>("/api/v1/system/version-check"),
 
   // --- System admin (scoped root helper) ---
   adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),

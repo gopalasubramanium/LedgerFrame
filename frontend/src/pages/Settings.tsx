@@ -214,10 +214,18 @@ export default function Settings() {
           <button className="lf-btn" disabled={!!busy} onClick={async () => {
             setBusy("backup"); try { const r = await fetch("/api/v1/backup/create", { method: "POST", credentials: "same-origin" }); const j = await r.json(); setAdminOut(r.ok ? `Backup: ${j.filename}` : (j.detail || "failed")); } catch { setAdminOut("backup failed"); } finally { setBusy(""); }
           }}>Create backup</button>
+          <button className="lf-btn" disabled={!!busy} onClick={async () => {
+            setBusy("version"); try {
+              const v = await api.versionCheck();
+              if (!v.update_available) { setAdminOut(`Up to date (v${v.current}).`); }
+              else if (adminOn) { setAdminOut(`Updating v${v.current} → v${v.latest}…`); await api.admin("update"); setAdminOut("Update started — reload in a moment."); }
+              else { setAdminOut(`Update available: v${v.latest}. Run ./scripts/update.sh on the device.`); }
+            } catch { setAdminOut("version check failed"); } finally { setBusy(""); }
+          }}>Check &amp; update</button>
         </div>
         {busy && <p className="text-xs text-muted mt-2">Running {busy}…</p>}
         {adminOut && <pre className="text-xs bg-base rounded-card p-3 mt-3 overflow-auto max-h-48 whitespace-pre-wrap">{adminOut}</pre>}
-        <p className="text-xs text-faint mt-2">Updates & installs (Hailo, packages) stay on the command line for safety: <code>./scripts/update.sh</code>.</p>
+        <p className="text-xs text-faint mt-2">Package/Hailo installation stays on the command line for safety.</p>
       </Card>
 
       {/* News feeds */}
@@ -261,17 +269,16 @@ export default function Settings() {
 
       {/* Advanced */}
       <Card title="Advanced" className="col-span-12 lg:col-span-6">
-        <label className="block text-sm text-muted mb-1">Data folder</label>
-        <input className="lf-input mb-1" value={conf.data_dir ?? ""} onChange={(e) => setC("data_dir", e.target.value)} placeholder="/mnt/ledgerframe-data" />
-        <p className="text-xs text-warn mb-3">⚠ Changing this needs a restart and does NOT move existing data — move the folder first, then restart.</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-1">
+          <Num label="Web port" v={conf.api_port ?? "8321"} set={(v) => setC("api_port", v)} min={1} max={65535} />
           <Num label="Backups to keep" v={conf.backup_keep ?? "14"} set={(v) => setC("backup_keep", v)} min={1} max={365} />
-          <div>
-            <span className="text-xs uppercase tracking-wide text-faint">Backup age recipient (optional)</span>
-            <input className="lf-input mt-1" value={conf.backup_age_recipient ?? ""} onChange={(e) => setC("backup_age_recipient", e.target.value)} placeholder="age1…" />
-          </div>
         </div>
-        <button className="lf-btn-accent mt-3" onClick={() => saveConf(["data_dir", "backup_keep", "backup_age_recipient"])}>Save advanced</button>
+        <label className="block text-sm text-muted mt-2 mb-1">Data folder</label>
+        <input className="lf-input mb-1" value={conf.data_dir ?? ""} onChange={(e) => setC("data_dir", e.target.value)} placeholder="/mnt/ledgerframe-data" />
+        <p className="text-xs text-warn mb-2">⚠ Port & data-folder changes need a service restart. The data folder is NOT moved automatically — move it first, then restart.</p>
+        <label className="block text-sm text-muted mb-1">Backup age recipient (optional)</label>
+        <input className="lf-input" value={conf.backup_age_recipient ?? ""} onChange={(e) => setC("backup_age_recipient", e.target.value)} placeholder="age1…" />
+        <button className="lf-btn-accent mt-3" onClick={() => saveConf(["api_port", "data_dir", "backup_keep", "backup_age_recipient"])}>Save advanced</button>
       </Card>
 
       {/* Diagnostics */}

@@ -28,6 +28,7 @@ _ADMIN_ACTIONS: dict[str, set[str] | None] = {
     "lan": {"on", "off"},
     "voice": {"on", "off"},
     "ai": {"on", "off"},
+    "kiosk": {"on", "off"},
 }
 _ADMIN_BIN = "/usr/local/sbin/ledgerframe-admin"
 
@@ -124,6 +125,67 @@ async def set_data_source(payload: DataSourceIn) -> dict:
         except Exception:  # noqa: BLE001
             pass
     return {"ok": True, "applied": True, "note": f"Applied — now using '{payload.provider}'."}
+
+
+# Env-backed app config the Settings page may edit (key -> env var).
+_CONFIG_KEYS = {
+    "timezone": "LEDGERFRAME_TIMEZONE",
+    "stale_after_seconds": "LEDGERFRAME_STALE_AFTER_SECONDS",
+    "autolock_minutes": "LEDGERFRAME_AUTOLOCK_MINUTES",
+    "rotation_default_seconds": "LEDGERFRAME_ROTATION_DEFAULT_SECONDS",
+    "data_dir": "LEDGERFRAME_DATA_DIR",
+    "backup_keep": "LEDGERFRAME_BACKUP_KEEP",
+    "backup_age_recipient": "LEDGERFRAME_BACKUP_AGE_RECIPIENT",
+    "kiosk_url": "LEDGERFRAME_KIOSK_URL",
+}
+
+
+@router.get("/system/config")
+async def get_config() -> dict:
+    from app.core.envfile import read_env
+
+    env = read_env()
+    s = get_settings()
+    return {
+        "timezone": env.get("LEDGERFRAME_TIMEZONE", s.timezone),
+        "stale_after_seconds": env.get("LEDGERFRAME_STALE_AFTER_SECONDS", str(s.stale_after_seconds)),
+        "autolock_minutes": env.get("LEDGERFRAME_AUTOLOCK_MINUTES", str(s.autolock_minutes)),
+        "rotation_default_seconds": env.get("LEDGERFRAME_ROTATION_DEFAULT_SECONDS", str(s.rotation_default_seconds)),
+        "data_dir": env.get("LEDGERFRAME_DATA_DIR", str(s.data_dir)),
+        "backup_keep": env.get("LEDGERFRAME_BACKUP_KEEP", str(s.backup_keep)),
+        "backup_age_recipient": env.get("LEDGERFRAME_BACKUP_AGE_RECIPIENT", s.backup_age_recipient),
+        "kiosk_url": env.get("LEDGERFRAME_KIOSK_URL", s.kiosk_url),
+    }
+
+
+class ConfigIn(BaseModel):
+    values: dict[str, str]
+
+
+@router.put("/system/config", dependencies=[Depends(require_auth)])
+async def set_config(payload: ConfigIn) -> dict:
+    from app.core.config import reload_settings
+    from app.core.envfile import update_env
+
+    updates, restart_needed = {}, []
+    for key, value in payload.values.items():
+        env_key = _CONFIG_KEYS.get(key)
+        if not env_key:
+            continue
+        updates[env_key] = value.strip()
+        if key in ("data_dir", "backup_keep", "rotation_default_seconds"):
+            restart_needed.append(key)
+    if not updates:
+        raise HTTPException(400, "no recognised config keys")
+    update_env(updates)
+    reload_settings()
+    note = "Saved."
+    if "data_dir" in payload.values:
+        note = ("Saved. The data folder change takes effect after a restart — your "
+                "existing data is NOT moved automatically; move it first, then restart.")
+    elif restart_needed:
+        note = "Saved — restart services to fully apply."
+    return {"ok": True, "note": note}
 
 
 _AI_PROVIDERS = {"hailo", "openai_compatible", "disabled"}

@@ -50,10 +50,23 @@ dir + repo). Each is independently restartable and health-checkable.
   APScheduler, httpx, argon2-cffi, itsdangerous.
 - **Frontend:** React 18 + TypeScript, Vite, Tailwind (custom token theme),
   Apache ECharts (canvas, tree-shaken imports).
-- **Storage:** SQLite (WAL) on the USB NVMe. Money stored as TEXT and round-tripped
-  through `Decimal` to avoid float affinity.
-- **Packaging:** `uv`/venv for backend, npm for frontend build. Native systemd
-  deployment — no Docker.
+- **Storage:** SQLite (WAL) on the data dir (USB NVMe on a Pi). Money stored as TEXT
+  and round-tripped through `Decimal` to avoid float affinity.
+- **Packaging / deployment:** `uv`/venv for backend, npm for frontend build.
+  Two first-class options:
+  - **Native systemd** (default on the Pi) — installer renders the units.
+  - **Docker** (any host) — multi-stage `Dockerfile` + `docker-compose.yml` run the
+    API + worker with a persistent data volume. The Pi and Hailo HAT are optional;
+    without them you lose the kiosk + on-device AI only (AI falls back to a remote
+    Ollama / OpenAI-compatible endpoint, or deterministic answers).
+
+## Runtime configuration (no restart)
+
+Most settings are editable from the UI and applied **in-process**: `reload_settings()`
+re-reads `.env` and resets the provider/registry/FX caches, so switching market or
+AI provider, theme, currency, etc. takes effect immediately. Service-level actions
+(restart, LAN/voice/AI/kiosk toggles) go through a scoped, PIN-gated root helper
+(`/usr/local/sbin/ledgerframe-admin`) — see SECURITY.md.
 
 ## Data flow & key decisions
 
@@ -73,6 +86,20 @@ template renders the facts directly — the feature degrades, never breaks.
 (`get_provider`, `get_ai_provider`) return whatever is configured and fall back to
 safe defaults (mock market data, disabled AI) on any error. Adding a vendor means
 adding one adapter — no business-logic changes.
+
+- **Market:** `mock` (DEMO), `csv`, `alphavantage` (US equities/ETFs, crypto via the
+  currency endpoint, FX; raw indices unsupported → the Global page uses ETF proxies).
+- **AI:** `hailo`/Ollama (on-device), `openai_compatible` (OpenAI/OpenRouter/
+  Anthropic/remote Ollama), `disabled`. Configured in Settings.
+
+### Honest live data + caching
+A live provider that can't serve a symbol returns **unavailable (no price)** — the
+app never fabricates a price and never writes a null into the DB. Page loads use
+`display_quote()`: serve fresh cache, and only do a live fetch for "cheap" providers
+(`mock`/`csv`); rate-limited providers (Alpha Vantage, `fetch_on_demand=False`) serve
+cache and are refreshed by the worker or the Settings **Refresh** button. Daily
+history is cached in `price_history` (`get_history_cached`, ~12h freshness) so a page
+load can't exhaust a provider's quota.
 
 ### Staleness is explicit
 `app/services/market.py` stores `source`, `entitlement`, `market_time`, and

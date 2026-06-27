@@ -66,7 +66,28 @@ Light theme & mobile are first-class:
 
 ---
 
+## Runs anywhere
+
+LedgerFrame started as a Raspberry Pi project but **runs on any machine** — Linux,
+macOS, or Docker on any host. **The Raspberry Pi and the Hailo AI HAT+ are
+optional**: without them you simply lose the kiosk display and on-device AI (the
+assistant falls back to local Ollama / an OpenAI-compatible endpoint, or to
+deterministic fact-only answers). Everything else — portfolio, analytics, market
+data, news, themes — works identically.
+
 ## Install
+
+### Docker (any machine — simplest)
+
+```bash
+git clone https://github.com/gopalasubramanium/LedgerFrame.git && cd LedgerFrame
+export LEDGERFRAME_SECRET_KEY=$(python3 -c "import secrets;print(secrets.token_urlsafe(48))")
+docker compose up -d --build
+```
+
+Open **http://localhost:8321**. Data persists in the `ledgerframe-data` volume.
+Runs the API + background worker in DEMO mode; switch to live data and configure
+everything from **Settings**. (If you expose it beyond localhost, set a PIN.)
 
 ### Raspberry Pi 5 (guided)
 

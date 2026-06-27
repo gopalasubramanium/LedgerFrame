@@ -12,34 +12,42 @@ layer only *explains* verified, timestamped facts — it never calculates. SQLit
 
 ## 2. Implemented features
 
-- **Backend engine:** FIFO cost basis (buys/sells/splits/dividends/fees), multi-currency
-  valuation with FX conversion, unrealised/realised P/L, day change, allocations
-  (class/security/currency/account), top movers, concentration, net worth with
-  liabilities, manual/illiquid asset price overrides.
-- **Market data abstraction:** `mock` (DEMO, default), `csv`, and an opt-in external
-  adapter (Alpha Vantage reference). Per-quote provenance, entitlement labelling, and
-  explicit staleness; provider failures degrade to cache, never break the UI.
-- **Grounded AI:** Hailo `hailo-ollama` client (runtime model discovery, streaming,
-  timeouts, auto-select smallest instruct model), disabled-safe fallback, optional
-  OpenAI-compatible provider. Tool-backed fact gathering, refusal on missing data, "not
-  financial advice" disclaimer, no fabricated numbers.
-- **API:** documented `/api/v1` (OpenAPI at `/api/docs`), typed Pydantic models, auth on
-  all mutations, localhost binding, SSE streaming for AI.
-- **Data model:** all 21 entities, Alembic migrations + bootstrap, demo seed.
-- **Frontend:** original dark "deep graphite" design system; pages Home, Portfolio,
-  Markets, Instrument Detail, Heatmap, Global Assets, News/Briefing, Financial Snapshot,
-  Settings; touch-first nav (≥44px targets, no hover-only controls), dashboard rotation
-  with pause-on-interaction + page indicators + focus, Ask panel (streaming + fact
-  panel), PIN lock screen, reduced-motion + high-contrast modes, offline stale banners,
-  loading skeletons, ECharts (line/donut/treemap heatmap).
-- **Security:** Argon2 PIN, signed time-limited sessions, auto-lock, CSP + security
-  headers, log redaction, CSV size/row caps + formula-injection guard, age-encrypted
-  backups with rotation, audit events, no telemetry.
-- **Ops:** idempotent non-destructive installer, doctor, backup/restore, benchmark,
-  update, uninstall, reset-demo, start-dev; 4 systemd units (API/worker/kiosk/voice);
+- **Backend engine:** FIFO cost basis (buy/sell/split/**bonus**/dividend/interest/fees/
+  **taxes**), multi-currency valuation + FX, unrealised/realised P/L, income & income
+  yield, day change, allocations (class/currency/sector/account), top movers,
+  concentration, net worth with liabilities, manual/illiquid price overrides.
+- **Performance analytics:** benchmarked invested-portfolio value series vs a
+  user-selectable index, with deterministic stats (return, vs-benchmark, max drawdown,
+  annualised volatility, return/vol). DB-cached daily history.
+- **Market data abstraction:** `mock` (DEMO), `csv`, `alphavantage` (equities/ETFs,
+  crypto, FX; index ETF proxies on Global). Switchable from Settings, applied
+  in-process. Per-quote provenance/entitlement/staleness; **honest failures** (no
+  fabricated price); history & quote caching to respect provider quotas.
+- **Configurable AI:** Hailo/Ollama (on-device, runtime model discovery) or any
+  OpenAI-compatible endpoint (OpenAI/OpenRouter/Anthropic/remote Ollama) or disabled;
+  set + connection-tested in Settings. Tool-backed grounding, refusal on missing data,
+  "not financial advice", no fabricated numbers.
+- **API:** documented `/api/v1` (OpenAPI at `/api/docs`), typed models, auth on
+  mutations, SSE streaming; data-source / AI / config / reset / refresh / fetch-history
+  / scoped-admin endpoints.
+- **Data model:** 21 entities (+ `taxes`), Alembic migrations + idempotent boot schema,
+  seed-once demo, full reset.
+- **Frontend:** original **slate + emerald** design system with **light/dark/system**
+  themes; pages Home (now), Portfolio (analytics), **Holdings** (manage), Markets (your
+  markets + search), Global (world indices via ETF proxies), Heatmap, News, Snapshot,
+  Settings, Instrument. Responsive (mobile drawer nav), benchmark picker, key-stats
+  panel, transaction/asset editor, Ask panel, auto PIN prompt, rotation, accessibility
+  modes, offline banners, theme-aware ECharts.
+- **Security:** Argon2 PIN (auto-prompt on 401/expiry, first-PIN-with-LAN handled),
+  signed sessions + auto-lock, CSP + security headers, log redaction, CSV size/row caps
+  + formula-injection guard, age-encrypted rotating backups, scoped sudoers helper,
+  audit events, no telemetry.
+- **Ops & deployment:** native **systemd** (installer renders units; re-rendered on
+  update) **or Docker** (`Dockerfile` + `docker-compose.yml`); scripts: install, doctor,
+  backup/restore, benchmark, update, uninstall, reset-demo, start-dev, lf-admin;
   background worker (refresh/snapshots/briefing/backup).
-- **Tests:** 35 backend (pytest), 4 frontend (vitest), 7 e2e (Playwright) covering all
-  10 acceptance criteria.
+- **Tests:** 72 backend (pytest), frontend vitest, Playwright e2e covering the 10
+  acceptance criteria.
 
 ## 3. Deferred features (v1.1+)
 

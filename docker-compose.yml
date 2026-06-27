@@ -1,0 +1,39 @@
+# Run LedgerFrame anywhere with Docker:  docker compose up -d
+# Then open http://localhost:8321  (data persists in the named volume).
+services:
+  api:
+    build: .
+    image: ledgerframe:latest
+    container_name: ledgerframe-api
+    ports:
+      - "8321:8321"
+    environment:
+      # Generate one: python -c "import secrets;print(secrets.token_urlsafe(48))"
+      LEDGERFRAME_SECRET_KEY: ${LEDGERFRAME_SECRET_KEY:-change-me-to-a-long-random-string}
+      LEDGERFRAME_DATA_DIR: /data
+      LEDGERFRAME_BASE_CURRENCY: ${LEDGERFRAME_BASE_CURRENCY:-USD}
+      # DEMO by default. To go live: set these (or use Settings → Data source).
+      LEDGERFRAME_MARKET_PROVIDER: ${LEDGERFRAME_MARKET_PROVIDER:-mock}
+      LEDGERFRAME_MARKET_API_KEY: ${LEDGERFRAME_MARKET_API_KEY:-}
+      # If you expose this beyond localhost, set a PIN in Settings.
+      LEDGERFRAME_ALLOW_LAN: ${LEDGERFRAME_ALLOW_LAN:-false}
+    volumes:
+      - ledgerframe-data:/data
+    restart: unless-stopped
+
+  worker:
+    image: ledgerframe:latest
+    container_name: ledgerframe-worker
+    command: ["python", "-m", "app.worker"]
+    environment:
+      LEDGERFRAME_DATA_DIR: /data
+      LEDGERFRAME_MARKET_PROVIDER: ${LEDGERFRAME_MARKET_PROVIDER:-mock}
+      LEDGERFRAME_MARKET_API_KEY: ${LEDGERFRAME_MARKET_API_KEY:-}
+    volumes:
+      - ledgerframe-data:/data
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  ledgerframe-data:

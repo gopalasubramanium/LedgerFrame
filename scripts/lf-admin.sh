@@ -80,6 +80,15 @@ case "$action" in
     esac
     systemctl restart ledgerframe-api ledgerframe-worker
     echo "ai ${2}" ;;
+  kiosk)
+    case "${2:-}" in
+      on)
+        if [[ -f /etc/systemd/system/ledgerframe-kiosk.service ]]; then
+          systemctl enable --now ledgerframe-kiosk; echo "kiosk on"
+        else echo "kiosk unit not installed (re-run installer with --enable-kiosk)"; exit 1; fi ;;
+      off) systemctl disable --now ledgerframe-kiosk 2>/dev/null || true; echo "kiosk off" ;;
+      *) echo "usage: kiosk <on|off>"; exit 1 ;;
+    esac ;;
   doctor)
     as_user bash "$REPO_DIR/scripts/doctor.sh" || true ;;
   backup)

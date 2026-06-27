@@ -12,7 +12,10 @@ export default function Settings() {
   const adminAvail = useApi(api.adminAvailable, 0);
   const feeds = useApi(api.feeds, 0);
   const ds = useApi(api.dataSource, 0);
+  const cfg = useApi(api.config, 0);
 
+  const [conf, setConf] = useState<Record<string, string>>({});
+  const setC = (k: string, v: string) => setConf((p) => ({ ...p, [k]: v }));
   const [provider, setProvider] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [feedTest, setFeedTest] = useState<{ url: string; ok: boolean; count: number; error: string | null }[] | null>(null);
@@ -39,6 +42,15 @@ export default function Settings() {
   }, [settings.data]);
   useEffect(() => { if (feeds.data) setFeedText(feeds.data.feeds.join("\n")); }, [feeds.data]);
   useEffect(() => { if (ds.data) setProvider(ds.data.provider); }, [ds.data]);
+  useEffect(() => { if (cfg.data) setConf(cfg.data); }, [cfg.data]);
+
+  async function saveConf(keys: string[]) {
+    try {
+      const values = Object.fromEntries(keys.map((k) => [k, conf[k] ?? ""]));
+      const r = await api.setConfig(values);
+      setMsg(r.note); cfg.refetch(); refreshStatus();
+    } catch (e) { setMsg(e instanceof Error ? e.message : "Save failed (locked?)"); }
+  }
 
   async function saveDataSource() {
     try {
@@ -83,12 +95,18 @@ export default function Settings() {
         <select className="lf-input mb-3" value={baseCcy} onChange={(e) => setBaseCcy(e.target.value)}>
           {ccys.map((c) => <option key={c}>{c}</option>)}
         </select>
+        <label className="block text-sm text-muted mb-1">Timezone</label>
+        <input className="lf-input mb-3" value={conf.timezone ?? ""} onChange={(e) => setC("timezone", e.target.value)} placeholder="Asia/Singapore" />
         <div className="grid grid-cols-3 gap-3">
           <Num label="Rotation (s)" v={rotation} set={setRotation} min={10} max={300} />
           <Num label="Refresh (s)" v={refresh} set={setRefresh} min={15} max={3600} />
           <Num label="Screen sleep (min, 0=off)" v={sleepMin} set={setSleepMin} min={0} max={180} />
+          <Num label="Stale after (s)" v={conf.stale_after_seconds ?? "900"} set={(v) => setC("stale_after_seconds", v)} min={30} max={86400} />
         </div>
-        <button className="lf-btn-accent mt-3" onClick={saveConfig}>Save</button>
+        <div className="flex gap-2 mt-3">
+          <button className="lf-btn-accent" onClick={saveConfig}>Save display</button>
+          <button className="lf-btn" onClick={() => saveConf(["timezone", "stale_after_seconds"])}>Save timezone & staleness</button>
+        </div>
       </Card>
 
       {/* Data source (mock <-> live) */}
@@ -175,9 +193,14 @@ export default function Settings() {
           <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("voice", "off")}>Disable voice</button>
         </div>
         <Row k="AI" v={status?.ai_enabled ? "ON" : "off"} />
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-3">
           <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("ai", "on")}>Enable AI</button>
           <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("ai", "off")}>Disable AI</button>
+        </div>
+        <Row k="Kiosk (full-screen)" v="" />
+        <div className="flex gap-2">
+          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("kiosk", "on")}>Enable kiosk</button>
+          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("kiosk", "off")}>Disable kiosk</button>
         </div>
         <p className="text-xs text-warn mt-3">Enabling LAN exposes the app to your network — set a PIN first.</p>
       </Card>
@@ -229,7 +252,26 @@ export default function Settings() {
           <input type="password" inputMode="numeric" placeholder="New PIN (min 4)" className="lf-input tnum" value={pin} onChange={(e) => setPin(e.target.value)} />
           <button className="lf-btn" onClick={setNewPin}>Set PIN</button>
         </div>
+        <div className="mt-3 flex items-end gap-2">
+          <Num label="Auto-lock after (min, 0=off)" v={conf.autolock_minutes ?? "15"} set={(v) => setC("autolock_minutes", v)} min={0} max={1440} />
+          <button className="lf-btn" onClick={() => saveConf(["autolock_minutes"])}>Save</button>
+        </div>
         {status?.pin_set && <button className="lf-btn mt-3" onClick={() => { api.lock(); setLocked(true); }}>Lock now</button>}
+      </Card>
+
+      {/* Advanced */}
+      <Card title="Advanced" className="col-span-12 lg:col-span-6">
+        <label className="block text-sm text-muted mb-1">Data folder</label>
+        <input className="lf-input mb-1" value={conf.data_dir ?? ""} onChange={(e) => setC("data_dir", e.target.value)} placeholder="/mnt/ledgerframe-data" />
+        <p className="text-xs text-warn mb-3">⚠ Changing this needs a restart and does NOT move existing data — move the folder first, then restart.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Num label="Backups to keep" v={conf.backup_keep ?? "14"} set={(v) => setC("backup_keep", v)} min={1} max={365} />
+          <div>
+            <span className="text-xs uppercase tracking-wide text-faint">Backup age recipient (optional)</span>
+            <input className="lf-input mt-1" value={conf.backup_age_recipient ?? ""} onChange={(e) => setC("backup_age_recipient", e.target.value)} placeholder="age1…" />
+          </div>
+        </div>
+        <button className="lf-btn-accent mt-3" onClick={() => saveConf(["data_dir", "backup_keep", "backup_age_recipient"])}>Save advanced</button>
       </Card>
 
       {/* Diagnostics */}

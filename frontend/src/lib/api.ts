@@ -112,7 +112,7 @@ export const api = {
   setAiConfig: (d: { enabled: boolean; provider: string; hailo_base_url?: string; model?: string; openai_base_url?: string; openai_api_key?: string }) =>
     req<{ ok: boolean; available: boolean; detail: string }>("/api/v1/system/ai-config", { method: "PUT", body: JSON.stringify(d) }),
   resetData: () => req<{ ok: boolean; note: string }>("/api/v1/system/reset-data", { method: "POST" }),
-  refreshData: () => req<{ ok: boolean; refreshed: number; total: number; errors: string[] }>("/api/v1/system/refresh-data", { method: "POST" }),
+  refreshData: () => req<{ ok: boolean; refreshed: number; total: number; succeeded: string[]; failed: { symbol: string; reason: string }[]; errors: string[] }>("/api/v1/system/refresh-data", { method: "POST" }),
 
   // --- System admin (scoped root helper) ---
   adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),

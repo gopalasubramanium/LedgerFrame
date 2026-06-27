@@ -35,6 +35,10 @@ from app.schemas.common import (
 log = logging.getLogger(__name__)
 _BASE = "https://www.alphavantage.co/query"
 
+# Common crypto tickers — Alpha Vantage serves these via its currency endpoint,
+# NOT GLOBAL_QUOTE (which is equities/ETFs only).
+_CRYPTO = {"BTC", "ETH", "LTC", "XRP", "BCH", "ADA", "DOGE", "SOL", "DOT", "MATIC", "LINK", "AVAX"}
+
 
 class RateLimited(Exception):
     """Alpha Vantage returned a rate-limit / notice response."""
@@ -71,6 +75,21 @@ class ExternalMarketDataProvider:
 
     async def get_quote(self, symbol: str, exchange: str | None = None) -> Quote:
         now = datetime.now(UTC)
+        sym = symbol.upper()
+        # Crypto uses the currency endpoint (GLOBAL_QUOTE is equities/ETFs only).
+        if sym in _CRYPTO:
+            try:
+                rate = await self._raw_fx(sym, "USD")  # raises on failure (no mock)
+                return Quote(
+                    symbol=sym, exchange=exchange, price=rate, currency="USD",
+                    source=self.name, entitlement=EntitlementStatus.DELAYED,
+                    market_time=now, received_at=now,
+                )
+            except Exception as exc:  # noqa: BLE001
+                log.warning("AV crypto quote unavailable for %s: %s", sym, exc)
+                return Quote(symbol=sym, exchange=exchange, price=None, currency="USD",
+                             source=self.name, entitlement=EntitlementStatus.UNAVAILABLE,
+                             received_at=now, is_stale=True)
         try:
             data = (await self._get({"function": "GLOBAL_QUOTE", "symbol": symbol})).get("Global Quote", {})
             px = data.get("05. price")
@@ -139,19 +158,25 @@ class ExternalMarketDataProvider:
     async def get_market_status(self, market: str) -> MarketStatus:
         return await self._mock.get_market_status(market)
 
+    async def _raw_fx(self, base: str, quote: str):
+        """AV exchange rate, raising on failure (no mock fallback)."""
+        data = await self._get({
+            "function": "CURRENCY_EXCHANGE_RATE", "from_currency": base, "to_currency": quote,
+        })
+        rate = data.get("Realtime Currency Exchange Rate", {}).get("5. Exchange Rate")
+        if not rate:
+            raise ValueError("empty fx (unsupported pair or rate limited)")
+        return price(rate)
+
     async def get_fx_rate(self, base: str, quote: str) -> FxRate:
         now = datetime.now(UTC)
         try:
-            data = await self._get({
-                "function": "CURRENCY_EXCHANGE_RATE", "from_currency": base, "to_currency": quote,
-            })
-            rate = data.get("Realtime Currency Exchange Rate", {}).get("5. Exchange Rate")
-            if not rate:
-                raise ValueError("empty fx")
-            return FxRate(base=base.upper(), quote=quote.upper(), rate=price(rate),
-                          source=self.name, received_at=now)
+            return FxRate(base=base.upper(), quote=quote.upper(),
+                          rate=await self._raw_fx(base, quote), source=self.name, received_at=now)
         except Exception as exc:  # noqa: BLE001
-            log.warning("AV fx failed %s/%s: %s", base, quote, exc)
+            # FX is needed for currency conversion across the app, so fall back to
+            # the (approximate) mock rate rather than breaking valuation.
+            log.warning("AV fx fell back to approx for %s/%s: %s", base, quote, exc)
             return await self._mock.get_fx_rate(base, quote)
 
     async def get_news(self, instruments: list[str]) -> list[NewsItem]:

@@ -16,6 +16,7 @@ export default function Settings() {
   const [provider, setProvider] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [feedTest, setFeedTest] = useState<{ url: string; ok: boolean; count: number; error: string | null }[] | null>(null);
+  const [refreshResult, setRefreshResult] = useState<{ refreshed: number; total: number; succeeded: string[]; failed: { symbol: string; reason: string }[] } | null>(null);
 
   const [baseCcy, setBaseCcy] = useState("");
   const [rotation, setRotation] = useState("30");
@@ -113,7 +114,7 @@ export default function Settings() {
           <div className="text-xs uppercase tracking-wide text-faint">Data</div>
           <div className="flex flex-wrap gap-2">
             <button className="lf-btn" disabled={!!busy} onClick={async () => {
-              setBusy("refresh"); try { const r = await api.refreshData(); setMsg(`Refreshed ${r.refreshed}/${r.total}${r.errors.length ? ` · ${r.errors.length} failed` : ""}`); } catch (e) { setMsg(e instanceof Error ? e.message : "Refresh failed"); } finally { setBusy(""); }
+              setBusy("refresh"); setRefreshResult(null); try { const r = await api.refreshData(); setRefreshResult(r); setMsg(`Refreshed ${r.refreshed}/${r.total}`); } catch (e) { setMsg(e instanceof Error ? e.message : "Refresh failed"); } finally { setBusy(""); }
             }}>Refresh live data now</button>
             <button className="lf-btn border-down/50 text-down" disabled={!!busy} onClick={async () => {
               if (!confirm("Delete ALL demo & portfolio data (holdings, transactions, watchlists, prices)? Your settings and PIN are kept. This cannot be undone.")) return;
@@ -121,6 +122,22 @@ export default function Settings() {
             }}>Clear demo / all data</button>
           </div>
           <p className="text-xs text-faint">Clear, then set a live provider above and add your own holdings (Holdings page). Demo data won't come back.</p>
+
+          {refreshResult && (
+            <div className="text-xs mt-1 space-y-1">
+              <div className="text-up">✓ Updated ({refreshResult.refreshed}): {refreshResult.succeeded.join(", ") || "—"}</div>
+              {refreshResult.failed.length > 0 && (
+                <div>
+                  <div className="text-down">✗ No data ({refreshResult.failed.length}):</div>
+                  <ul className="ml-3">
+                    {refreshResult.failed.map((f) => (
+                      <li key={f.symbol} className="text-muted"><span className="text-ink">{f.symbol}</span> — {f.reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </Card>
 

@@ -238,17 +238,31 @@ async def refresh_data(session: AsyncSession = Depends(get_db)) -> dict:
     wl = (await session.execute(select(WatchlistItem.instrument_id))).scalars().all()
     ids = {*held, *wl}
     instruments = (await session.execute(select(Instrument).where(Instrument.id.in_(ids or [-1])))).scalars().all()
-    refreshed, errors = 0, []
+    provider = get_settings().market_provider
+    refreshed, succeeded, failed = 0, [], []
     for instr in instruments:
         try:
             q = await refresh_quote(session, instr.symbol, instr.exchange)
             if q.price is not None and q.entitlement.value != "unavailable":
                 refreshed += 1
+                succeeded.append(instr.symbol)
             else:
-                errors.append(f"{instr.symbol}: no data")
+                failed.append({
+                    "symbol": instr.symbol,
+                    "reason": f"no data from {provider} (symbol may be unsupported "
+                              f"on this provider, or the daily/minute limit was hit)",
+                })
         except Exception as exc:  # noqa: BLE001
-            errors.append(f"{instr.symbol}: {exc}")
-    return {"ok": True, "refreshed": refreshed, "total": len(instruments), "errors": errors[:20]}
+            failed.append({"symbol": instr.symbol, "reason": str(exc)[:160]})
+    return {
+        "ok": True,
+        "refreshed": refreshed,
+        "total": len(instruments),
+        "succeeded": succeeded,
+        "failed": failed,
+        # Back-compat string list.
+        "errors": [f"{f['symbol']}: {f['reason']}" for f in failed],
+    }
 
 
 @router.get("/system/admin/available")

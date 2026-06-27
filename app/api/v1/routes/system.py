@@ -8,7 +8,7 @@ import shutil
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
@@ -108,8 +108,12 @@ async def set_data_source(payload: DataSourceIn) -> dict:
     if payload.stale_after_seconds:
         updates["LEDGERFRAME_STALE_AFTER_SECONDS"] = str(payload.stale_after_seconds)
     update_env(updates)
-    # Try to apply immediately via the privileged helper; fall back to a manual note.
-    applied = False
+    # Apply immediately in this process (no restart needed): re-read .env and reset
+    # provider caches. Also restart the worker via the helper if available so its
+    # background refreshes use the new provider too.
+    from app.core.config import reload_settings
+
+    reload_settings()
     if os.path.exists(_ADMIN_BIN):
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -117,11 +121,79 @@ async def set_data_source(payload: DataSourceIn) -> dict:
                 stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
             )
             await asyncio.wait_for(proc.communicate(), timeout=60)
-            applied = proc.returncode == 0
         except Exception:  # noqa: BLE001
-            applied = False
-    return {"ok": True, "applied": applied,
-            "note": "Saved." if applied else "Saved — restart services to apply."}
+            pass
+    return {"ok": True, "applied": True, "note": f"Applied — now using '{payload.provider}'."}
+
+
+@router.post("/system/reset-data", dependencies=[Depends(require_auth)])
+async def reset_data(session: AsyncSession = Depends(get_db)) -> dict:
+    """Delete all demo/portfolio/market data so you can start fresh with live data.
+
+    Removes transactions, holdings, instruments, quotes, price history, watchlists,
+    snapshots, news and notes. Keeps your settings, PIN, and provider config. Sets a
+    flag so demo data is NOT re-seeded afterwards.
+    """
+    from sqlalchemy import delete
+
+    from app.models import (
+        Account,
+        AIConversation,
+        AIMessage,
+        Holding,
+        Instrument,
+        MarketNews,
+        NetWorthSnapshot,
+        Note,
+        PortfolioSnapshot,
+        PriceHistory,
+        Quote,
+        Setting,
+        Transaction,
+        Watchlist,
+        WatchlistItem,
+    )
+    from app.seed.demo import SEED_FLAG_KEY
+
+    # Delete children before parents to satisfy FK constraints.
+    for model in (
+        AIMessage, AIConversation, WatchlistItem, Watchlist, Note, PriceHistory,
+        Quote, Transaction, Holding, PortfolioSnapshot, NetWorthSnapshot, MarketNews,
+        Instrument, Account,
+    ):
+        await session.execute(delete(model))
+    # Prevent demo re-seeding on the next boot.
+    flag = (await session.execute(select(Setting).where(Setting.key == SEED_FLAG_KEY))).scalars().first()
+    if flag:
+        flag.value = "1"
+    else:
+        session.add(Setting(key=SEED_FLAG_KEY, value="1"))
+    await session.flush()
+    return {"ok": True, "note": "All portfolio & market data cleared. Add your holdings to begin."}
+
+
+@router.post("/system/refresh-data", dependencies=[Depends(require_auth)])
+async def refresh_data(session: AsyncSession = Depends(get_db)) -> dict:
+    """Force-refresh quotes for held + watchlisted instruments from the current
+    provider (live, if configured). Returns how many were refreshed and any errors."""
+    from app.models import Holding, Instrument, WatchlistItem
+    from app.services.market import refresh_quote
+
+    held = (await session.execute(select(Holding.instrument_id).where(Holding.instrument_id.isnot(None)))).scalars().all()
+    wl = (await session.execute(select(WatchlistItem.instrument_id))).scalars().all()
+    ids = {*held, *wl}
+    instruments = (await session.execute(select(Instrument).where(Instrument.id.in_(ids or [-1])))).scalars().all()
+    refreshed, errors = 0, []
+    for instr in instruments:
+        try:
+            q = await refresh_quote(session, instr.symbol, instr.exchange)
+            if q.price is not None and q.entitlement.value != "unavailable":
+                refreshed += 1
+            else:
+                errors.append(f"{instr.symbol}: no data")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{instr.symbol}: {exc}")
+    return {"ok": True, "refreshed": refreshed, "total": len(instruments), "errors": errors[:20]}
 
 
 @router.get("/system/admin/available")

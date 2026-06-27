@@ -8,6 +8,7 @@ import { useApp } from "./store/app";
 import { Clock } from "./components/Clock";
 import Home from "./pages/Home";
 import Portfolio from "./pages/Portfolio";
+import Holdings from "./pages/Holdings";
 import Markets from "./pages/Markets";
 import HeatmapPage from "./pages/Heatmap";
 import News from "./pages/News";
@@ -19,6 +20,7 @@ import Settings from "./pages/Settings";
 const NAV = [
   { path: "/", page: "home", label: "Home" },
   { path: "/portfolio", page: "portfolio", label: "Portfolio" },
+  { path: "/holdings", page: "holdings", label: "Holdings" },
   { path: "/markets", page: "markets", label: "Markets" },
   { path: "/heatmap", page: "heatmap", label: "Heatmap" },
   { path: "/global", page: "global", label: "Global" },
@@ -93,6 +95,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/holdings" element={<Holdings />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/heatmap" element={<HeatmapPage />} />
             <Route path="/global" element={<GlobalAssets />} />

@@ -137,3 +137,23 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def reload_settings() -> Settings:
+    """Re-read .env into a fresh Settings (after the app edits .env at runtime) and
+    reset dependent caches so changes (e.g. market provider) take effect in-process
+    without a full service restart."""
+    get_settings.cache_clear()
+    settings = get_settings()
+    # Reset provider/registry caches that captured the old settings.
+    try:
+        from app.providers.ai import reset_ai_provider
+        from app.providers.market import reset_provider
+        from app.services import fx
+
+        reset_provider()
+        reset_ai_provider()
+        fx.clear_cache()
+    except Exception:  # noqa: BLE001 — best-effort; full restart always works too
+        pass
+    return settings

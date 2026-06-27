@@ -86,6 +86,92 @@ async def get_cached_quote(
     )
 
 
+async def get_history_cached(
+    session: AsyncSession,
+    symbol: str,
+    interval: str,
+    start: datetime,
+    end: datetime,
+    max_age_hours: int = 12,
+):
+    """Return historical candles, cached in price_history.
+
+    Refetches from the provider at most once per ``max_age_hours`` per
+    instrument+interval — critical for rate-limited providers (Alpha Vantage's
+    free tier is ~25 requests/day). Cheap providers (mock/csv) also benefit.
+    """
+    from app.models import PriceHistory, Setting
+    from app.schemas.common import Candle
+
+    instrument = await _get_or_create_instrument(session, symbol, None)
+    marker_key = f"hist_fetched:{instrument.id}:{interval}"
+    marker = (await session.execute(select(Setting).where(Setting.key == marker_key))).scalars().first()
+    fresh = False
+    if marker:
+        try:
+            ts = datetime.fromisoformat(marker.value)
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=UTC)
+            fresh = (datetime.now(UTC) - ts).total_seconds() < max_age_hours * 3600
+        except ValueError:
+            fresh = False
+
+    async def _from_db() -> list:
+        rows = (
+            await session.execute(
+                select(PriceHistory)
+                .where(
+                    PriceHistory.instrument_id == instrument.id,
+                    PriceHistory.interval == interval,
+                    PriceHistory.ts >= start,
+                    PriceHistory.ts <= end,
+                )
+                .order_by(PriceHistory.ts)
+            )
+        ).scalars().all()
+        return [
+            Candle(ts=r.ts, open=r.open, high=r.high, low=r.low, close=r.close, volume=r.volume)
+            for r in rows
+        ]
+
+    if fresh:
+        cached = await _from_db()
+        if cached:
+            return cached
+
+    # Fetch from provider and upsert new candles.
+    try:
+        candles = await get_provider().get_history(symbol, interval, start, end)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("history fetch failed for %s: %s", symbol, exc)
+        return await _from_db()
+
+    existing_ts = set(
+        (
+            await session.execute(
+                select(PriceHistory.ts).where(
+                    PriceHistory.instrument_id == instrument.id,
+                    PriceHistory.interval == interval,
+                )
+            )
+        ).scalars().all()
+    )
+    for c in candles:
+        cts = c.ts.replace(tzinfo=None) if c.ts.tzinfo else c.ts
+        if cts in existing_ts or c.ts in existing_ts:
+            continue
+        session.add(PriceHistory(
+            instrument_id=instrument.id, interval=interval, ts=c.ts,
+            open=c.open, high=c.high, low=c.low, close=c.close, volume=c.volume,
+        ))
+    if marker:
+        marker.value = datetime.now(UTC).isoformat()
+    else:
+        session.add(Setting(key=marker_key, value=datetime.now(UTC).isoformat()))
+    await session.flush()
+    return candles
+
+
 async def _get_or_create_instrument(
     session: AsyncSession, symbol: str, exchange: str | None
 ) -> Instrument:

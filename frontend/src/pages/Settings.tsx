@@ -106,7 +106,21 @@ export default function Settings() {
           </>
         )}
         <button className="lf-btn-accent" onClick={saveDataSource}>Save & apply</button>
-        <p className="text-xs text-faint mt-2">Switching providers restarts the API. See docs/DATA_SOURCES.md for keys & limits.</p>
+        <p className="text-xs text-faint mt-2">Applies immediately (no restart). See docs/DATA_SOURCES.md for keys & limits.</p>
+
+        <div className="border-t border-line mt-4 pt-3 space-y-2">
+          <div className="text-xs uppercase tracking-wide text-faint">Data</div>
+          <div className="flex flex-wrap gap-2">
+            <button className="lf-btn" disabled={!!busy} onClick={async () => {
+              setBusy("refresh"); try { const r = await api.refreshData(); setMsg(`Refreshed ${r.refreshed}/${r.total}${r.errors.length ? ` · ${r.errors.length} failed` : ""}`); } catch (e) { setMsg(e instanceof Error ? e.message : "Refresh failed"); } finally { setBusy(""); }
+            }}>Refresh live data now</button>
+            <button className="lf-btn border-down/50 text-down" disabled={!!busy} onClick={async () => {
+              if (!confirm("Delete ALL demo & portfolio data (holdings, transactions, watchlists, prices)? Your settings and PIN are kept. This cannot be undone.")) return;
+              setBusy("reset"); try { const r = await api.resetData(); setMsg(r.note); ds.refetch(); refreshStatus(); } catch (e) { setMsg(e instanceof Error ? e.message : "Reset failed"); } finally { setBusy(""); }
+            }}>Clear demo / all data</button>
+          </div>
+          <p className="text-xs text-faint">Clear, then set a live provider above and add your own holdings (Holdings page). Demo data won't come back.</p>
+        </div>
       </Card>
 
       {/* Accessibility */}

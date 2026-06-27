@@ -23,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.money import ZERO, D, money, to_display
 from app.models import AssetClass, Holding, Instrument
 from app.models import Transaction as Txn
-from app.providers.market import get_provider
 from app.services import fx
 from app.services.portfolio import compute_fifo, value_portfolio
 
@@ -134,12 +133,13 @@ async def performance_series(
     benchmark. Constant manual assets (cash/property) are excluded by default so
     the line reflects market movement; pass include_manual=True for a net-worth view.
     """
-    provider = get_provider()
+    from app.services.market import get_history_cached
+
     end = datetime.now(UTC)
     start = end - timedelta(days=days)
 
-    # Time axis from the benchmark's daily candles.
-    bench_candles = await provider.get_history(benchmark, "1d", start, end)
+    # Time axis from the benchmark's daily candles (cached).
+    bench_candles = await get_history_cached(session, benchmark, "1d", start, end)
     axis = [c.ts for c in bench_candles]
     if len(axis) < 2:
         return {"series": [], "benchmark": [], "benchmark_symbol": benchmark, "stats": None}
@@ -171,7 +171,7 @@ async def performance_series(
                 portfolio_vals[i] += base_contrib
             continue
 
-        candles = await provider.get_history(instr.symbol, "1d", start, end)
+        candles = await get_history_cached(session, instr.symbol, "1d", start, end)
         closes = {c.ts: D(c.close) for c in candles}
         per_date = _carry_forward(axis, closes)
         qty = D(h.quantity)

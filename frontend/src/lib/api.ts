@@ -102,6 +102,8 @@ export const api = {
   dataSource: () => req<{ provider: string; has_api_key: boolean; base_currency: string; stale_after_seconds: string; providers: string[]; admin_available: boolean }>("/api/v1/system/data-source"),
   setDataSource: (d: { provider: string; api_key?: string; base_currency?: string; stale_after_seconds?: number }) =>
     req<{ ok: boolean; applied: boolean; note: string }>("/api/v1/system/data-source", { method: "PUT", body: JSON.stringify(d) }),
+  resetData: () => req<{ ok: boolean; note: string }>("/api/v1/system/reset-data", { method: "POST" }),
+  refreshData: () => req<{ ok: boolean; refreshed: number; total: number; errors: string[] }>("/api/v1/system/refresh-data", { method: "POST" }),
 
   // --- System admin (scoped root helper) ---
   adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),

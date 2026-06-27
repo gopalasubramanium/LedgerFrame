@@ -110,10 +110,13 @@ async def instrument_history(
     symbol: str,
     interval: str = Query("1d"),
     days: int = Query(180, ge=1, le=3650),
+    session: AsyncSession = Depends(get_db),
 ) -> dict:
+    from app.services.market import get_history_cached
+
     end = datetime.now(UTC)
     start = end - timedelta(days=days)
-    candles = await get_provider().get_history(symbol, interval, start, end)
+    candles = await get_history_cached(session, symbol, interval, start, end)
     return {
         "symbol": symbol.upper(),
         "interval": interval,

@@ -1,27 +1,30 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
-import { Card, ChangePill, DataBadge } from "../components/ui";
+import { Card } from "../components/ui";
 import { Donut } from "../components/Chart";
 import { PerformancePanel } from "../components/PerformancePanel";
 import { KeyStatsPanel } from "../components/KeyStatsPanel";
-import { PortfolioEditor } from "../components/PortfolioEditor";
 import { money, pct, signedMoney, toneClass } from "../lib/format";
+import type { HoldingRow } from "../lib/types";
 
+// Analytics view of the portfolio. Position management lives on the Holdings page.
 export default function Portfolio() {
   const summary = useApi(api.portfolioSummary, 60000);
   const holdings = useApi(api.holdings, 60000);
-  const [editing, setEditing] = useState(false);
   const s = summary.data;
   const ccy = s?.base_currency ?? "SGD";
-  const refresh = () => { summary.refetch(); holdings.refetch(); };
 
   const allocClass = s ? Object.entries(s.allocation_by_class).map(([name, value]) => ({ name, value: Math.abs(value) })) : [];
   const allocCcy = s ? Object.entries(s.allocation_by_currency).map(([name, value]) => ({ name, value: Math.abs(value) })) : [];
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Portfolio analytics</h1>
+        <Link to="/holdings" className="lf-btn-accent">Manage holdings →</Link>
+      </div>
+
       {/* Stat rail */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <Stat label={`Value (${ccy})`} value={money(s?.total_value, ccy)} />
@@ -50,59 +53,12 @@ export default function Portfolio() {
           {allocCcy.length ? <Donut data={allocCcy} /> : <p className="text-muted">No holdings.</p>}
           <Legend items={allocCcy} ccy={ccy} />
         </Card>
-
-        <KeyStatsPanel className="col-span-12 lg:col-span-8" />
-
         <Card title="Concentration" className="col-span-12 lg:col-span-4">
           <Concentration holdings={holdings.data?.holdings ?? []} total={s?.total_value ?? 0} />
         </Card>
 
-        <Card
-          title="Holdings"
-          className="col-span-12"
-          action={
-            <div className="flex items-center gap-2">
-              {s?.has_stale && <DataBadge stale />}
-              <button className="lf-btn-accent" onClick={() => setEditing(true)}>✎ Edit / Add</button>
-            </div>
-          }
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-faint text-xs uppercase">
-                <tr className="text-left border-b border-line">
-                  <th className="py-2">Asset</th>
-                  <th className="text-right">Qty</th>
-                  <th className="text-right">Price</th>
-                  <th className="text-right">Value ({ccy})</th>
-                  <th className="text-right">Unrealised</th>
-                  <th className="text-right">Day</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holdings.data?.holdings.map((h) => (
-                  <tr key={h.id} className="border-b border-line/50">
-                    <td className="py-2">
-                      {h.symbol ? (
-                        <Link to={`/instrument/${h.symbol}`} className="text-ink hover:text-accent">{h.label}</Link>
-                      ) : (h.label)}
-                      {!h.is_priced && <span className="text-faint text-xs ml-2">manual</span>}
-                      {h.is_stale && <span className="text-warn text-xs ml-1">⚠</span>}
-                    </td>
-                    <td className="text-right tnum">{h.quantity}</td>
-                    <td className="text-right tnum">{h.price === null ? "—" : money(h.price, h.currency, true)}</td>
-                    <td className="text-right tnum">{money(h.market_value, ccy)}</td>
-                    <td className={`text-right tnum ${toneClass(h.unrealised_pl)}`}>{signedMoney(h.unrealised_pl, ccy)}</td>
-                    <td className="text-right"><ChangePill value={h.day_change} currency={ccy} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <KeyStatsPanel className="col-span-12" />
       </div>
-
-      {editing && <PortfolioEditor onClose={() => setEditing(false)} onChanged={refresh} />}
     </div>
   );
 }
@@ -129,7 +85,7 @@ function Legend({ items, ccy }: { items: { name: string; value: number }[]; ccy:
   );
 }
 
-function MoverList({ title, rows, ccy }: { title: string; rows: import("../lib/types").HoldingRow[]; ccy: string }) {
+function MoverList({ title, rows, ccy }: { title: string; rows: HoldingRow[]; ccy: string }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-faint mb-2">{title}</div>
@@ -146,7 +102,7 @@ function MoverList({ title, rows, ccy }: { title: string; rows: import("../lib/t
   );
 }
 
-function Concentration({ holdings, total }: { holdings: import("../lib/types").HoldingRow[]; total: number }) {
+function Concentration({ holdings, total }: { holdings: HoldingRow[]; total: number }) {
   const top = [...holdings].filter((h) => h.market_value > 0).sort((a, b) => b.market_value - a.market_value).slice(0, 6);
   const denom = total || 1;
   return (
@@ -166,7 +122,6 @@ function Concentration({ holdings, total }: { holdings: import("../lib/types").H
         );
       })}
       {top.length === 0 && <li className="text-muted text-sm">No holdings.</li>}
-      <li className="text-xs text-faint pt-1">Largest position: {top[0] ? `${((top[0].market_value / denom) * 100).toFixed(1)}% (${top[0].label})` : "—"}</li>
     </ul>
   );
 }

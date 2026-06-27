@@ -41,7 +41,17 @@ _DEMO_TXNS = [
 _DEMO_PAGES = ["home", "portfolio", "markets", "heatmap", "news"]
 
 
+SEED_FLAG_KEY = "demo_seed_done"
+
+
 async def seed_demo_data(session: AsyncSession) -> bool:
+    """Seed demo data exactly once. A persistent flag prevents re-seeding after the
+    user clears their data (otherwise an empty DB would re-seed on every boot)."""
+    from app.models import Setting
+
+    flag = (await session.execute(select(Setting).where(Setting.key == SEED_FLAG_KEY))).scalars().first()
+    if flag and flag.value == "1":
+        return False
     existing = (await session.execute(select(func.count()).select_from(Transaction))).scalar()
     if existing:
         return False
@@ -99,4 +109,6 @@ async def seed_demo_data(session: AsyncSession) -> bool:
 
     await session.flush()
     await rebuild_holdings_from_transactions(session)
+    session.add(Setting(key=SEED_FLAG_KEY, value="1"))
+    await session.flush()
     return True

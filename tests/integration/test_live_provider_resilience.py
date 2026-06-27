@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.schemas.common import EntitlementStatus, Quote
 from app.services import market
@@ -15,7 +15,7 @@ class _NoDataProvider:
     async def get_quote(self, symbol, exchange=None):
         return Quote(symbol=symbol.upper(), price=None, currency="USD", source="stub",
                      entitlement=EntitlementStatus.UNAVAILABLE,
-                     received_at=datetime.now(timezone.utc), is_stale=True)
+                     received_at=datetime.now(UTC), is_stale=True)
 
 
 async def test_refresh_quote_with_no_price_does_not_write_null(session, monkeypatch):

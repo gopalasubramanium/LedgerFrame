@@ -110,10 +110,13 @@ class HailoOllamaProvider:
             "stream": True,
             "options": {"temperature": request.temperature, "num_predict": request.max_tokens},
         }
+        produced = False
         try:
             async with await self._client() as client:
                 async with client.stream("POST", "/api/chat", json=body) as resp:
-                    resp.raise_for_status()
+                    if resp.status_code >= 400:
+                        detail = (await resp.aread()).decode(errors="replace")[:300]
+                        raise RuntimeError(f"{resp.status_code} from hailo-ollama: {detail}")
                     async for line in resp.aiter_lines():
                         if not line.strip():
                             continue
@@ -124,6 +127,7 @@ class HailoOllamaProvider:
                         delta = (obj.get("message") or {}).get("content", "")
                         done = bool(obj.get("done"))
                         if delta:
+                            produced = True
                             yield AIChunk(delta=delta, done=False)
                         if done:
                             yield AIChunk(delta="", done=True)
@@ -131,4 +135,7 @@ class HailoOllamaProvider:
             yield AIChunk(delta="", done=True)
         except Exception as exc:  # noqa: BLE001
             log.warning("hailo chat failed: %s", exc)
+            if not produced:
+                # Surface the reason so the grounding layer can show it (not a blank box).
+                raise RuntimeError(str(exc)) from exc
             yield AIChunk(delta="", done=True)

@@ -22,7 +22,8 @@ def get_ai_provider() -> AIProvider:
         from app.providers.ai.openai_compatible import OpenAICompatibleProvider
 
         _PROVIDER = OpenAICompatibleProvider(
-            settings.openai_base_url, settings.openai_api_key, settings.ai_model
+            settings.openai_base_url, settings.openai_api_key, settings.ai_model,
+            timeout=settings.ai_timeout_seconds,
         )
     else:
         _PROVIDER = HailoOllamaProvider(

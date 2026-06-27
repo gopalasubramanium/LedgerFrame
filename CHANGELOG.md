@@ -2,6 +2,24 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.11 — 2026-06-28
+
+- **AI answers now actually appear (Ask was returning nothing).** The model
+  connected, but several failure modes were swallowed silently, leaving an empty
+  box. Fixes:
+  - **Errors are surfaced** — an HTTP error or unreachable model now shows a clear
+    reason *and* the underlying data, instead of nothing.
+  - **Reasoning models handled** — a model that emits only `<think>…</think>` (so
+    the client stripped everything) now falls back to the data answer.
+  - **Non-streaming fallback** — if streaming yields nothing, the request is retried
+    non-streamed (some Ollama models/servers don't stream cleanly).
+  - **Longer timeout** (default 120s) and bigger token budget (800) for slow local
+    LLMs and reasoning models.
+  - **Smarter prompt** — facts mentioned by ticker in your question (e.g. "how is
+    AAPL") are now included; facts are de-duplicated before prompting.
+- Verified end-to-end against streaming-OK, reasoning-only, HTTP-500, and
+  stream-empty providers — every case now returns a useful answer.
+
 ## v1.0.10 — 2026-06-28
 
 - **Base currency & AI config now apply in-process — no restart needed.** Root

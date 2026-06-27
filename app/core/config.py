@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     ai_provider: str = "hailo"
     hailo_base_url: str = "http://127.0.0.1:8000"
     ai_model: str = ""
-    ai_timeout_seconds: int = 30
+    ai_timeout_seconds: int = 120  # local LLMs on CPU can be slow to first token
     ai_max_requests_per_minute: int = 20
     openai_base_url: str = ""
     openai_api_key: str = ""

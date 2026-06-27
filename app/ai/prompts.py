@@ -2,7 +2,24 @@
 
 from __future__ import annotations
 
+import re
+
 from app.schemas.ai import GroundingFact
+
+
+def strip_reasoning(text: str) -> str:
+    """Remove reasoning-model chain-of-thought so only the final answer remains.
+
+    Handles ``<think>…</think>`` blocks and the common case where a model dumps its
+    reasoning then a closing ``</think>`` with the real answer after it. Used both
+    while streaming (client also strips) and server-side to decide whether the
+    model actually produced an answer or only thought out loud.
+    """
+    if "</think>" in text:
+        text = text.rsplit("</think>", 1)[-1]
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    text = text.replace("<think>", "").replace("</think>", "")
+    return text.strip()
 
 SYSTEM_PROMPT = """\
 You are LedgerFrame's assistant for a private, local financial dashboard.

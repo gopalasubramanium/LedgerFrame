@@ -94,6 +94,46 @@ async def watchlist_quote_facts(session: AsyncSession) -> list[GroundingFact]:
     return facts
 
 
+async def symbol_facts(session: AsyncSession, symbols: list[str]) -> list[GroundingFact]:
+    """Quote + position facts for specific tickers named in the question."""
+    from app.models import Holding, Instrument
+
+    facts: list[GroundingFact] = []
+    for sym in symbols[:5]:
+        instr = (
+            await session.execute(select(Instrument).where(Instrument.symbol == sym))
+        ).scalars().first()
+        if not instr:
+            continue
+        q = await get_cached_quote(session, instr.symbol, instr.exchange)
+        name = instr.name if instr.name and instr.name.upper() != sym else sym
+        if q.price is not None:
+            facts.append(GroundingFact(
+                label=f"{name} price", value=_fmt(q.price, q.currency), source=q.source,
+                timestamp=q.received_at, entitlement=q.entitlement.value, is_stale=q.is_stale))
+        else:
+            facts.append(GroundingFact(label=f"{name} price", value="unavailable",
+                                       source=q.source, entitlement="unavailable"))
+        holding = (
+            await session.execute(select(Holding).where(Holding.instrument_id == instr.id))
+        ).scalars().first()
+        if holding and holding.quantity:
+            facts.append(GroundingFact(label=f"{name} holding", value=f"{holding.quantity} units"))
+    return facts
+
+
+def _extract_symbols(question: str) -> list[str]:
+    """Pull likely tickers from a question (e.g. AAPL, HDFC.BSE, BTC)."""
+    import re
+
+    stop = {"WHAT", "HOW", "MY", "THE", "ETF", "USD", "SGD", "INR", "AI", "PL", "FX", "OK", "VS"}
+    out: list[str] = []
+    for tok in re.findall(r"\b[A-Z]{2,10}(?:\.[A-Z]{1,4})?\b", question.upper()):
+        if tok not in stop and tok not in out:
+            out.append(tok)
+    return out
+
+
 # Keyword → tool routing. Deliberately simple & transparent for a desk display.
 async def gather_facts(session: AsyncSession, question: str) -> list[GroundingFact]:
     q = question.lower()
@@ -111,6 +151,17 @@ async def gather_facts(session: AsyncSession, question: str) -> list[GroundingFa
         facts += await portfolio_facts(session)
     if any(w in q for w in ("watch", "price", "quote", "market", "overnight")):
         facts += await watchlist_quote_facts(session)
+    # Ticker-aware: if the question names specific symbols, include their data.
+    syms = _extract_symbols(question)
+    if syms:
+        facts += await symbol_facts(session, syms)
     if not facts:  # default: give a portfolio overview
         facts += await portfolio_facts(session)
-    return facts
+    # De-duplicate by label, preserving order.
+    seen: set[str] = set()
+    deduped: list[GroundingFact] = []
+    for f in facts:
+        if f.label not in seen:
+            seen.add(f.label)
+            deduped.append(f)
+    return deduped

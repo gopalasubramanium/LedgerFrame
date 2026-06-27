@@ -29,7 +29,7 @@ class AIRequest(BaseModel):
     messages: list[ChatMessage]
     model: str | None = None
     temperature: float = 0.2
-    max_tokens: int = 600
+    max_tokens: int = 800  # headroom so reasoning models still reach a final answer
 
 
 class AIChunk(BaseModel):

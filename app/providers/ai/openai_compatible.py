@@ -21,10 +21,12 @@ log = logging.getLogger(__name__)
 class OpenAICompatibleProvider:
     name = "openai_compatible"
 
-    def __init__(self, base_url: str, api_key: str, model: str):
+    def __init__(self, base_url: str, api_key: str, model: str, timeout: int = 120):
         self.base_url = base_url.rstrip("/")
         self._key = api_key
         self.model = model or "gpt-4o-mini"
+        # Generous read timeout: a local model can take a while to first token.
+        self._timeout = httpx.Timeout(float(timeout), connect=10.0)
 
     def _headers(self) -> dict:
         h = {"Content-Type": "application/json"}
@@ -73,6 +75,18 @@ class OpenAICompatibleProvider:
     async def list_models(self) -> list[ModelInfo]:
         return [ModelInfo(name=self.model, family="openai_compatible")]
 
+    @staticmethod
+    def _delta_text(obj: dict) -> str:
+        """Pull text from a streaming chunk, tolerating provider variations."""
+        try:
+            choice = obj["choices"][0]
+        except (KeyError, IndexError, TypeError):
+            return ""
+        delta = choice.get("delta") or {}
+        # OpenAI/Ollama use delta.content; some reasoning models stream
+        # reasoning_content separately — surface both so nothing is lost.
+        return (delta.get("content") or "") + (delta.get("reasoning_content") or "")
+
     async def chat(self, request: AIRequest) -> AsyncIterator[AIChunk]:
         body = {
             "model": request.model or self.model,
@@ -81,27 +95,54 @@ class OpenAICompatibleProvider:
             "max_tokens": request.max_tokens,
             "stream": True,
         }
+        url = f"{self.base_url}/chat/completions"
+        produced = False
+        # 1) Try streaming. Surface HTTP errors clearly (raised → grounding shows them).
         try:
-            async with httpx.AsyncClient(base_url=self.base_url, timeout=60) as client:
-                async with client.stream(
-                    "POST", "/chat/completions", json=body, headers=self._headers()
-                ) as resp:
-                    resp.raise_for_status()
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                async with client.stream("POST", url, json=body, headers=self._headers()) as resp:
+                    if resp.status_code >= 400:
+                        detail = (await resp.aread()).decode(errors="replace")[:300]
+                        raise RuntimeError(f"{resp.status_code} from model endpoint: {detail}")
                     async for line in resp.aiter_lines():
-                        if not line.startswith("data:"):
+                        line = line.strip()
+                        if not line or not line.startswith("data:"):
                             continue
                         data = line[5:].strip()
                         if data == "[DONE]":
-                            yield AIChunk(delta="", done=True)
-                            return
+                            if produced:
+                                yield AIChunk(delta="", done=True)
+                                return
+                            break  # streamed nothing usable → fall through to non-stream
                         try:
-                            obj = json.loads(data)
-                            delta = obj["choices"][0]["delta"].get("content", "")
-                            if delta:
-                                yield AIChunk(delta=delta, done=False)
-                        except (json.JSONDecodeError, KeyError, IndexError):
+                            text = self._delta_text(json.loads(data))
+                        except json.JSONDecodeError:
                             continue
-            yield AIChunk(delta="", done=True)
+                        if text:
+                            produced = True
+                            yield AIChunk(delta=text, done=False)
+            if produced:
+                yield AIChunk(delta="", done=True)
+                return
+        except Exception as exc:  # noqa: BLE001 — retry once non-streamed before giving up
+            log.warning("openai_compatible streaming failed: %s", exc)
+            stream_error = exc
+        else:
+            stream_error = None
+
+        # 2) Non-streaming fallback (some servers/models don't stream cleanly).
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                r = await client.post(url, json={**body, "stream": False}, headers=self._headers())
+                if r.status_code >= 400:
+                    raise RuntimeError(f"{r.status_code}: {r.text[:300]}")
+                msg = (r.json()["choices"][0].get("message") or {})
+                content = (msg.get("content") or "") + (msg.get("reasoning_content") or "")
+                if content:
+                    yield AIChunk(delta=content, done=False)
+                yield AIChunk(delta="", done=True)
+                return
         except Exception as exc:  # noqa: BLE001
-            log.warning("openai_compatible chat failed: %s", exc)
-            yield AIChunk(delta="", done=True)
+            log.warning("openai_compatible non-streaming failed: %s", exc)
+            # Signal the real reason to the orchestration layer (shown to the user).
+            raise RuntimeError(str(stream_error or exc)) from exc

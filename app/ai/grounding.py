@@ -12,7 +12,7 @@ from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.prompts import REFUSAL_NO_FACTS, SYSTEM_PROMPT, render_facts
+from app.ai.prompts import REFUSAL_NO_FACTS, SYSTEM_PROMPT, render_facts, strip_reasoning
 from app.ai.tools import gather_facts
 from app.core.config import get_settings
 from app.providers.ai import get_ai_provider
@@ -75,16 +75,29 @@ async def answer_stream(
         ChatMessage(role="user", content=question),
     ]
     req = AIRequest(messages=messages)
-    produced = False
-    async for chunk in provider.chat(req):
-        if chunk.delta:
-            produced = True
-            yield {"type": "delta", "delta": chunk.delta}
-        if chunk.done:
-            break
-    if not produced:
-        # Model returned nothing usable → fall back rather than show an empty box.
+    full = ""
+    error: str | None = None
+    try:
+        async for chunk in provider.chat(req):
+            if chunk.delta:
+                full += chunk.delta
+                yield {"type": "delta", "delta": chunk.delta}
+            if chunk.done:
+                break
+    except Exception as exc:  # noqa: BLE001 — never crash the stream; surface the reason
+        error = str(exc)[:300]
+
+    # Did the model actually produce an answer, or only reasoning / nothing?
+    if not strip_reasoning(full):
+        if error:
+            yield {"type": "delta",
+                   "delta": f"_The AI model didn't return an answer ({error}). "
+                            "Showing the underlying data instead._\n\n"}
         yield {"type": "delta", "delta": _template_answer(question, facts)}
+        yield {"type": "done", "grounded": True, "provider": "fallback",
+               "error": error, "disclaimer": "Information only, not financial advice."}
+        return
+
     yield {"type": "done", "grounded": True, "provider": provider.name,
            "model": health.models[0] if health.models else None,
            "disclaimer": "Information only, not financial advice."}

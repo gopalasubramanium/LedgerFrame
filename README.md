@@ -167,7 +167,12 @@ The AI only ever *explains* verified facts. Choose:
 | **OpenAI-compatible** | **Yes** | OpenAI / OpenRouter / Anthropic / remote Ollama (base URL + key + model; presets included) |
 | **Disabled** | No | Deterministic, fact-only answers |
 
-Saving tests the connection. Without any model, "Ask" still answers from your data.
+**Saving runs a real connection test** and tells you exactly what's wrong —
+*unreachable*, *auth rejected*, or *model not found* (with the list of models the
+server actually has). For a **remote Ollama**, set the base URL to
+`http://<host>:11434/v1`, leave the key blank, and make the model match one you've
+pulled (`ollama list`), e.g. `llama3.2`. Without any model, "Ask" still answers
+from your data.
 
 ## Usage (typical flow)
 

@@ -11,8 +11,8 @@
 # is read from /etc/ledgerframe/admin.env (written by the installer).
 #
 #   Usage: ledgerframe-admin <action> [arg]
-#   Actions: status | restart | lan <on|off> | voice <on|off> | ai <on|off>
-#            | kiosk <on|off> | update | doctor | backup
+#   Actions: status | restart | restart-worker | lan <on|off> | voice <on|off>
+#            | ai <on|off> | kiosk <on|off> | update | doctor | backup
 # =============================================================================
 set -euo pipefail
 
@@ -40,8 +40,23 @@ case "$action" in
     done
     ;;
   restart)
-    systemctl restart ledgerframe-api ledgerframe-worker
-    echo "restarted"
+    # Restarting ledgerframe-api kills the very request that asked for it (the API
+    # is what invoked this helper), so a synchronous restart always looks "failed"
+    # to the caller. Run it detached in its own cgroup so this returns first and
+    # the API actually comes back.
+    if command -v systemd-run >/dev/null 2>&1; then
+      systemd-run --collect --quiet bash -c 'sleep 1; systemctl restart ledgerframe-api ledgerframe-worker' \
+        && echo "restarting" || { echo "could not schedule restart"; exit 1; }
+    else
+      setsid bash -c 'sleep 1; systemctl restart ledgerframe-api ledgerframe-worker' >/dev/null 2>&1 < /dev/null &
+      echo "restarting"
+    fi
+    ;;
+  restart-worker)
+    # Worker only — safe to run synchronously from an API request (doesn't drop
+    # the response). Used after in-process config changes so the worker reloads.
+    systemctl restart ledgerframe-worker
+    echo "worker restarted"
     ;;
   lan)
     case "${2:-}" in

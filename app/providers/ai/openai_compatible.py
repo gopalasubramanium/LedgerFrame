@@ -33,12 +33,42 @@ class OpenAICompatibleProvider:
         return h
 
     async def health(self) -> HealthStatus:
-        return HealthStatus(
-            available=bool(self.base_url),
-            provider="openai_compatible",
-            detail="WARNING: sends data off-device",
-            models=[self.model],
-        )
+        if not self.base_url:
+            return HealthStatus(available=False, provider=self.name, detail="no base URL set")
+        warn = "sends data off-device"
+        try:
+            async with httpx.AsyncClient(base_url=self.base_url, timeout=10) as client:
+                r = await client.get("/models", headers=self._headers())
+                if r.status_code in (401, 403):
+                    return HealthStatus(available=False, provider=self.name,
+                                        detail=f"auth rejected ({r.status_code}) — check the API key")
+                if r.status_code == 200:
+                    data = r.json()
+                    rows = data.get("data") or data.get("models") or []
+                    names = [str(m.get("id") or m.get("name") or "") for m in rows if isinstance(m, dict)]
+                    names = [n for n in names if n]
+                    if names and not any(self.model == n or self.model in n for n in names):
+                        return HealthStatus(
+                            available=False, provider=self.name, models=names,
+                            detail=f"reachable, but model '{self.model}' not found. Available: "
+                                   f"{', '.join(names[:8])}{'…' if len(names) > 8 else ''}",
+                        )
+                    return HealthStatus(available=True, provider=self.name,
+                                        models=names or [self.model], detail=f"reachable; {warn}")
+                # /models not supported (404/405) — probe with a tiny chat call.
+                probe = await client.post(
+                    "/chat/completions", headers=self._headers(),
+                    json={"model": self.model, "messages": [{"role": "user", "content": "ping"}],
+                          "max_tokens": 1, "stream": False},
+                )
+                if probe.status_code == 200:
+                    return HealthStatus(available=True, provider=self.name,
+                                        models=[self.model], detail=f"reachable; {warn}")
+                return HealthStatus(available=False, provider=self.name,
+                                    detail=f"endpoint returned {probe.status_code}: {probe.text[:160]}")
+        except Exception as exc:  # noqa: BLE001
+            return HealthStatus(available=False, provider=self.name,
+                                detail=f"unreachable: {type(exc).__name__}: {exc}")
 
     async def list_models(self) -> list[ModelInfo]:
         return [ModelInfo(name=self.model, family="openai_compatible")]

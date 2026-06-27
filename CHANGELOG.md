@@ -2,6 +2,24 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.7 — 2026-06-27
+
+- **Base currency now applies instantly, everywhere.** Changing it in Settings
+  previously wrote a DB row the valuation engine never read (it reads the env), so
+  pages kept showing the old currency. It's now persisted to `.env`, reloaded
+  in-process, the FX cache is cleared, the worker is restarted, and the page
+  reloads — so Home and every other page re-report in the chosen currency.
+- **AI "Save & test" actually tests the connection.** The OpenAI-compatible
+  provider (OpenAI / OpenRouter / Anthropic / **remote Ollama**) now really probes
+  the endpoint and reports *unreachable*, *auth rejected*, or *model not found*
+  (listing the models the server has) instead of always claiming "Connected". For
+  remote Ollama use `http://<host>:11434/v1` and a model you've pulled.
+- **"Restart services" works.** Restarting the API from inside its own request
+  always looked "failed" (it killed the request). Restart now runs detached in its
+  own cgroup and returns immediately; a new safe `restart-worker` is used after
+  config changes (data source / base currency) so the worker reloads without
+  dropping the API response.
+
 ## v1.0.6 — 2026-06-27
 
 - **FX cross rates fixed (the real currency bug).** Foreign holdings showed the

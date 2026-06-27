@@ -67,14 +67,17 @@ export default function Settings() {
   const adminOn = adminAvail.data?.available ?? false;
 
   async function saveConfig() {
+    const ccyChanged = baseCcy !== (settings.data?.defaults.base_currency as string | undefined);
     await run("save:display", async () => {
       await api.updateSettings({
         base_currency: baseCcy, rotation_seconds: rotation,
         refresh_interval_seconds: refresh, display_sleep_minutes: sleepMin,
       });
-      setMsg("Saved. Some changes (currency) apply after a service restart.");
+      setMsg("Saved.");
       refreshStatus();
-    }, { pending: "Saving display", success: "Display saved", error: (e) => e instanceof Error ? e.message : "Save failed (locked? set a PIN)" });
+      // Base currency re-reports the whole app — reload so every page picks it up.
+      if (ccyChanged) setTimeout(() => window.location.reload(), 700);
+    }, { pending: "Saving display", success: ccyChanged ? `Base currency → ${baseCcy}; reloading…` : "Display saved", error: (e) => e instanceof Error ? e.message : "Save failed (locked? set a PIN)" });
   }
   async function saveFeeds() {
     await run("save:feeds", async () => {

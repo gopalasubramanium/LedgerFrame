@@ -23,6 +23,7 @@ router = APIRouter()
 _ADMIN_ACTIONS: dict[str, set[str] | None] = {
     "status": None,
     "restart": None,
+    "restart-worker": None,
     "doctor": None,
     "backup": None,
     "lan": {"on", "off"},
@@ -112,20 +113,15 @@ async def set_data_source(payload: DataSourceIn) -> dict:
         updates["LEDGERFRAME_STALE_AFTER_SECONDS"] = str(payload.stale_after_seconds)
     update_env(updates)
     # Apply immediately in this process (no restart needed): re-read .env and reset
-    # provider caches. Also restart the worker via the helper if available so its
-    # background refreshes use the new provider too.
+    # provider/FX caches. Restart only the WORKER (never the API — that would drop
+    # this response) so its background refreshes use the new provider too.
     from app.core.config import reload_settings
+    from app.core.service_control import restart_worker
+    from app.services import fx
 
     reload_settings()
-    if os.path.exists(_ADMIN_BIN):
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                "sudo", "-n", _ADMIN_BIN, "restart",
-                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
-            )
-            await asyncio.wait_for(proc.communicate(), timeout=60)
-        except Exception:  # noqa: BLE001
-            pass
+    fx.clear_cache()
+    await restart_worker()
     return {"ok": True, "applied": True, "note": f"Applied — now using '{payload.provider}'."}
 
 

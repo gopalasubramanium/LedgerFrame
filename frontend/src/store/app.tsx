@@ -38,6 +38,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refreshStatus();
     api.authState().then((s) => setLocked(s.pin_set)).catch(() => {});
+    // Any 401 (locked / expired session) pops the PIN screen automatically.
+    const onUnauthorized = () => setLocked(true);
+    window.addEventListener("lf:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("lf:unauthorized", onUnauthorized);
   }, []);
 
   // Apply theme + follow system changes when in "system" mode.

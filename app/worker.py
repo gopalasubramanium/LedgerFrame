@@ -11,32 +11,30 @@ import logging
 from datetime import UTC, datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.base import Base, get_engine, get_sessionmaker
-from app.models import Instrument, NetWorthSnapshot, PortfolioSnapshot, WatchlistItem
+from app.models import NetWorthSnapshot, PortfolioSnapshot
 
 log = logging.getLogger("ledgerframe.worker")
 
 
 async def refresh_market_data() -> None:
-    """Batch-refresh quotes for watchlisted + held instruments."""
+    """Batch-refresh quotes for everything shown (holdings + watchlist + market &
+    global tiles), so the dashboard stays warm without manual refreshes."""
+    from app.api.v1.routes.system import _display_symbols
     from app.services.market import refresh_quote
 
     async with get_sessionmaker()() as session:
-        wl_ids = (await session.execute(select(WatchlistItem.instrument_id))).scalars().all()
-        instruments = (
-            await session.execute(select(Instrument).where(Instrument.id.in_(wl_ids or [-1])))
-        ).scalars().all()
-        for instr in instruments:
+        symbols = await _display_symbols(session)
+        for sym in symbols:
             try:
-                await refresh_quote(session, instr.symbol, instr.exchange)
+                await refresh_quote(session, sym)
             except Exception as exc:  # noqa: BLE001
-                log.warning("refresh failed for %s: %s", instr.symbol, exc)
+                log.warning("refresh failed for %s: %s", sym, exc)
         await session.commit()
-    log.info("market data refreshed")
+    log.info("market data refreshed (%d symbols)", len(symbols))
 
 
 async def generate_snapshots() -> None:

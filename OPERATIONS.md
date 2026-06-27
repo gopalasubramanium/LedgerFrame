@@ -95,14 +95,34 @@ well within the < 700 MB / < 4 s first-render targets.
 
 ## Managing data & system from the UI
 
-- **Edit holdings:** Portfolio → **Edit / Add** opens a manager for transactions
-  (date/time, type, symbol, quantity, price, fees, taxes, currency, note — add,
-  edit, delete, or CSV-import) and manual assets/liabilities (cash, property, loans).
-- **News feeds:** Settings → *News feeds* — paste free RSS/Atom URLs (one per line).
-- **System controls:** Settings → *System controls* / *Service & maintenance* can
-  enable/disable LAN, voice, and AI, restart services, run diagnostics, and create
-  backups (requires the installer to have set up the scoped helper; see SECURITY.md).
-  Package/Hailo **installation stays on the CLI** by design.
+Most day-to-day operation is now in the app (no CLI needed):
+
+- **Pages:** **Home** (glanceable command centre), **Portfolio** (analytics:
+  benchmarked performance, allocation, key stats, concentration), **Holdings**
+  (the only place to add/edit/delete positions), **Markets** (your markets via a
+  view dropdown + symbol search), **Global** (world markets via ETF proxies),
+  **Heatmap**, **News**, **Snapshot**, **Settings**.
+- **Edit holdings:** Holdings → **Add / Edit / Delete** — transactions
+  (date/time, type incl. buy/sell/dividend/split/**bonus**/…, symbol, quantity,
+  price, fees, taxes, currency, note; CSV import) and manual assets/liabilities.
+- **Data source (demo ↔ live):** Settings → *Data source* — switch provider
+  (`mock` / `csv` / `alphavantage`), set the API key. **Applies immediately.**
+  - **Refresh live prices** — pulls quotes for everything shown; lists what
+    updated/failed and why.
+  - **Fetch & cache history** — backfills daily history for new holdings only.
+  - **Clear demo / all data** — wipe to a clean slate (demo won't re-seed).
+- **AI provider:** Settings → *AI assistant* — local Hailo/Ollama (set the IP) or
+  any OpenAI-compatible endpoint (OpenAI / OpenRouter / Anthropic / remote Ollama);
+  saves, applies, and tests the connection.
+- **Appearance:** Settings → *Appearance* — light / dark / system theme (also a
+  top-bar toggle), reduced motion, high contrast.
+- **News feeds:** Settings → *News feeds* — paste free RSS/Atom URLs; **Test feeds**.
+- **System controls:** Settings → *System controls* / *Service & maintenance* —
+  enable/disable LAN, voice, AI; restart services; diagnostics; backups (requires
+  the installer's scoped helper; see SECURITY.md). Package/Hailo **installation
+  stays on the CLI** by design.
+- **Security:** Settings → set a PIN; the PIN screen now pops up automatically when
+  a session is locked/expired.
 
 ## Switching out of demo mode
 

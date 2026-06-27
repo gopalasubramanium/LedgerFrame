@@ -115,7 +115,10 @@ export default function Settings() {
           <div className="flex flex-wrap gap-2">
             <button className="lf-btn" disabled={!!busy} onClick={async () => {
               setBusy("refresh"); setRefreshResult(null); try { const r = await api.refreshData(); setRefreshResult(r); setMsg(`Refreshed ${r.refreshed}/${r.total}`); } catch (e) { setMsg(e instanceof Error ? e.message : "Refresh failed"); } finally { setBusy(""); }
-            }}>Refresh live data now</button>
+            }}>Refresh live prices</button>
+            <button className="lf-btn" disabled={!!busy} onClick={async () => {
+              setBusy("history"); try { const r = await api.fetchHistory(); setMsg(`History cached for ${r.with_history.length}/${r.total}${r.no_history.length ? ` · ${r.no_history.length} unavailable` : ""}`); } catch (e) { setMsg(e instanceof Error ? e.message : "History fetch failed"); } finally { setBusy(""); }
+            }}>Fetch &amp; cache history</button>
             <button className="lf-btn border-down/50 text-down" disabled={!!busy} onClick={async () => {
               if (!confirm("Delete ALL demo & portfolio data (holdings, transactions, watchlists, prices)? Your settings and PIN are kept. This cannot be undone.")) return;
               setBusy("reset"); try { const r = await api.resetData(); setMsg(r.note); ds.refetch(); refreshStatus(); } catch (e) { setMsg(e instanceof Error ? e.message : "Reset failed"); } finally { setBusy(""); }

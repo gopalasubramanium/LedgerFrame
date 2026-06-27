@@ -40,9 +40,19 @@ configure it.
   by the backend; the model explains, it does not invent. Falls back to deterministic
   templates when the Hailo NPU is unavailable.
 - **Provider-abstracted market data** — runs fully in **DEMO mode** (synthetic data,
-  no API key) out of the box; swap in a CSV source or an opt-in external provider.
-- **Private by design** — localhost-only binding, Argon2 PIN lock, encrypted backups
-  (`age`), no telemetry, secrets kept out of the repo.
+  no API key) out of the box; switch to a live provider (Alpha Vantage) or CSV from
+  **Settings** with no restart. Clear demo data, refresh prices, and backfill history
+  from the UI.
+- **Configurable AI** — local Hailo/Ollama (on-device) or any OpenAI-compatible
+  endpoint (OpenAI / OpenRouter / Anthropic / remote Ollama), set in Settings.
+- **Wealth-manager UI** — original slate + emerald design with **light / dark /
+  system** themes, a benchmarked performance chart with a benchmark picker, a
+  key-stats panel, and a responsive layout that works on phone and desk display.
+- **Dedicated pages** — Home (now), Portfolio (analytics), Holdings (manage),
+  Markets (your markets), Global (world indices via ETF proxies), Heatmap, News,
+  Snapshot, Settings.
+- **Private by design** — localhost-only binding, Argon2 PIN lock (auto-prompts on
+  expiry), encrypted backups (`age`), no telemetry, secrets kept out of the repo.
 
 See `docs/` for architecture, security, data sources, voice setup, and testing.
 

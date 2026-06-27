@@ -18,6 +18,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    // Session locked/expired → tell the app to pop the PIN screen automatically.
+    if (res.status === 401) window.dispatchEvent(new CustomEvent("lf:unauthorized"));
     throw new ApiError(res.status, body || res.statusText);
   }
   return res.json() as Promise<T>;
@@ -66,7 +68,7 @@ export const api = {
   search: (q: string) =>
     req<{ results: { symbol: string; name: string; asset_class: string; currency: string }[] }>(`/api/v1/markets/search?q=${encodeURIComponent(q)}`),
   marketsGlobal: () =>
-    req<{ groups: { region: string; items: { symbol: string; quote: Quote }[] }[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/global"),
+    req<{ groups: { region: string; items: { symbol: string; label: string; quote: Quote }[] }[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/global"),
   news: () =>
     req<{ items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string; symbols: string[] }[]; rss_count: number }>("/api/v1/news"),
   watchlists: () => req<{ watchlists: { id: number; name: string; items: { symbol: string; name: string; quote: Quote }[] }[] }>("/api/v1/watchlists"),
@@ -113,6 +115,7 @@ export const api = {
     req<{ ok: boolean; available: boolean; detail: string }>("/api/v1/system/ai-config", { method: "PUT", body: JSON.stringify(d) }),
   resetData: () => req<{ ok: boolean; note: string }>("/api/v1/system/reset-data", { method: "POST" }),
   refreshData: () => req<{ ok: boolean; refreshed: number; total: number; succeeded: string[]; failed: { symbol: string; reason: string }[]; errors: string[] }>("/api/v1/system/refresh-data", { method: "POST" }),
+  fetchHistory: () => req<{ ok: boolean; with_history: string[]; no_history: string[]; total: number }>("/api/v1/system/fetch-history", { method: "POST" }),
 
   // --- System admin (scoped root helper) ---
   adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),

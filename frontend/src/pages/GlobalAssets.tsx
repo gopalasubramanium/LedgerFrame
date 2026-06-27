@@ -27,7 +27,8 @@ export default function GlobalAssets() {
               {g.items.map((it) => (
                 <li key={it.symbol} className="flex items-center justify-between py-2">
                   <Link to={`/instrument/${it.symbol}`} className="hover:text-accent">
-                    <div className="text-sm">{it.symbol}</div>
+                    <div className="text-sm">{it.label}</div>
+                    <div className="text-xs text-faint">{it.symbol}</div>
                   </Link>
                   <div className="flex items-center gap-3">
                     <span className="tnum text-sm">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>

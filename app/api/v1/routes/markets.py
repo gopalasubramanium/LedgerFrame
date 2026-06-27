@@ -78,23 +78,30 @@ async def markets_overview(session: AsyncSession = Depends(get_db)) -> dict:
 
 
 # Major world indices + cross-asset benchmarks, grouped for the Global page.
-_GLOBAL_MARKETS: dict[str, list[str]] = {
-    "Americas": ["^GSPC", "^DJI", "^IXIC"],
-    "Europe": ["^FTSE", "^GDAXI"],
-    "Asia-Pacific": ["^N225", "^HSI", "^BSESN", "^STI"],
-    "Commodities": ["GLD"],
-    "Crypto": ["BTC", "ETH"],
+# World markets via liquid, broadly-supported ETF proxies (so a live provider like
+# Alpha Vantage — which doesn't serve raw indices such as ^GSPC — returns real
+# values). Each entry is (symbol, label).
+_GLOBAL_MARKETS: dict[str, list[tuple[str, str]]] = {
+    "Americas": [("SPY", "S&P 500"), ("QQQ", "Nasdaq 100"), ("DIA", "Dow 30")],
+    "Europe": [("EWU", "UK · FTSE"), ("EWG", "Germany · DAX"), ("EZU", "Eurozone")],
+    "Asia-Pacific": [("EWJ", "Japan · Nikkei"), ("EWH", "Hong Kong"), ("INDA", "India"), ("EWS", "Singapore")],
+    "Commodities": [("GLD", "Gold"), ("SLV", "Silver"), ("USO", "Oil")],
+    "Crypto": [("BTC", "Bitcoin"), ("ETH", "Ethereum")],
 }
+
+
+def global_market_symbols() -> list[str]:
+    return [sym for items in _GLOBAL_MARKETS.values() for sym, _ in items]
 
 
 @router.get("/markets/global")
 async def markets_global(session: AsyncSession = Depends(get_db)) -> dict:
     groups = []
-    for region, symbols in _GLOBAL_MARKETS.items():
+    for region, items_def in _GLOBAL_MARKETS.items():
         items = []
-        for sym in symbols:
+        for sym, label in items_def:
             q = await display_quote(session, sym)
-            items.append({"symbol": sym, "quote": q.model_dump(mode="json")})
+            items.append({"symbol": sym, "label": label, "quote": q.model_dump(mode="json")})
         groups.append({"region": region, "items": items})
     status = await get_provider().get_market_status("US")
     return {"groups": groups, "market_status": status.model_dump(mode="json"), "demo_mode": get_settings().is_demo}

@@ -227,42 +227,74 @@ async def reset_data(session: AsyncSession = Depends(get_db)) -> dict:
     return {"ok": True, "note": "All portfolio & market data cleared. Add your holdings to begin."}
 
 
+async def _display_symbols(session: AsyncSession) -> list[str]:
+    """All symbols shown across the app: holdings + watchlist + the curated market
+    lists (overview, home tiles, global proxies)."""
+    from app.api.v1.routes.dashboard import _HOME_MARKETS
+    from app.api.v1.routes.markets import _DEFAULT_OVERVIEW, global_market_symbols
+    from app.models import Holding, Instrument, WatchlistItem
+
+    ids = {
+        *(await session.execute(select(Holding.instrument_id).where(Holding.instrument_id.isnot(None)))).scalars().all(),
+        *(await session.execute(select(WatchlistItem.instrument_id))).scalars().all(),
+    }
+    instr_syms = (
+        await session.execute(select(Instrument.symbol).where(Instrument.id.in_(ids or [-1])))
+    ).scalars().all()
+    ordered: list[str] = []
+    for sym in [*instr_syms, *_DEFAULT_OVERVIEW, *_HOME_MARKETS, *global_market_symbols()]:
+        if sym not in ordered:
+            ordered.append(sym)
+    return ordered
+
+
 @router.post("/system/refresh-data", dependencies=[Depends(require_auth)])
 async def refresh_data(session: AsyncSession = Depends(get_db)) -> dict:
-    """Force-refresh quotes for held + watchlisted instruments from the current
-    provider (live, if configured). Returns how many were refreshed and any errors."""
-    from app.models import Holding, Instrument, WatchlistItem
+    """Force-refresh quotes for everything shown (holdings, watchlist, market &
+    global tiles) from the current provider. Reports exactly what updated/failed."""
     from app.services.market import refresh_quote
 
-    held = (await session.execute(select(Holding.instrument_id).where(Holding.instrument_id.isnot(None)))).scalars().all()
-    wl = (await session.execute(select(WatchlistItem.instrument_id))).scalars().all()
-    ids = {*held, *wl}
-    instruments = (await session.execute(select(Instrument).where(Instrument.id.in_(ids or [-1])))).scalars().all()
     provider = get_settings().market_provider
+    symbols = await _display_symbols(session)
     refreshed, succeeded, failed = 0, [], []
-    for instr in instruments:
+    for sym in symbols:
         try:
-            q = await refresh_quote(session, instr.symbol, instr.exchange)
+            q = await refresh_quote(session, sym)
             if q.price is not None and q.entitlement.value != "unavailable":
                 refreshed += 1
-                succeeded.append(instr.symbol)
+                succeeded.append(sym)
             else:
-                failed.append({
-                    "symbol": instr.symbol,
-                    "reason": f"no data from {provider} (symbol may be unsupported "
-                              f"on this provider, or the daily/minute limit was hit)",
-                })
+                failed.append({"symbol": sym, "reason": f"no data from {provider} "
+                               "(unsupported on this provider, or limit hit)"})
         except Exception as exc:  # noqa: BLE001
-            failed.append({"symbol": instr.symbol, "reason": str(exc)[:160]})
+            failed.append({"symbol": sym, "reason": str(exc)[:160]})
     return {
-        "ok": True,
-        "refreshed": refreshed,
-        "total": len(instruments),
-        "succeeded": succeeded,
-        "failed": failed,
-        # Back-compat string list.
+        "ok": True, "refreshed": refreshed, "total": len(symbols),
+        "succeeded": succeeded, "failed": failed,
         "errors": [f"{f['symbol']}: {f['reason']}" for f in failed],
     }
+
+
+@router.post("/system/fetch-history", dependencies=[Depends(require_auth)])
+async def fetch_history(days: int = 365, session: AsyncSession = Depends(get_db)) -> dict:
+    """Fetch & cache daily price history for everything shown — but only where it
+    isn't already cached/fresh (get_history_cached skips fresh symbols). Used to
+    backfill history for newly-added holdings without re-spending API quota."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.services.market import get_history_cached
+
+    end = datetime.now(UTC)
+    start = end - timedelta(days=max(30, min(days, 3650)))
+    symbols = await _display_symbols(session)
+    fetched, empty = [], []
+    for sym in symbols:
+        try:
+            candles = await get_history_cached(session, sym, "1d", start, end)
+            (fetched if candles else empty).append(sym)
+        except Exception:  # noqa: BLE001
+            empty.append(sym)
+    return {"ok": True, "with_history": fetched, "no_history": empty, "total": len(symbols)}
 
 
 @router.get("/system/admin/available")

@@ -30,17 +30,28 @@ Reads `<data-dir>/imports/<SYMBOL>.csv` with header
 `date,open,high,low,close,volume`. Latest row → quote (`end-of-day`). Symbols
 without a CSV fall back to `mock` so the dashboard stays populated. 10 MB/file cap.
 
-### `external` — Alpha Vantage (opt-in reference adapter)
-Included as a worked example of integrating a real vendor.
-
-- **Enable:** `LEDGERFRAME_MARKET_PROVIDER=alphavantage` and
-  `LEDGERFRAME_MARKET_API_KEY=<your key>`.
-- **Before relying on it**, review Alpha Vantage's current API docs, **rate limits**
-  (free tier is very limited), and **licensing / permitted use**. Quotes are labelled
-  `delayed`; we make no real-time claim.
-- The adapter rate-limits itself (serialised requests) and **falls back to mock**
-  (labelled `unavailable`) on any error, so the dashboard never breaks.
-- Get a key: <https://www.alphavantage.co/support/#api-key>.
+### `external` — Alpha Vantage (opt-in)
+- **Enable from the UI:** Settings → *Data source* → choose `alphavantage`, paste
+  your key, Save (applies immediately, no restart). Or set
+  `LEDGERFRAME_MARKET_PROVIDER=alphavantage` + `LEDGERFRAME_MARKET_API_KEY` in `.env`.
+- **Honest failures:** if a symbol can't be served (rate limit, unsupported), the
+  quote is `unavailable` (shows "—"). We **never** substitute a fabricated/demo
+  price for a live provider. **Settings → Refresh live prices** lists exactly which
+  symbols updated and which returned no data (and why).
+- **History is cached** in the DB (`price_history`) and re-fetched at most ~once/12h
+  per symbol, so page loads don't spend your quota. **Settings → Fetch & cache
+  history** backfills history for newly-added holdings only (skips ones already cached).
+- **What Alpha Vantage does / doesn't cover** (important):
+  - ✅ **US equities & ETFs** via `GLOBAL_QUOTE` / `TIME_SERIES_DAILY`.
+  - ✅ **Crypto** (BTC, ETH, …) — handled via AV's currency endpoint.
+  - ✅ **FX** via `CURRENCY_EXCHANGE_RATE`.
+  - ❌ **Raw indices** (`^GSPC`, `^STI`, …) — not provided. Use an **ETF proxy**
+    (e.g. `SPY` for the S&P 500, `QQQ` Nasdaq, `EWS` Singapore). The **Global** page
+    already uses these proxies so it shows real values on a live provider.
+  - ❌ **Most non-US tickers** unless using AV's region suffix (e.g. `TSCO.LON`).
+    For unsupported holdings, add them as **manual-priced** holdings instead.
+- Quotes are labelled `delayed`; we make no real-time claim. Free tier ≈ 25
+  req/day (premium raises this). Get a key: <https://www.alphavantage.co/support/#api-key>.
 
 > Adding another vendor = implement `MarketDataProvider` in
 > `app/providers/market/`, register it in `get_provider`. No business-logic changes.
@@ -60,6 +71,19 @@ Two free, no-key sources feed the News page, merged and shown with source + time
 
 The AI briefing summarises only retrieved articles + computed market/portfolio
 facts — it never invents a headline.
+
+## AI providers (configurable in Settings)
+
+Settings → *AI assistant* configures the AI without editing files:
+- **Hailo / Ollama (local, on-device)** — set the service URL (e.g. your Ollama
+  box `http://192.168.0.x:11434` or the Hailo `hailo-ollama` at `:8000`) + model.
+- **OpenAI-compatible** — any endpoint exposing `/v1/chat/completions`: **OpenAI,
+  OpenRouter, Anthropic, or a remote Ollama** (presets prefill base URL + model).
+  ⚠ This sends prompts (incl. your portfolio facts) off-device; local keeps them on-device.
+- **Disabled** — deterministic, fact-only answers.
+
+Saving applies in-process and tests connectivity. Regardless of provider, the AI
+only ever explains verified facts and never computes financial numbers.
 
 ## AI models (Hailo)
 

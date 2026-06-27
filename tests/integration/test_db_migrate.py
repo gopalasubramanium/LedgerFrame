@@ -51,3 +51,22 @@ def test_db_migrate_adopts_create_all_schema(tmp_path):
     assert r.returncode == 0, r.stderr
     assert "stamping" in r.stdout
     assert "already exists" not in (r.stdout + r.stderr)
+
+
+def test_db_migrate_recovers_empty_alembic_version(tmp_path):
+    # The Pi's exact broken state: a prior failed `alembic upgrade head` left an
+    # EMPTY alembic_version table alongside a full create_all schema.
+    boot = _run([
+        sys.executable, "-c",
+        "from sqlalchemy import create_engine, text; import app.models; "
+        "from app.db.base import Base; from app.core.config import get_settings; "
+        "s=get_settings(); s.db_path.parent.mkdir(parents=True, exist_ok=True); "
+        "e=create_engine(s.sync_db_url); Base.metadata.create_all(e); "
+        "c=e.connect(); c.execute(text('CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)')); c.commit()",
+    ], tmp_path)
+    assert boot.returncode == 0, boot.stderr
+
+    r = _run([sys.executable, "scripts/db_migrate.py"], tmp_path)
+    assert r.returncode == 0, r.stderr
+    assert "stamping baseline" in r.stdout
+    assert "schema up to date" in r.stdout

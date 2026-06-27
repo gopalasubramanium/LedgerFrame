@@ -2,6 +2,16 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.9 — 2026-06-28
+
+- **Actually fixes the "table accounts already exists" migration error.** v1.0.8's
+  detection only checked whether the `alembic_version` *table* existed — but a
+  previously-failed `alembic upgrade` leaves that table **present but empty**, so
+  the baseline was never stamped and the upgrade still ran from scratch. The
+  migration runner now checks for a real version **row**, stamps the baseline when
+  missing, and force-stamps `head` as a final safety net so the update never dumps
+  a traceback. Verified against the empty-`alembic_version` state.
+
 ## v1.0.8 — 2026-06-28
 
 - **Fixed the noisy "table accounts already exists" error during update.** The app

@@ -201,6 +201,22 @@ More: [`OPERATIONS.md`](OPERATIONS.md) · [`SECURITY.md`](SECURITY.md) ·
 - Validated on x86_64 dev hardware; Pi/Hailo paths are guarded — run `doctor.sh` on
   the device.
 
+## Author & credits
+
+**Concept, direction & product design:** [Gopala Subramanium](https://me.sgopala.com).
+The implementation was generated with Claude under that direction.
+
+[Website](https://me.sgopala.com) ·
+[GitHub](https://github.com/gopalasubramanium) ·
+[LinkedIn](https://www.linkedin.com/in/gopalasubramanium/) ·
+[X](https://x.com/sgopala) ·
+[YouTube](https://www.youtube.com/@sgopala) ·
+[Facebook](https://www.facebook.com/gopala.subramanium)
+
+If LedgerFrame is useful to you, you can
+[support the project via PayPal](https://www.paypal.com/donate/?business=gopalasubramanium@gmail.com&item_name=Support%20LedgerFrame&no_recurring=0)
+⭐ and a star on the repo helps too.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Market data & external providers are subject to their

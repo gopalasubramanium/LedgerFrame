@@ -18,6 +18,7 @@ import InstrumentDetail from "./pages/InstrumentDetail";
 import Settings from "./pages/Settings";
 import Legal from "./pages/Legal";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { Footer } from "./components/Footer";
 
 const NAV = [
   { path: "/", label: "Home" },
@@ -141,6 +142,8 @@ export default function App() {
           ))}
         </div>
       )}
+
+      <Footer />
 
       {asking && <AskPanel onClose={() => setAsking(false)} />}
       <UpdateBanner />

@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { useActivity } from "./Activity";
 
 // Checks for a newer release on load and shows a snoozable banner. "Update now"
-// runs the scoped admin update action (if the helper is installed); otherwise it
-// links to the release. Snooze hides it for 24h.
+// runs the scoped admin update (if the helper is installed), then polls the
+// update-status endpoint so it shows live progress, reloads when the new version
+// is live, and surfaces failures instead of silently doing nothing. Snooze hides
+// it for 24h.
 export function UpdateBanner() {
   const [info, setInfo] = useState<{ latest: string; url: string } | null>(null);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const { run, isRunning } = useActivity();
 
   useEffect(() => {
     const snoozedUntil = Number(localStorage.getItem("lf_update_snooze") || 0);
@@ -19,42 +22,33 @@ export function UpdateBanner() {
 
   if (!info) return null;
 
-  // Poll the version endpoint until the running app reports it's up to date
-  // (the build + restart can take a few minutes on a Pi); then reload. The API
-  // is briefly unreachable while it restarts — those errors are expected.
-  function pollUntilUpdated() {
-    let tries = 0;
-    const iv = setInterval(async () => {
-      tries += 1;
-      try {
-        const v = await api.versionCheck();
-        if (!v.update_available) { clearInterval(iv); window.location.reload(); return; }
-      } catch { /* API restarting — keep waiting */ }
-      if (tries > 120) { clearInterval(iv); setMsg("Update is taking a while — refresh the page in a moment."); }
-    }, 5000);
+  function update() {
+    run("update", async () => {
+      const r = await api.admin("update");
+      if (!r.ok) { setMsg("Update could not start (use the CLI: ./scripts/update.sh)."); throw new Error(r.output || "could not start"); }
+      setMsg("Updating in the background… the page reloads automatically when done.");
+      await new Promise<void>((resolve, reject) => {
+        let tries = 0;
+        const iv = setInterval(async () => {
+          tries += 1;
+          try {
+            const s = await api.updateStatus();
+            if (s.failed) { clearInterval(iv); setMsg("Update failed — see Settings → log, or run ./scripts/update.sh."); reject(new Error(s.status)); return; }
+            if (info && s.version === info.latest && !s.running) { clearInterval(iv); resolve(); window.location.reload(); return; }
+          } catch { /* API restarting — keep waiting */ }
+          if (tries > 150) { clearInterval(iv); setMsg("Update is taking a while — refresh in a moment."); reject(new Error("timeout")); }
+        }, 4000);
+      });
+      return true;
+    }, { pending: "Updating", success: "Update complete — reloading", error: (e) => e instanceof Error ? e.message : "update failed" });
   }
 
-  async function update() {
-    setBusy(true); setMsg("Starting update…");
-    try {
-      const r = await api.admin("update");
-      if (r.ok) {
-        setMsg("Updating in the background — this can take a few minutes. The page reloads automatically when it's done.");
-        pollUntilUpdated();
-      } else {
-        setMsg("Update could not run (use the CLI: ./scripts/update.sh).");
-        setBusy(false);
-      }
-    } catch {
-      setMsg("Update needs the in-app helper. Run ./scripts/update.sh on the device.");
-      setBusy(false);
-    }
-  }
   function snooze() {
     localStorage.setItem("lf_update_snooze", String(Date.now() + 24 * 3600 * 1000));
     setInfo(null);
   }
 
+  const busy = isRunning("update");
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[92%]">
       <div className="lf-card bg-elevated border-accent shadow-card flex items-center gap-3 px-4 py-3">
@@ -64,7 +58,7 @@ export function UpdateBanner() {
           {msg && <div className="text-xs text-faint mt-1">{msg}</div>}
         </div>
         <a className="lf-btn text-xs" href={info.url} target="_blank" rel="noreferrer">Notes</a>
-        <button className="lf-btn-accent text-xs" disabled={busy} onClick={update}>Update now</button>
+        <button className="lf-btn-accent text-xs" disabled={busy} onClick={update}>{busy ? "Updating…" : "Update now"}</button>
         <button className="lf-btn text-xs" onClick={snooze}>Later</button>
       </div>
     </div>

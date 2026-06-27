@@ -129,6 +129,7 @@ export const api = {
   fetchHistory: () => req<{ ok: boolean; with_history: string[]; no_history: string[]; total: number }>("/api/v1/system/fetch-history", { method: "POST" }),
 
   versionCheck: () => req<{ current: string; latest: string; update_available: boolean; url: string }>("/api/v1/system/version-check"),
+  updateStatus: () => req<{ running: boolean; ok: boolean; failed: boolean; status: string; version: string; log_tail: string }>("/api/v1/system/update-status"),
 
   // --- System admin (scoped root helper) ---
   adminAvailable: () => req<{ available: boolean }>("/api/v1/system/admin/available"),

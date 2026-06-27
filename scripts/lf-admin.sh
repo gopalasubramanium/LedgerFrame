@@ -92,18 +92,23 @@ case "$action" in
   update)
     # The update restarts ledgerframe-api/worker — so it must run OUTSIDE this
     # process tree, or it would be killed mid-flight when the API (its parent)
-    # restarts. Launch it detached as root; update.sh drops to the owning user for
-    # code/build steps and uses root for the service restart. Returns immediately;
-    # the UI polls the version endpoint until the new build is live.
+    # restarts. systemd-run puts it in its own cgroup (survives the restart);
+    # setsid is the fallback. update.sh writes progress to <data>/logs/update.*
+    # which the UI polls, so failures are visible rather than silent.
+    LOG_DIR="${DATA_DIR:+$DATA_DIR/logs}"; [[ -n "$LOG_DIR" ]] || LOG_DIR="$REPO_DIR/.update"
+    mkdir -p "$LOG_DIR" 2>/dev/null || LOG_DIR=/tmp
+    chown -R "$RUN_USER" "$LOG_DIR" 2>/dev/null || true
+    echo "running" > "$LOG_DIR/update.status" 2>/dev/null || true
     if command -v systemd-run >/dev/null 2>&1; then
       systemd-run --collect --quiet \
         --setenv=RUN_USER="$RUN_USER" --setenv=REPO_DIR="$REPO_DIR" --setenv=DATA_DIR="$DATA_DIR" \
         bash "$REPO_DIR/scripts/update.sh" \
-        && echo "update started in the background (transient unit); services will restart when done" \
-        || { echo "could not launch background update"; exit 1; }
+        && echo "update started in the background (transient unit); watch progress in Settings" \
+        || { echo "failed: could not launch background update" > "$LOG_DIR/update.status"; echo "could not launch update"; exit 1; }
     else
-      setsid bash "$REPO_DIR/scripts/update.sh" >/var/log/ledgerframe-update.log 2>&1 < /dev/null &
-      echo "update started in the background (detached); log: /var/log/ledgerframe-update.log"
+      setsid env RUN_USER="$RUN_USER" REPO_DIR="$REPO_DIR" DATA_DIR="$DATA_DIR" \
+        bash "$REPO_DIR/scripts/update.sh" >>"$LOG_DIR/update.log" 2>&1 < /dev/null &
+      echo "update started in the background (detached); watch progress in Settings"
     fi
     ;;
   doctor)

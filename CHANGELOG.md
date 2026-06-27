@@ -2,6 +2,25 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.6 — 2026-06-27
+
+- **FX cross rates fixed (the real currency bug).** Foreign holdings showed the
+  right symbol (₹/£/¥) but the **converted base value was ~13% off** because the
+  provider's *direct* exotic crosses (e.g. Alpha Vantage INR→SGD) are unreliable.
+  All conversions are now **triangulated through USD** (USD→INR × USD→SGD), the
+  legs providers quote accurately — so base-currency totals are correct.
+- **One-click update made reliable and observable.** It now runs detached in its
+  own cgroup (survives the API restart), drops to the owning user via a **login
+  shell** so `npm`/`uv` are actually found, sets `safe.directory`, and **writes a
+  live log + status** to `<data>/logs/update.{log,status}`. The UI polls this and
+  shows progress, **surfaces errors instead of silently doing nothing**, and
+  reloads when the new version is live. New endpoint: `GET /system/update-status`.
+- **Global activity feedback + double-click guard.** Every system action now shows
+  a spinner toast while running and a success/error toast when done, with a header
+  "Working…" pip. Re-triggering an action that's still running flashes
+  "already running — please wait…" instead of firing a duplicate request.
+- Refreshed documentation screenshots (now showing multi-currency holdings).
+
 ## v1.0.5 — 2026-06-27
 
 - **Multi-currency, done by market parlance.** A foreign holding is now valued and

@@ -4,9 +4,11 @@ import { useApi } from "../hooks/useApi";
 import { Card } from "../components/ui";
 import { AiConfigCard } from "../components/AiConfigCard";
 import { useApp } from "../store/app";
+import { useActivity } from "../components/Activity";
 
 export default function Settings() {
   const { status, reducedMotion, highContrast, toggleReducedMotion, toggleHighContrast, setLocked, refreshStatus, theme, setTheme } = useApp();
+  const { run, running } = useActivity();
   const settings = useApi(api.settings, 0);
   const aiStatus = useApi(api.aiStatus, 0);
   const adminAvail = useApi(api.adminAvailable, 0);
@@ -29,7 +31,7 @@ export default function Settings() {
   const [feedText, setFeedText] = useState("");
   const [msg, setMsg] = useState("");
   const [adminOut, setAdminOut] = useState("");
-  const [busy, setBusy] = useState("");
+  const busy = running > 0;  // a system action is in flight (see Activity)
 
   useEffect(() => {
     if (settings.data) {
@@ -45,46 +47,82 @@ export default function Settings() {
   useEffect(() => { if (cfg.data) setConf(cfg.data); }, [cfg.data]);
 
   async function saveConf(keys: string[]) {
-    try {
+    await run(`save:${keys.join(",")}`, async () => {
       const values = Object.fromEntries(keys.map((k) => [k, conf[k] ?? ""]));
       const r = await api.setConfig(values);
       setMsg(r.note); cfg.refetch(); refreshStatus();
-    } catch (e) { setMsg(e instanceof Error ? e.message : "Save failed (locked?)"); }
+      return r;
+    }, { pending: "Saving", success: (r) => r.note || "Saved", error: (e) => e instanceof Error ? e.message : "Save failed (locked?)" });
   }
 
   async function saveDataSource() {
-    try {
+    await run("save:datasource", async () => {
       const r = await api.setDataSource({ provider, api_key: apiKey || undefined });
       setMsg(r.note); setApiKey(""); ds.refetch(); refreshStatus();
-    } catch (e) { setMsg(e instanceof Error ? e.message : "Save failed (locked?)"); }
+      return r;
+    }, { pending: "Applying data source", success: (r) => r.note || "Applied", error: (e) => e instanceof Error ? e.message : "Save failed (locked?)" });
   }
 
   const ccys = (settings.data?.defaults.supported_currencies as string[]) ?? ["SGD", "USD", "INR", "EUR", "GBP"];
   const adminOn = adminAvail.data?.available ?? false;
 
   async function saveConfig() {
-    try {
+    await run("save:display", async () => {
       await api.updateSettings({
         base_currency: baseCcy, rotation_seconds: rotation,
         refresh_interval_seconds: refresh, display_sleep_minutes: sleepMin,
       });
       setMsg("Saved. Some changes (currency) apply after a service restart.");
       refreshStatus();
-    } catch (e) { setMsg(e instanceof Error ? e.message : "Save failed (locked? set a PIN)"); }
+    }, { pending: "Saving display", success: "Display saved", error: (e) => e instanceof Error ? e.message : "Save failed (locked? set a PIN)" });
   }
   async function saveFeeds() {
-    try { await api.setFeeds(feedText.split("\n").map((s) => s.trim()).filter(Boolean)); setMsg("News feeds saved."); feeds.refetch(); }
-    catch (e) { setMsg(e instanceof Error ? e.message : "Save failed"); }
+    await run("save:feeds", async () => {
+      await api.setFeeds(feedText.split("\n").map((s) => s.trim()).filter(Boolean)); setMsg("News feeds saved."); feeds.refetch();
+    }, { pending: "Saving feeds", success: "News feeds saved", error: (e) => e instanceof Error ? e.message : "Save failed" });
   }
   async function admin(action: string, arg?: string) {
-    setBusy(`${action} ${arg ?? ""}`); setAdminOut("");
-    try { const r = await api.admin(action, arg); setAdminOut(r.output || (r.ok ? "done" : "failed")); refreshStatus(); }
-    catch (e) { setAdminOut(e instanceof Error ? e.message : "failed"); }
-    finally { setBusy(""); }
+    const label = `${action}${arg ? " " + arg : ""}`;
+    await run(`admin:${label}`, async () => {
+      const r = await api.admin(action, arg);
+      setAdminOut(r.output || (r.ok ? "done" : "failed"));
+      refreshStatus();
+      if (!r.ok) throw new Error(r.output || "failed");
+      return r;
+    }, { pending: label, success: `${label} ✓`, error: (e) => `${label}: ${e instanceof Error ? e.message : "failed"}` });
+  }
+
+  // Trigger + watch a one-click update. Polls the update-status endpoint so it
+  // shows live progress, reloads when the new version is live, and surfaces
+  // failures instead of hanging silently.
+  async function checkAndUpdate() {
+    await run("update", async () => {
+      const v = await api.versionCheck();
+      if (!v.update_available) { setAdminOut(`Up to date (v${v.current}).`); return "Up to date"; }
+      if (!adminOn) { setAdminOut(`Update available: v${v.latest}. Run ./scripts/update.sh on the device.`); return undefined; }
+      const r = await api.admin("update");
+      if (!r.ok) { setAdminOut(`Update could not start: ${r.output || "use the CLI"}`); throw new Error(r.output || "could not start update"); }
+      setAdminOut(`Updating v${v.current} → v${v.latest} in the background…`);
+      await new Promise<void>((resolve, reject) => {
+        let tries = 0;
+        const iv = setInterval(async () => {
+          tries += 1;
+          try {
+            const s = await api.updateStatus();
+            if (s.log_tail) setAdminOut(s.log_tail);
+            if (s.failed) { clearInterval(iv); reject(new Error(s.status || "update failed")); return; }
+            if (s.version === v.latest && !s.running) { clearInterval(iv); resolve(); window.location.reload(); return; }
+          } catch { /* API restarting — keep waiting */ }
+          if (tries > 150) { clearInterval(iv); reject(new Error("update timed out — check Settings log or run ./scripts/update.sh")); }
+        }, 4000);
+      });
+      return `Updated to v${v.latest}`;
+    }, { pending: "Updating", success: "Update complete — reloading", error: (e) => e instanceof Error ? e.message : "update failed" });
   }
   async function setNewPin() {
-    try { await api.setPin(pin); setMsg("PIN set."); setPin(""); refreshStatus(); }
-    catch (e) { setMsg(e instanceof Error ? e.message : "Could not set PIN"); }
+    await run("save:pin", async () => {
+      await api.setPin(pin); setMsg("PIN set."); setPin(""); refreshStatus();
+    }, { pending: "Setting PIN", success: "PIN set", error: (e) => e instanceof Error ? e.message : "Could not set PIN" });
   }
 
   return (
@@ -131,15 +169,19 @@ export default function Settings() {
         <div className="border-t border-line mt-4 pt-3 space-y-2">
           <div className="text-xs uppercase tracking-wide text-faint">Data</div>
           <div className="flex flex-wrap gap-2">
-            <button className="lf-btn" disabled={!!busy} onClick={async () => {
-              setBusy("refresh"); setRefreshResult(null); try { const r = await api.refreshData(); setRefreshResult(r); setMsg(`Refreshed ${r.refreshed}/${r.total}`); } catch (e) { setMsg(e instanceof Error ? e.message : "Refresh failed"); } finally { setBusy(""); }
-            }}>Refresh live prices</button>
-            <button className="lf-btn" disabled={!!busy} onClick={async () => {
-              setBusy("history"); try { const r = await api.fetchHistory(); setMsg(`History cached for ${r.with_history.length}/${r.total}${r.no_history.length ? ` · ${r.no_history.length} unavailable` : ""}`); } catch (e) { setMsg(e instanceof Error ? e.message : "History fetch failed"); } finally { setBusy(""); }
-            }}>Fetch &amp; cache history</button>
-            <button className="lf-btn border-down/50 text-down" disabled={!!busy} onClick={async () => {
+            <button className="lf-btn" onClick={() => run("refresh", async () => {
+              setRefreshResult(null);
+              const r = await api.refreshData(); setRefreshResult(r);
+              return r;
+            }, { pending: "Refreshing live prices", success: (r) => `Refreshed ${r.refreshed}/${r.total}${r.failed.length ? ` · ${r.failed.length} unavailable` : ""}`, error: "Refresh failed" })}>Refresh live prices</button>
+            <button className="lf-btn" onClick={() => run("history", async () => {
+              const r = await api.fetchHistory();
+              return r;
+            }, { pending: "Fetching & caching history", success: (r) => `History cached for ${r.with_history.length}/${r.total}${r.no_history.length ? ` · ${r.no_history.length} unavailable` : ""}`, error: "History fetch failed" })}>Fetch &amp; cache history</button>
+            <button className="lf-btn border-down/50 text-down" onClick={() => {
               if (!confirm("Delete ALL demo & portfolio data (holdings, transactions, watchlists, prices)? Your settings and PIN are kept. This cannot be undone.")) return;
-              setBusy("reset"); try { const r = await api.resetData(); setMsg(r.note); ds.refetch(); refreshStatus(); } catch (e) { setMsg(e instanceof Error ? e.message : "Reset failed"); } finally { setBusy(""); }
+              run("reset", async () => { const r = await api.resetData(); ds.refetch(); refreshStatus(); return r; },
+                { pending: "Clearing data", success: (r) => r.note || "Data cleared", error: "Reset failed" });
             }}>Clear demo / all data</button>
           </div>
           <p className="text-xs text-faint">Clear, then set a live provider above and add your own holdings (Holdings page). Demo data won't come back.</p>
@@ -184,23 +226,23 @@ export default function Settings() {
         {!adminOn && <p className="text-xs text-warn mb-2">In-app controls unavailable — run the installer to enable, or use the CLI.</p>}
         <Row k="LAN access" v={status?.allow_lan ? "ON" : "off"} />
         <div className="flex gap-2 mb-3">
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("lan", "on")}>Enable LAN</button>
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("lan", "off")}>Disable LAN</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("lan", "on")}>Enable LAN</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("lan", "off")}>Disable LAN</button>
         </div>
         <Row k="Voice" v={status?.voice_enabled ? "ON" : "off"} />
         <div className="flex gap-2 mb-3">
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("voice", "on")}>Enable voice</button>
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("voice", "off")}>Disable voice</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("voice", "on")}>Enable voice</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("voice", "off")}>Disable voice</button>
         </div>
         <Row k="AI" v={status?.ai_enabled ? "ON" : "off"} />
         <div className="flex gap-2 mb-3">
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("ai", "on")}>Enable AI</button>
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("ai", "off")}>Disable AI</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("ai", "on")}>Enable AI</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("ai", "off")}>Disable AI</button>
         </div>
         <Row k="Kiosk (full-screen)" v="" />
         <div className="flex gap-2">
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("kiosk", "on")}>Enable kiosk</button>
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("kiosk", "off")}>Disable kiosk</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("kiosk", "on")}>Enable kiosk</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("kiosk", "off")}>Disable kiosk</button>
         </div>
         <p className="text-xs text-warn mt-3">Enabling LAN exposes the app to your network — set a PIN first.</p>
       </Card>
@@ -208,35 +250,18 @@ export default function Settings() {
       {/* Maintenance */}
       <Card title="Service & maintenance" className="col-span-12 lg:col-span-6">
         <div className="flex flex-wrap gap-2">
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("restart")}>Restart services</button>
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("status")}>Service status</button>
-          <button className="lf-btn" disabled={!adminOn || !!busy} onClick={() => admin("doctor")}>Run diagnostics</button>
-          <button className="lf-btn" disabled={!!busy} onClick={async () => {
-            setBusy("backup"); try { const r = await fetch("/api/v1/backup/create", { method: "POST", credentials: "same-origin" }); const j = await r.json(); setAdminOut(r.ok ? `Backup: ${j.filename}` : (j.detail || "failed")); } catch { setAdminOut("backup failed"); } finally { setBusy(""); }
-          }}>Create backup</button>
-          <button className="lf-btn" disabled={!!busy} onClick={async () => {
-            setBusy("version"); try {
-              const v = await api.versionCheck();
-              if (!v.update_available) { setAdminOut(`Up to date (v${v.current}).`); }
-              else if (adminOn) {
-                const r = await api.admin("update");
-                if (r.ok) {
-                  setAdminOut(`Updating v${v.current} → v${v.latest} in the background…\nThis can take a few minutes; the page reloads automatically when done.`);
-                  let tries = 0;
-                  const iv = setInterval(async () => {
-                    tries += 1;
-                    try { const c = await api.versionCheck(); if (!c.update_available) { clearInterval(iv); window.location.reload(); return; } } catch { /* restarting */ }
-                    if (tries > 120) { clearInterval(iv); setAdminOut("Update is taking a while — refresh the page in a moment."); }
-                  }, 5000);
-                } else {
-                  setAdminOut(`Update could not run: ${r.output || "use the CLI: ./scripts/update.sh"}`);
-                }
-              }
-              else { setAdminOut(`Update available: v${v.latest}. Run ./scripts/update.sh on the device.`); }
-            } catch { setAdminOut("version check failed"); } finally { setBusy(""); }
-          }}>Check &amp; update</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("restart")}>Restart services</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("status")}>Service status</button>
+          <button className="lf-btn" disabled={!adminOn || busy} onClick={() => admin("doctor")}>Run diagnostics</button>
+          <button className="lf-btn" onClick={() => run("backup", async () => {
+            const r = await fetch("/api/v1/backup/create", { method: "POST", credentials: "same-origin" });
+            const j = await r.json(); setAdminOut(r.ok ? `Backup: ${j.filename}` : (j.detail || "failed"));
+            if (!r.ok) throw new Error(j.detail || "backup failed");
+            return j;
+          }, { pending: "Creating backup", success: (j) => `Backup: ${j.filename}`, error: "Backup failed" })}>Create backup</button>
+          <button className="lf-btn" onClick={checkAndUpdate}>Check &amp; update</button>
         </div>
-        {busy && <p className="text-xs text-muted mt-2">Running {busy}…</p>}
+        {busy && <p className="text-xs text-muted mt-2">A system action is running…</p>}
         {adminOut && <pre className="text-xs bg-base rounded-card p-3 mt-3 overflow-auto max-h-48 whitespace-pre-wrap">{adminOut}</pre>}
         <p className="text-xs text-faint mt-2">Package/Hailo installation stays on the command line for safety.</p>
       </Card>

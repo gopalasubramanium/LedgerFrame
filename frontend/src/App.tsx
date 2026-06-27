@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import Legal from "./pages/Legal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { Footer } from "./components/Footer";
+import { ActivityPip } from "./components/Activity";
 
 const NAV = [
   { path: "/", label: "Home" },
@@ -86,6 +87,7 @@ export default function App() {
         </div>
         <div className="hidden md:block"><Clock timezone={status?.timezone} /></div>
         <div className="flex items-center gap-2">
+          <ActivityPip />
           <button className="lf-btn px-3" onClick={cycleTheme} title={`Theme: ${theme}`} aria-label="Toggle theme">{themeIcon}</button>
           <button
             className={`lf-btn hidden sm:inline-flex ${rotate ? "border-accent text-accent" : ""}`}

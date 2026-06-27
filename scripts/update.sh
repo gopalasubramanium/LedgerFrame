@@ -1,76 +1,91 @@
 #!/usr/bin/env bash
-# Manual update: sync code to the latest release, reinstall deps, rebuild the
-# dashboard, migrate the database, and restart services.
+# Update LedgerFrame: sync code to the latest release, reinstall deps, rebuild the
+# dashboard, migrate the DB, and restart services.
 #
 # Appliance-safe: your data, backups, and .env are git-ignored and never touched.
-# It DOES discard local edits to tracked code (including the rebuilt frontend/dist,
+# It DOES discard local edits to tracked code (incl. the rebuilt frontend/dist,
 # which is why a plain `git pull` fails here) by hard-resetting to the remote.
 #
-# Privilege model — this script works in two modes:
-#   • Run by you from the CLI (unprivileged): uses `sudo` for service/unit ops
-#     (prompts for your password, which is fine at a terminal).
-#   • Run by the root admin helper (one-click "Update now", launched detached via
-#     systemd-run as root): already root, so no `sudo` is needed for systemctl —
-#     but code/build/git steps are dropped to the owning user so file ownership
-#     stays correct and git's ownership checks pass.
-set -euo pipefail
+# Runs in two modes:
+#   • From your terminal (unprivileged): uses `sudo` for service/unit ops.
+#   • From the root admin helper ("Update now"): already root, so no sudo for
+#     systemctl — code/build/git steps drop to the owning user via a LOGIN shell
+#     so their PATH (nvm/uv) is loaded and file ownership stays correct.
+#
+# Progress is written to <data>/logs/update.{log,status} so the web UI can show
+# what's happening and surface errors instead of failing silently.
+#
+# Note: we deliberately do NOT use `set -e` — every step is checked explicitly so
+# a failure is logged (and shown in the UI), never swallowed.
+set -uo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
-# Decide how to run privileged vs. user-level steps based on who we are.
+# --- who runs what -----------------------------------------------------------
 SUDO=sudo
-RUN_AS=()
+OWNER="$(id -un)"
 if [[ "$(id -u)" -eq 0 ]]; then
-  SUDO=""   # already root; systemctl/tee/install need no sudo
+  SUDO=""
   OWNER="${RUN_USER:-$(stat -c %U "$REPO_DIR" 2>/dev/null || echo root)}"
-  [[ "$OWNER" != "root" ]] && RUN_AS=(sudo -u "$OWNER")
+fi
+# Run a command as the repo owner (login shell so nvm/uv/etc. are on PATH).
+run_owner() { if [[ "$OWNER" != "$(id -un)" ]]; then sudo -iu "$OWNER" "$@"; else "$@"; fi; }
+owner_sh()  { if [[ "$OWNER" != "$(id -un)" ]]; then sudo -iu "$OWNER" bash -lc "$1"; else bash -lc "$1"; fi; }
+
+# --- log + status ------------------------------------------------------------
+LOG_DIR="${DATA_DIR:+$DATA_DIR/logs}"
+[[ -n "$LOG_DIR" ]] || LOG_DIR="$REPO_DIR/.update"
+mkdir -p "$LOG_DIR" 2>/dev/null || LOG_DIR="/tmp"
+[[ "$OWNER" != "$(id -un)" ]] && chown -R "$OWNER" "$LOG_DIR" 2>/dev/null || true
+LOG="$LOG_DIR/update.log"
+STATUS="$LOG_DIR/update.status"
+# When launched detached (no terminal), mirror all output into the log file so
+# the UI / CLI can read it; when run interactively, print to the terminal.
+[[ -t 1 ]] || exec >>"$LOG" 2>&1
+
+log() { echo "[$(date -u '+%Y-%m-%d %H:%M:%S')Z] $*"; }
+set_status() { echo "$1" >"$STATUS" 2>/dev/null || true; }
+fail() { log "ERROR: $1"; set_status "failed: $1"; exit 1; }
+
+: >"$LOG" 2>/dev/null || true   # fresh log per run (best effort)
+set_status "running"
+log "update starting (user=$OWNER repo=$REPO_DIR)"
+
+# git ownership safety (root operating on a user-owned repo, or vice versa)
+run_owner git config --global --add safe.directory "$REPO_DIR" >/dev/null 2>&1 || true
+
+BRANCH="$(run_owner git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
+[[ "$BRANCH" == "HEAD" || -z "$BRANCH" ]] && BRANCH=main
+
+log "backing up database first…"
+owner_sh "cd '$REPO_DIR' && ./scripts/backup.sh" >/dev/null 2>&1 && log "backup created" || log "backup skipped"
+
+log "fetching latest ($BRANCH)…"
+run_owner git -C "$REPO_DIR" fetch origin "$BRANCH" || fail "git fetch failed (network?)"
+run_owner git -C "$REPO_DIR" reset --hard "origin/$BRANCH" || fail "git reset failed"
+log "code synced to $(run_owner git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo '?')"
+
+log "updating backend dependencies…"
+owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; if command -v uv >/dev/null 2>&1; then uv pip install -e '.[dev]'; else pip install -e '.[dev]'; fi" \
+  && log "backend deps updated" || log "WARN: backend dep step had issues (continuing)"
+
+if owner_sh "command -v npm >/dev/null 2>&1" && [[ -d frontend ]]; then
+  log "rebuilding dashboard…"
+  owner_sh "cd '$REPO_DIR/frontend' && (npm ci --no-audit --no-fund || npm install) && npm run build" \
+    && log "dashboard rebuilt" || log "WARN: dashboard rebuild failed (using committed build)"
 fi
 
-# Run a command as the repo owner (no-op prefix when we're already that user).
-as_owner() { if [[ ${#RUN_AS[@]} -gt 0 ]]; then "${RUN_AS[@]}" "$@"; else "$@"; fi; }
+log "applying database migrations…"
+owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; alembic upgrade head" \
+  && log "migrations applied" || log "no migrations to apply"
 
-BRANCH="$(as_owner git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
-[[ "$BRANCH" == "HEAD" ]] && BRANCH=main
-
-echo "[update] backing up database first…"
-as_owner bash "$REPO_DIR/scripts/backup.sh" >/dev/null 2>&1 && echo "[update] backup created" || echo "[update] backup skipped"
-
-echo "[update] fetching latest ($BRANCH)…"
-as_owner git -C "$REPO_DIR" fetch origin "$BRANCH"
-# Hard-reset tracked files to the remote. Ignored paths (.env, data/, .venv,
-# node_modules) are left intact. This cleanly resolves the rebuilt-dist conflict.
-as_owner git -C "$REPO_DIR" reset --hard "origin/$BRANCH"
-
-# All code/build/migrate steps run as the owner (defined here, executed in one
-# subshell so env activation persists). Quiet on success; never aborts the run.
-build_steps() {
-  set -e
-  cd "$REPO_DIR"
-  # shellcheck disable=SC1091
-  [[ -f .venv/bin/activate ]] && source .venv/bin/activate || true
-  echo "[update] updating backend dependencies…"
-  if command -v uv &>/dev/null; then uv pip install -e ".[dev]" >/dev/null; else pip install -e ".[dev]" >/dev/null; fi
-  if command -v npm &>/dev/null && [[ -d frontend ]]; then
-    echo "[update] rebuilding dashboard…"
-    (cd frontend && (npm ci --no-audit --no-fund >/dev/null 2>&1 || npm install >/dev/null 2>&1) && npm run build >/dev/null 2>&1) \
-      && echo "[update] dashboard rebuilt" || echo "[update] dashboard rebuild skipped (using committed build)"
-  fi
-  echo "[update] applying database migrations…"
-  alembic upgrade head 2>/dev/null && echo "[update] migrations applied" || echo "[update] no migrations to apply"
-}
-
-if [[ ${#RUN_AS[@]} -gt 0 ]]; then
-  "${RUN_AS[@]}" env REPO_DIR="$REPO_DIR" bash -c "$(declare -f build_steps); build_steps"
-else
-  build_steps
-fi
-
-# Refresh the privileged helper if present (in case it changed).
+# Refresh the privileged helper (in case it changed).
 if [[ -f /usr/local/sbin/ledgerframe-admin ]]; then
-  $SUDO install -m 0755 -o root -g root "$REPO_DIR/scripts/lf-admin.sh" /usr/local/sbin/ledgerframe-admin 2>/dev/null || true
+  $SUDO install -m 0755 -o root -g root "$REPO_DIR/scripts/lf-admin.sh" /usr/local/sbin/ledgerframe-admin 2>/dev/null \
+    && log "admin helper refreshed" || log "WARN: could not refresh admin helper"
 fi
 
-# Re-render systemd units so unit changes (e.g. hardening tweaks) apply on update.
+# Re-render systemd units so unit changes apply on update.
 if [[ -r /etc/ledgerframe/admin.env ]]; then
   # shellcheck disable=SC1091
   . /etc/ledgerframe/admin.env   # REPO_DIR, DATA_DIR, RUN_USER
@@ -80,16 +95,19 @@ if [[ -r /etc/ledgerframe/admin.env ]]; then
   API_PORT="${API_PORT:-8321}"
   for unit in ledgerframe-api ledgerframe-worker ledgerframe-kiosk; do
     [[ -f /etc/systemd/system/$unit.service ]] || continue
-    desktop_user="$RUN_USER"
-    sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$desktop_user|g" \
+    sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$RUN_USER|g" \
         -e "s|@API_HOST@|$API_HOST|g" -e "s|@API_PORT@|$API_PORT|g" "$REPO_DIR/systemd/$unit.service" \
       | $SUDO tee "/etc/systemd/system/$unit.service" >/dev/null
   done
   $SUDO systemctl daemon-reload 2>/dev/null || true
-  echo "[update] systemd units refreshed"
+  log "systemd units refreshed"
 fi
 
-echo "[update] restarting services…"
+NEWVER="$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' "$REPO_DIR/app/__init__.py" 2>/dev/null | head -1 | tr -d '"')"
+# Mark success BEFORE restarting the API (the restart will drop this process's
+# connections; the status file is how the UI learns the update finished).
+set_status "ok ${NEWVER:-updated}"
+log "restarting services…"
 $SUDO systemctl restart ledgerframe-api ledgerframe-worker 2>/dev/null \
-  && echo "[update] services restarted" || echo "[update] services not installed (dev?)"
-echo "[update] done."
+  && log "services restarted" || log "services not installed (dev?)"
+log "update complete → v${NEWVER:-?}"

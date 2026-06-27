@@ -398,6 +398,40 @@ async def version_check() -> dict:
     return {"current": current, "latest": latest, "update_available": available, "url": url}
 
 
+@router.get("/system/update-status")
+async def update_status() -> dict:
+    """Progress of a backgrounded one-click update.
+
+    The update runs detached (it restarts this very API), writing progress to
+    ``<data>/logs/update.{log,status}``. The UI polls this so it can show live
+    progress, reload when the new version is live, and surface failures instead
+    of hanging silently.
+    """
+    log_dir = get_settings().logs_dir
+    status_text = ""
+    log_tail = ""
+    try:
+        sf = log_dir / "update.status"
+        if sf.exists():
+            status_text = sf.read_text(errors="replace").strip()
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        lf = log_dir / "update.log"
+        if lf.exists():
+            log_tail = "\n".join(lf.read_text(errors="replace").splitlines()[-40:])
+    except Exception:  # noqa: BLE001
+        pass
+    return {
+        "running": status_text == "running",
+        "ok": status_text.startswith("ok"),
+        "failed": status_text.startswith("failed"),
+        "status": status_text,
+        "version": __version__,
+        "log_tail": log_tail,
+    }
+
+
 @router.get("/system/admin/available")
 async def admin_available() -> dict:
     """Whether in-app system controls are wired (root helper + sudoers present)."""

@@ -2,6 +2,12 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.3 — 2026-06-27
+
+- Added a minimal, responsive credit footer on every page: "Concept & direction by
+  Gopala Subramanium" + social links (website, GitHub, LinkedIn, X, YouTube, Facebook)
+  and a PayPal support link. Author/credits section added to the README.
+
 ## v1.0.2 — 2026-06-27
 
 - Briefing & Ask no longer leak reasoning-model chain-of-thought (`<think>`) — only

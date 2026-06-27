@@ -16,8 +16,13 @@ depends_on = None
 
 
 def upgrade() -> None:
-    with op.batch_alter_table("transactions") as batch:
-        batch.add_column(sa.Column("taxes", app.db.base.DecimalText(), nullable=True))
+    # Idempotent: the app bootstraps fresh DBs with create_all(), so the column may
+    # already exist on databases adopted into Alembic. Only add it if missing.
+    bind = op.get_bind()
+    cols = {c["name"] for c in sa.inspect(bind).get_columns("transactions")}
+    if "taxes" not in cols:
+        with op.batch_alter_table("transactions") as batch:
+            batch.add_column(sa.Column("taxes", app.db.base.DecimalText(), nullable=True))
     op.execute("UPDATE transactions SET taxes = '0' WHERE taxes IS NULL")
 
 

@@ -76,8 +76,8 @@ if owner_sh "command -v npm >/dev/null 2>&1" && [[ -d frontend ]]; then
 fi
 
 log "applying database migrations…"
-owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; alembic upgrade head" \
-  && log "migrations applied" || log "no migrations to apply"
+owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; python scripts/db_migrate.py" \
+  && log "migrations applied" || log "WARN: migration step reported an issue (schema may already be current)"
 
 # Refresh the privileged helper (in case it changed).
 if [[ -f /usr/local/sbin/ledgerframe-admin ]]; then

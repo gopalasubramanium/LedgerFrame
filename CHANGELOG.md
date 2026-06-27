@@ -2,6 +2,16 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.8 — 2026-06-28
+
+- **Fixed the noisy "table accounts already exists" error during update.** The app
+  bootstraps fresh databases with `create_all()`, so an existing DB has the current
+  schema but no Alembic stamp — and `alembic upgrade head` then tried to re-create
+  existing tables. A new `scripts/db_migrate.py` adopts the schema (stamps the
+  baseline) when needed, then upgrades; the initial-taxes migration is now
+  idempotent. Handles all cases: fresh DB, create_all DB, and already-stamped DB.
+  (The error was harmless — the app worked regardless — but it's gone now.)
+
 ## v1.0.7 — 2026-06-27
 
 - **Base currency now applies instantly, everywhere.** Changing it in Settings

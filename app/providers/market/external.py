@@ -58,7 +58,8 @@ class ExternalMarketDataProvider:
 
     async def _get(self, params: dict) -> dict:
         params = {**params, "apikey": self._key}
-        async with self._sem, httpx.AsyncClient(timeout=15) as client:
+        # Tight timeout so a slow/limited provider can't hang dashboard requests.
+        async with self._sem, httpx.AsyncClient(timeout=8) as client:
             r = await client.get(_BASE, params=params)
             r.raise_for_status()
             data = r.json()
@@ -71,7 +72,7 @@ class ExternalMarketDataProvider:
             data = (await self._get({"function": "GLOBAL_QUOTE", "symbol": symbol})).get("Global Quote", {})
             px = data.get("05. price")
             if not px:
-                raise ValueError("empty quote")
+                raise ValueError("empty quote (unknown symbol or rate limited)")
             return Quote(
                 symbol=symbol.upper(), exchange=exchange,
                 price=price(px),
@@ -82,12 +83,15 @@ class ExternalMarketDataProvider:
                 entitlement=EntitlementStatus.DELAYED, market_time=now, received_at=now,
             )
         except Exception as exc:  # noqa: BLE001
-            log.warning("AV quote failed for %s: %s", symbol, exc)
-            q = await self._mock.get_quote(symbol, exchange)
-            q.source = f"{self.name}-unavailable"
-            q.entitlement = EntitlementStatus.UNAVAILABLE
-            q.is_stale = True
-            return q
+            # NEVER fabricate a price for a live provider — return UNAVAILABLE so the
+            # UI shows "—" and the user knows the live feed isn't delivering (e.g. the
+            # Alpha Vantage daily limit was hit), not a misleading demo number.
+            log.warning("AV quote unavailable for %s: %s", symbol, exc)
+            return Quote(
+                symbol=symbol.upper(), exchange=exchange, price=None,
+                currency="USD", source=self.name,
+                entitlement=EntitlementStatus.UNAVAILABLE, received_at=now, is_stale=True,
+            )
 
     async def get_history(self, instrument_id: str, interval: str, start: datetime, end: datetime) -> list[Candle]:
         try:
@@ -108,8 +112,10 @@ class ExternalMarketDataProvider:
             candles.sort(key=lambda c: c.ts)
             return candles
         except Exception as exc:  # noqa: BLE001
-            log.warning("AV history failed for %s: %s", instrument_id, exc)
-            return await self._mock.get_history(instrument_id, interval, start, end)
+            # No mock fallback for a live provider — return empty so charts show
+            # "no data" rather than fabricated history.
+            log.warning("AV history unavailable for %s: %s", instrument_id, exc)
+            return []
 
     async def search_instruments(self, query: str) -> list[Instrument]:
         try:

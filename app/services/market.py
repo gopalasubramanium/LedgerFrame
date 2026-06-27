@@ -93,6 +93,7 @@ async def get_history_cached(
     start: datetime,
     end: datetime,
     max_age_hours: int = 12,
+    allow_fetch: bool = True,
 ):
     """Return historical candles, cached in price_history.
 
@@ -134,9 +135,11 @@ async def get_history_cached(
             for r in rows
         ]
 
-    if fresh:
+    if fresh or not allow_fetch:
+        # Serve cached data without a (possibly slow) provider call. When fetching
+        # isn't allowed (time-budget exceeded), return whatever we have, even empty.
         cached = await _from_db()
-        if cached:
+        if cached or not allow_fetch:
             return cached
 
     # Fetch from provider and upsert new candles.

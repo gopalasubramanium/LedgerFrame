@@ -93,7 +93,11 @@ function MoverList({ title, rows, ccy }: { title: string; rows: HoldingRow[]; cc
       <ul className="space-y-1">
         {rows.slice(0, 5).map((h) => (
           <li key={h.id} className="flex justify-between text-sm">
-            <span className="truncate mr-2">{h.label}</span>
+            {h.symbol ? (
+              <Link to={`/instrument/${h.symbol}`} className="truncate mr-2 hover:text-accent">{h.label}</Link>
+            ) : (
+              <span className="truncate mr-2">{h.label}</span>
+            )}
             <span className={`tnum ${toneClass(h.day_change)}`}>{signedMoney(h.day_change, ccy)}</span>
           </li>
         ))}
@@ -112,7 +116,11 @@ function Concentration({ holdings, total }: { holdings: HoldingRow[]; total: num
         return (
           <li key={h.id}>
             <div className="flex justify-between text-sm">
-              <span className="truncate mr-2">{h.label}</span>
+              {h.symbol ? (
+                <Link to={`/instrument/${h.symbol}`} className="truncate mr-2 hover:text-accent">{h.label}</Link>
+              ) : (
+                <span className="truncate mr-2">{h.label}</span>
+              )}
               <span className="tnum text-muted">{wpct.toFixed(1)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-elevated mt-1">

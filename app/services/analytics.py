@@ -74,9 +74,16 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
     largest = priced[0] if priced else None
     top5 = sum((h.market_value_base for h in priced[:5]), ZERO)
 
-    # 1Y risk/return metrics from the invested performance series.
-    perf = await performance_series(session, base_currency, 365, benchmark)
-    ps = perf.get("stats") or {}
+    # 1Y risk/return metrics from the invested performance series (best-effort —
+    # never block the panel if the provider is slow/rate-limited).
+    import asyncio
+
+    ps: dict = {}
+    try:
+        perf = await asyncio.wait_for(performance_series(session, base_currency, 365, benchmark), timeout=14)
+        ps = perf.get("stats") or {}
+    except (TimeoutError, Exception):  # noqa: BLE001
+        ps = {}
     vol = ps.get("volatility_pct") or 0.0
     ret = ps.get("return_pct") or 0.0
     ret_vol = round(ret / vol, 2) if vol else None
@@ -133,10 +140,15 @@ async def performance_series(
     benchmark. Constant manual assets (cash/property) are excluded by default so
     the line reflects market movement; pass include_manual=True for a net-worth view.
     """
+    import time as _time
+
     from app.services.market import get_history_cached
 
     end = datetime.now(UTC)
     start = end - timedelta(days=days)
+    # Overall time budget so a slow/rate-limited live provider can't make the page
+    # hang. Past the budget we use only already-cached history.
+    deadline = _time.monotonic() + 12.0
 
     # Time axis from the benchmark's daily candles (cached).
     bench_candles = await get_history_cached(session, benchmark, "1d", start, end)
@@ -171,7 +183,9 @@ async def performance_series(
                 portfolio_vals[i] += base_contrib
             continue
 
-        candles = await get_history_cached(session, instr.symbol, "1d", start, end)
+        candles = await get_history_cached(
+            session, instr.symbol, "1d", start, end, allow_fetch=_time.monotonic() < deadline
+        )
         closes = {c.ts: D(c.close) for c in candles}
         per_date = _carry_forward(axis, closes)
         qty = D(h.quantity)

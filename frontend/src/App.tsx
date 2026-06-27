@@ -18,23 +18,24 @@ import InstrumentDetail from "./pages/InstrumentDetail";
 import Settings from "./pages/Settings";
 
 const NAV = [
-  { path: "/", page: "home", label: "Home" },
-  { path: "/portfolio", page: "portfolio", label: "Portfolio" },
-  { path: "/holdings", page: "holdings", label: "Holdings" },
-  { path: "/markets", page: "markets", label: "Markets" },
-  { path: "/heatmap", page: "heatmap", label: "Heatmap" },
-  { path: "/global", page: "global", label: "Global" },
-  { path: "/news", page: "news", label: "News" },
-  { path: "/snapshot", page: "snapshot", label: "Snapshot" },
-  { path: "/settings", page: "settings", label: "Settings" },
+  { path: "/", label: "Home" },
+  { path: "/portfolio", label: "Portfolio" },
+  { path: "/holdings", label: "Holdings" },
+  { path: "/markets", label: "Markets" },
+  { path: "/global", label: "Global" },
+  { path: "/heatmap", label: "Heatmap" },
+  { path: "/news", label: "News" },
+  { path: "/snapshot", label: "Snapshot" },
+  { path: "/settings", label: "Settings" },
 ];
 
 const ROTATION_PAGES = ["/", "/portfolio", "/markets", "/heatmap", "/news"];
 
 export default function App() {
-  const { status, locked } = useApp();
+  const { status, locked, theme, setTheme } = useApp();
   const [asking, setAsking] = useState(false);
   const [rotate, setRotate] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,51 +48,73 @@ export default function App() {
     onChange: onRotate,
   });
 
-  // Force PIN setup when LAN is on but none is set (prevents a locked-out state).
   if (status?.allow_lan && status?.pin_set === false) return <LockScreen mode="setup" />;
   if (locked) return <LockScreen mode="unlock" />;
+
+  const cycleTheme = () => setTheme(theme === "light" ? "dark" : theme === "dark" ? "system" : "light");
+  const themeIcon = theme === "light" ? "☀" : theme === "dark" ? "☾" : "◑";
+
+  const navLinks = (onClick?: () => void) =>
+    NAV.map((n) => (
+      <NavLink
+        key={n.path}
+        to={n.path}
+        end={n.path === "/"}
+        onClick={onClick}
+        className={({ isActive }) =>
+          `touch flex items-center px-4 rounded-card mb-1 text-sm font-medium transition-colors ${
+            isActive ? "bg-elevated text-accent" : "text-muted hover:text-ink hover:bg-elevated/50"
+          }`
+        }
+      >
+        {n.label}
+      </NavLink>
+    ));
 
   return (
     <div className="h-screen flex flex-col bg-base text-ink">
       {/* Top bar */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-line bg-surface/60">
-        <div className="flex items-center gap-4">
-          <span className="text-accent font-semibold tracking-tight text-lg">LedgerFrame</span>
-          {status?.demo_mode && <DemoBadge />}
+      <header className="flex items-center justify-between gap-2 px-3 sm:px-6 py-3 border-b border-line bg-surface/60">
+        <div className="flex items-center gap-3 min-w-0">
+          <button className="lf-btn md:hidden px-3" onClick={() => setMenuOpen(true)} aria-label="Menu">☰</button>
+          <span className="lf-wordmark text-accent font-semibold text-lg">LedgerFrame</span>
+          {status?.demo_mode && <span className="hidden sm:inline"><DemoBadge /></span>}
         </div>
-        <Clock timezone={status?.timezone} />
+        <div className="hidden md:block"><Clock timezone={status?.timezone} /></div>
         <div className="flex items-center gap-2">
+          <button className="lf-btn px-3" onClick={cycleTheme} title={`Theme: ${theme}`} aria-label="Toggle theme">{themeIcon}</button>
           <button
-            className={`lf-btn ${rotate ? "border-accent text-accent" : ""}`}
+            className={`lf-btn hidden sm:inline-flex ${rotate ? "border-accent text-accent" : ""}`}
             onClick={() => setRotate((v) => !v)}
             title="Toggle dashboard rotation"
           >
-            {rotate ? (paused ? "❚❚ Paused" : "⟳ Rotating") : "⟳ Rotate"}
+            {rotate ? (paused ? "❚❚" : "⟳") : "⟳"}
           </button>
           <button className="lf-btn-accent" onClick={() => setAsking(true)}>Ask</button>
         </div>
       </header>
 
-      {/* Nav rail + content */}
       <div className="flex flex-1 min-h-0">
-        <nav className="w-44 shrink-0 border-r border-line bg-surface/40 py-3 px-2 overflow-y-auto" aria-label="Primary">
-          {NAV.map((n) => (
-            <NavLink
-              key={n.path}
-              to={n.path}
-              end={n.path === "/"}
-              className={({ isActive }) =>
-                `touch flex items-center px-4 rounded-card mb-1 text-sm font-medium transition-colors ${
-                  isActive ? "bg-elevated text-accent" : "text-muted hover:text-ink hover:bg-elevated/50"
-                }`
-              }
-            >
-              {n.label}
-            </NavLink>
-          ))}
+        {/* Desktop side rail */}
+        <nav className="hidden md:block w-44 shrink-0 border-r border-line bg-surface/40 py-3 px-2 overflow-y-auto" aria-label="Primary">
+          {navLinks()}
         </nav>
 
-        <main className="flex-1 min-h-0 overflow-y-auto p-5">
+        {/* Mobile drawer */}
+        {menuOpen && (
+          <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMenuOpen(false)}>
+            <div className="absolute inset-0 bg-black/50" />
+            <nav className="absolute left-0 top-0 bottom-0 w-64 bg-surface border-r border-line py-4 px-3 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4 px-2">
+                <span className="lf-wordmark text-accent font-semibold">LedgerFrame</span>
+                <button className="lf-btn px-3" onClick={() => setMenuOpen(false)} aria-label="Close">✕</button>
+              </div>
+              {navLinks(() => setMenuOpen(false))}
+            </nav>
+          </div>
+        )}
+
+        <main className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/portfolio" element={<Portfolio />} />
@@ -107,14 +130,10 @@ export default function App() {
         </main>
       </div>
 
-      {/* Rotation page indicators */}
       {rotate && (
-        <div className="flex justify-center gap-2 py-2 border-t border-line bg-surface/40">
+        <div className="hidden sm:flex justify-center gap-2 py-2 border-t border-line bg-surface/40">
           {ROTATION_PAGES.map((p) => (
-            <span
-              key={p}
-              className={`h-2 w-2 rounded-full ${location.pathname === p ? "bg-accent" : "bg-line"}`}
-            />
+            <span key={p} className={`h-2 w-2 rounded-full ${location.pathname === p ? "bg-accent" : "bg-line"}`} />
           ))}
         </div>
       )}

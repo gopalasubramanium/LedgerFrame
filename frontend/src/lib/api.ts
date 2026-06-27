@@ -12,6 +12,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     credentials: "same-origin",
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    // Bound every request so a slow/rate-limited backend can't hang a panel.
+    signal: init?.signal ?? AbortSignal.timeout(25000),
     ...init,
   });
   if (!res.ok) {
@@ -61,6 +63,10 @@ export const api = {
     req<{ symbol: string; candles: { ts: string; open: number; high: number; low: number; close: number; volume: number | null }[] }>(
       `/api/v1/instruments/${encodeURIComponent(symbol)}/history?days=${days}`,
     ),
+  search: (q: string) =>
+    req<{ results: { symbol: string; name: string; asset_class: string; currency: string }[] }>(`/api/v1/markets/search?q=${encodeURIComponent(q)}`),
+  marketsGlobal: () =>
+    req<{ groups: { region: string; items: { symbol: string; quote: Quote }[] }[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/global"),
   news: () =>
     req<{ items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string; symbols: string[] }[]; rss_count: number }>("/api/v1/news"),
   watchlists: () => req<{ watchlists: { id: number; name: string; items: { symbol: string; name: string; quote: Quote }[] }[] }>("/api/v1/watchlists"),
@@ -159,7 +165,7 @@ export interface ManualInput {
 }
 
 export const TXN_TYPES = [
-  "buy", "sell", "dividend", "interest", "deposit", "withdrawal", "fee", "split", "transfer",
+  "buy", "sell", "dividend", "interest", "deposit", "withdrawal", "fee", "split", "bonus", "transfer",
 ] as const;
 export const ASSET_CLASSES = [
   "equity", "etf", "mutual_fund", "bond", "cash", "fixed_deposit", "commodity", "crypto",

@@ -1,10 +1,19 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>LedgerFrame</title>
+    <script>
+      // Apply the saved theme before paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem("lf_theme") || "system";
+          var sys = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          document.documentElement.dataset.theme = t === "system" ? sys : t;
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" crossorigin src="/assets/index.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index.css">
   </head>

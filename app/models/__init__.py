@@ -46,6 +46,7 @@ class TxnType(str, enum.Enum):
     WITHDRAWAL = "withdrawal"
     FEE = "fee"
     SPLIT = "split"
+    BONUS = "bonus"
     TRANSFER = "transfer"
 
 

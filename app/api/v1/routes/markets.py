@@ -77,6 +77,29 @@ async def markets_overview(session: AsyncSession = Depends(get_db)) -> dict:
     }
 
 
+# Major world indices + cross-asset benchmarks, grouped for the Global page.
+_GLOBAL_MARKETS: dict[str, list[str]] = {
+    "Americas": ["^GSPC", "^DJI", "^IXIC"],
+    "Europe": ["^FTSE", "^GDAXI"],
+    "Asia-Pacific": ["^N225", "^HSI", "^BSESN", "^STI"],
+    "Commodities": ["GLD"],
+    "Crypto": ["BTC", "ETH"],
+}
+
+
+@router.get("/markets/global")
+async def markets_global(session: AsyncSession = Depends(get_db)) -> dict:
+    groups = []
+    for region, symbols in _GLOBAL_MARKETS.items():
+        items = []
+        for sym in symbols:
+            q = await refresh_quote(session, sym)
+            items.append({"symbol": sym, "quote": q.model_dump(mode="json")})
+        groups.append({"region": region, "items": items})
+    status = await get_provider().get_market_status("US")
+    return {"groups": groups, "market_status": status.model_dump(mode="json"), "demo_mode": get_settings().is_demo}
+
+
 @router.get("/markets/search")
 async def markets_search(q: str = Query(min_length=1, max_length=40)) -> dict:
     results = await get_provider().search_instruments(q)

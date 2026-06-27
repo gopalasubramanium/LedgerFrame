@@ -80,6 +80,11 @@ def compute_fifo(transactions: list[Txn]) -> FifoResult:
             for lot in lots:
                 lot[0] *= ratio
                 lot[1] /= ratio
+        elif t.type == TxnType.BONUS:
+            # Bonus issue: extra shares at zero cost → quantity up, total cost
+            # unchanged, average cost falls. `quantity` holds the bonus shares.
+            if qty > ZERO:
+                lots.append([qty, ZERO])
         elif t.type in (TxnType.DIVIDEND, TxnType.INTEREST):
             res.income += D(t.amount) if t.amount else qty * px
 

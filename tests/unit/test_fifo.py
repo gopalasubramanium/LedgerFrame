@@ -80,3 +80,12 @@ def test_order_independence_sorts_by_time():
     scrambled = [ordered[2], ordered[0], ordered[1]]
     assert compute_fifo(ordered).cost_basis == compute_fifo(scrambled).cost_basis
     assert compute_fifo(ordered).realised_pl == compute_fifo(scrambled).realised_pl
+
+
+def test_bonus_adds_shares_at_zero_cost():
+    # buy 10 @100 (cost 1000), then 1:1 bonus (10 free shares)
+    txns = [_txn("buy", "2024-01-01", 10, 100), _txn("bonus", "2024-02-01", 10, 0)]
+    res = compute_fifo(txns)
+    assert res.quantity == Decimal("20")
+    assert res.cost_basis == Decimal("1000")   # total cost unchanged
+    assert res.avg_cost == Decimal("50")         # halved by the bonus

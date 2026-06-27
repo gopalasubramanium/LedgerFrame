@@ -1,38 +1,39 @@
-/** LedgerFrame design system — original "deep graphite" financial-terminal theme. */
+/** LedgerFrame design system — themeable via CSS variables (see styles/index.css).
+ *  Colours are defined as RGB triplets so Tailwind opacity modifiers (e.g.
+ *  bg-accent/15) keep working across light & dark themes. */
+const c = (v) => `rgb(var(${v}) / <alpha-value>)`;
+
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
-  darkMode: "class",
+  darkMode: ["selector", '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Deep graphite surfaces.
-        base: "#0b0e13",
-        surface: "#141923",
-        elevated: "#1c2230",
-        line: "#2a3242",
-        // Typography.
-        ink: "#e8ecf2",
-        muted: "#8a93a6",
-        faint: "#5b647a",
-        // Warm neutral accent (original brand hue).
-        accent: "#d9a566",
-        "accent-dim": "#8a6a3f",
-        // Restrained performance indicators.
-        up: "#4ea88b",
-        down: "#d2685f",
-        warn: "#d9a566",
+        base: c("--c-base"),
+        surface: c("--c-surface"),
+        elevated: c("--c-elevated"),
+        line: c("--c-line"),
+        ink: c("--c-ink"),
+        muted: c("--c-muted"),
+        faint: c("--c-faint"),
+        accent: c("--c-accent"),
+        "accent-fg": c("--c-accent-fg"),
+        up: c("--c-up"),
+        down: c("--c-down"),
+        warn: c("--c-warn"),
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },
-      borderRadius: { card: "14px" },
+      borderRadius: { card: "12px" },
       boxShadow: {
-        card: "0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.35)",
+        card: "0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(var(--c-shadow) / 0.10)",
       },
       fontSize: {
-        hero: ["3.25rem", { lineHeight: "1.05", letterSpacing: "-0.02em" }],
-        figure: ["2rem", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
+        hero: ["3rem", { lineHeight: "1.05", letterSpacing: "-0.02em" }],
+        figure: ["1.9rem", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
       },
     },
   },

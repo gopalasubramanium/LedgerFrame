@@ -5,7 +5,7 @@ import { Card } from "../components/ui";
 import { useApp } from "../store/app";
 
 export default function Settings() {
-  const { status, reducedMotion, highContrast, toggleReducedMotion, toggleHighContrast, setLocked, refreshStatus } = useApp();
+  const { status, reducedMotion, highContrast, toggleReducedMotion, toggleHighContrast, setLocked, refreshStatus, theme, setTheme } = useApp();
   const settings = useApi(api.settings, 0);
   const aiStatus = useApi(api.aiStatus, 0);
   const adminAvail = useApi(api.adminAvailable, 0);
@@ -123,8 +123,18 @@ export default function Settings() {
         </div>
       </Card>
 
-      {/* Accessibility */}
-      <Card title="Accessibility & display" className="col-span-12 lg:col-span-6">
+      {/* Appearance */}
+      <Card title="Appearance & accessibility" className="col-span-12 lg:col-span-6">
+        <div className="text-sm text-muted mb-1">Theme</div>
+        <div className="flex gap-2 mb-3">
+          {(["light", "dark", "system"] as const).map((t) => (
+            <button key={t}
+              className={`touch flex-1 rounded-card px-3 text-sm capitalize ${theme === t ? "bg-accent text-accent-fg" : "bg-elevated text-muted hover:text-ink"}`}
+              onClick={() => setTheme(t)}>
+              {t}
+            </button>
+          ))}
+        </div>
         <Toggle label="Reduced motion" on={reducedMotion} onClick={toggleReducedMotion} />
         <Toggle label="High contrast" on={highContrast} onClick={toggleHighContrast} />
         <p className="text-xs text-faint mt-2">Stored on this device.</p>

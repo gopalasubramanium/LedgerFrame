@@ -61,6 +61,8 @@ export const api = {
       market_status: { state: string };
       demo_mode: boolean;
     }>("/api/v1/markets/overview"),
+  instrumentNews: (symbol: string) =>
+    req<{ symbol: string; items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string }[] }>(`/api/v1/instruments/${encodeURIComponent(symbol)}/news`),
   history: (symbol: string, days = 180) =>
     req<{ symbol: string; candles: { ts: string; open: number; high: number; low: number; close: number; volume: number | null }[] }>(
       `/api/v1/instruments/${encodeURIComponent(symbol)}/history?days=${days}`,

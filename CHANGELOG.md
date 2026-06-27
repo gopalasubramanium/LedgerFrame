@@ -2,6 +2,18 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.2 — 2026-06-27
+
+- Briefing & Ask no longer leak reasoning-model chain-of-thought (`<think>`) — only
+  the final answer is shown (stripped server- and client-side; prompt updated).
+- Instrument page: per-instrument **news** (replaces Notes) and a **Your position**
+  summary when you hold it (watchlist shown otherwise).
+- Global/Markets use named index ETF proxies: US S&P 500 / Nasdaq 100 / Dow Jones,
+  Japan Nikkei 225, Europe Euro Stoxx 50, UK FTSE 100, Hong Kong Hang Seng,
+  India Nifty 50, Singapore STI.
+- Denser layouts (tighter cards/padding) to reduce scrolling.
+- Docker build validated (wheel + frontend build); `docker compose up -d --build`.
+
 ## v1.0.1 — 2026-06-27
 
 - **Consistent live data:** Home/Markets/Global/benchmark now use live-provider-friendly

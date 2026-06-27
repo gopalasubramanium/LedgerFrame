@@ -55,6 +55,23 @@ async def _deterministic_briefing(session: AsyncSession) -> tuple[str, list[str]
     return " ".join(parts), facts
 
 
+def _strip_reasoning(text: str) -> str:
+    """Remove reasoning-model chain-of-thought so only the final answer is shown.
+
+    Handles ``<think>…</think>`` blocks and the common case where a model dumps its
+    reasoning and then a closing ``</think>`` with the real answer after it.
+    """
+    import re
+
+    if "</think>" in text:
+        text = text.rsplit("</think>", 1)[-1]
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    text = text.replace("<think>", "").replace("</think>", "")
+    # Drop a leading "Okay, …/Sure, …/Here is …" preamble line if present.
+    text = re.sub(r"^\s*(okay|sure|alright|here(?:'s| is))\b.*?\n", "", text, flags=re.IGNORECASE)
+    return text.strip()
+
+
 async def generate_briefing(session: AsyncSession) -> str:
     template, facts = await _deterministic_briefing(session)
     # If an AI provider is reachable, let it narrate the SAME facts (it may not add
@@ -70,17 +87,19 @@ async def generate_briefing(session: AsyncSession) -> str:
             messages = [
                 ChatMessage(role="system", content=SYSTEM_PROMPT),
                 ChatMessage(role="system", content="FACTS (the only data you may use):\n" + "\n".join(f"- {f}" for f in facts)),
-                ChatMessage(role="user", content="Write a concise 2-3 sentence daily briefing for the desk display, "
-                            "highlighting the portfolio's notable moves today. Plain English."),
+                ChatMessage(role="user", content="Write ONLY a concise 2-3 sentence daily briefing for the desk "
+                            "display, highlighting the portfolio's notable moves today. Plain English. Do not "
+                            "include any reasoning, planning, preamble, or <think> tags — output the briefing only."),
             ]
             text = ""
-            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=220)):
+            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=400)):
                 if chunk.delta:
                     text += chunk.delta
                 if chunk.done:
                     break
-            text = text.strip()
-            if text:
+            text = _strip_reasoning(text)
+            # If the model leaked only reasoning (little real answer left), fall back.
+            if len(text) >= 25:
                 if "not financial advice" not in text.lower():
                     text += "\n\nInformation only, not financial advice."
                 return text

@@ -38,3 +38,9 @@ async def test_feeds_test_endpoint(app_client):
     r = await app_client.get("/api/v1/news/feeds/test")
     assert r.status_code == 200
     assert r.json()["results"] == []
+
+
+async def test_instrument_news_endpoint(app_client):
+    r = await app_client.get("/api/v1/instruments/AAPL/news")
+    assert r.status_code == 200
+    assert "items" in r.json() and r.json()["symbol"] == "AAPL"

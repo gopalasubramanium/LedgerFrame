@@ -70,7 +70,7 @@ body {
 
 @layer components {
   .lf-card {
-    @apply bg-surface border border-line rounded-card shadow-card p-5;
+    @apply bg-surface border border-line rounded-card shadow-card p-4;
   }
   .lf-chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;

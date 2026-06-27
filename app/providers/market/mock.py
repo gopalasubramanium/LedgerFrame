@@ -59,6 +59,7 @@ _CATALOG: dict[str, dict] = {
     "EWH": {"name": "Hong Kong ETF (DEMO)", "ac": "etf", "ccy": "USD", "sec": "Index", "ctry": "HK", "base": 18.0},
     "INDA": {"name": "India (Nifty) ETF (DEMO)", "ac": "etf", "ccy": "USD", "sec": "Index", "ctry": "IN", "base": 55.0},
     "EWS": {"name": "Singapore ETF (DEMO)", "ac": "etf", "ccy": "USD", "sec": "Index", "ctry": "SG", "base": 24.0},
+    "FEZ": {"name": "Euro Stoxx 50 ETF (DEMO)", "ac": "etf", "ccy": "USD", "sec": "Index", "ctry": "EU", "base": 52.0},
     "BTC": {"name": "Bitcoin (DEMO)", "ac": "crypto", "ccy": "USD", "sec": "Crypto", "ctry": "XX", "base": 64000.0},
     "ETH": {"name": "Ethereum (DEMO)", "ac": "crypto", "ccy": "USD", "sec": "Crypto", "ctry": "XX", "base": 3400.0},
 }

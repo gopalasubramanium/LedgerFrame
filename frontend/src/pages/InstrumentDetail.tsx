@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge } from "../components/ui";
 import { LineSeries } from "../components/Chart";
-import { money, num, pct, toneClass } from "../lib/format";
+import { money, num, pct, signedMoney, timeAgo, toneClass } from "../lib/format";
 
 const PERIODS: { label: string; days: number }[] = [
   { label: "1M", days: 30 },
@@ -25,10 +25,13 @@ export default function InstrumentDetail() {
   );
   const history = useApi(() => api.history(symbol, PERIODS[period].days), 0, [symbol, period]);
   const wl = useApi(api.watchlists, 0);
+  const holdings = useApi(api.holdings, 0);
+  const news = useApi(() => api.instrumentNews(symbol), 0, [symbol]);
 
   const q = detail.data?.quote;
   const meta = detail.data?.instrument;
   const candles = history.data?.candles ?? [];
+  const holding = (holdings.data?.holdings ?? []).find((h) => h.symbol === symbol);
 
   // Derived stats from the series.
   const stats = useMemo(() => {
@@ -138,23 +141,55 @@ export default function InstrumentDetail() {
         )}
       </Card>
 
-      {/* Watchlist sidebar */}
-      <Card title="Watchlist" className="col-span-12 lg:col-span-4">
-        {wl.data?.watchlists.flatMap((l) => l.items).slice(0, 12).map((it) => (
-          <Link key={it.symbol} to={`/instrument/${it.symbol}`}
-            className={`flex items-center justify-between py-2 border-b border-line/40 ${it.symbol === symbol ? "text-accent" : "hover:text-accent"}`}>
-            <span className="text-sm">{it.symbol}</span>
-            <div className="flex items-center gap-3">
-              <span className="tnum text-sm">{it.quote.price == null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
-              <ChangePill value={it.quote.change_pct} />
-            </div>
-          </Link>
-        ))}
-      </Card>
+      {/* If held: your position; otherwise the watchlist for context. */}
+      {holding ? (
+        <Card title="Your position" className="col-span-12 lg:col-span-4">
+          <dl className="grid grid-cols-2 gap-y-2 text-sm">
+            <Stat k="Quantity" v={num(holding.quantity, 4)} />
+            <Stat k="Avg cost" v={holding.quantity ? money(holding.cost_basis / holding.quantity, ccy, true) : "—"} />
+            <Stat k="Market value" v={money(holding.market_value, ccy)} />
+            <Stat k="Cost basis" v={money(holding.cost_basis, ccy)} />
+            <Stat k="Unrealised P/L" v={signedMoney(holding.unrealised_pl, ccy)} />
+            <Stat k="Day change" v={signedMoney(holding.day_change, ccy)} />
+          </dl>
+          <Link to="/holdings" className="lf-btn mt-3 w-full">Manage holding</Link>
+        </Card>
+      ) : (
+        <Card title="Watchlist" className="col-span-12 lg:col-span-4">
+          {(wl.data?.watchlists.flatMap((l) => l.items) ?? []).slice(0, 10).map((it) => (
+            <Link key={it.symbol} to={`/instrument/${it.symbol}`}
+              className={`flex items-center justify-between py-2 border-b border-line/40 ${it.symbol === symbol ? "text-accent" : "hover:text-accent"}`}>
+              <span className="text-sm">{it.symbol}</span>
+              <div className="flex items-center gap-3">
+                <span className="tnum text-sm">{it.quote.price == null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+                <ChangePill value={it.quote.change_pct} />
+              </div>
+            </Link>
+          ))}
+          {(wl.data?.watchlists.flatMap((l) => l.items) ?? []).length === 0 && (
+            <p className="text-muted text-sm">You don't hold {symbol}. Add it on Markets (☆) to watch it.</p>
+          )}
+        </Card>
+      )}
 
-      {/* Notes */}
-      <Card title="Notes" className="col-span-12 lg:col-span-8">
-        <p className="text-muted text-sm">Per-instrument notes are a v1.1 item. Use the Ask panel for grounded explanations about this holding.</p>
+      {/* News for this instrument */}
+      <Card title={`${symbol} news`} className="col-span-12 lg:col-span-8">
+        {news.loading && !news.data && <p className="text-muted text-sm">Loading…</p>}
+        <ul className="divide-y divide-line/50">
+          {(news.data?.items ?? []).map((item, i) => (
+            <li key={i} className="py-2">
+              {item.url ? (
+                <a className="text-sm text-ink hover:text-accent" href={item.url} target="_blank" rel="noreferrer">{item.headline}</a>
+              ) : (
+                <span className="text-sm text-ink">{item.headline}</span>
+              )}
+              <div className="text-xs text-faint">{item.source} · {timeAgo(item.published_at)}</div>
+            </li>
+          ))}
+          {news.data && news.data.items.length === 0 && (
+            <li className="py-3 text-muted text-sm">No recent headlines mention {symbol}. Add RSS feeds in Settings → News.</li>
+          )}
+        </ul>
       </Card>
     </div>
   );

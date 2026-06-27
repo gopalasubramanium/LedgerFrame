@@ -32,8 +32,8 @@ export default {
         card: "0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(var(--c-shadow) / 0.10)",
       },
       fontSize: {
-        hero: ["3rem", { lineHeight: "1.05", letterSpacing: "-0.02em" }],
-        figure: ["1.9rem", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
+        hero: ["2.6rem", { lineHeight: "1.05", letterSpacing: "-0.02em" }],
+        figure: ["1.7rem", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
       },
     },
   },

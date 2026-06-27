@@ -18,7 +18,10 @@ router = APIRouter()
 
 # Baseline symbols always shown. Uses live-provider-friendly ETF proxies instead of
 # raw indices (^GSPC etc.), which Alpha Vantage doesn't serve.
-_DEFAULT_OVERVIEW = ["SPY", "QQQ", "DIA", "EWS", "AAPL", "MSFT", "NVDA", "GLD", "BTC", "ETH"]
+_DEFAULT_OVERVIEW = [
+    "SPY", "QQQ", "DIA", "EWJ", "FEZ", "EWU", "EWH", "INDA", "EWS",
+    "AAPL", "MSFT", "NVDA", "GLD", "BTC", "ETH",
+]
 
 
 async def _overview_instruments(session: AsyncSession) -> list[Instrument]:
@@ -82,9 +85,10 @@ async def markets_overview(session: AsyncSession = Depends(get_db)) -> dict:
 # Alpha Vantage — which doesn't serve raw indices such as ^GSPC — returns real
 # values). Each entry is (symbol, label).
 _GLOBAL_MARKETS: dict[str, list[tuple[str, str]]] = {
-    "Americas": [("SPY", "S&P 500"), ("QQQ", "Nasdaq 100"), ("DIA", "Dow 30")],
-    "Europe": [("EWU", "UK · FTSE"), ("EWG", "Germany · DAX"), ("EZU", "Eurozone")],
-    "Asia-Pacific": [("EWJ", "Japan · Nikkei"), ("EWH", "Hong Kong"), ("INDA", "India"), ("EWS", "Singapore")],
+    "Americas": [("SPY", "US · S&P 500"), ("QQQ", "US · Nasdaq 100"), ("DIA", "US · Dow Jones")],
+    "Europe": [("EWU", "UK · FTSE 100"), ("FEZ", "Europe · Euro Stoxx 50"), ("EWG", "Germany · DAX")],
+    "Asia-Pacific": [("EWJ", "Japan · Nikkei 225"), ("EWH", "Hong Kong · Hang Seng"),
+                     ("INDA", "India · Nifty 50"), ("EWS", "Singapore · STI")],
     "Commodities": [("GLD", "Gold"), ("SLV", "Silver"), ("USO", "Oil")],
     "Crypto": [("BTC", "Bitcoin"), ("ETH", "Ethereum")],
 }
@@ -133,6 +137,40 @@ async def instrument_detail(symbol: str, session: AsyncSession = Depends(get_db)
         match = next((r for r in results if r.symbol == symbol.upper()), None)
         meta = match.model_dump(mode="json") if match else {"symbol": symbol.upper()}
     return {"quote": q.model_dump(mode="json"), "instrument": meta}
+
+
+@router.get("/instruments/{symbol}/news")
+async def instrument_news(symbol: str, session: AsyncSession = Depends(get_db)) -> dict:
+    """News relevant to one instrument: provider news for the symbol + any RSS/Atom
+    headlines mentioning the symbol or company name."""
+    from app.services.feeds import fetch_feeds
+
+    sym = symbol.upper()
+    instr = (await session.execute(select(Instrument).where(Instrument.symbol == sym))).scalars().first()
+    name = (instr.name if instr else "").replace(" (DEMO)", "").strip()
+    terms = {sym.lower()}
+    if name:
+        terms.add(name.lower())
+        first = name.split()[0].lower()
+        if len(first) > 3:
+            terms.add(first)
+
+    items = list(await get_provider().get_news([sym]))
+    try:
+        for it in await fetch_feeds(session, limit=60):
+            blob = f"{it.headline} {it.summary or ''}".lower()
+            if any(t in blob for t in terms):
+                items.append(it)
+    except Exception:  # noqa: BLE001
+        pass
+    # Dedupe by headline, newest first.
+    seen, out = set(), []
+    for it in sorted(items, key=lambda i: i.published_at, reverse=True):
+        if it.headline in seen:
+            continue
+        seen.add(it.headline)
+        out.append(it.model_dump(mode="json"))
+    return {"symbol": sym, "items": out[:15]}
 
 
 @router.get("/instruments/{symbol}/history")

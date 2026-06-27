@@ -3,6 +3,16 @@ import { streamChat } from "../lib/api";
 import type { GroundingFact } from "../lib/types";
 import { timeAgo } from "../lib/format";
 
+// Hide reasoning-model chain-of-thought (<think>…</think>) from the displayed
+// answer, including a still-streaming, not-yet-closed think block.
+function stripThinking(t: string): string {
+  let s = t.replace(/<think>[\s\S]*?<\/think>/g, "");
+  if (s.includes("</think>")) s = s.split("</think>").pop() ?? s;
+  const open = s.indexOf("<think>");
+  if (open !== -1) s = s.slice(0, open);
+  return s.replace(/^\s+/, "");
+}
+
 const SUGGESTIONS = [
   "What moved in my portfolio today?",
   "Show my allocation by currency",
@@ -80,8 +90,8 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex-1 overflow-auto">
-          {answer && (
-            <div className="bg-base rounded-card p-4 mb-4 whitespace-pre-wrap text-ink leading-relaxed">{answer}</div>
+          {stripThinking(answer) && (
+            <div className="bg-base rounded-card p-4 mb-4 whitespace-pre-wrap text-ink leading-relaxed">{stripThinking(answer)}</div>
           )}
           {facts.length > 0 && (
             <div>

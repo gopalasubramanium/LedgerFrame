@@ -117,7 +117,7 @@ export default function App() {
           </div>
         )}
 
-        <main className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5">
+        <main className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/portfolio" element={<Portfolio />} />

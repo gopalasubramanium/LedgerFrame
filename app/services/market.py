@@ -201,7 +201,12 @@ async def _get_or_create_instrument(
         stmt = stmt.where(Instrument.exchange == exchange)
     instrument = (await session.execute(stmt)).scalars().first()
     if instrument is None:
-        instrument = Instrument(symbol=symbol.upper(), exchange=exchange, name=symbol.upper())
+        from app.core.symbols import currency_for_symbol
+
+        instrument = Instrument(
+            symbol=symbol.upper(), exchange=exchange, name=symbol.upper(),
+            currency=currency_for_symbol(symbol, exchange) or "USD",
+        )
         session.add(instrument)
         await session.flush()
     return instrument

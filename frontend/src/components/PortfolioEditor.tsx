@@ -8,9 +8,10 @@ import {
   type TxnInput,
   type TxnRow,
 } from "../lib/api";
-import { money } from "../lib/format";
+import { currencyForSymbol, money } from "../lib/format";
 
-const CURRENCIES = ["SGD", "USD", "INR", "EUR", "GBP", "JPY", "AUD", "CNY", "HKD"];
+const CURRENCIES = ["SGD", "USD", "INR", "EUR", "GBP", "JPY", "AUD", "CNY", "HKD",
+  "CAD", "CHF", "HKD", "KRW", "TWD", "SEK", "NOK", "DKK", "ZAR", "BRL", "NZD", "THB", "MYR"];
 
 type Tab = "transactions" | "assets";
 
@@ -157,13 +158,19 @@ function TxnForm({ initial, busy, error, onCancel, onSave }: { initial: TxnInput
           </select>
         </Field>
         <Field label="Symbol (blank for cash)">
-          <input className="lf-input" value={f.symbol ?? ""} onChange={(e) => set("symbol", e.target.value.toUpperCase())} placeholder="AAPL" />
+          <input className="lf-input" value={f.symbol ?? ""} placeholder="AAPL or HDFC.BSE"
+            onChange={(e) => {
+              const sym = e.target.value.toUpperCase();
+              // Auto-fill the trading currency from the exchange suffix (e.g. .BSE -> INR).
+              const ccy = currencyForSymbol(sym);
+              setF((p) => ({ ...p, symbol: sym, ...(ccy ? { currency: ccy } : {}) }));
+            }} />
         </Field>
         <Field label="Quantity"><NumberInput v={f.quantity} on={(v) => set("quantity", v)} /></Field>
         <Field label="Price (per unit)"><NumberInput v={f.price} on={(v) => set("price", v)} /></Field>
         <Field label="Currency">
           <select className="lf-input" value={f.currency} onChange={(e) => set("currency", e.target.value)}>
-            {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
+            {Array.from(new Set([f.currency, ...CURRENCIES])).filter(Boolean).map((c) => <option key={c}>{c}</option>)}
           </select>
         </Field>
         <Field label="Fees / commission"><NumberInput v={f.fees} on={(v) => set("fees", v)} /></Field>

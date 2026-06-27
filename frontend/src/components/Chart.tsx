@@ -42,6 +42,10 @@ export function Sparkline({ points, up }: { points: number[]; up: boolean }) {
       yAxis: { type: "value", show: false, scale: true },
       series: [{
         type: "line", data: points, smooth: true, symbol: "none",
+        // With animation:false, hover-emphasis re-clips the area from zero and
+        // (because there's no animation to restore it) the line vanishes until
+        // mouse-out. Disabling emphasis keeps the series stable on hover.
+        emphasis: { disabled: true },
         lineStyle: { width: 2, color: up ? p.up : p.down },
         areaStyle: { opacity: 0.12, color: up ? p.up : p.down },
       }],
@@ -64,6 +68,7 @@ export function LineSeries({ x, y, height = 280 }: { x: string[]; y: number[]; h
       yAxis: { type: "value", scale: true, splitLine: { lineStyle: { color: p.line } }, axisLabel: { color: p.axis } },
       series: [{
         type: "line", data: y, smooth: true, symbol: "none",
+        emphasis: { disabled: true },  // keep line/area visible while hovering (see Sparkline)
         lineStyle: { width: 2, color: up ? p.up : p.down },
         areaStyle: { opacity: 0.1, color: up ? p.up : p.down },
       }],
@@ -89,8 +94,10 @@ export function BenchmarkChart({
       yAxis: { type: "value", scale: true, splitLine: { lineStyle: { color: p.line } }, axisLabel: { color: p.axis } },
       series: [
         { name: "Portfolio", type: "line", data: portfolio, smooth: true, symbol: "none",
+          emphasis: { disabled: true },
           lineStyle: { width: 2.5, color: up ? p.up : p.down }, areaStyle: { opacity: 0.1, color: up ? p.up : p.down } },
         { name: benchmarkLabel, type: "line", data: benchmark, smooth: true, symbol: "none",
+          emphasis: { disabled: true },
           lineStyle: { width: 1.5, color: p.accent, type: "dashed" } },
       ],
     };

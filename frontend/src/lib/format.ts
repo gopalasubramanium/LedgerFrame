@@ -1,5 +1,26 @@
 // Display formatting helpers. All inputs are already-computed numbers from the API.
 
+// Exchange-suffix -> trading currency (mirrors app/core/symbols.py). Lets the
+// transaction form auto-fill the currency when you type e.g. HDFC.BSE.
+const SUFFIX_CCY: Record<string, string> = {
+  BSE: "INR", NSE: "INR", NS: "INR", BO: "INR",
+  L: "GBP", LON: "GBP", IL: "GBP",
+  TO: "CAD", V: "CAD", CN: "CAD", NE: "CAD",
+  AX: "AUD", NZ: "NZD", HK: "HKD", T: "JPY", TYO: "JPY",
+  SS: "CNY", SZ: "CNY", KS: "KRW", KQ: "KRW", TW: "TWD", TWO: "TWD",
+  SI: "SGD", SES: "SGD",
+  DE: "EUR", F: "EUR", PA: "EUR", AS: "EUR", BR: "EUR", MI: "EUR",
+  MC: "EUR", LS: "EUR", VI: "EUR", HE: "EUR", IR: "EUR", AT: "EUR",
+  SW: "CHF", VX: "CHF", ST: "SEK", OL: "NOK", CO: "DKK",
+  JO: "ZAR", SA: "BRL", MX: "MXN", TA: "ILS", BK: "THB", KL: "MYR", JK: "IDR",
+};
+
+export function currencyForSymbol(symbol: string | null | undefined): string | null {
+  if (!symbol || !symbol.includes(".")) return null;
+  const suffix = symbol.trim().toUpperCase().split(".").pop() || "";
+  return SUFFIX_CCY[suffix] ?? null;
+}
+
 export function money(value: number | null | undefined, currency = "SGD", compact = false): string {
   if (value === null || value === undefined) return "—";
   return new Intl.NumberFormat("en-SG", {

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.config import get_settings
+from app.core.symbols import currency_for_symbol
 from app.models import Holding, Instrument, WatchlistItem
 from app.providers.market import get_provider
 from app.services.market import display_quote, refresh_quote
@@ -66,7 +67,7 @@ async def markets_overview(session: AsyncSession = Depends(get_db)) -> dict:
             "symbol": instr.symbol,
             "name": instr.name,
             "asset_class": instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class),
-            "currency": instr.currency,
+            "currency": currency_for_symbol(instr.symbol, instr.exchange) or instr.currency,
             "held": instr.id in held_ids,
             "quote": q.model_dump(mode="json"),
         })
@@ -129,7 +130,8 @@ async def instrument_detail(symbol: str, session: AsyncSession = Depends(get_db)
         meta = {
             "symbol": instr.symbol, "name": instr.name,
             "asset_class": instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class),
-            "currency": instr.currency, "exchange": instr.exchange,
+            "currency": currency_for_symbol(instr.symbol, instr.exchange) or instr.currency,
+            "exchange": instr.exchange,
             "sector": instr.sector, "country": instr.country,
         }
     else:

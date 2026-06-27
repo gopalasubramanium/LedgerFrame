@@ -21,6 +21,7 @@ from datetime import UTC, datetime
 import httpx
 
 from app.core.money import D, price
+from app.core.symbols import currency_for_symbol
 from app.providers.market.mock import MockMarketDataProvider
 from app.schemas.common import (
     Candle,
@@ -95,13 +96,16 @@ class ExternalMarketDataProvider:
             px = data.get("05. price")
             if not px:
                 raise ValueError("empty quote (unknown symbol or rate limited)")
+            # AV returns the price in the listing's local currency but doesn't
+            # label it — derive it from the symbol suffix (e.g. .BSE -> INR).
+            ccy = currency_for_symbol(symbol, exchange) or "USD"
             return Quote(
                 symbol=symbol.upper(), exchange=exchange,
                 price=price(px),
                 previous_close=price(data["08. previous close"]) if data.get("08. previous close") else None,
                 change=price(data.get("09. change") or 0),
                 change_pct=D((data.get("10. change percent") or "0").rstrip("%")),
-                currency="USD", source=self.name,
+                currency=ccy, source=self.name,
                 entitlement=EntitlementStatus.DELAYED, market_time=now, received_at=now,
             )
         except Exception as exc:  # noqa: BLE001
@@ -111,7 +115,7 @@ class ExternalMarketDataProvider:
             log.warning("AV quote unavailable for %s: %s", symbol, exc)
             return Quote(
                 symbol=symbol.upper(), exchange=exchange, price=None,
-                currency="USD", source=self.name,
+                currency=currency_for_symbol(symbol, exchange) or "USD", source=self.name,
                 entitlement=EntitlementStatus.UNAVAILABLE, received_at=now, is_stale=True,
             )
 

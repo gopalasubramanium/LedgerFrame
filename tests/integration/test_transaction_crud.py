@@ -56,6 +56,20 @@ async def test_transaction_crud_via_api(app_client):
     assert delete.status_code == 200
 
 
+async def test_foreign_symbol_holding_uses_native_currency(app_client):
+    # A .BSE stock trades in INR even though the form defaulted to USD — the
+    # engine must value/report it in INR (then convert to base for totals).
+    add = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "HDFC.BSE", "type": "buy", "ts": "2024-05-01T09:30:00",
+        "quantity": 10, "price": 1500, "currency": "USD",
+    })
+    assert add.status_code == 200
+
+    holdings = (await app_client.get("/api/v1/portfolio/holdings")).json()["holdings"]
+    hdfc = next(h for h in holdings if (h.get("symbol") or "").startswith("HDFC"))
+    assert hdfc["currency"] == "INR"
+
+
 async def test_manual_holding_crud_via_api(app_client):
     add = await app_client.post("/api/v1/portfolio/manual-holdings", json={
         "label": "Gold bar", "asset_class": "commodity", "value": 5000, "currency": "SGD",

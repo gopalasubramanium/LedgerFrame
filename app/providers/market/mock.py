@@ -12,6 +12,7 @@ import math
 from datetime import UTC, datetime, timedelta
 
 from app.core.money import D, price
+from app.core.symbols import currency_for_symbol
 from app.schemas.common import (
     Candle,
     EntitlementStatus,
@@ -104,7 +105,7 @@ class MockMarketDataProvider:
             previous_close=price(prev),
             change=price(cur - prev),
             change_pct=D(round((cur - prev) / prev * 100, 2)) if prev else None,
-            currency=info["ccy"],
+            currency=currency_for_symbol(symbol, exchange) or info["ccy"],
             source="mock",
             entitlement=EntitlementStatus.DELAYED,
             market_time=now,

@@ -2,6 +2,21 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.5 — 2026-06-27
+
+- **Multi-currency, done by market parlance.** A foreign holding is now valued and
+  displayed in its **native trading currency** (e.g. `HDFC.BSE` shows ₹, not US$),
+  then converted to your base currency via FX for portfolio totals. The trading
+  currency is inferred from the exchange suffix (`.BSE`/`.NSE`→INR, `.L`→GBP,
+  `.T`→JPY, `.HK`→HKD, `.TO`→CAD, `.AX`→AUD, `.SI`→SGD, `.DE`/`.PA`/…→EUR, etc.)
+  across instrument creation, live quotes, valuation, and the markets/instrument
+  pages — so existing holdings are corrected too, no re-entry needed. The
+  transaction form auto-fills the currency when you type a suffixed symbol.
+- **Charts no longer vanish on hover.** With animation disabled, ECharts'
+  hover-emphasis was re-clipping the area/line to nothing until the mouse left;
+  emphasis is now disabled on the line/area series so the chart stays put while
+  you read the tooltip values.
+
 ## v1.0.4 — 2026-06-27
 
 - **Fixed one-click "Update now"** (previously failed with "Update could not run").

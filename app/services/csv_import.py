@@ -120,7 +120,9 @@ async def _ensure_instrument(session: AsyncSession, symbol: str) -> Instrument:
         await session.execute(select(Instrument).where(Instrument.symbol == symbol))
     ).scalars().first()
     if instr is None:
-        instr = Instrument(symbol=symbol, name=symbol)
+        from app.core.symbols import currency_for_symbol
+
+        instr = Instrument(symbol=symbol, name=symbol, currency=currency_for_symbol(symbol) or "USD")
         session.add(instr)
         await session.flush()
     return instr

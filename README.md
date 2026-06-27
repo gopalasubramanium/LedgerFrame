@@ -147,8 +147,11 @@ unavailable symbols show "—", and **Refresh live prices** lists what updated/f
 **Alpha Vantage specifics** (important):
 - ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX.
 - ❌ Raw indices (`^GSPC`) — the **Global** page uses ETF proxies (SPY, QQQ, EWJ, …)
-  so live values still show. ❌ Most non-US tickers (need region suffixes) — add
-  those as **manual-priced** holdings.
+  so live values still show. Non-US tickers vary in coverage; whatever the
+  provider serves, **foreign holdings are valued in their native trading currency**
+  (from the exchange suffix — `HDFC.BSE`→₹, `VOD.L`→£, `7203.T`→¥) and converted to
+  your base currency via FX. If a live quote isn't available, add the holding as a
+  **manual-priced** position.
 - History is **cached** in the DB; **Fetch & cache history** backfills new holdings
   only (won't re-spend quota). Free tier ≈ 25 req/day; premium raises it.
 

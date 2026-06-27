@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.money import ZERO, D, money, pct_change
+from app.core.symbols import currency_for_symbol
 from app.models import AssetClass, Holding, Instrument, TxnType
 from app.models import Transaction as Txn
 from app.providers.market import get_provider
@@ -151,7 +152,14 @@ async def value_portfolio(
             await session.get(Instrument, h.instrument_id) if h.instrument_id else None
         )
         symbol = instrument.symbol if instrument else None
-        native_ccy = h.currency or (instrument.currency if instrument else base_currency)
+        # Authoritative native currency: the instrument's venue currency (from its
+        # symbol suffix) wins, so even holdings stored before this inference get
+        # valued/displayed correctly. Falls back to the stored currency.
+        native_ccy = (
+            currency_for_symbol(symbol, instrument.exchange if instrument else None)
+            or h.currency
+            or (instrument.currency if instrument else base_currency)
+        )
 
         price_native: Decimal | None = None
         is_stale = False
@@ -252,7 +260,14 @@ async def rebuild_holdings_from_transactions(session: AsyncSession) -> int:
             continue
         instrument = await session.get(Instrument, instrument_id)
         account = await session.get(Account, account_id)
-        ccy = group[0].currency or (instrument.currency if instrument else "USD")
+        # The instrument's trading currency (from its exchange suffix) is
+        # authoritative — a .BSE stock trades in INR no matter what currency the
+        # transaction row happened to default to. Fall back to the txn currency.
+        sym = instrument.symbol if instrument else None
+        inferred = currency_for_symbol(sym, instrument.exchange if instrument else None)
+        ccy = inferred or group[0].currency or (instrument.currency if instrument else "USD")
+        if instrument and inferred and instrument.currency != inferred:
+            instrument.currency = inferred  # keep the instrument aligned to its venue
         session.add(Holding(
             account_id=account_id,
             instrument_id=instrument_id,

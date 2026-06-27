@@ -157,11 +157,12 @@ async def gather_facts(session: AsyncSession, question: str) -> list[GroundingFa
         facts += await symbol_facts(session, syms)
     if not facts:  # default: give a portfolio overview
         facts += await portfolio_facts(session)
-    # De-duplicate by label, preserving order.
+    # De-duplicate by label, then cap: a tight, relevant fact set keeps the prompt
+    # precise and stops verbose/reasoning models from drowning in data.
     seen: set[str] = set()
     deduped: list[GroundingFact] = []
     for f in facts:
         if f.label not in seen:
             seen.add(f.label)
             deduped.append(f)
-    return deduped
+    return deduped[:10]

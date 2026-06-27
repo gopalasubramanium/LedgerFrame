@@ -43,12 +43,15 @@ class HailoOllamaProvider:
         self.timeout = timeout
         self._resolved_model: str | None = model or None
 
-    async def _client(self) -> httpx.AsyncClient:
-        return httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout)
+    async def _client(self, timeout: float | None = None) -> httpx.AsyncClient:
+        # Bounded connect so an unreachable host fails fast; long read only for
+        # generation (slow local models).
+        t = httpx.Timeout(float(timeout if timeout is not None else self.timeout), connect=10.0)
+        return httpx.AsyncClient(base_url=self.base_url, timeout=t)
 
     async def list_models(self) -> list[ModelInfo]:
         try:
-            async with await self._client() as client:
+            async with await self._client(timeout=10) as client:  # health/discovery is quick
                 r = await client.get("/hailo/v1/list")
                 r.raise_for_status()
                 payload = r.json()

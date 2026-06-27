@@ -18,11 +18,13 @@ async def test_set_ai_config_writes_env(app_client, tmp_path, monkeypatch):
     import app.core.envfile as envfile
 
     monkeypatch.setattr(envfile, "ENV_PATH", tmp_path / ".env")
+    # 127.0.0.1:1 refuses instantly, so the (real) connection test fails fast
+    # instead of blocking on an unreachable host.
     r = await app_client.put("/api/v1/system/ai-config", json={
-        "enabled": True, "provider": "hailo", "hailo_base_url": "http://10.0.0.5:8000",
+        "enabled": True, "provider": "hailo", "hailo_base_url": "http://127.0.0.1:1",
     })
     assert r.status_code == 200
-    assert "LEDGERFRAME_HAILO_BASE_URL=http://10.0.0.5:8000" in (tmp_path / ".env").read_text()
+    assert "LEDGERFRAME_HAILO_BASE_URL=http://127.0.0.1:1" in (tmp_path / ".env").read_text()
 
 
 async def test_get_config(app_client):

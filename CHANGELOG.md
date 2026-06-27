@@ -2,6 +2,24 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.12 — 2026-06-28
+
+- **Much better AI answers + reasoning models (e.g. Ollama qwen3) now work.**
+  - Tighter system prompt → concise, plain-prose answers (2-4 sentences), no
+    markdown headings, no "let's analyze" preamble, and no mischaracterising
+    instruments (it was calling stocks "tokens"/"coins").
+  - Reasoning models stream their chain-of-thought in a separate field and burn a
+    large share of the token budget before answering — the old 800-token cap cut
+    the answer off (or produced nothing). The budget is now 4000 (a ceiling only),
+    so the answer completes; the reasoning is still hidden.
+  - Facts sent to the model are filtered/de-duplicated and capped for a precise,
+    focused prompt.
+  - Verified end-to-end against a real LAN Ollama (`qwen3.6`): clean, complete,
+    correctly-grounded answers.
+- **Migration tests slimmed** — moved the migrate logic to `app.db.migrate` and
+  test it in-process; the suite no longer spawns subprocesses (seconds, not
+  minutes).
+
 ## v1.0.11 — 2026-06-28
 
 - **AI answers now actually appear (Ask was returning nothing).** The model

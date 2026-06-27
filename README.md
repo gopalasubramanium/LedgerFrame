@@ -171,8 +171,10 @@ The AI only ever *explains* verified facts. Choose:
 *unreachable*, *auth rejected*, or *model not found* (with the list of models the
 server actually has). For a **remote Ollama**, set the base URL to
 `http://<host>:11434/v1`, leave the key blank, and make the model match one you've
-pulled (`ollama list`), e.g. `llama3.2`. Without any model, "Ask" still answers
-from your data.
+pulled (`ollama list`), e.g. `llama3.2` or a reasoning model like `qwen3`.
+**Reasoning models are supported** — their chain-of-thought is hidden and only the
+final answer is shown. If a model can't return an answer, "Ask" shows the reason
+plus your data, so it never goes blank. Without any model it still answers from your data.
 
 ## Usage (typical flow)
 

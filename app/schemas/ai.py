@@ -29,7 +29,10 @@ class AIRequest(BaseModel):
     messages: list[ChatMessage]
     model: str | None = None
     temperature: float = 0.2
-    max_tokens: int = 800  # headroom so reasoning models still reach a final answer
+    # Generous cap: reasoning models (qwen, deepseek-r1) can spend a couple thousand
+    # tokens "thinking" before emitting the answer, so a small cap cuts off before any
+    # answer appears. This is only a ceiling — the prompt keeps the *answer* short.
+    max_tokens: int = 4000
 
 
 class AIChunk(BaseModel):

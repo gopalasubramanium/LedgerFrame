@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.money import ZERO, D, money, pct_change
 from app.models import AssetClass, Holding, Instrument, TxnType
 from app.models import Transaction as Txn
+from app.providers.market import get_provider
 from app.services import fx
 from app.services.market import get_cached_quote, refresh_quote
 
@@ -161,9 +162,9 @@ async def value_portfolio(
             mv_native = D(h.manual_value)
         elif symbol and instrument and not instrument.is_manual_price:
             quote = await get_cached_quote(session, symbol, instrument.exchange)
-            if quote.price is None and warm:
-                # No cached quote yet (cold start) — fetch one. Cheap for local
-                # providers; the external adapter rate-limits and degrades safely.
+            if quote.price is None and warm and getattr(get_provider(), "fetch_on_demand", True):
+                # No cached quote yet — fetch one for cheap providers (mock/csv).
+                # Rate-limited providers serve cache only (refresh via worker/button).
                 quote = await refresh_quote(session, symbol, instrument.exchange)
             if quote.price is not None:
                 price_native = D(quote.price)

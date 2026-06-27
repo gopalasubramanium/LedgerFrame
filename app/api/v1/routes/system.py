@@ -126,6 +126,61 @@ async def set_data_source(payload: DataSourceIn) -> dict:
     return {"ok": True, "applied": True, "note": f"Applied — now using '{payload.provider}'."}
 
 
+_AI_PROVIDERS = {"hailo", "openai_compatible", "disabled"}
+
+
+@router.get("/system/ai-config")
+async def get_ai_config() -> dict:
+    from app.core.envfile import read_env
+
+    env = read_env()
+    s = get_settings()
+    return {
+        "enabled": env.get("LEDGERFRAME_AI_ENABLED", str(s.ai_enabled)).lower() in ("1", "true", "yes"),
+        "provider": env.get("LEDGERFRAME_AI_PROVIDER", s.ai_provider),
+        "hailo_base_url": env.get("LEDGERFRAME_HAILO_BASE_URL", s.hailo_base_url),
+        "model": env.get("LEDGERFRAME_AI_MODEL", s.ai_model),
+        "openai_base_url": env.get("LEDGERFRAME_OPENAI_BASE_URL", s.openai_base_url),
+        "has_openai_key": bool(env.get("LEDGERFRAME_OPENAI_API_KEY", s.openai_api_key)),
+        "providers": sorted(_AI_PROVIDERS),
+    }
+
+
+class AIConfigIn(BaseModel):
+    enabled: bool = True
+    provider: str
+    hailo_base_url: str | None = None
+    model: str | None = None
+    openai_base_url: str | None = None
+    openai_api_key: str | None = None  # write-only
+
+
+@router.put("/system/ai-config", dependencies=[Depends(require_auth)])
+async def set_ai_config(payload: AIConfigIn) -> dict:
+    from app.core.config import reload_settings
+    from app.core.envfile import update_env
+
+    if payload.provider not in _AI_PROVIDERS:
+        raise HTTPException(400, f"unknown AI provider; choose one of {sorted(_AI_PROVIDERS)}")
+    updates = {
+        "LEDGERFRAME_AI_ENABLED": "true" if payload.enabled else "false",
+        "LEDGERFRAME_AI_PROVIDER": payload.provider,
+    }
+    if payload.hailo_base_url is not None:
+        updates["LEDGERFRAME_HAILO_BASE_URL"] = payload.hailo_base_url.strip()
+    if payload.model is not None:
+        updates["LEDGERFRAME_AI_MODEL"] = payload.model.strip()
+    if payload.openai_base_url is not None:
+        updates["LEDGERFRAME_OPENAI_BASE_URL"] = payload.openai_base_url.strip()
+    if payload.openai_api_key is not None:
+        updates["LEDGERFRAME_OPENAI_API_KEY"] = payload.openai_api_key.strip()
+    update_env(updates)
+    reload_settings()
+    # Report whether the new config can reach a model.
+    health = await get_ai_provider().health()
+    return {"ok": True, "available": health.available, "detail": health.detail}
+
+
 @router.post("/system/reset-data", dependencies=[Depends(require_auth)])
 async def reset_data(session: AsyncSession = Depends(get_db)) -> dict:
     """Delete all demo/portfolio/market data so you can start fresh with live data.

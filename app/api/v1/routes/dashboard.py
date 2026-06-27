@@ -12,7 +12,6 @@ from app.core.config import get_settings
 from app.core.money import to_display
 from app.providers.market import get_provider
 from app.services.briefing import get_briefing
-from app.services.market import get_cached_quote
 from app.services.portfolio import top_movers, value_portfolio
 
 router = APIRouter()
@@ -29,19 +28,20 @@ async def dashboard_home(session: AsyncSession = Depends(get_db)) -> dict:
     gainers, losers = top_movers(val, n=4)
     provider = get_provider()
 
+    from app.services.market import display_quote
+
     markets = []
     for sym in _HOME_MARKETS:
-        q = await get_cached_quote(session, sym)
-        if q.price is None:  # warm the cache once on first load
-            from app.services.market import refresh_quote
-
-            q = await refresh_quote(session, sym)
+        q = await display_quote(session, sym)
         markets.append(q.model_dump(mode="json"))
 
     fx = []
     for b, qc in _HOME_FX:
-        rate = await provider.get_fx_rate(b, qc)
-        fx.append(rate.model_dump(mode="json"))
+        try:
+            rate = await provider.get_fx_rate(b, qc)
+            fx.append(rate.model_dump(mode="json"))
+        except Exception:  # noqa: BLE001 — never let FX block the dashboard
+            pass
 
     status = await provider.get_market_status("US")
     briefing = await get_briefing(session)

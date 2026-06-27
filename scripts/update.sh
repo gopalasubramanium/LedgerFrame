@@ -40,6 +40,22 @@ if [[ -f /usr/local/sbin/ledgerframe-admin ]]; then
   sudo install -m 0755 -o root -g root "$REPO_DIR/scripts/lf-admin.sh" /usr/local/sbin/ledgerframe-admin 2>/dev/null || true
 fi
 
+# Re-render systemd units so unit changes (e.g. hardening tweaks) apply on update.
+if [[ -r /etc/ledgerframe/admin.env ]]; then
+  # shellcheck disable=SC1091
+  . /etc/ledgerframe/admin.env   # REPO_DIR, DATA_DIR, RUN_USER
+  API_HOST=127.0.0.1
+  grep -q '^LEDGERFRAME_ALLOW_LAN=true' "$REPO_DIR/.env" 2>/dev/null && API_HOST=0.0.0.0
+  for unit in ledgerframe-api ledgerframe-worker; do
+    [[ -f /etc/systemd/system/$unit.service ]] || continue
+    sed -e "s|@REPO_DIR@|$REPO_DIR|g" -e "s|@DATA_DIR@|$DATA_DIR|g" -e "s|@USER@|$RUN_USER|g" \
+        -e "s|@API_HOST@|$API_HOST|g" "$REPO_DIR/systemd/$unit.service" \
+      | sudo tee "/etc/systemd/system/$unit.service" >/dev/null
+  done
+  sudo systemctl daemon-reload 2>/dev/null || true
+  echo "[update] systemd units refreshed"
+fi
+
 echo "[update] restarting services…"
 sudo systemctl restart ledgerframe-api ledgerframe-worker 2>/dev/null \
   && echo "[update] services restarted" || echo "[update] services not installed (dev?)"

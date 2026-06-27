@@ -36,6 +36,11 @@ async def refresh_quote(session: AsyncSession, symbol: str, exchange: str | None
     instrument = await _get_or_create_instrument(session, symbol, exchange)
     try:
         q = await provider.get_quote(symbol, exchange)
+        if q.price is None:
+            # Provider couldn't deliver (e.g. rate-limited). Do NOT write a null
+            # price (the column is NOT NULL, and a null would poison the session).
+            # Return the last cached quote, or an explicit "unavailable".
+            return await get_cached_quote(session, symbol, exchange)
         row = await session.get(QuoteRow, instrument.id)
         if row is None:
             row = QuoteRow(instrument_id=instrument.id)
@@ -84,6 +89,19 @@ async def get_cached_quote(
         received_at=row.received_at,
         is_stale=stale,
     )
+
+
+async def display_quote(session: AsyncSession, symbol: str, exchange: str | None = None) -> Quote:
+    """Quote for page rendering. Serves the cache when fresh; only does a live
+    fetch for 'cheap' providers (mock/csv). For rate-limited live providers it
+    returns cached data so a page load never blocks on many serial API calls
+    (refresh those via the worker or the Settings 'Refresh live data' button)."""
+    cached = await get_cached_quote(session, symbol, exchange)
+    if cached.price is not None and not cached.is_stale:
+        return cached
+    if getattr(get_provider(), "fetch_on_demand", True):
+        return await refresh_quote(session, symbol, exchange)
+    return cached
 
 
 async def get_history_cached(

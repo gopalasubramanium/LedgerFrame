@@ -12,7 +12,7 @@ from app.api.deps import get_db
 from app.core.config import get_settings
 from app.models import Holding, Instrument, WatchlistItem
 from app.providers.market import get_provider
-from app.services.market import refresh_quote
+from app.services.market import display_quote, refresh_quote
 
 router = APIRouter()
 
@@ -58,7 +58,7 @@ async def markets_overview(session: AsyncSession = Depends(get_db)) -> dict:
     instruments = await _overview_instruments(session)
     items = []
     for instr in instruments:
-        q = await refresh_quote(session, instr.symbol, instr.exchange)
+        q = await display_quote(session, instr.symbol, instr.exchange)
         items.append({
             "symbol": instr.symbol,
             "name": instr.name,
@@ -93,7 +93,7 @@ async def markets_global(session: AsyncSession = Depends(get_db)) -> dict:
     for region, symbols in _GLOBAL_MARKETS.items():
         items = []
         for sym in symbols:
-            q = await refresh_quote(session, sym)
+            q = await display_quote(session, sym)
             items.append({"symbol": sym, "quote": q.model_dump(mode="json")})
         groups.append({"region": region, "items": items})
     status = await get_provider().get_market_status("US")

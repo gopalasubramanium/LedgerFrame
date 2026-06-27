@@ -48,6 +48,9 @@ def _check_limit(data: dict) -> None:
 
 
 class ExternalMarketDataProvider:
+    # Rate-limited: don't fetch on page load — serve cache, refresh via worker/button.
+    fetch_on_demand = False
+
     def __init__(self, name: str, api_key: str):
         if not api_key:
             raise ValueError("external market provider requires an API key")

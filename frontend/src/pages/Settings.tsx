@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card } from "../components/ui";
+import { AiConfigCard } from "../components/AiConfigCard";
 import { useApp } from "../store/app";
 
 export default function Settings() {
@@ -177,6 +178,8 @@ export default function Settings() {
       </Card>
 
       {/* News feeds */}
+      <AiConfigCard className="col-span-12 lg:col-span-6" onSaved={setMsg} />
+
       <Card title="News feeds (free RSS)" className="col-span-12 lg:col-span-6">
         <p className="text-xs text-muted mb-2">One feed URL per line. No API key needed. Leave blank to disable RSS.</p>
         <textarea className="lf-input font-mono text-xs h-32" value={feedText} onChange={(e) => setFeedText(e.target.value)} spellCheck={false} />

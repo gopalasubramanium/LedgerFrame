@@ -25,7 +25,8 @@ CPUQuota=180%
 # Hardening — read-only system, writable only where needed.
 # ProtectHome=read-only (not true) so the service can read an app installed under
 # a user's home directory; ReadWritePaths re-grants writes to the data dir.
-NoNewPrivileges=true
+# NoNewPrivileges is intentionally NOT set here: the Settings page invokes the
+# scoped `sudo ledgerframe-admin` helper, and NoNewPrivileges would block sudo.
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only

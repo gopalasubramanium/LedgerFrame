@@ -1,5 +1,31 @@
 # LedgerFrame — Operations Guide
 
+## First-time setup (no experience needed)
+
+You can't break anything — the installer never erases or formats drives.
+
+1. **Flash the OS.** Install **Raspberry Pi Imager** (raspberrypi.com/software),
+   pick *Raspberry Pi 5* → *Raspberry Pi OS (64-bit)* → your microSD. In **Edit
+   Settings** set a username/password, your Wi-Fi, and time zone. Write.
+2. **Assemble.** (Fit the AI HAT+ 2 if you have one.) Insert the card; connect the
+   monitor (HDMI0), keyboard, mouse, and your **USB SSD** (blue USB-3 port). Plug in
+   power last — the desktop appears after a minute or two.
+3. **The USB SSD** usually mounts automatically (you'll see it in the Files app).
+   That's all that's needed; the installer finds it.
+4. **Open the Terminal** (the `>_` icon, or Ctrl+Alt+T) and paste these one at a
+   time (paste with Ctrl+Shift+V):
+   ```bash
+   cd ~
+   sudo apt update && sudo apt install -y git
+   git clone https://github.com/gopalasubramanium/LedgerFrame.git
+   cd ~/LedgerFrame && ./scripts/install.sh
+   ```
+5. **Answer the prompts** (press Enter to accept the safe defaults). When it prints
+   **"✓ All done!"**, open **Chromium → http://127.0.0.1:8321**. `sudo reboot` makes
+   it launch full-screen automatically on every boot.
+
+> Troubleshooting & the “view it on my phone” (LAN) steps are below and in the README.
+
 ## Install (Raspberry Pi 5)
 
 Prerequisites: Raspberry Pi OS 64-bit (Trixie preferred), the USB 3 NVMe **mounted

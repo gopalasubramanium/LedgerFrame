@@ -1,145 +1,74 @@
 # LedgerFrame
 
-[![Repository](https://img.shields.io/badge/GitHub-LedgerFrame-d9a566?logo=github&logoColor=white)](https://github.com/gopalasubramanium/LedgerFrame)
+[![Repository](https://img.shields.io/badge/GitHub-LedgerFrame-2f9e7c?logo=github&logoColor=white)](https://github.com/gopalasubramanium/LedgerFrame)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ea88b)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%205-c51a4a?logo=raspberrypi&logoColor=white)](ARCHITECTURE.md)
 
 **A local-first, always-on personal financial intelligence display for Raspberry Pi 5 + Hailo AI HAT+ 2.**
 
-LedgerFrame is a private, self-hosted financial command centre: market monitoring,
-portfolio & net-worth tracking, interactive dashboards, optional local voice, and
-grounded AI explanations — all running on your own hardware. Your portfolio data
-stays on the device by default. Nothing is sent off-device unless you explicitly
-configure it.
+A private, self-hosted "wealth desk": market monitoring, portfolio & net-worth
+tracking, benchmarked performance analytics, world-market views, optional local
+voice, and **grounded** AI explanations — all on your own hardware. Your data stays
+on the device by default; nothing leaves it unless you configure it to.
 
-> This is **not** a trading or execution platform. It contains no order placement,
-> no brokerage integration, and gives no buy/sell recommendations or financial advice.
+> **Not a trading platform.** No order placement, no brokerage integration, no
+> buy/sell recommendations, no financial advice.
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/home.png" alt="LedgerFrame home dashboard"><br><sub><b>Home</b> — dashboard in DEMO mode.</sub></td>
-    <td width="50%"><img src="docs/screenshots/portfolio.png" alt="LedgerFrame portfolio page"><br><sub><b>Portfolio</b> — allocation, currency exposure, and FIFO-valued holdings.</sub></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/ask.png" alt="LedgerFrame grounded AI Ask panel"><br><sub><b>Ask</b> — grounded AI: every answer cites the verified facts it was built from, with source + timestamp, and never invents numbers.</sub></td>
-    <td width="50%"><img src="docs/screenshots/heatmap.png" alt="LedgerFrame performance heatmap"><br><sub><b>Heatmap</b> — treemap sized by value, coloured by daily change, with a data-coverage note.</sub></td>
-  </tr>
-</table>
+![LedgerFrame home dashboard](docs/screenshots/home.png)
 
-<sub>More views — markets, news, snapshot, and settings — in <a href="docs/screenshots/"><code>docs/screenshots/</code></a>.</sub>
+| | |
+|---|---|
+| **Portfolio analytics** — benchmarked performance, allocation, key stats | **Holdings** — the one place to add/edit/delete positions |
+| ![Portfolio](docs/screenshots/portfolio.png) | ![Holdings](docs/screenshots/holdings.png) |
+| **Instrument** — price, period chart, stats, watchlist | **Global** — world markets via liquid ETF proxies |
+| ![Instrument](docs/screenshots/instrument.png) | ![Global](docs/screenshots/global.png) |
+| **Settings** — data source, AI, theme, system controls | **Grounded AI** — answers cite the facts they're built from |
+| ![Settings](docs/screenshots/settings.png) | ![Ask](docs/screenshots/ask.png) |
+
+Light theme & mobile are first-class:
+
+| Light theme | Mobile |
+|---|---|
+| ![Light](docs/screenshots/home-light.png) | <img src="docs/screenshots/home-mobile.png" width="240" alt="Mobile"> |
 
 ---
 
 ## Highlights
 
 - **Local-first & offline-capable** — last-known data is kept and clearly marked
-  *stale* when connectivity drops. The dashboard never goes blank.
-- **Deterministic financial engine** — all valuations, FIFO cost basis, allocations,
-  and net worth are computed in Python with `Decimal`. The AI never calculates a number.
-- **Grounded AI** — answers are built only from verified, timestamped facts produced
-  by the backend; the model explains, it does not invent. Falls back to deterministic
-  templates when the Hailo NPU is unavailable.
-- **Provider-abstracted market data** — runs fully in **DEMO mode** (synthetic data,
-  no API key) out of the box; switch to a live provider (Alpha Vantage) or CSV from
-  **Settings** with no restart. Clear demo data, refresh prices, and backfill history
-  from the UI.
-- **Configurable AI** — local Hailo/Ollama (on-device) or any OpenAI-compatible
-  endpoint (OpenAI / OpenRouter / Anthropic / remote Ollama), set in Settings.
-- **Wealth-manager UI** — original slate + emerald design with **light / dark /
-  system** themes, a benchmarked performance chart with a benchmark picker, a
-  key-stats panel, and a responsive layout that works on phone and desk display.
-- **Dedicated pages** — Home (now), Portfolio (analytics), Holdings (manage),
-  Markets (your markets), Global (world indices via ETF proxies), Heatmap, News,
-  Snapshot, Settings.
-- **Private by design** — localhost-only binding, Argon2 PIN lock (auto-prompts on
-  expiry), encrypted backups (`age`), no telemetry, secrets kept out of the repo.
+  *stale*; the dashboard never goes blank.
+- **Deterministic engine** — valuations, FIFO cost basis, allocations, net worth,
+  and risk stats are computed in Python with `Decimal`. **The AI never calculates a number.**
+- **Grounded AI** — answers are built only from verified, timestamped facts; the
+  model explains, it never invents. Falls back to deterministic templates when no
+  model is available.
+- **Honest market data** — runs in **DEMO mode** out of the box; switch to a live
+  provider from Settings. A live provider that can't serve a symbol shows "—",
+  never a fabricated price.
+- **Wealth-manager UI** — slate + emerald design, **light / dark / system** themes,
+  benchmark picker, key-stats panel, responsive on phone and desk display.
+- **Private by design** — localhost-only by default, Argon2 PIN (auto-prompts on
+  expiry), encrypted backups (`age`), no telemetry.
 
-See `docs/` for architecture, security, data sources, voice setup, and testing.
+## The pages
 
----
-
-## Quick start (development / any Linux/macOS machine)
-
-```bash
-git clone <your-repo-url> LedgerFrame && cd LedgerFrame
-cp .env.example .env
-# For local dev, point the data dir somewhere writable:
-export LEDGERFRAME_DATA_DIR="$PWD/data" LEDGERFRAME_ENV=development
-
-# Backend
-uv venv && source .venv/bin/activate
-uv pip install -e ".[dev]"
-ledgerframe              # serves API on http://127.0.0.1:8321
-
-# Frontend (separate terminal)
-cd frontend && npm install && npm run dev   # http://127.0.0.1:5173
-```
-
-Open <http://127.0.0.1:5173> in development, or <http://127.0.0.1:8321> once the
-frontend is built (`npm run build`) and served by the API.
-
-The app boots in **DEMO mode** with seeded holdings, watchlists, and synthetic
-market data — no keys or network required.
+| Page | Purpose |
+|------|---------|
+| **Home** | Glanceable "now": ticker, portfolio headline, movers, markets, watchlist, FX, briefing, headlines |
+| **Portfolio** | Analytics: benchmarked performance, allocation & currency donuts, concentration, key statistics |
+| **Holdings** | The only place to **add / edit / delete** transactions & manual assets (CSV import too) |
+| **Markets** | *Your* markets — a view dropdown (holdings/watchlist/equities/…) + symbol search |
+| **Global** | World markets by region via liquid ETF proxies (so live data works) |
+| **Heatmap** | Performance treemap across your instruments |
+| **News** | Free RSS/Atom headlines + the grounded AI briefing |
+| **Snapshot** | Net worth, assets, liabilities, cash, net-worth history |
+| **Settings** | Data source, AI provider, theme, news feeds, PIN, system controls, backups |
 
 ---
 
-## 🟢 Setup guide for everyone (no experience needed)
+## Install
 
-This walkthrough assumes **zero technical background**. Follow it top to bottom and
-you'll have LedgerFrame running on your screen. It takes about 30–45 minutes, most
-of which is the computer doing the work while you wait. ☕
-
-> **You can't break anything.** The installer never erases or formats your drives —
-> it only creates one folder and asks before each step. If you get stuck, jump to
-> [Help, something went wrong](#-help-something-went-wrong) at the bottom.
-
-### What you'll need (shopping list)
-
-| Item | Notes |
-|------|-------|
-| Raspberry Pi 5 (8 or 16 GB) | The little computer that runs everything |
-| Raspberry Pi AI HAT+ 2 (Hailo-10H) | *Optional* — only needed for the AI answers. Everything else works without it |
-| Official Pi 5 power supply | Use the real one; underpowered chargers cause crashes |
-| microSD card (32 GB+) | Holds the operating system |
-| USB 3 SSD/“NVMe” drive | Where your data is stored. Plug into a **blue** USB port |
-| A monitor + HDMI cable | Any TV/monitor with HDMI works (use the Pi's `HDMI0` port) |
-| USB keyboard + mouse | For the one-time setup. A touchscreen is optional |
-
-### Step 1 — Put the operating system on the card
-
-1. On any computer, download and install **Raspberry Pi Imager** from
-   <https://www.raspberrypi.com/software/>.
-2. Insert your microSD card.
-3. Open Imager → **Choose Device:** Raspberry Pi 5 → **Choose OS:** *Raspberry Pi OS (64-bit)*
-   → **Choose Storage:** your microSD card.
-4. Click **Next**, then **Edit Settings**. Set a **username and password** you'll
-   remember, your **Wi-Fi name + password**, and your **time zone**. Save.
-5. Click **Write** and wait. When it finishes, remove the card.
-
-### Step 2 — Assemble and switch on
-
-1. (If you have the AI HAT+ 2, fit it onto the Pi per its little instruction card first.)
-2. Insert the microSD card into the Pi. Plug in the **monitor (HDMI0)**, **keyboard**,
-   **mouse**, and your **USB SSD** (into a blue USB 3 port).
-3. Plug in the **power supply** last. The Pi turns on automatically and, after a
-   minute or two, shows a desktop.
-
-### Step 3 — Make the USB drive ready (one click)
-
-Raspberry Pi OS usually mounts your USB SSD automatically — you'll see it pop up in
-the **Files** app. That's all that's needed; the installer finds it for you. *(If a
-window asks whether to “open” the drive, you can just close it.)*
-
-### Step 4 — Open the Terminal
-
-Click the **black square icon** (`>_`) in the top bar, **or** press
-**Ctrl + Alt + T**. A window with text appears. You'll type three short lines into
-it — copy each line, paste with **Ctrl + Shift + V**, then press **Enter**.
-
-### Step 5 — Download and install LedgerFrame
-
-Paste these commands one at a time (wait for each to finish). The first line
-(`cd ~`) makes sure you start from your home folder:
+### Raspberry Pi 5 (guided)
 
 ```bash
 cd ~
@@ -148,140 +77,100 @@ git clone https://github.com/gopalasubramanium/LedgerFrame.git
 cd ~/LedgerFrame && ./scripts/install.sh
 ```
 
-The installer now **guides you with simple questions** and sensible defaults — you
-can just press **Enter** to accept each one:
+The installer is interactive and idempotent: it auto-detects the platform, installs
+missing prerequisites (`uv`, Node, build tools, `age`, Chromium for kiosk), helps
+pick/create the data folder on your USB SSD (**never formats anything**), sets up
+systemd services + a scoped admin helper, builds the dashboard, and runs a health
+check. A complete **no-experience walkthrough** (flashing the OS, etc.) is in
+[`OPERATIONS.md`](OPERATIONS.md). Verify anytime with `./scripts/doctor.sh`.
 
-- *“Data folder”* → press **Enter** (it auto-picks your USB drive).
-- *“Start in DEMO mode?”* → **Enter** for **Yes** (safe sample data, no signups).
-- *“Auto-launch the full-screen dashboard?”* → **Enter** for **Yes**.
-- *“Install optional voice control?”* → **Enter** for **No**.
-- *“Proceed with installation?”* → **Enter** for **Yes**.
+Open **http://127.0.0.1:8321** on the Pi. To reach it from your phone/laptop:
+`./scripts/install.sh --enable-lan --yes` (set a PIN when prompted).
 
-It then installs everything itself (you may be asked for your password once). When
-it prints **“✓ All done!”**, you're finished.
-
-### Step 6 — See your dashboard
-
-Open the **Chromium** web browser on the Pi and go to:
-
-```
-http://127.0.0.1:8321
-```
-
-You'll see the LedgerFrame dashboard with sample data. 🎉 To make it launch
-**full-screen automatically every time you turn on the Pi**, just restart it:
+### Development (any Linux/macOS)
 
 ```bash
-sudo reboot
+git clone https://github.com/gopalasubramanium/LedgerFrame.git && cd LedgerFrame
+cp .env.example .env
+export LEDGERFRAME_DATA_DIR="$PWD/data" LEDGERFRAME_ENV=development
+uv venv && source .venv/bin/activate && uv pip install -e ".[dev]"
+(cd frontend && npm install)
+./scripts/start-dev.sh     # API :8321 + Vite :5173
 ```
 
-### Step 7 — Make it yours
-
-- Click **Settings** → set a **PIN** so only you can make changes.
-- Try the **Ask** button (top right) and tap a suggested question.
-- Everything you see is **safe demo data**. When you're ready for real prices or AI
-  answers, see [Going beyond demo mode](#going-beyond-demo-mode) below.
+Boots in **DEMO mode** with seeded holdings and synthetic data — no keys or network.
 
 ---
 
-## Install (for technical users)
+## Data providers (Settings → Data source)
 
-One line, fully guided:
+Switch any time; changes apply **immediately** (no restart). Failures are honest —
+unavailable symbols show "—", and **Refresh live prices** lists what updated/failed.
 
-```bash
-./scripts/install.sh
-```
+| Provider | Cost | Covers | Notes |
+|----------|------|--------|-------|
+| `mock` | free | everything (synthetic) | Default DEMO mode; clearly labelled |
+| `csv` | free | local `imports/<SYMBOL>.csv` | Offline/manual history |
+| `alphavantage` | free/paid | **US equities & ETFs, crypto, FX** | Add your key in Settings |
 
-Or unattended with explicit choices:
+**Alpha Vantage specifics** (important):
+- ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX.
+- ❌ Raw indices (`^GSPC`) — the **Global** page uses ETF proxies (SPY, QQQ, EWJ, …)
+  so live values still show. ❌ Most non-US tickers (need region suffixes) — add
+  those as **manual-priced** holdings.
+- History is **cached** in the DB; **Fetch & cache history** backfills new holdings
+  only (won't re-spend quota). Free tier ≈ 25 req/day; premium raises it.
 
-```bash
-./scripts/install.sh --data-dir /mnt/ledgerframe-data --enable-kiosk --enable-voice false --demo-mode true --yes
-```
+Full detail & licensing: [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
 
-The installer auto-detects your platform, installs missing prerequisites (`uv`,
-Node, build tools, `age`, and Chromium when kiosk is enabled), helps pick/create the
-data folder on an existing mount (never formats), and shows a plan before changing
-anything. Preview without installing:
+## AI providers (Settings → AI assistant)
 
-```bash
-./scripts/install.sh --dry-run     # show the plan, change nothing
-./scripts/install.sh --help        # all options
-```
+The AI only ever *explains* verified facts. Choose:
 
-Then verify the hardware & runtime:
+| Option | Data leaves device? | Use |
+|--------|---------------------|-----|
+| **Hailo / Ollama (local)** | No | On-device model — set the service URL (Hailo `:8000` or Ollama IP `:11434`) + model |
+| **OpenAI-compatible** | **Yes** | OpenAI / OpenRouter / Anthropic / remote Ollama (base URL + key + model; presets included) |
+| **Disabled** | No | Deterministic, fact-only answers |
 
-```bash
-./scripts/doctor.sh
-```
+Saving tests the connection. Without any model, "Ask" still answers from your data.
 
-Full operational guide: [`OPERATIONS.md`](OPERATIONS.md). Hardware/AI setup and
-constraints: [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md).
+## Usage (typical flow)
 
-### View it on your phone or laptop
+1. **Settings → Data source** → pick a provider (+ key) → **Clear demo / all data**.
+2. **Holdings → Add / Edit / Delete** → enter your transactions (or import a CSV).
+3. **Settings → Refresh live prices**, then **Fetch & cache history**.
+4. **Home** for the daily glance; **Portfolio** for analytics; tap any symbol for its page.
+5. **Ask** (top-right) for grounded explanations; set a **PIN** in Settings.
 
-By default LedgerFrame listens on `127.0.0.1` — reachable **only on the Pi itself**
-(this is the secure default, since your finances shouldn't be on the network
-uninvited). To open it from other devices on your home network:
+## Maintenance
 
-```bash
-# Re-run the installer with LAN access enabled:
-cd ~/LedgerFrame && ./scripts/install.sh --enable-lan --yes
-```
+| Action | How |
+|--------|-----|
+| Update | `./scripts/update.sh` (backs up, syncs, rebuilds, migrates, restarts) |
+| Back up / restore | `./scripts/backup.sh` · `./scripts/restore.sh <file> [--force]` (or Settings → Create backup) |
+| Refresh / history / clear data | Settings → *Data source* buttons |
+| Restart / diagnostics | Settings → *Service & maintenance*, or `sudo systemctl restart ledgerframe-api ledgerframe-worker` |
+| Health / hardware report | `./scripts/doctor.sh` · `curl http://127.0.0.1:8321/health` |
+| Benchmark | `./scripts/benchmark.sh` |
+| Reset to demo | `./scripts/reset-demo-data.sh` |
+| Tests | `pytest` · `cd frontend && npm test && npx playwright test` |
 
-Then, from any device on the same Wi-Fi, browse to `http://<your-pi-ip>:8321`
-(the installer prints the exact address, e.g. `http://192.168.0.14:8321`).
+More: [`OPERATIONS.md`](OPERATIONS.md) · [`SECURITY.md`](SECURITY.md) ·
+[`ARCHITECTURE.md`](ARCHITECTURE.md) · [`docs/`](docs/).
 
-> **Set a PIN first.** With LAN access on, open **Settings → set a PIN** immediately
-> so others on your network can't change your data. LedgerFrame refuses to enable LAN
-> binding for mutations without one. Only enable this on a network you trust.
+## Limitations
 
-To turn it back off: `./scripts/install.sh --enable-lan false --yes`.
-
-### Going beyond demo mode
-
-- **Live prices:** edit `.env` → set `LEDGERFRAME_MARKET_PROVIDER` and a key. See
-  [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) for providers, licensing, and limits.
-- **Local AI answers:** fit the AI HAT+ 2 and install the Hailo stack + `hailo-ollama`
-  (see [`ARCHITECTURE.md`](ARCHITECTURE.md)). Without it, the app still answers using
-  your data — it just won't phrase things in natural language.
-- **Your own holdings:** **Settings → import a CSV**, or add transactions manually.
-
----
-
-## 🆘 Help, something went wrong
-
-| What you see | What to do |
-|--------------|------------|
-| The browser says “can't connect” | Wait 30 seconds and refresh. Still stuck? Run `./scripts/doctor.sh` in the Terminal — it checks everything and tells you what's missing |
-| Works on the Pi but not from my phone/laptop | That's on purpose — by default the app is reachable **only on the Pi**. To open it from other devices, see [View it on your phone or laptop](#view-it-on-your-phone-or-laptop) |
-| Installer said the data folder doesn't exist | Your USB drive isn't mounted. Open the **Files** app, click the drive once so it mounts, then re-run the install command |
-| It asks for a password | That's normal — type your Pi login password (the letters won't show as you type) and press Enter |
-| Want to start over | Just run `cd ~/LedgerFrame && ./scripts/install.sh` again — it's safe to re-run |
-| Want to remove it | `./scripts/uninstall.sh` — your data and backups are kept |
-
-The installer is safe to run as many times as you like. It never touches your data
-or formats any drive.
-
----
-
-## Day-to-day commands
-
-| Action            | Command                                                        |
-|-------------------|----------------------------------------------------------------|
-| Start (dev)       | `ledgerframe`                                                  |
-| Start services    | `sudo systemctl start ledgerframe-api ledgerframe-worker`      |
-| Stop services     | `sudo systemctl stop ledgerframe-api ledgerframe-worker`       |
-| Status / health   | `curl http://127.0.0.1:8321/health` · `./scripts/doctor.sh`    |
-| Update            | `./scripts/update.sh`                                          |
-| Back up           | `./scripts/backup.sh`                                          |
-| Restore           | `./scripts/restore.sh <backup-file>`                           |
-| Benchmark         | `./scripts/benchmark.sh`                                       |
-| Reset demo data   | `./scripts/reset-demo-data.sh`                                 |
-| Run tests         | `pytest` · `cd frontend && npm test`                           |
-
----
+- **Not real-time** — bundled providers are demo/delayed/EOD; entitlement & staleness
+  are shown on every quote.
+- **Alpha Vantage free tier (~25/day)** can't sustain an always-on multi-symbol
+  display; caching stretches it, but a less-restrictive feed is better for live use.
+- **Small local AI** explains concisely; it's not an analyst, and degrades to
+  fact-only answers when unavailable.
+- Validated on x86_64 dev hardware; Pi/Hailo paths are guarded — run `doctor.sh` on
+  the device.
 
 ## License
 
-MIT. See `LICENSE`. Market data and any external providers are subject to their own
-terms — see [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
+MIT — see [`LICENSE`](LICENSE). Market data & external providers are subject to their
+own terms ([`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md)).

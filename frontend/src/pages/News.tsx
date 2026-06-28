@@ -2,16 +2,25 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card } from "../components/ui";
+import { useActivity } from "../components/Activity";
 import { timeAgo } from "../lib/format";
 
 export default function News() {
   const news = useApi(api.news, 120000);
   const home = useApi(api.home, 120000);
+  const { run } = useActivity();
   const rss = news.data?.rss_count ?? 0;
 
   return (
     <div className="grid grid-cols-12 gap-4 auto-rows-min">
-      <Card title="AI briefing" className="col-span-12 lg:col-span-5">
+      <Card title="AI briefing" className="col-span-12 lg:col-span-5"
+        action={
+          <button className="lf-chip bg-elevated text-accent hover:text-ink" title="Regenerate the AI briefing"
+            onClick={() => run("briefing", async () => { const r = await api.refreshBriefing(); home.refetch(); return r; },
+              { pending: "Regenerating briefing", success: "Briefing updated", error: "Couldn't refresh briefing" })}>
+            ↻ Refresh
+          </button>
+        }>
         <p className="text-ink leading-relaxed">{home.data?.briefing.text ?? "—"}</p>
         <p className="text-xs text-faint mt-3">Grounded in your portfolio + market data. Information only, not financial advice.</p>
       </Card>
@@ -19,7 +28,14 @@ export default function News() {
       <Card
         title="Headlines"
         className="col-span-12 lg:col-span-7"
-        action={<span className="text-xs text-faint">{rss > 0 ? `${rss} from RSS` : "RSS: 0"}</span>}
+        action={
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-faint">{rss > 0 ? `${rss} from RSS` : "RSS: 0"}</span>
+            <button className="lf-chip bg-elevated text-accent hover:text-ink" title="Refresh headlines"
+              onClick={() => run("headlines", async () => news.refetch(),
+                { pending: "Refreshing headlines", success: "Headlines refreshed", error: "Couldn't refresh" })}>↻</button>
+          </div>
+        }
       >
         {news.loading && !news.data && <p className="text-muted text-sm">Loading headlines…</p>}
         <ul className="divide-y divide-line/50">

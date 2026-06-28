@@ -84,15 +84,23 @@ async def generate_briefing(session: AsyncSession) -> str:
         provider = get_ai_provider()
         health = await provider.health()
         if health.available and facts:
+            # Add a little market context so the briefing relates the portfolio to
+            # how the broader markets did today (still grounded — only these facts).
+            try:
+                from app.ai.tools import market_facts
+
+                facts = facts + [f"{m.label}: {m.value}" for m in await market_facts(session, limit=4)]
+            except Exception:  # noqa: BLE001
+                pass
             messages = [
                 ChatMessage(role="system", content=SYSTEM_PROMPT),
                 ChatMessage(role="system", content="FACTS (the only data you may use):\n" + "\n".join(f"- {f}" for f in facts)),
                 ChatMessage(role="user", content="Write ONLY a concise 2-3 sentence daily briefing for the desk "
-                            "display, highlighting the portfolio's notable moves today. Plain English. Do not "
-                            "include any reasoning, planning, preamble, or <think> tags — output the briefing only."),
+                            "display: lead with the portfolio's notable moves today, then one line relating it to "
+                            "how the broader markets did. Plain English, no markdown, no reasoning or <think> tags."),
             ]
             text = ""
-            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=400)):
+            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=1500)):
                 if chunk.delta:
                     text += chunk.delta
                 if chunk.done:

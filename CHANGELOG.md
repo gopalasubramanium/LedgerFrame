@@ -2,6 +2,25 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.1.0 — 2026-06-28
+
+- **Smarter AI assistant — it now uses the right data and reasons over it.**
+  - **Intent-routed grounding:** questions are matched to the relevant dataset —
+    world indices (Global/Markets), net worth (assets/liabilities), performance &
+    risk (return, 1Y vol, max drawdown, return/vol, concentration, income/yield),
+    allocation by asset class or currency, top holdings, movers, news headlines, or
+    a specific ticker. "How did the markets do?" now pulls the **global indices**
+    (not your watchlist), and portfolio questions are anchored with the headline
+    numbers — so answers are relevant and rich.
+  - **Analyst-grade prompt:** the model now compares, ranks and connects the facts
+    (what drove the day, concentration, vs. benchmark) instead of reciting them —
+    while staying strictly grounded (no invented numbers).
+  - Fact numbers are cleanly formatted (no raw 14-decimal percentages) and
+    allocation weights use gross assets (never >100%).
+- **Refresh buttons** for the **Daily briefing** (Home & News) and **Headlines**
+  (Home & News) — regenerate the AI briefing or re-pull RSS on demand, with toast
+  feedback. The briefing now also relates your portfolio to how markets did.
+
 ## v1.0.14 — 2026-06-28
 
 - **Catches the missing-port mistake in AI base URLs.** A base URL without a port

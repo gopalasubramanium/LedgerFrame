@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge, Figure, Skeleton } from "../components/ui";
+import { useActivity } from "../components/Activity";
 import { TickerStrip } from "../components/TickerStrip";
 import { money, pct, signedMoney, timeAgo, toneClass } from "../lib/format";
 import type { Quote } from "../lib/types";
@@ -13,9 +14,10 @@ type TickerSrc = "markets" | "holdings" | "global" | "watchlist";
 // portfolio and the markets. Deep analytics (performance, allocation, key stats)
 // live on the Portfolio page; position management lives on Holdings.
 export default function Home() {
-  const { data, loading, stale } = useApi(api.home, 60000);
+  const { data, loading, stale, refetch } = useApi(api.home, 60000);
   const wl = useApi(api.watchlists, 60000);
   const news = useApi(api.news, 180000);
+  const { run } = useActivity();
   const overview = useApi(api.marketsOverview, 60000);
   const glob = useApi(api.marketsGlobal, 60000);
   const [tickerSrc, setTickerSrc] = useState<TickerSrc>(
@@ -118,7 +120,15 @@ export default function Home() {
         </Card>
 
         {/* Daily briefing */}
-        <Card title="Daily briefing" className="col-span-12 lg:col-span-7">
+        <Card title="Daily briefing" className="col-span-12 lg:col-span-7"
+          action={
+            <button className="lf-chip bg-elevated text-accent hover:text-ink"
+              title="Regenerate the AI briefing"
+              onClick={() => run("briefing", async () => { const r = await api.refreshBriefing(); refetch(); return r; },
+                { pending: "Regenerating briefing", success: "Briefing updated", error: "Couldn't refresh briefing" })}>
+              ↻ Refresh
+            </button>
+          }>
           <p className="text-ink leading-relaxed">{data.briefing.text}</p>
           <p className="text-xs text-faint mt-3">
             {data.briefing.generated_at ? `Generated ${timeAgo(data.briefing.generated_at)}` : "Not yet generated"} · Information only, not financial advice.
@@ -127,7 +137,14 @@ export default function Home() {
 
         {/* Headlines preview */}
         <Card title="Headlines" className="col-span-12 lg:col-span-5"
-          action={<Link to="/news" className="lf-chip bg-elevated text-accent">More →</Link>}>
+          action={
+            <div className="flex items-center gap-2">
+              <button className="lf-chip bg-elevated text-accent hover:text-ink" title="Refresh headlines"
+                onClick={() => run("headlines", async () => news.refetch(),
+                  { pending: "Refreshing headlines", success: "Headlines refreshed", error: "Couldn't refresh" })}>↻</button>
+              <Link to="/news" className="lf-chip bg-elevated text-accent">More →</Link>
+            </div>
+          }>
           <ul className="divide-y divide-line/50">
             {(news.data?.items ?? []).slice(0, 5).map((item, i) => (
               <li key={i} className="py-2">

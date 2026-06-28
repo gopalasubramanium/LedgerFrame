@@ -73,6 +73,8 @@ export const api = {
     req<{ groups: { region: string; items: { symbol: string; label: string; quote: Quote }[] }[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/global"),
   news: () =>
     req<{ items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string; symbols: string[] }[]; rss_count: number }>("/api/v1/news"),
+  briefing: () => req<{ text: string; generated_at: string | null }>("/api/v1/briefing"),
+  refreshBriefing: () => req<{ text: string }>("/api/v1/briefing/refresh", { method: "POST" }),
   watchlists: () => req<{ watchlists: { id: number; name: string; items: { symbol: string; name: string; quote: Quote }[] }[] }>("/api/v1/watchlists"),
   createWatchlist: (name: string, symbols: string[]) =>
     req<{ ok: boolean; id: number }>("/api/v1/watchlists", { method: "POST", body: JSON.stringify({ name, symbols }) }),

@@ -128,12 +128,13 @@ async def symbol_facts(session: AsyncSession, symbols: list[str]) -> list[Ground
 
 async def market_facts(session: AsyncSession, limit: int = 14) -> list[GroundingFact]:
     """World indices + cross-asset benchmarks (the Global/Markets data) with % change."""
-    from app.api.v1.routes.markets import _GLOBAL_MARKETS
+    from app.api.v1.routes.markets import _GLOBAL_MARKETS, _global_symbol
     from app.services.market import display_quote
 
     facts: list[GroundingFact] = []
     for items in _GLOBAL_MARKETS.values():
-        for sym, label in items:
+        for proxy, idx, label in items:
+            sym = _global_symbol(proxy, idx)
             q = await display_quote(session, sym)
             if q.price is None:
                 continue

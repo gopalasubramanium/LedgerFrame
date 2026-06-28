@@ -70,8 +70,8 @@ async def ai_status() -> dict:
     return health.model_dump()
 
 
-# Market-data providers the UI may select. mock/csv need no key.
-_MARKET_PROVIDERS = {"mock", "csv", "alphavantage"}
+# Market-data providers the UI may select. mock/csv/yahoo need no key.
+_MARKET_PROVIDERS = {"mock", "csv", "alphavantage", "yahoo"}
 
 
 @router.get("/system/data-source")

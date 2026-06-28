@@ -25,6 +25,21 @@ stale in the UI.
 Synthetic, deterministic data. No key, no network. Everything labelled DEMO and
 `delayed`. Ideal for evaluation and offline kiosks.
 
+### `yahoo` — Yahoo Finance (free, no key)
+Uses Yahoo's public chart/search JSON endpoints. **Best free live option.**
+- **Covers:** real **index levels** (`^GSPC`, `^NDX`, `^DJI`, `^FTSE`, `^GDAXI`,
+  `^STOXX50E`, `^N225`, `^HSI`, `^NSEI`, `^STI`), global equities
+  (`RELIANCE.NSE`→`RELIANCE.NS`, `HDFC.BSE`→`HDFC.BO`, `VOD.L`, `7203.T`), FX
+  (`EURUSD=X`) and crypto (`BTC`→`BTC-USD`) — each in the listing's own currency.
+- **Capability flag** `supports_indices=True`: the **Global** page shows real index
+  levels (local currency) instead of ETF proxies.
+- **Rate limiting:** the public endpoint throttles bursts (HTTP 429), so the provider
+  **serializes** calls with a ~1.5s minimum interval + 429 backoff, and runs with
+  `fetch_on_demand=False` so page loads serve the **cache** while the worker refreshes
+  symbols one at a time. Throttled symbols show `unavailable` ("—"), never a fabricated
+  price; FX/search fall back to `mock` so valuation keeps working. Best for a modest
+  symbol set; a keyed provider is steadier for heavy always-on use.
+
 ### `csv`
 Reads `<data-dir>/imports/<SYMBOL>.csv` with header
 `date,open,high,low,close,volume`. Latest row → quote (`end-of-day`). Symbols

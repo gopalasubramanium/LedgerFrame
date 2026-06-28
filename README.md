@@ -138,22 +138,33 @@ Boots in **DEMO mode** with seeded holdings and synthetic data — no keys or ne
 Switch any time; changes apply **immediately** (no restart). Failures are honest —
 unavailable symbols show "—", and **Refresh live prices** lists what updated/failed.
 
-| Provider | Cost | Covers | Notes |
-|----------|------|--------|-------|
-| `mock` | free | everything (synthetic) | Default DEMO mode; clearly labelled |
-| `csv` | free | local `imports/<SYMBOL>.csv` | Offline/manual history |
-| `alphavantage` | free/paid | **US equities & ETFs, crypto, FX** | Add your key in Settings |
+| Provider | Cost | Key? | Covers | Notes |
+|----------|------|------|--------|-------|
+| `mock` | free | no | everything (synthetic) | Default DEMO mode; clearly labelled |
+| `yahoo` | free | **no** | **real indices, global stocks, FX, crypto** | Best free option — see below |
+| `csv` | free | no | local `imports/<SYMBOL>.csv` | Offline/manual history |
+| `alphavantage` | free/paid | yes | US equities & ETFs, crypto, FX | Add your key in Settings |
 
-**Alpha Vantage specifics** (important):
-- ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX.
-- ❌ Raw indices (`^GSPC`) — the **Global** page uses ETF proxies (SPY, QQQ, EWJ, …)
-  so live values still show. Non-US tickers vary in coverage; whatever the
-  provider serves, **foreign holdings are valued in their native trading currency**
-  (from the exchange suffix — `HDFC.BSE`→₹, `VOD.L`→£, `7203.T`→¥) and converted to
-  your base currency via FX. If a live quote isn't available, add the holding as a
-  **manual-priced** position.
+**Yahoo Finance (free, no key) — recommended for live data:**
+- ✅ **Real index levels** in local currency — the **Global** page shows actual
+  S&P 500, Nasdaq, FTSE 100, Nikkei 225, Hang Seng, Nifty 50, STI, DAX, etc.
+  (not ETF proxies). ✅ Global equities (`RELIANCE.NSE`, `VOD.L`, `7203.T`),
+  ✅ FX, ✅ crypto — each in its own currency, converted to your base via FX.
+- ⚠️ It's an unofficial public endpoint that **rate-limits bursts**, so LedgerFrame
+  **paces** requests (one at a time, ~1.5s apart) and serves cached values on page
+  load while the background worker refreshes gradually. First population takes a
+  little time; if a request is throttled the value shows "—" (never fabricated).
+  Best for a modest symbol set; for heavy always-on use a keyed provider is steadier.
+
+**Alpha Vantage specifics:**
+- ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX. ❌ Raw indices — the **Global**
+  page falls back to ETF proxies (SPY, QQQ, EWJ, …) on this provider. (Use Yahoo for
+  real indices.)
+- Non-US tickers vary in coverage; whatever the provider serves, **foreign holdings
+  are valued in their native trading currency** (`HDFC.BSE`→₹, `VOD.L`→£, `7203.T`→¥)
+  and converted to your base currency via FX.
 - History is **cached** in the DB; **Fetch & cache history** backfills new holdings
-  only (won't re-spend quota). Free tier ≈ 25 req/day; premium raises it.
+  only. Free tier ≈ 25 req/day; premium raises it.
 
 Full detail & licensing: [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
 

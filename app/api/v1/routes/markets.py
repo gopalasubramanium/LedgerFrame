@@ -85,31 +85,47 @@ async def markets_overview(session: AsyncSession = Depends(get_db)) -> dict:
 # World markets via liquid, broadly-supported ETF proxies (so a live provider like
 # Alpha Vantage — which doesn't serve raw indices such as ^GSPC — returns real
 # values). Each entry is (symbol, label).
-_GLOBAL_MARKETS: dict[str, list[tuple[str, str]]] = {
-    "Americas": [("SPY", "US · S&P 500"), ("QQQ", "US · Nasdaq 100"), ("DIA", "US · Dow Jones")],
-    "Europe": [("EWU", "UK · FTSE 100"), ("FEZ", "Europe · Euro Stoxx 50"), ("EWG", "Germany · DAX")],
-    "Asia-Pacific": [("EWJ", "Japan · Nikkei 225"), ("EWH", "Hong Kong · Hang Seng"),
-                     ("INDA", "India · Nifty 50"), ("EWS", "Singapore · STI")],
-    "Commodities": [("GLD", "Gold"), ("SLV", "Silver"), ("USO", "Oil")],
-    "Crypto": [("BTC", "Bitcoin"), ("ETH", "Ethereum")],
+# Each entry is (proxy_symbol, index_symbol, label). On providers that serve raw
+# indices (e.g. Yahoo: supports_indices=True) the real index level is shown; on
+# others (Alpha Vantage, mock) the liquid ETF proxy is used so a value still
+# renders. For commodities/crypto the two are the same.
+_GLOBAL_MARKETS: dict[str, list[tuple[str, str, str]]] = {
+    "Americas": [("SPY", "^GSPC", "US · S&P 500"), ("QQQ", "^NDX", "US · Nasdaq 100"),
+                 ("DIA", "^DJI", "US · Dow Jones")],
+    "Europe": [("EWU", "^FTSE", "UK · FTSE 100"), ("FEZ", "^STOXX50E", "Europe · Euro Stoxx 50"),
+               ("EWG", "^GDAXI", "Germany · DAX")],
+    "Asia-Pacific": [("EWJ", "^N225", "Japan · Nikkei 225"), ("EWH", "^HSI", "Hong Kong · Hang Seng"),
+                     ("INDA", "^NSEI", "India · Nifty 50"), ("EWS", "^STI", "Singapore · STI")],
+    "Commodities": [("GLD", "GLD", "Gold"), ("SLV", "SLV", "Silver"), ("USO", "USO", "Oil")],
+    "Crypto": [("BTC", "BTC", "Bitcoin"), ("ETH", "ETH", "Ethereum")],
 }
 
 
+def _global_symbol(proxy: str, index: str) -> str:
+    """Real index symbol on index-capable providers, else the ETF proxy."""
+    return index if getattr(get_provider(), "supports_indices", False) else proxy
+
+
 def global_market_symbols() -> list[str]:
-    return [sym for items in _GLOBAL_MARKETS.values() for sym, _ in items]
+    return [_global_symbol(proxy, idx) for items in _GLOBAL_MARKETS.values() for proxy, idx, _ in items]
 
 
 @router.get("/markets/global")
 async def markets_global(session: AsyncSession = Depends(get_db)) -> dict:
+    indices = getattr(get_provider(), "supports_indices", False)
     groups = []
     for region, items_def in _GLOBAL_MARKETS.items():
         items = []
-        for sym, label in items_def:
+        for proxy, idx, label in items_def:
+            sym = _global_symbol(proxy, idx)
             q = await display_quote(session, sym)
             items.append({"symbol": sym, "label": label, "quote": q.model_dump(mode="json")})
         groups.append({"region": region, "items": items})
     status = await get_provider().get_market_status("US")
-    return {"groups": groups, "market_status": status.model_dump(mode="json"), "demo_mode": get_settings().is_demo}
+    return {
+        "groups": groups, "market_status": status.model_dump(mode="json"),
+        "demo_mode": get_settings().is_demo, "real_indices": indices,
+    }
 
 
 @router.get("/markets/search")

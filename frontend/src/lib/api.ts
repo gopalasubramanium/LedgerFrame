@@ -70,7 +70,7 @@ export const api = {
   search: (q: string) =>
     req<{ results: { symbol: string; name: string; asset_class: string; currency: string }[] }>(`/api/v1/markets/search?q=${encodeURIComponent(q)}`),
   marketsGlobal: () =>
-    req<{ groups: { region: string; items: { symbol: string; label: string; quote: Quote }[] }[]; market_status: { state: string }; demo_mode: boolean }>("/api/v1/markets/global"),
+    req<{ groups: { region: string; items: { symbol: string; label: string; quote: Quote }[] }[]; market_status: { state: string }; demo_mode: boolean; real_indices?: boolean }>("/api/v1/markets/global"),
   news: () =>
     req<{ items: { headline: string; summary?: string | null; url?: string | null; source: string; published_at: string; symbols: string[] }[]; rss_count: number }>("/api/v1/news"),
   briefing: () => req<{ text: string; generated_at: string | null }>("/api/v1/briefing"),

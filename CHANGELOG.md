@@ -2,6 +2,21 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.2.0 — 2026-06-28
+
+- **New free data provider: Yahoo Finance (no API key).** Select `yahoo` in
+  Settings → Data source for live **real index levels** (S&P 500, Nasdaq, FTSE,
+  Nikkei, Hang Seng, Nifty, STI, DAX, Euro Stoxx…), global equities
+  (`RELIANCE.NSE`, `VOD.L`, `7203.T`), FX and crypto — each in its own currency,
+  converted to your base via FX. No key, no signup.
+- **Global page shows real indices** on index-capable providers (Yahoo) in each
+  market's local currency, instead of ETF proxies. Alpha Vantage/mock keep the ETF
+  proxies (AV has no usable raw-index endpoint — validated against their docs/API).
+- Yahoo's public endpoint rate-limits bursts, so the provider **paces** requests
+  (serialized, ~1.5s apart, with 429 backoff) and serves the cache on page load
+  while the worker refreshes gradually; throttled symbols show "—" (never fake),
+  and FX/search fall back to the demo provider so valuation never breaks.
+
 ## v1.1.1 — 2026-06-28
 
 - **Ask now shows live progress.** Instead of a blank pause, the Ask panel

@@ -156,11 +156,14 @@ export default function Settings() {
         <select className="lf-input mb-3" value={provider} onChange={(e) => setProvider(e.target.value)}>
           {(ds.data?.providers ?? ["mock"]).map((p) => (
             <option key={p} value={p}>
-              {p === "mock" ? "mock — demo / synthetic (no key)" : p === "csv" ? "csv — local files" : `${p} — live (needs API key)`}
+              {p === "mock" ? "mock — demo / synthetic (no key)"
+                : p === "csv" ? "csv — local files (no key)"
+                : p === "yahoo" ? "yahoo — live, free (no key): indices, global stocks, FX, crypto"
+                : `${p} — live (needs API key)`}
             </option>
           ))}
         </select>
-        {provider !== "mock" && provider !== "csv" && (
+        {provider !== "mock" && provider !== "csv" && provider !== "yahoo" && (
           <>
             <label className="block text-sm text-muted mb-1">API key {ds.data?.has_api_key && <span className="text-up">(saved)</span>}</label>
             <input className="lf-input mb-3" type="password" placeholder={ds.data?.has_api_key ? "•••••• (leave blank to keep)" : "paste key"} value={apiKey} onChange={(e) => setApiKey(e.target.value)} />

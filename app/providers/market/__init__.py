@@ -25,6 +25,14 @@ def get_provider() -> MarketDataProvider:
         _PROVIDER = CSVMarketDataProvider(settings.imports_dir)
     elif name in ("mock", "demo", ""):
         _PROVIDER = MockMarketDataProvider()
+    elif name == "yahoo":
+        # Free, no API key. Import lazily so it never breaks demo mode.
+        try:
+            from app.providers.market.yahoo import YahooMarketDataProvider
+
+            _PROVIDER = YahooMarketDataProvider()
+        except Exception:  # noqa: BLE001
+            _PROVIDER = MockMarketDataProvider()
     else:
         # External adapter, opt-in. Import lazily so a missing dependency or key
         # never breaks demo mode.

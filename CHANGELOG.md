@@ -2,6 +2,16 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.2.1 — 2026-06-28
+
+- **Alpha Vantage premium indices.** With a premium AV key, the **Global** page now
+  shows real US index levels via AV's **Index Data API** (`INDEX_DATA` → `SPX`,
+  `NDX`, `DJI`, mapped from `^GSPC`/`^NDX`/`^DJI`); index history feeds the chart
+  too. The response is parsed defensively and LedgerFrame **checks it's valid** —
+  if the endpoint isn't available (e.g. a free key) it **falls back per-entry to the
+  ETF proxy** automatically, with no error and no fabricated value. (Corrects the
+  earlier note that AV had no index endpoint — it does, on premium plans.)
+
 ## v1.2.0 — 2026-06-28
 
 - **New free data provider: Yahoo Finance (no API key).** Select `yahoo` in

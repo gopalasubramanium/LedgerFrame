@@ -60,9 +60,12 @@ without a CSV fall back to `mock` so the dashboard stays populated. 10 MB/file c
   - ✅ **US equities & ETFs** via `GLOBAL_QUOTE` / `TIME_SERIES_DAILY`.
   - ✅ **Crypto** (BTC, ETH, …) — handled via AV's currency endpoint.
   - ✅ **FX** via `CURRENCY_EXCHANGE_RATE`.
-  - ❌ **Raw indices** (`^GSPC`, `^STI`, …) — not provided. Use an **ETF proxy**
-    (e.g. `SPY` for the S&P 500, `QQQ` Nasdaq, `EWS` Singapore). The **Global** page
-    already uses these proxies so it shows real values on a live provider.
+  - ✅ **Indices — premium only** via the **Index Data API** (`function=INDEX_DATA`).
+    With a premium key the **Global** page shows real US index levels (`SPX`, `NDX`,
+    `DJI`, mapped from `^GSPC`/`^NDX`/`^DJI`). The response is parsed defensively and,
+    if the endpoint isn't available (free key / unsupported symbol), the page **falls
+    back per-entry to the ETF proxy** (`SPY`, `QQQ`, …) — no error, no fabricated
+    value. Non-US indices use proxies on AV (Yahoo serves all ^ indices).
   - ❌ **Most non-US tickers** unless using AV's region suffix (e.g. `TSCO.LON`).
     For unsupported holdings, add them as **manual-priced** holdings instead.
 - Quotes are labelled `delayed`; we make no real-time claim. Free tier ≈ 25

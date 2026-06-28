@@ -157,9 +157,12 @@ unavailable symbols show "—", and **Refresh live prices** lists what updated/f
   Best for a modest symbol set; for heavy always-on use a keyed provider is steadier.
 
 **Alpha Vantage specifics:**
-- ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX. ❌ Raw indices — the **Global**
-  page falls back to ETF proxies (SPY, QQQ, EWJ, …) on this provider. (Use Yahoo for
-  real indices.)
+- ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX.
+- ✅ **Indices on premium plans** — with a premium key the **Index Data API**
+  unlocks real US index levels (S&P 500, Nasdaq, Dow), shown on the **Global** page.
+  LedgerFrame checks the response and, if the endpoint isn't available (e.g. a free
+  key), **falls back per-entry to the ETF proxy** automatically. Non-US indices use
+  proxies on AV (use Yahoo for real FTSE/Nikkei/Nifty/etc.).
 - Non-US tickers vary in coverage; whatever the provider serves, **foreign holdings
   are valued in their native trading currency** (`HDFC.BSE`→₹, `VOD.L`→£, `7203.T`→¥)
   and converted to your base currency via FX.

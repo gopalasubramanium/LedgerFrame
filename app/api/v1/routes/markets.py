@@ -101,30 +101,59 @@ _GLOBAL_MARKETS: dict[str, list[tuple[str, str, str]]] = {
 }
 
 
+# Canonical (Yahoo ^) index symbol → Alpha Vantage Index Data symbol. Only US
+# indices are mapped; for the rest, AV uses the ETF proxy (Yahoo serves all ^).
+_AV_INDEX = {"^GSPC": "SPX", "^IXIC": "COMP", "^NDX": "NDX", "^DJI": "DJI"}
+
+
 def _global_symbol(proxy: str, index: str) -> str:
-    """Real index symbol on index-capable providers, else the ETF proxy."""
-    return index if getattr(get_provider(), "supports_indices", False) else proxy
+    """The symbol to query for a global-market entry on the current provider:
+    a real index symbol where the provider supports it, else the ETF proxy."""
+    provider = get_provider()
+    if not getattr(provider, "supports_indices", False) or index == proxy:
+        return proxy
+    if getattr(provider, "name", "") == "yahoo":
+        return index  # Yahoo serves all ^ indices
+    return _AV_INDEX.get(index, proxy)  # AV: US indices only, else proxy
 
 
 def global_market_symbols() -> list[str]:
-    return [_global_symbol(proxy, idx) for items in _GLOBAL_MARKETS.values() for proxy, idx, _ in items]
+    """Symbols the worker should keep fresh for the Global page. Includes the ETF
+    proxy alongside the index on providers that may fall back (AV non-premium), so
+    the fallback always has cached data. Yahoo serves all indices, so no proxies."""
+    is_yahoo = getattr(get_provider(), "name", "") == "yahoo"
+    out: list[str] = []
+    for items in _GLOBAL_MARKETS.values():
+        for proxy, idx, _ in items:
+            sym = _global_symbol(proxy, idx)
+            out.append(sym)
+            if sym != proxy and not is_yahoo:
+                out.append(proxy)  # keep the proxy cached for the AV fallback
+    return list(dict.fromkeys(out))
 
 
 @router.get("/markets/global")
 async def markets_global(session: AsyncSession = Depends(get_db)) -> dict:
     indices = getattr(get_provider(), "supports_indices", False)
     groups = []
+    shown_real = False
     for region, items_def in _GLOBAL_MARKETS.items():
         items = []
         for proxy, idx, label in items_def:
             sym = _global_symbol(proxy, idx)
             q = await display_quote(session, sym)
+            # "Check the response and update accordingly": if a real-index quote is
+            # unavailable (e.g. key isn't premium), fall back to the ETF proxy.
+            if sym != proxy and q.price is None:
+                sym, q = proxy, await display_quote(session, proxy)
+            elif sym != proxy and q.price is not None:
+                shown_real = True
             items.append({"symbol": sym, "label": label, "quote": q.model_dump(mode="json")})
         groups.append({"region": region, "items": items})
     status = await get_provider().get_market_status("US")
     return {
         "groups": groups, "market_status": status.model_dump(mode="json"),
-        "demo_mode": get_settings().is_demo, "real_indices": indices,
+        "demo_mode": get_settings().is_demo, "real_indices": indices and shown_real,
     }
 
 

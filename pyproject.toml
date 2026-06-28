@@ -1,6 +1,6 @@
 [project]
 name = "ledgerframe"
-version = "1.0.13"
+version = "1.0.14"
 description = "Local-first personal financial intelligence display for Raspberry Pi 5 + Hailo AI HAT+ 2"
 readme = "README.md"
 requires-python = ">=3.12"

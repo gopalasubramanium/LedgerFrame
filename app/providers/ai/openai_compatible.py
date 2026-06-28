@@ -42,7 +42,22 @@ def _connect_detail(base_url: str, exc: Exception) -> str:
         seen += 1
     where = f"reach {base_url} from the device running LedgerFrame"
 
+    # Very common cause: the URL has no port, so it falls back to the default web
+    # port (80/443) and gets refused. Ollama listens on 11434.
+    from urllib.parse import urlsplit
+
+    try:
+        parsed = urlsplit(base_url)
+        no_port = parsed.port is None
+        host = parsed.hostname or "host"
+    except ValueError:
+        no_port, host = False, "host"
+
     if "ConnectionRefusedError" in types or 111 in errnos or "refused" in text:
+        if no_port:
+            return (f"connection refused — the URL has no port, so it tried the default "
+                    f"web port. Ollama listens on 11434 — use http://{host}:11434/v1 "
+                    "(include the port), then Save & test again.")
         return (f"connection refused — nothing is listening at {base_url}. If it's "
                 "Ollama, restart it with OLLAMA_HOST=0.0.0.0 so it accepts LAN "
                 "connections (then re-test), and confirm the host and port.")

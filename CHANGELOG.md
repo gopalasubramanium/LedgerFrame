@@ -2,6 +2,16 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.14 — 2026-06-28
+
+- **Catches the missing-port mistake in AI base URLs.** A base URL without a port
+  (e.g. `http://192.168.0.12/v1`) silently tries the default web port and gets
+  refused. The connection test now detects this and says exactly what to do:
+  "the URL has no port — Ollama listens on 11434, use `http://<host>:11434/v1`".
+  The Settings field label/placeholder now show the port explicitly. (The app
+  stores/round-trips the URL verbatim — verified — so once the port is included it
+  works.)
+
 ## v1.0.13 — 2026-06-28
 
 - **Actionable AI connection errors.** "Saved, but not reachable: …ConnectError:

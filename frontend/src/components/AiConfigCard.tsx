@@ -79,8 +79,9 @@ export function AiConfigCard({ className = "", onSaved }: { className?: string; 
                 onClick={() => { setOpenaiUrl(p.url); setModel(p.model); }}>{p.label}</button>
             ))}
           </div>
-          <label className="block text-sm text-muted mb-1">Base URL (must end in /v1)</label>
-          <input className="lf-input mb-3" value={openaiUrl} onChange={(e) => setOpenaiUrl(e.target.value)} placeholder="https://api.openai.com/v1" />
+          <label className="block text-sm text-muted mb-1">Base URL — include the port, must end in /v1</label>
+          <input className="lf-input mb-1" value={openaiUrl} onChange={(e) => setOpenaiUrl(e.target.value)} placeholder="http://192.168.0.12:11434/v1" />
+          <p className="text-xs text-faint mb-3">Remote Ollama uses port <b>11434</b>, e.g. <code>http://192.168.0.12:11434/v1</code>.</p>
           <label className="block text-sm text-muted mb-1">Model</label>
           <input className="lf-input mb-3" value={model} onChange={(e) => setModel(e.target.value)} placeholder="gpt-4o-mini" />
           <label className="block text-sm text-muted mb-1">API key {cfg.data?.has_openai_key && <span className="text-up">(saved)</span>}</label>

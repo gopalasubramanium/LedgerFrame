@@ -2,6 +2,20 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.1.1 — 2026-06-28
+
+- **Ask now shows live progress.** Instead of a blank pause, the Ask panel
+  immediately shows an animated "thinking" indicator with a staged message
+  ("Gathering your portfolio data" → "Analyzing with the AI model"), an elapsed
+  timer, and a "local/reasoning models can take longer" hint — plus a **Stop**
+  button and a blinking caret while the answer streams. The input auto-focuses.
+- **PIN screen accepts the keyboard** (digits, Backspace, Enter) as well as the
+  on-screen keypad.
+- **Fixed a concurrency crash** ("UNIQUE constraint failed: quotes.instrument_id"):
+  concurrent dashboard requests that refreshed the same symbol could collide and
+  500 ("Unable to load dashboard"). Quote writes are now an atomic upsert and
+  instrument creation is race-safe.
+
 ## v1.1.0 — 2026-06-28
 
 - **Smarter AI assistant — it now uses the right data and reasons over it.**

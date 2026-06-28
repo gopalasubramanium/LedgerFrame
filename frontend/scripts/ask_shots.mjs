@@ -1,0 +1,22 @@
+import { chromium } from "@playwright/test";
+const BASE = process.env.LF_BASE_URL || "http://127.0.0.1:8328";
+const OUT = new URL("../../docs/screenshots/", import.meta.url).pathname;
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
+const p = await ctx.newPage();
+await p.goto(BASE + "/", { waitUntil: "networkidle" });
+// Wait for the dashboard to actually render so the background isn't an error.
+await p.getByText(/Total value/i).first().waitFor({ timeout: 20000 }).catch(() => {});
+await p.waitForTimeout(600);
+await p.getByRole("button", { name: "Ask" }).click();
+await p.waitForTimeout(400);
+await p.getByPlaceholder(/Ask about your portfolio/).fill("How did the markets do today?");
+await p.keyboard.press("Enter");
+await p.waitForTimeout(2500);
+await p.screenshot({ path: OUT + "ask-thinking.png" });
+console.log("saved ask-thinking.png");
+await p.waitForFunction(() => /Answered by|data only/.test(document.body.innerText), { timeout: 180000 }).catch(() => {});
+await p.waitForTimeout(600);
+await p.screenshot({ path: OUT + "ask.png" });
+console.log("saved ask.png");
+await b.close();

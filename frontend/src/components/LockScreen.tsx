@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useApp } from "../store/app";
 
@@ -35,6 +35,19 @@ export function LockScreen({ mode }: { mode: "unlock" | "setup" }) {
     else setter((p) => (p.length < 12 ? p + k : p));
   }
 
+  // Allow a physical keyboard too (digits / Backspace / Enter), not just the keypad.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); key(e.key); }
+      else if (e.key === "Backspace") { e.preventDefault(); key("⌫"); }
+      else if (e.key === "Enter") { e.preventDefault(); key("↵"); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // Rebind on state change so Enter submits with the latest pin/confirm.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, confirm, onConfirmStep]);
+
   const heading =
     mode === "setup"
       ? onConfirmStep ? "Re-enter your PIN to confirm" : "Create a PIN to secure this device"
@@ -54,6 +67,7 @@ export function LockScreen({ mode }: { mode: "unlock" | "setup" }) {
           <button key={k} className="lf-btn h-16 text-xl" onClick={() => key(k)}>{k}</button>
         ))}
       </div>
+      <p className="text-xs text-faint mt-4">Type on your keyboard or tap — Enter to submit, Backspace to delete.</p>
     </div>
   );
 }

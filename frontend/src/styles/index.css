@@ -68,6 +68,39 @@ body {
   min-width: 44px;
 }
 
+/* "Ask" thinking indicator — three pulsing dots while the model works. */
+.lf-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.lf-typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: rgb(var(--c-accent));
+  animation: lf-bounce 1.2s ease-in-out infinite;
+}
+.lf-typing i:nth-child(2) { animation-delay: 0.15s; }
+.lf-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes lf-bounce {
+  0%, 80%, 100% { transform: scale(0.5); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Blinking caret shown at the end of a streaming answer. */
+.lf-caret {
+  display: inline-block;
+  margin-left: 1px;
+  color: rgb(var(--c-accent));
+  animation: lf-blink 1s steps(2, start) infinite;
+}
+@keyframes lf-blink { to { visibility: hidden; } }
+
+/* Respect reduced-motion preference. */
+.reduce-motion .lf-typing i,
+.reduce-motion .lf-caret { animation: none; }
+
 @layer components {
   .lf-card {
     @apply bg-surface border border-line rounded-card shadow-card p-4;

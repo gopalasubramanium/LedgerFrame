@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { streamChat } from "../lib/api";
 import type { GroundingFact } from "../lib/types";
 import { timeAgo } from "../lib/format";
@@ -15,21 +15,38 @@ function stripThinking(t: string): string {
 
 const SUGGESTIONS = [
   "What moved in my portfolio today?",
-  "Show my allocation by currency",
-  "How did markets do?",
-  "What is my total return?",
+  "How did the markets do?",
+  "How concentrated is my portfolio?",
+  "How am I doing vs the benchmark?",
 ];
 
 // Touch-first "Ask" panel. Streams a grounded answer and shows the source facts
 // (with timestamps + stale flags) the answer is built from. Works even when the
-// NPU is offline (backend falls back to a deterministic, fact-only answer).
+// model is offline (backend falls back to a deterministic, fact-only answer).
 export function AskPanel({ onClose }: { onClose: () => void }) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [facts, setFacts] = useState<GroundingFact[]>([]);
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState("");
+  const [elapsed, setElapsed] = useState(0);
   const [provider, setProvider] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  // Tick an elapsed-seconds counter while waiting (so slow local models feel alive).
+  useEffect(() => {
+    if (!busy) return;
+    const start = Date.now();
+    setElapsed(0);
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [busy]);
+
+  const visibleAnswer = stripThinking(answer);
+  const thinking = busy && !visibleAnswer; // waiting for the first real token
 
   async function ask(q: string) {
     if (!q.trim() || busy) return;
@@ -37,13 +54,14 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
     setAnswer("");
     setFacts([]);
     setProvider(null);
+    setStage("Gathering your portfolio data");
     abortRef.current = new AbortController();
     try {
       await streamChat(
         q,
         {
-          onFacts: setFacts,
-          onDelta: (d) => setAnswer((a) => a + d),
+          onFacts: (f) => { setFacts(f); setStage("Analyzing with the AI model"); },
+          onDelta: (d) => { setStage(""); setAnswer((a) => a + d); },
           onDone: (m) => setProvider(String(m.provider ?? "")),
         },
         abortRef.current.signal,
@@ -53,6 +71,11 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function stop() {
+    abortRef.current?.abort();
+    setBusy(false);
   }
 
   return (
@@ -70,29 +93,52 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
 
         <div className="flex gap-2 mb-3">
           <input
+            ref={inputRef}
             className="flex-1 touch rounded-card bg-base border border-line px-4 text-ink focus:ring-2 focus:ring-accent outline-none"
             placeholder="Ask about your portfolio or the markets…"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ask(question)}
           />
-          <button className="lf-btn-accent" disabled={busy} onClick={() => ask(question)}>
-            {busy ? "…" : "Ask"}
-          </button>
+          {busy ? (
+            <button className="lf-btn" onClick={stop} title="Stop">■ Stop</button>
+          ) : (
+            <button className="lf-btn-accent" onClick={() => ask(question)}>Ask</button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
           {SUGGESTIONS.map((s) => (
-            <button key={s} className="lf-chip bg-elevated text-muted hover:text-ink" onClick={() => { setQuestion(s); ask(s); }}>
+            <button key={s} disabled={busy} className="lf-chip bg-elevated text-muted hover:text-ink disabled:opacity-40"
+              onClick={() => { setQuestion(s); ask(s); }}>
               {s}
             </button>
           ))}
         </div>
 
         <div className="flex-1 overflow-auto">
-          {stripThinking(answer) && (
-            <div className="bg-base rounded-card p-4 mb-4 whitespace-pre-wrap text-ink leading-relaxed">{stripThinking(answer)}</div>
+          {/* Thinking indicator — shows immediately so the user knows it's working. */}
+          {thinking && (
+            <div className="bg-base rounded-card p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <span className="lf-typing" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span className="text-muted text-sm">
+                  {stage || "Querying AI"}{elapsed >= 1 ? ` · ${elapsed}s` : ""}
+                </span>
+              </div>
+              {elapsed >= 6 && (
+                <p className="text-xs text-faint mt-2">Local/reasoning models can take a little longer — hang tight.</p>
+              )}
+            </div>
           )}
+
+          {visibleAnswer && (
+            <div className="bg-base rounded-card p-4 mb-4 whitespace-pre-wrap text-ink leading-relaxed">
+              {visibleAnswer}
+              {busy && <span className="lf-caret">▋</span>}
+            </div>
+          )}
+
           {facts.length > 0 && (
             <div>
               <div className="text-xs uppercase tracking-wide text-faint mb-2">Based on these facts</div>
@@ -113,7 +159,8 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
               </ul>
             </div>
           )}
-          {provider && (
+
+          {provider && !busy && (
             <p className="text-xs text-faint mt-3">
               {provider === "fallback" ? "Local model unavailable — showing data only." : `Answered by: ${provider}.`}{" "}
               Information only, not financial advice.

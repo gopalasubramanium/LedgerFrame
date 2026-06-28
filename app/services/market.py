@@ -41,17 +41,28 @@ async def refresh_quote(session: AsyncSession, symbol: str, exchange: str | None
             # price (the column is NOT NULL, and a null would poison the session).
             # Return the last cached quote, or an explicit "unavailable".
             return await get_cached_quote(session, symbol, exchange)
-        row = await session.get(QuoteRow, instrument.id)
-        if row is None:
-            row = QuoteRow(instrument_id=instrument.id)
-            session.add(row)
-        row.price = q.price
-        row.previous_close = q.previous_close
-        row.currency = q.currency
-        row.source = q.source
-        row.entitlement = q.entitlement.value
-        row.market_time = q.market_time
-        row.received_at = datetime.now(UTC)
+        # Race-safe upsert: concurrent dashboard requests often refresh the same
+        # symbol at once (SPY appears on Home, Markets and Global). A check-then-
+        # insert would hit "UNIQUE constraint failed: quotes.instrument_id"; an
+        # atomic ON CONFLICT DO UPDATE can't.
+        from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+        values = {
+            "instrument_id": instrument.id,
+            "price": q.price,
+            "previous_close": q.previous_close,
+            "currency": q.currency,
+            "source": q.source,
+            "entitlement": q.entitlement.value,
+            "market_time": q.market_time,
+            "received_at": datetime.now(UTC),
+        }
+        stmt = sqlite_insert(QuoteRow).values(**values)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[QuoteRow.instrument_id],
+            set_={k: v for k, v in values.items() if k != "instrument_id"},
+        )
+        await session.execute(stmt)
         await session.flush()
         q.is_stale = False
         return q
@@ -232,6 +243,8 @@ async def _get_or_create_instrument(
         stmt = stmt.where(Instrument.exchange == exchange)
     instrument = (await session.execute(stmt)).scalars().first()
     if instrument is None:
+        from sqlalchemy.exc import IntegrityError
+
         from app.core.symbols import currency_for_symbol
 
         instrument = Instrument(
@@ -239,5 +252,11 @@ async def _get_or_create_instrument(
             currency=currency_for_symbol(symbol, exchange) or "USD",
         )
         session.add(instrument)
-        await session.flush()
+        try:
+            # Savepoint so a concurrent create (UNIQUE on symbol+exchange) can be
+            # recovered without poisoning the outer transaction.
+            async with session.begin_nested():
+                await session.flush()
+        except IntegrityError:
+            instrument = (await session.execute(stmt)).scalars().first()
     return instrument

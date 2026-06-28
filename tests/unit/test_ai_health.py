@@ -12,9 +12,12 @@ async def test_health_no_base_url():
     assert "no base URL" in h.detail
 
 
-async def test_health_unreachable_reports_failure():
-    # Nothing listening here → must report NOT available (not a false "Connected").
-    p = OpenAICompatibleProvider(base_url="http://127.0.0.1:9/v1", api_key="", model="llama3.2")
+async def test_health_unreachable_reports_actionable_reason():
+    # Nothing listening here → must report NOT available with a clear, specific
+    # reason (not a false "Connected", and not an opaque "All connection attempts
+    # failed"). Port 1 refuses instantly.
+    p = OpenAICompatibleProvider(base_url="http://127.0.0.1:1/v1", api_key="", model="llama3.2", timeout=5)
     h = await p.health()
     assert h.available is False
-    assert "unreachable" in h.detail.lower()
+    assert "refused" in h.detail.lower() or "cannot connect" in h.detail.lower()
+    assert "All connection attempts failed" not in h.detail  # opaque message replaced

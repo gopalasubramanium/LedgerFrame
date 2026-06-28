@@ -18,6 +18,46 @@ from app.schemas.ai import AIChunk, AIRequest, HealthStatus, ModelInfo
 log = logging.getLogger(__name__)
 
 
+def _connect_detail(base_url: str, exc: Exception) -> str:
+    """Turn an opaque httpx connect failure into an actionable message.
+
+    httpx surfaces "ConnectError: All connection attempts failed" regardless of
+    cause, so we walk the exception chain for the real OS reason and give a hint
+    the user can act on (the connection is attempted from the device running
+    LedgerFrame — typically the Pi — not from your laptop)."""
+    # Walk the exception chain collecting types, errnos and text (httpx hides the
+    # real OSError several levels down and its message says "Connect call failed",
+    # not "refused" — so match on type/errno, not just text).
+    types: set[str] = set()
+    errnos: set[int] = set()
+    text = ""
+    cur: BaseException | None = exc
+    seen = 0
+    while cur is not None and seen < 8:
+        types.add(type(cur).__name__)
+        if isinstance(cur, OSError) and cur.errno:
+            errnos.add(cur.errno)
+        text += f" {cur}".lower()
+        cur = cur.__cause__ or cur.__context__
+        seen += 1
+    where = f"reach {base_url} from the device running LedgerFrame"
+
+    if "ConnectionRefusedError" in types or 111 in errnos or "refused" in text:
+        return (f"connection refused — nothing is listening at {base_url}. If it's "
+                "Ollama, restart it with OLLAMA_HOST=0.0.0.0 so it accepts LAN "
+                "connections (then re-test), and confirm the host and port.")
+    if {"ConnectTimeout", "TimeoutException", "TimeoutError"} & types or 110 in errnos or "timed out" in text:
+        return (f"timed out — could not {where}. The host may be off, on another "
+                "subnet, or blocked by a firewall.")
+    if errnos & {113, 101} or "no route" in text or "unreachable" in text:
+        return (f"no route to host — could not {where}. It may be on a different "
+                "subnet/VLAN or blocked by a firewall.")
+    if "gaierror" in types or "getaddrinfo" in text or "name or service" in text:
+        return f"cannot resolve the host in {base_url} — check the address."
+    return (f"cannot connect to {base_url} — verify it's reachable from the device "
+            f"running LedgerFrame (try: curl {base_url.rstrip('/')}/models).")
+
+
 class OpenAICompatibleProvider:
     name = "openai_compatible"
 
@@ -70,7 +110,7 @@ class OpenAICompatibleProvider:
                                     detail=f"endpoint returned {probe.status_code}: {probe.text[:160]}")
         except Exception as exc:  # noqa: BLE001
             return HealthStatus(available=False, provider=self.name,
-                                detail=f"unreachable: {type(exc).__name__}: {exc}")
+                                detail=_connect_detail(self.base_url, exc))
 
     async def list_models(self) -> list[ModelInfo]:
         return [ModelInfo(name=self.model, family="openai_compatible")]

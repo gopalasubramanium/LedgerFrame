@@ -2,6 +2,17 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.0.13 — 2026-06-28
+
+- **Actionable AI connection errors.** "Saved, but not reachable: …ConnectError:
+  All connection attempts failed" was opaque. The connection test now names the
+  real cause — *connection refused* (with the `OLLAMA_HOST=0.0.0.0` hint),
+  *timed out / no route* (subnet/firewall), or *can't resolve the host* — and
+  reminds you the connection is made from the **device running LedgerFrame** (the
+  Pi), not your laptop. README gains an AI troubleshooting note.
+  (The app's probe is verified working; an unreachable endpoint is a network issue
+  between that device and the model server.)
+
 ## v1.0.12 — 2026-06-28
 
 - **Much better AI answers + reasoning models (e.g. Ollama qwen3) now work.**

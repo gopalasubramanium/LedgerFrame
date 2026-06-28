@@ -176,6 +176,12 @@ pulled (`ollama list`), e.g. `llama3.2` or a reasoning model like `qwen3`.
 final answer is shown. If a model can't return an answer, "Ask" shows the reason
 plus your data, so it never goes blank. Without any model it still answers from your data.
 
+> **"Saved, but not reachable"?** The connection is made from the **device running
+> LedgerFrame** (e.g. your Pi), not from your laptop. The error now names the cause
+> — *connection refused* (start Ollama with `OLLAMA_HOST=0.0.0.0` and open the
+> port), *timed out / no route* (different subnet or a firewall), or *can't
+> resolve*. Verify from that device: `curl http://<host>:11434/v1/models`.
+
 ## Usage (typical flow)
 
 1. **Settings → Data source** → pick a provider (+ key) → **Clear demo / all data**.

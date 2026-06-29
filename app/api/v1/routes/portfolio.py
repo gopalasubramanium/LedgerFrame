@@ -42,6 +42,7 @@ def _hv(h) -> dict:
         "cost_basis": to_display(h.cost_basis_base),
         "unrealised_pl": to_display(h.unrealised_pl_base),
         "day_change": to_display(h.day_change_base),
+        "day_change_pct": to_display(h.day_change_pct),
         "is_stale": h.is_stale, "is_priced": h.is_priced,
     }
 

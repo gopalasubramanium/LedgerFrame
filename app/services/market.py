@@ -196,12 +196,17 @@ async def get_history_cached(
             instrument_id=instrument.id, interval=interval, ts=c.ts,
             open=c.open, high=c.high, low=c.low, close=c.close, volume=c.volume,
         ))
-    if marker:
-        marker.value = datetime.now(UTC).isoformat()
-    else:
-        session.add(Setting(key=marker_key, value=datetime.now(UTC).isoformat()))
+    # Only mark "freshly fetched" when we actually got data. An empty result
+    # (provider error, rate limit, throttle) must NOT lock in an empty series for
+    # max_age_hours — otherwise Performance/Net-worth charts stay blank until the
+    # marker expires. Leaving it unset means we retry on the next view.
+    if candles:
+        if marker:
+            marker.value = datetime.now(UTC).isoformat()
+        else:
+            session.add(Setting(key=marker_key, value=datetime.now(UTC).isoformat()))
     await session.flush()
-    return candles
+    return candles if candles else await _from_db()
 
 
 def _has_real_name(instr: Instrument) -> bool:

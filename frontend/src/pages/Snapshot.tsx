@@ -36,7 +36,11 @@ export default function Snapshot() {
         {history.length > 1 ? (
           <LineSeries x={history.map((p) => new Date(p.ts).toLocaleDateString())} y={history.map((p) => p.value)} />
         ) : (
-          <p className="text-muted">{nw.loading ? "Loading…" : "Add holdings to see your net-worth trend."}</p>
+          <p className="text-muted">
+            {nw.loading ? "Loading…"
+              : h.length > 0 ? "Building price history — check back in a moment (or run Settings → Fetch & cache history)."
+                : "Add holdings to see your net-worth trend."}
+          </p>
         )}
       </Card>
 

@@ -63,6 +63,7 @@ export interface HoldingRow {
   cost_basis: number;
   unrealised_pl: number;
   day_change: number;
+  day_change_pct?: number | null;
   is_stale: boolean;
   is_priced: boolean;
 }

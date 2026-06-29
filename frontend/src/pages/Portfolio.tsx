@@ -5,6 +5,7 @@ import { Card } from "../components/ui";
 import { Donut } from "../components/Chart";
 import { PerformancePanel } from "../components/PerformancePanel";
 import { KeyStatsPanel } from "../components/KeyStatsPanel";
+import { MoverList } from "../components/MoverList";
 import { money, pct, signedMoney, toneClass } from "../lib/format";
 import type { HoldingRow } from "../lib/types";
 
@@ -44,6 +45,7 @@ export default function Portfolio() {
             <MoverList title="Bottom" rows={s?.top_losers ?? []} ccy={ccy} />
           </div>
         </Card>
+        {/* (local MoverList removed — shared component used) */}
 
         <Card title="Allocation by class" className="col-span-12 md:col-span-6 lg:col-span-4">
           {allocClass.length ? <Donut data={allocClass} /> : <p className="text-muted">No holdings.</p>}
@@ -82,27 +84,6 @@ function Legend({ items, ccy }: { items: { name: string; value: number }[]; ccy:
         </li>
       ))}
     </ul>
-  );
-}
-
-function MoverList({ title, rows, ccy }: { title: string; rows: HoldingRow[]; ccy: string }) {
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wide text-faint mb-2">{title}</div>
-      {rows.length === 0 && <div className="text-muted text-sm">—</div>}
-      <ul className="space-y-1">
-        {rows.slice(0, 5).map((h) => (
-          <li key={h.id} className="flex justify-between text-sm">
-            {h.symbol ? (
-              <Link to={`/instrument/${h.symbol}`} className="truncate mr-2 hover:text-accent">{h.label}</Link>
-            ) : (
-              <span className="truncate mr-2">{h.label}</span>
-            )}
-            <span className={`tnum ${toneClass(h.day_change)}`}>{signedMoney(h.day_change, ccy)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

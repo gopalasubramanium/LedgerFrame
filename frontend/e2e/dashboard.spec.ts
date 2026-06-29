@@ -48,9 +48,11 @@ test("5 & 6 & 7. AI answer shows grounding facts with timestamps and no fabricat
 test("9 & 10. app works without Hailo and without external provider", async ({ page }) => {
   // Demo mode (no external provider) + AI disabled (no Hailo) is the test config.
   await page.goto("/markets");
-  await expect(page.getByRole("heading", { name: "Markets" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Markets", exact: true })).toBeVisible();
+  // Global was merged into Markets: /global redirects and the world-markets
+  // section is shown on the Markets page.
   await page.goto("/global");
-  await expect(page.getByRole("heading", { name: /Global markets/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /World markets/i })).toBeVisible();
 });
 
 // NOTE: this test mutates persistent state (sets a PIN), so it runs LAST.

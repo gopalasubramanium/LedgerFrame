@@ -20,8 +20,15 @@ export function PerformancePanel({ height = 300, className = "" }: { height?: nu
   const [benchmark, setBenchmark] = useState("SPY");
   const benches = useApi(api.benchmarks, 0);
   const perf = useApi(() => api.performance(PERIODS[p].days, benchmark), 0, [p, benchmark]);
+  const holdings = useApi(api.holdings, 0);
   const d = perf.data;
   const stats = d?.stats;
+  const hasInvested = (holdings.data?.holdings ?? []).some((h) => h.symbol && h.is_priced);
+  const emptyMsg = perf.loading
+    ? "Loading…"
+    : hasInvested
+      ? "Building price history for this view — check back in a moment (or run Settings → Fetch & cache history)."
+      : "Add priced holdings to see performance.";
 
   return (
     <Card
@@ -62,7 +69,7 @@ export function PerformancePanel({ height = 300, className = "" }: { height?: nu
           height={height}
         />
       ) : (
-        <p className="text-muted">{perf.loading ? "Loading…" : "Add invested holdings to see performance."}</p>
+        <p className="text-muted">{emptyMsg}</p>
       )}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">

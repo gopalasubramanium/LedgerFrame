@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AskPanel } from "./components/AskPanel";
 import { LockScreen } from "./components/LockScreen";
 import { DemoBadge } from "./components/ui";
@@ -13,7 +13,6 @@ import Markets from "./pages/Markets";
 import HeatmapPage from "./pages/Heatmap";
 import News from "./pages/News";
 import Snapshot from "./pages/Snapshot";
-import GlobalAssets from "./pages/GlobalAssets";
 import InstrumentDetail from "./pages/InstrumentDetail";
 import Settings from "./pages/Settings";
 import Legal from "./pages/Legal";
@@ -26,7 +25,6 @@ const NAV = [
   { path: "/portfolio", label: "Portfolio" },
   { path: "/holdings", label: "Holdings" },
   { path: "/markets", label: "Markets" },
-  { path: "/global", label: "Global" },
   { path: "/heatmap", label: "Heatmap" },
   { path: "/news", label: "News" },
   { path: "/snapshot", label: "Snapshot" },
@@ -127,7 +125,7 @@ export default function App() {
             <Route path="/holdings" element={<Holdings />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/heatmap" element={<HeatmapPage />} />
-            <Route path="/global" element={<GlobalAssets />} />
+            <Route path="/global" element={<Navigate to="/markets" replace />} />
             <Route path="/news" element={<News />} />
             <Route path="/snapshot" element={<Snapshot />} />
             <Route path="/instrument/:symbol" element={<InstrumentDetail />} />

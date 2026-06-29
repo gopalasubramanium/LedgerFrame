@@ -112,6 +112,13 @@ class HoldingValue:
     is_stale: bool
     is_priced: bool
 
+    @property
+    def day_change_pct(self) -> Decimal | None:
+        """Today's % change, derived from the day's base-currency move vs the
+        previous value (current value minus today's change)."""
+        prev = self.market_value_base - self.day_change_base
+        return pct_change(self.market_value_base, prev) if prev else None
+
 
 @dataclass
 class PortfolioValuation:

@@ -31,7 +31,7 @@ Uses Yahoo's public chart/search JSON endpoints. **Best free live option.**
   `^STOXX50E`, `^N225`, `^HSI`, `^NSEI`, `^STI`), global equities
   (`RELIANCE.NSE`→`RELIANCE.NS`, `HDFC.BSE`→`HDFC.BO`, `VOD.L`, `7203.T`), FX
   (`EURUSD=X`) and crypto (`BTC`→`BTC-USD`) — each in the listing's own currency.
-- **Capability flag** `supports_indices=True`: the **Global** page shows real index
+- **Capability flag** `supports_indices=True`: the **Markets** page (world markets) shows real index
   levels (local currency) instead of ETF proxies.
 - **Rate limiting:** the public endpoint throttles bursts (HTTP 429), so the provider
   **serializes** calls with a ~1.5s minimum interval + 429 backoff, and runs with
@@ -61,7 +61,7 @@ without a CSV fall back to `mock` so the dashboard stays populated. 10 MB/file c
   - ✅ **Crypto** (BTC, ETH, …) — handled via AV's currency endpoint.
   - ✅ **FX** via `CURRENCY_EXCHANGE_RATE`.
   - ✅ **Indices — premium only** via the **Index Data API** (`function=INDEX_DATA`).
-    With a premium key the **Global** page shows real US index levels (`SPX`, `NDX`,
+    With a premium key the **Markets** page shows real US index levels (`SPX`, `NDX`,
     `DJI`, mapped from `^GSPC`/`^NDX`/`^DJI`). The response is parsed defensively and,
     if the endpoint isn't available (free key / unsupported symbol), the page **falls
     back per-entry to the ETF proxy** (`SPY`, `QQQ`, …) — no error, no fabricated

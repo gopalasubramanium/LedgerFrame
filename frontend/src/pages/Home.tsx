@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge, Figure, Skeleton } from "../components/ui";
 import { useActivity } from "../components/Activity";
+import { MoverList } from "../components/MoverList";
 import { TickerStrip } from "../components/TickerStrip";
 import { money, pct, signedMoney, timeAgo, toneClass } from "../lib/format";
 import type { Quote } from "../lib/types";
@@ -74,8 +75,8 @@ export default function Home() {
         {/* Top movers */}
         <Card title="Today's movers" className="col-span-12 lg:col-span-7">
           <div className="grid grid-cols-2 gap-6">
-            <Movers title="Gainers" rows={data.top_movers.gainers} ccy={p.base_currency} />
-            <Movers title="Detractors" rows={data.top_movers.losers} ccy={p.base_currency} />
+            <MoverList title="Gainers" rows={data.top_movers.gainers} ccy={p.base_currency} />
+            <MoverList title="Detractors" rows={data.top_movers.losers} ccy={p.base_currency} />
           </div>
         </Card>
 
@@ -89,6 +90,21 @@ export default function Home() {
                 <span className="justify-self-end"><ChangePill value={q.change_pct} /></span>
               </li>
             ))}
+          </ul>
+        </Card>
+
+        {/* Global indices summary */}
+        <Card title="World indices" className="col-span-12 lg:col-span-4"
+          action={<Link to="/markets" className="lf-chip bg-elevated text-accent">All →</Link>}>
+          <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-3 gap-y-2 text-sm">
+            {(glob.data?.groups ?? []).flatMap((g) => g.items).slice(0, 7).map((it) => (
+              <li key={it.symbol} className="contents">
+                <Link to={`/instrument/${it.symbol}`} className="text-muted hover:text-accent truncate" title={it.label}>{it.label.split("·").pop()?.trim()}</Link>
+                <span className="tnum text-right">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+                <span className="justify-self-end"><ChangePill value={it.quote.change_pct} /></span>
+              </li>
+            ))}
+            {(glob.data?.groups ?? []).length === 0 && <li className="text-muted text-sm col-span-3">—</li>}
           </ul>
         </Card>
 
@@ -171,27 +187,6 @@ function Mini({ label, value, tone }: { label: string; value: string; tone: numb
     <div className="bg-base rounded-card px-3 py-2">
       <div className="text-xs uppercase tracking-wide text-faint">{label}</div>
       <div className={`tnum ${tone === null ? "text-ink" : toneClass(tone)}`}>{value}</div>
-    </div>
-  );
-}
-
-function Movers({ title, rows, ccy }: { title: string; rows: { label: string; name?: string | null; symbol: string | null; day_change: number; is_stale: boolean }[]; ccy: string }) {
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wide text-faint mb-2">{title}</div>
-      {rows.length === 0 && <div className="text-muted text-sm">No priced positions.</div>}
-      <ul className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 text-sm">
-        {rows.map((r) => (
-          <li key={r.label} className="contents">
-            {r.symbol ? (
-              <Link to={`/instrument/${r.symbol}`} className="truncate hover:text-accent" title={r.name || r.label}>{r.name || r.label}{r.is_stale ? " ⚠" : ""}</Link>
-            ) : (
-              <span className="truncate" title={r.name || r.label}>{r.name || r.label}{r.is_stale ? " ⚠" : ""}</span>
-            )}
-            <span className={`tnum text-right ${toneClass(r.day_change)}`}>{signedMoney(r.day_change, ccy)}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

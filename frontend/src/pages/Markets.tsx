@@ -21,6 +21,7 @@ const VIEWS: { id: View; label: string }[] = [
 // symbol and open its page. (Global page = the world's major indices.)
 export default function Markets() {
   const { data, stale } = useApi(api.marketsOverview, 60000);
+  const glob = useApi(api.marketsGlobal, 60000);
   const wl = useApi(api.watchlists, 60000);
   const [view, setView] = useState<View>("holdings");
   const [query, setQuery] = useState("");
@@ -56,6 +57,7 @@ export default function Markets() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">Markets</h1>
+          <span className="text-sm text-muted hidden sm:inline">world indices + your instruments</span>
           <select className="lf-input w-auto" value={view} onChange={(e) => setView(e.target.value as View)}>
             {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
           </select>
@@ -75,6 +77,34 @@ export default function Markets() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* World markets (merged from the former Global page) */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm uppercase tracking-wide text-faint">World markets</h2>
+          <span className="text-xs text-faint">
+            {glob.data?.real_indices ? "live index levels (local currency)" : "via liquid ETF proxies"}
+          </span>
+        </div>
+        <div className="grid grid-cols-12 gap-4 auto-rows-min">
+          {(glob.data?.groups ?? []).map((g) => (
+            <Card key={g.region} title={g.region} className="col-span-12 md:col-span-6 lg:col-span-4">
+              <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-2.5">
+                {g.items.map((it) => (
+                  <li key={it.symbol} className="contents">
+                    <Link to={`/instrument/${it.symbol}`} className="hover:text-accent min-w-0">
+                      <div className="text-sm truncate">{it.label}</div>
+                      <div className="text-xs text-faint">{it.symbol}</div>
+                    </Link>
+                    <span className="tnum text-sm text-right">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+                    <span className="justify-self-end"><ChangePill value={it.quote.change_pct} /></span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
         </div>
       </div>
 

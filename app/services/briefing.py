@@ -23,7 +23,10 @@ BRIEFING_TS_KEY = "daily_briefing_ts"
 def _mover_str(h, base: str) -> str:
     from app.core.money import pct_change
 
-    pct = pct_change(h.price, h.price - (h.day_change_base / h.quantity)) if h.quantity else None
+    pct = None
+    if h.price is not None and h.quantity:
+        prev = h.price - (h.day_change_base / h.quantity)
+        pct = pct_change(h.price, prev) if prev else None
     pctf = f" {pct:+.1f}%" if pct is not None else ""
     return f"{h.label} ({h.day_change_base:+,.0f} {base}{pctf})"
 
@@ -44,9 +47,24 @@ async def _deterministic_briefing(session: AsyncSession) -> tuple[str, list[str]
     if losers:
         facts.append("Top movers down: " + "; ".join(_mover_str(x, base) for x in losers))
 
-    parts = [f"Portfolio {val.total_value:,.2f} {base}, today {val.day_change:+,.2f} {base}."]
+    # A line on how the broader markets moved (best-effort; never blocks).
+    market_line = ""
+    try:
+        from app.ai.tools import market_facts
+
+        mkt = await market_facts(session, limit=3)
+        if mkt:
+            market_line = "Markets: " + ", ".join(f"{m.label.split('·')[-1].strip()} {m.value}" for m in mkt) + "."
+            facts += [f"{m.label}: {m.value}" for m in mkt]
+    except Exception:  # noqa: BLE001
+        pass
+
+    parts = []
+    if market_line:
+        parts.append(market_line)
+    parts.append(f"Your portfolio {val.total_value:,.2f} {base}, today {val.day_change:+,.2f} {base}.")
     if gainers:
-        parts.append("Leading your holdings: " + ", ".join(_mover_str(g, base) for g in gainers) + ".")
+        parts.append("Leading: " + ", ".join(_mover_str(g, base) for g in gainers) + ".")
     if losers:
         parts.append("Weighing on it: " + ", ".join(_mover_str(x, base) for x in losers) + ".")
     if val.has_stale:
@@ -84,23 +102,28 @@ async def generate_briefing(session: AsyncSession) -> str:
         provider = get_ai_provider()
         health = await provider.health()
         if health.available and facts:
-            # Add a little market context so the briefing relates the portfolio to
-            # how the broader markets did today (still grounded — only these facts).
+            # Add world-market + news context so the briefing tells a connected story
+            # (global markets → your portfolio → relevant headlines). Still grounded —
+            # the model may only use these facts.
             try:
-                from app.ai.tools import market_facts
+                from app.ai.tools import market_facts, news_facts
 
-                facts = facts + [f"{m.label}: {m.value}" for m in await market_facts(session, limit=4)]
+                facts = facts + [f"{m.label}: {m.value}" for m in await market_facts(session, limit=8)]
+                facts = facts + [f"News: {n.value}" for n in await news_facts(session, limit=4)]
             except Exception:  # noqa: BLE001
                 pass
             messages = [
                 ChatMessage(role="system", content=SYSTEM_PROMPT),
                 ChatMessage(role="system", content="FACTS (the only data you may use):\n" + "\n".join(f"- {f}" for f in facts)),
-                ChatMessage(role="user", content="Write ONLY a concise 2-3 sentence daily briefing for the desk "
-                            "display: lead with the portfolio's notable moves today, then one line relating it to "
-                            "how the broader markets did. Plain English, no markdown, no reasoning or <think> tags."),
+                ChatMessage(role="user", content=(
+                    "Write a daily briefing for a desk display — a short, connected story in 4-6 sentences, "
+                    "plain prose, no markdown. Structure it: (1) how the broader/global markets moved today "
+                    "(name a couple of indices and direction), (2) how that ties to your portfolio's move today "
+                    "and its standout gainers/detractors, (3) one relevant headline if any. Use ONLY the FACTS; "
+                    "quote their numbers; no reasoning or <think> tags. End with: Information only, not financial advice.")),
             ]
             text = ""
-            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=1500)):
+            async for chunk in provider.chat(AIRequest(messages=messages, max_tokens=2500)):
                 if chunk.delta:
                     text += chunk.delta
                 if chunk.done:

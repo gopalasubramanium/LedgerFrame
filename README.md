@@ -30,8 +30,8 @@ on the device by default; nothing leaves it unless you configure it to.
 |---|---|
 | **Portfolio analytics** — benchmarked performance, allocation, key stats | **Holdings** — the one place to add/edit/delete positions |
 | ![Portfolio](docs/screenshots/portfolio.png) | ![Holdings](docs/screenshots/holdings.png) |
-| **Instrument** — price, period chart, stats, watchlist | **Global** — world markets via liquid ETF proxies |
-| ![Instrument](docs/screenshots/instrument.png) | ![Global](docs/screenshots/global.png) |
+| **Instrument** — price, period chart, stats, watchlist | **Markets** — world indices by region + your instruments |
+| ![Instrument](docs/screenshots/instrument.png) | ![Markets](docs/screenshots/markets.png) |
 | **Settings** — data source, AI, theme, system controls | **Grounded AI** — answers cite the facts they're built from |
 | ![Settings](docs/screenshots/settings.png) | ![Ask](docs/screenshots/ask.png) |
 
@@ -64,11 +64,10 @@ Light theme & mobile are first-class:
 
 | Page | Purpose |
 |------|---------|
-| **Home** | Glanceable "now": ticker, portfolio headline, movers, markets, watchlist, FX, briefing, headlines |
-| **Portfolio** | Analytics: benchmarked performance, allocation & currency donuts, concentration, key statistics |
-| **Holdings** | The only place to **add / edit / delete** transactions & manual assets (CSV import too) |
-| **Markets** | *Your* markets — a view dropdown (holdings/watchlist/equities/…) + symbol search |
-| **Global** | World markets by region via liquid ETF proxies (so live data works) |
+| **Home** | Master glance: ticker, portfolio headline, movers (price + Δ/Δ%), world indices, markets, watchlist, FX, briefing, headlines |
+| **Portfolio** | Analytics: benchmarked performance, allocation & currency donuts, concentration, key statistics, contributors |
+| **Holdings** | Add / edit / delete transactions & manual assets — with search, sort, CSV export, sticky header |
+| **Markets** | World indices by region **plus** *your* markets (view dropdown + symbol search) — Global is merged in here |
 | **Heatmap** | Performance treemap across your instruments |
 | **News** | Free RSS/Atom headlines + the grounded AI briefing |
 | **Snapshot** | Net worth, assets, liabilities, cash, net-worth history |
@@ -146,7 +145,7 @@ unavailable symbols show "—", and **Refresh live prices** lists what updated/f
 | `alphavantage` | free/paid | yes | US equities & ETFs, crypto, FX | Add your key in Settings |
 
 **Yahoo Finance (free, no key) — recommended for live data:**
-- ✅ **Real index levels** in local currency — the **Global** page shows actual
+- ✅ **Real index levels** in local currency — the **Markets** page (world markets) shows actual
   S&P 500, Nasdaq, FTSE 100, Nikkei 225, Hang Seng, Nifty 50, STI, DAX, etc.
   (not ETF proxies). ✅ Global equities (`RELIANCE.NSE`, `VOD.L`, `7203.T`),
   ✅ FX, ✅ crypto — each in its own currency, converted to your base via FX.
@@ -159,7 +158,7 @@ unavailable symbols show "—", and **Refresh live prices** lists what updated/f
 **Alpha Vantage specifics:**
 - ✅ US equities & ETFs, ✅ crypto (BTC/ETH/…), ✅ FX.
 - ✅ **Indices on premium plans** — with a premium key the **Index Data API**
-  unlocks real US index levels (S&P 500, Nasdaq, Dow), shown on the **Global** page.
+  unlocks real US index levels (S&P 500, Nasdaq, Dow), shown on the **Markets** page (world markets section).
   LedgerFrame checks the response and, if the endpoint isn't available (e.g. a free
   key), **falls back per-entry to the ETF proxy** automatically. Non-US indices use
   proxies on AV (use Yahoo for real FTSE/Nikkei/Nifty/etc.).

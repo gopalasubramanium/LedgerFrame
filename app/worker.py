@@ -37,6 +37,30 @@ async def refresh_market_data() -> None:
     log.info("market data refreshed (%d symbols)", len(symbols))
 
 
+async def backfill_history() -> None:
+    """Keep daily price history cached for the benchmark + everything shown, so the
+    Performance and Net-worth charts have data immediately (no manual 'Fetch history').
+    get_history_cached refetches at most once per 12h per symbol."""
+    from datetime import timedelta
+
+    from app.api.v1.routes.system import _display_symbols
+    from app.services.market import get_history_cached
+
+    async with get_sessionmaker()() as session:
+        end = datetime.now(UTC)
+        start = end - timedelta(days=400)
+        symbols = ["SPY", *await _display_symbols(session)]  # benchmark first
+        done = 0
+        for sym in dict.fromkeys(symbols):
+            try:
+                if await get_history_cached(session, sym, "1d", start, end):
+                    done += 1
+            except Exception as exc:  # noqa: BLE001
+                log.warning("history backfill failed for %s: %s", sym, exc)
+        await session.commit()
+    log.info("history backfilled (%d symbols)", done)
+
+
 async def generate_snapshots() -> None:
     from app.services.portfolio import value_portfolio
 
@@ -95,6 +119,7 @@ async def main() -> None:
 
     scheduler = AsyncIOScheduler(timezone="UTC")
     scheduler.add_job(refresh_market_data, "interval", minutes=5, id="market", max_instances=1)
+    scheduler.add_job(backfill_history, "interval", hours=6, id="history", max_instances=1)
     scheduler.add_job(generate_snapshots, "interval", hours=6, id="snapshots", max_instances=1)
     scheduler.add_job(generate_briefing, "cron", hour=6, minute=30, id="briefing")
     scheduler.add_job(prune_cache, "interval", hours=24, id="prune")
@@ -102,8 +127,10 @@ async def main() -> None:
     scheduler.start()
     log.info("worker started")
 
-    # Kick off an initial refresh so dashboards are warm shortly after boot.
+    # Kick off an initial refresh + history backfill so dashboards (incl. the
+    # Performance / Net-worth charts) are warm shortly after boot.
     await refresh_market_data()
+    await backfill_history()
     await generate_briefing()
 
     stop = asyncio.Event()

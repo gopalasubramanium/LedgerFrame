@@ -2,6 +2,23 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.3.0 — 2026-06-29
+
+- **Fixed Performance-vs-benchmark and Net-worth charts showing empty.** Root cause:
+  an empty/failed history fetch still set the "fresh" marker, locking the chart blank
+  for 12h. Empty fetches now retry; the worker proactively backfills daily history for
+  the benchmark + everything shown; and the empty state is honest ("Building price
+  history…" vs "Add holdings"). Both charts now populate without manual steps.
+- **Movers & Contributors show price + change, with a Δ ⇄ Δ% toggle** (click to switch
+  absolute vs percent) on Home and Portfolio, via a shared compact component.
+- **Richer daily/AI briefing** — a connected story: how global markets moved → your
+  portfolio's move and standout names → a relevant headline. Works in the deterministic
+  fallback too.
+- **Holdings page**: search/filter, sortable columns, CSV export, and a sticky header.
+- **Markets & Global merged** into one **Markets** page (world indices by region +
+  your instruments + search). `/global` redirects there; Home gains a World-indices card.
+- **Legal page** redesigned to fit without scrolling.
+
 ## v1.2.1 — 2026-06-28
 
 - **Alpha Vantage premium indices.** With a premium AV key, the **Global** page now

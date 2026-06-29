@@ -81,10 +81,14 @@ async def dashboard_home(session: AsyncSession = Depends(get_db)) -> dict:
         },
         "top_movers": {
             "gainers": [{"label": h.label, "name": h.name, "symbol": h.symbol,
-                         "day_change": to_display(h.day_change_base), "is_stale": h.is_stale}
+                         "price": to_display(h.price), "currency": h.native_currency,
+                         "day_change": to_display(h.day_change_base),
+                         "day_change_pct": to_display(h.day_change_pct), "is_stale": h.is_stale}
                         for h in gainers],
             "losers": [{"label": h.label, "name": h.name, "symbol": h.symbol,
-                        "day_change": to_display(h.day_change_base), "is_stale": h.is_stale}
+                        "price": to_display(h.price), "currency": h.native_currency,
+                        "day_change": to_display(h.day_change_base),
+                        "day_change_pct": to_display(h.day_change_pct), "is_stale": h.is_stale}
                        for h in losers],
         },
         "markets": markets,

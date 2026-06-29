@@ -27,7 +27,6 @@ const shots = [
   ["/holdings", "holdings.png", { full: true }],
   ["/portfolio", "portfolio.png", { full: true }],
   ["/markets", "markets.png", { full: true }],
-  ["/global", "global.png", { full: true }],
   ["/heatmap", "heatmap.png", { full: false }],
   ["/news", "news.png", { full: true }],
   ["/snapshot", "snapshot.png", { full: true }],

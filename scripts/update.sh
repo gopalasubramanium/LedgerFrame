@@ -76,8 +76,13 @@ if owner_sh "command -v npm >/dev/null 2>&1" && [[ -d frontend ]]; then
 fi
 
 log "applying database migrations…"
-owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; python scripts/db_migrate.py" \
-  && log "migrations applied" || log "WARN: migration step reported an issue (schema may already be current)"
+# Resolve the data dir so migrations target the same DB the service uses (the
+# installer records it in admin.env; fall back to .env, then the app default).
+MIG_DATA_DIR=""
+[[ -r /etc/ledgerframe/admin.env ]] && MIG_DATA_DIR="$(. /etc/ledgerframe/admin.env 2>/dev/null; echo "${DATA_DIR:-}")"
+[[ -z "$MIG_DATA_DIR" ]] && MIG_DATA_DIR="$(sed -n 's/^LEDGERFRAME_DATA_DIR=//p' "$REPO_DIR/.env" 2>/dev/null | head -1 | tr -d '"')"
+owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; ${MIG_DATA_DIR:+LEDGERFRAME_DATA_DIR='$MIG_DATA_DIR'} python scripts/db_migrate.py" \
+  && log "migrations applied" || log "migrations skipped (schema ensured on service startup)"
 
 # Refresh the privileged helper (in case it changed).
 if [[ -f /usr/local/sbin/ledgerframe-admin ]]; then

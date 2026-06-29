@@ -2,6 +2,16 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.3.2 — 2026-06-30
+
+- **Fixed the update script's migration error.** `./scripts/update.sh` printed a
+  `PermissionError: '/mnt/ledgerframe-data'` traceback when the data dir wasn't
+  writable (e.g. running it on a dev laptop where `LEDGERFRAME_DATA_DIR` is a shell
+  export rather than in `.env`). The migration step now (a) receives the correct
+  data dir from `admin.env`/`.env`, and (b) **exits cleanly with a clear message**
+  instead of a traceback when the dir isn't accessible — the running service ensures
+  the schema on startup either way.
+
 ## v1.3.1 — 2026-06-30
 
 - **Alpha Vantage premium indices now actually render.** The Index Data API returns

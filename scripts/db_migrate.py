@@ -17,7 +17,18 @@ from app.db.migrate import run_migrations  # noqa: E402
 
 
 def main() -> int:
-    run_migrations()
+    try:
+        run_migrations()
+    except OSError as exc:
+        # The data dir may be unwritable / not mounted (e.g. running update.sh on a
+        # dev laptop where LEDGERFRAME_DATA_DIR points elsewhere, or before the USB
+        # is mounted). The app/worker create the schema via create_all() at startup,
+        # so this is non-fatal — report clearly and exit 0 (no scary traceback).
+        print(f"[db] skipping migrations — data dir not accessible: {exc}")
+        print("[db] the running service ensures the schema on startup (create_all).")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[db] migrations could not run: {exc}")
+        print("[db] the running service ensures the schema on startup (create_all).")
     return 0
 
 

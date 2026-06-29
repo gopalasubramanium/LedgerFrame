@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge } from "../components/ui";
 import { money } from "../lib/format";
+import type { Quote } from "../lib/types";
 
 type View = "holdings" | "watchlist" | "equity" | "etf" | "crypto" | "commodity" | "all";
 
@@ -43,6 +44,17 @@ export default function Markets() {
   const [newWl, setNewWl] = useState("");
   const watchlists = wl.data?.watchlists ?? [];
 
+  // Flattened world indices for the glance strip.
+  const indices = useMemo(() => (glob.data?.groups ?? []).flatMap((g) => g.items), [glob.data]);
+
+  // Market movers from everything we track (overview + holdings + watchlist), by % change.
+  const movers = useMemo(() => {
+    const priced = instruments.filter((i) => i.quote.price != null && i.quote.change_pct != null);
+    const gainers = [...priced].sort((a, b) => (b.quote.change_pct as number) - (a.quote.change_pct as number)).slice(0, 6);
+    const losers = [...priced].sort((a, b) => (a.quote.change_pct as number) - (b.quote.change_pct as number)).slice(0, 6);
+    return { gainers, losers };
+  }, [instruments]);
+
   async function runSearch(q: string) {
     setQuery(q);
     if (q.trim().length < 1) { setResults([]); return; }
@@ -80,7 +92,34 @@ export default function Markets() {
         </div>
       </div>
 
-      {/* World markets (merged from the former Global page) */}
+      {/* Indices glance strip — quick read of the world's major markets. */}
+      {indices.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          {indices.map((it) => {
+            const cp = it.quote.change_pct;
+            return (
+              <Link key={it.symbol} to={`/instrument/${it.symbol}`}
+                className="shrink-0 bg-base rounded-card border border-line px-3 py-2 hover:border-accent transition-colors min-w-[8.5rem]">
+                <div className="text-xs text-muted truncate">{it.label.split("·").pop()?.trim()}</div>
+                <div className="tnum text-sm">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</div>
+                <div className={`tnum text-xs ${cp == null ? "text-faint" : cp >= 0 ? "text-up" : "text-down"}`}>
+                  {cp == null ? "" : `${cp >= 0 ? "+" : ""}${cp.toFixed(2)}%`}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Market movers (top gainers / losers across what you track). */}
+      {(movers.gainers.length > 0 || movers.losers.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card title="Top gainers"><MarketMovers rows={movers.gainers} /></Card>
+          <Card title="Top losers"><MarketMovers rows={movers.losers} /></Card>
+        </div>
+      )}
+
+      {/* World markets by region (merged from the former Global page) */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm uppercase tracking-wide text-faint">World markets</h2>
@@ -165,5 +204,27 @@ export default function Markets() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function MarketMovers({ rows }: { rows: { symbol: string; name: string; quote: Quote }[] }) {
+  if (!rows.length) return <p className="text-muted text-sm">—</p>;
+  return (
+    <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-3 gap-y-2 text-sm">
+      {rows.map((it) => {
+        const cp = it.quote.change_pct;
+        return (
+          <li key={it.symbol} className="contents">
+            <Link to={`/instrument/${it.symbol}`} className="truncate hover:text-accent" title={it.name || it.symbol}>
+              {it.name && it.name.toUpperCase() !== it.symbol ? it.name : it.symbol}
+            </Link>
+            <span className="tnum text-right text-muted">{it.quote.price === null ? "—" : money(it.quote.price, it.quote.currency, true)}</span>
+            <span className={`tnum text-right justify-self-end ${cp == null ? "text-faint" : cp >= 0 ? "text-up" : "text-down"}`}>
+              {cp == null ? "" : `${cp >= 0 ? "+" : ""}${cp.toFixed(2)}%`}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

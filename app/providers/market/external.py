@@ -58,15 +58,20 @@ def _check_limit(data: dict) -> None:
 
 
 def _find_time_series(data: dict) -> dict:
-    """Return the date→OHLC mapping from an AV response, tolerating key-name
-    variations (e.g. 'Time Series (Daily)', 'data', or an index-specific key)."""
+    """Return a ``{date_str: row}`` mapping from an AV response, tolerating both shapes:
+
+    - the classic ``"Time Series (Daily)": {"2026-06-26": {"4. close": …}}`` (equities), and
+    - the Index Data API's ``"data": [{"date": "2026-06-26", "close": …}, …]`` (a list).
+    """
     for val in data.values():
-        if not isinstance(val, dict):
-            continue
-        # A time-series value is a dict keyed by ISO-ish dates → row dicts.
-        sample = next(iter(val.values()), None)
-        if isinstance(sample, dict) and any("-" in str(k) for k in list(val)[:3]):
-            return val
+        if isinstance(val, dict):
+            sample = next(iter(val.values()), None)
+            if isinstance(sample, dict) and any("-" in str(k) for k in list(val)[:3]):
+                return val
+        elif isinstance(val, list) and val and isinstance(val[0], dict):
+            date_key = next((k for k in val[0] if "date" in k.lower()), None)
+            if date_key:
+                return {row[date_key]: row for row in val if row.get(date_key)}
     return {}
 
 

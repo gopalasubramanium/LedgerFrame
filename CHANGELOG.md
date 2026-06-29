@@ -2,6 +2,20 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.3.1 — 2026-06-30
+
+- **Alpha Vantage premium indices now actually render.** The Index Data API returns
+  its series as a `data` *list* (`[{date, open, high, low, close}]`), not the classic
+  "Time Series" dict — the parser now handles both, so with a premium (index-entitled)
+  key the **Markets** page shows real US index levels (SPX/NDX/DJI/COMP) for quotes
+  and charts. Verified live: DJI 51,876 · SPX 7,354 · NDX 29,118.
+- **Markets page restyled** (per request): a horizontal **indices glance strip** and
+  **Top gainers / losers** now sit above the regional world-markets detail and your
+  holdings — a fuller market dashboard.
+- **Tests are deterministic regardless of your `.env`** — the suite now forces the
+  `mock` provider, so a real Alpha Vantage / Yahoo key in `.env` can't leak in and
+  make tests hit the network or flake.
+
 ## v1.3.0 — 2026-06-29
 
 - **Fixed Performance-vs-benchmark and Net-worth charts showing empty.** Root cause:

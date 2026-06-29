@@ -14,6 +14,11 @@ os.environ.setdefault("LEDGERFRAME_DATA_DIR", str(_TMP))
 os.environ.setdefault("LEDGERFRAME_ENV", "development")
 os.environ.setdefault("LEDGERFRAME_AI_ENABLED", "false")
 os.environ.setdefault("LEDGERFRAME_SECRET_KEY", "test-secret-key-not-for-production-use")
+# Force the deterministic mock provider for tests, so a developer's local `.env`
+# (e.g. a real alphavantage/yahoo key) can't leak in and make the suite hit the
+# network or flake. These take precedence over the .env file in pydantic.
+os.environ["LEDGERFRAME_MARKET_PROVIDER"] = "mock"
+os.environ.pop("LEDGERFRAME_MARKET_API_KEY", None)
 
 
 @pytest.fixture

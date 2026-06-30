@@ -34,16 +34,16 @@ on the device by default; nothing leaves it unless you configure it to.
 |---|---|
 | **Portfolio analytics** — benchmarked performance, allocation, key stats | **Holdings** — the one place to add/edit/delete positions |
 | ![Portfolio](docs/screenshots/portfolio.png) | ![Holdings](docs/screenshots/holdings.png) |
-| **Instrument** — price, period chart, stats, watchlist | **Markets** — world indices by region + your instruments |
+| **Instrument** — candlestick + volume + indicators (MA/Bollinger/RSI), zoom/pan | **Markets** — world indices by region + your instruments |
 | ![Instrument](docs/screenshots/instrument.png) | ![Markets](docs/screenshots/markets.png) |
 | **Settings** — data source, AI, theme, system controls | **Grounded AI** — answers cite the facts they're built from |
 | ![Settings](docs/screenshots/settings.png) | ![Ask](docs/screenshots/ask.png) |
 
-Light theme & mobile are first-class:
+Light theme, a collapsible icon sidebar, and mobile are first-class:
 
-| Light theme | Mobile |
-|---|---|
-| ![Light](docs/screenshots/home-light.png) | <img src="docs/screenshots/home-mobile.png" width="240" alt="Mobile"> |
+| Light theme | Collapsible sidebar | Mobile |
+|---|---|---|
+| ![Light](docs/screenshots/home-light.png) | ![Collapsed sidebar](docs/screenshots/sidebar-collapsed.png) | <img src="docs/screenshots/home-mobile.png" width="220" alt="Mobile"> |
 
 ---
 
@@ -60,6 +60,7 @@ Light theme & mobile are first-class:
   provider from Settings. A live provider that can't serve a symbol shows "—",
   never a fabricated price.
 - **Wealth-manager UI** — slate + emerald design, **light / dark / system** themes,
+  a **collapsible icon sidebar**, candlestick instrument charts (MA/Bollinger/RSI),
   benchmark picker, key-stats panel, responsive on phone and desk display.
 - **Private by design** — localhost-only by default, Argon2 PIN (auto-prompts on
   expiry), encrypted backups (`age`), no telemetry.

@@ -55,6 +55,16 @@ test("9 & 10. app works without Hailo and without external provider", async ({ p
   await expect(page.getByRole("heading", { name: /World markets/i })).toBeVisible();
 });
 
+test("11. desktop sidebar collapses and expands", async ({ page }) => {
+  await page.goto("/");
+  const nav = page.getByRole("navigation", { name: "Primary" });
+  await expect(nav.getByText("Portfolio", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Collapse menu" }).click();
+  await expect(nav.getByText("Portfolio", { exact: true })).toBeHidden();
+  await page.getByRole("button", { name: "Expand menu" }).click();
+  await expect(nav.getByText("Portfolio", { exact: true })).toBeVisible();
+});
+
 // NOTE: this test mutates persistent state (sets a PIN), so it runs LAST.
 // Reset demo data between full e2e runs: ./scripts/reset-demo-data.sh
 test("8. PIN lock blocks protected actions", async ({ page, request }) => {

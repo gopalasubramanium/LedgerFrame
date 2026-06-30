@@ -2,6 +2,17 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.7.0 — 2026-06-30
+
+- **Collapsible sidebar (desktop).** The left navigation now collapses to a slim icon
+  rail (and expands back) to reclaim screen real estate; the choice is remembered per
+  device. Each item has a clean monochrome icon, and the mobile drawer is unchanged.
+- **Thorough end-to-end pass.** Re-ran the full backend (131 pytest) and browser (now
+  9 Playwright e2e, incl. a new sidebar collapse/expand test) suites plus an API smoke
+  test of the recently-changed endpoints (version-check, data-source/tier,
+  instrument news, history, markets) — all green; ruff + tsc clean. Screenshots
+  refreshed across the repo, including a new collapsed-sidebar shot.
+
 ## v1.6.1 — 2026-06-30
 
 - **Fixed the web-UI update (important).** The one-click update failed at `git fetch`

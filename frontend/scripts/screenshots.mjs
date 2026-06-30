@@ -53,6 +53,14 @@ const run = async () => {
     console.log("saved", file);
   }
 
+  // Collapsed sidebar (desktop) — shows the icon rail / reclaimed real estate.
+  await page.evaluate(() => localStorage.setItem("lf_sidebar_collapsed", "1"));
+  await page.goto(`${BASE}/portfolio`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: OUT + "sidebar-collapsed.png" });
+  console.log("saved sidebar-collapsed.png");
+  await page.evaluate(() => localStorage.setItem("lf_sidebar_collapsed", "0"));
+
   // Light theme home
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
   await page.evaluate(() => { localStorage.setItem("lf_theme", "light"); document.documentElement.dataset.theme = "light"; });

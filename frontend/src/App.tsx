@@ -19,6 +19,7 @@ import Legal from "./pages/Legal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { Footer } from "./components/Footer";
 import { ActivityPip } from "./components/Activity";
+import { NavIcon } from "./components/NavIcon";
 import { loadNav, NAV_CHANGED_EVENT } from "./lib/nav";
 
 const ROTATION_PAGES = ["/", "/portfolio", "/markets", "/heatmap", "/news"];
@@ -28,7 +29,11 @@ export default function App() {
   const [asking, setAsking] = useState(false);
   const [rotate, setRotate] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem("lf_sidebar_collapsed") === "1");
   const [nav, setNav] = useState(loadNav);
+
+  const toggleCollapsed = () =>
+    setCollapsed((v) => { const n = !v; localStorage.setItem("lf_sidebar_collapsed", n ? "1" : "0"); return n; });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -54,20 +59,22 @@ export default function App() {
   const cycleTheme = () => setTheme(theme === "light" ? "dark" : theme === "dark" ? "system" : "light");
   const themeIcon = theme === "light" ? "☀" : theme === "dark" ? "☾" : "◑";
 
-  const navLinks = (onClick?: () => void) =>
+  const navLinks = (onClick?: () => void, mini = false) =>
     nav.map((n) => (
       <NavLink
         key={n.path}
         to={n.path}
         end={n.path === "/"}
         onClick={onClick}
+        title={mini ? n.label : undefined}
         className={({ isActive }) =>
-          `touch flex items-center px-4 rounded-card mb-1 text-sm font-medium transition-colors ${
-            isActive ? "bg-elevated text-accent" : "text-muted hover:text-ink hover:bg-elevated/50"
-          }`
+          `touch flex items-center gap-3 rounded-card mb-1 text-sm font-medium transition-colors ${
+            mini ? "justify-center px-0" : "px-4"
+          } ${isActive ? "bg-elevated text-accent" : "text-muted hover:text-ink hover:bg-elevated/50"}`
         }
       >
-        {n.label}
+        <NavIcon path={n.path} />
+        {!mini && <span className="truncate">{n.label}</span>}
       </NavLink>
     ));
 
@@ -96,9 +103,21 @@ export default function App() {
       </header>
 
       <div className="flex flex-1 min-h-0">
-        {/* Desktop side rail */}
-        <nav className="hidden md:block w-44 shrink-0 border-r border-line bg-surface/40 py-3 px-2 overflow-y-auto" aria-label="Primary">
-          {navLinks()}
+        {/* Desktop side rail — collapsible to reclaim screen real estate */}
+        <nav
+          className={`hidden md:flex md:flex-col shrink-0 border-r border-line bg-surface/40 py-3 px-2 transition-[width] duration-200 ${collapsed ? "w-16" : "w-44"}`}
+          aria-label="Primary"
+        >
+          <div className="flex-1 overflow-y-auto">{navLinks(undefined, collapsed)}</div>
+          <button
+            className="touch flex items-center justify-center gap-2 mt-2 rounded-card text-xs font-medium text-faint hover:text-ink hover:bg-elevated/50"
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expand menu" : "Collapse menu"}
+            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+          >
+            <span aria-hidden="true">{collapsed ? "»" : "«"}</span>
+            {!collapsed && <span>Collapse</span>}
+          </button>
         </nav>
 
         {/* Mobile drawer */}

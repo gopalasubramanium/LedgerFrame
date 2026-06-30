@@ -168,3 +168,25 @@ async def fetch_feeds(session: AsyncSession, limit: int = 30) -> list[NewsItem]:
     items = [item for sub in results for item in sub]
     items.sort(key=lambda i: i.published_at, reverse=True)
     return items[:limit]
+
+
+# Free, no-key, no-config per-symbol headlines from Yahoo Finance's RSS. This is the
+# main news source on the instrument page when the market provider supplies no news
+# and the user hasn't configured RSS feeds. Symbols are passed through as-is (works
+# for US tickers; foreign suffixes may not always resolve).
+_SYMBOL_NEWS_URL = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={sym}&region=US&lang=en-US"
+
+
+async def fetch_symbol_news(symbol: str, limit: int = 12) -> list[NewsItem]:
+    from urllib.parse import quote
+
+    headers = {"User-Agent": "LedgerFrame/1.0 (+local)"}
+    url = _SYMBOL_NEWS_URL.format(sym=quote(symbol.strip()))
+    async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, headers=headers) as client:
+        items = await _fetch_one(client, url)
+    # Tag the symbol so the UI can show it; keep newest first.
+    for it in items:
+        if symbol.upper() not in it.symbols:
+            it.symbols.append(symbol.upper())
+    items.sort(key=lambda i: i.published_at, reverse=True)
+    return items[:limit]

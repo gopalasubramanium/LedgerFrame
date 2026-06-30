@@ -28,9 +28,16 @@ if [[ "$(id -u)" -eq 0 ]]; then
   SUDO=""
   OWNER="${RUN_USER:-$(stat -c %U "$REPO_DIR" 2>/dev/null || echo root)}"
 fi
-# Run a command as the repo owner (login shell so nvm/uv/etc. are on PATH).
-run_owner() { if [[ "$OWNER" != "$(id -un)" ]]; then sudo -iu "$OWNER" "$@"; else "$@"; fi; }
-owner_sh()  { if [[ "$OWNER" != "$(id -un)" ]]; then sudo -iu "$OWNER" bash -lc "$1"; else bash -lc "$1"; fi; }
+# Run a command as the repo owner. IMPORTANT: use a NON-login shell here (`sudo -H
+# -u`, not `sudo -iu`). A login shell sources the user's profile, which on Raspberry
+# Pi OS prints warnings ("Wi-Fi is currently blocked by rfkill…") to stdout — those
+# leak into command substitutions like BRANCH=$(…) and corrupt git refspecs. git
+# lives on the system PATH, so it doesn't need the login PATH.
+run_owner() { if [[ "$OWNER" != "$(id -un)" ]]; then sudo -H -u "$OWNER" "$@"; else "$@"; fi; }
+# Login shell (bash -lc) for steps that DO need the user PATH (nvm/uv for npm/pip).
+# Its output only ever goes to the log file, never into a captured variable, so any
+# profile noise here is harmless.
+owner_sh()  { if [[ "$OWNER" != "$(id -un)" ]]; then sudo -H -u "$OWNER" bash -lc "$1"; else bash -lc "$1"; fi; }
 
 # --- log + status ------------------------------------------------------------
 LOG_DIR="${DATA_DIR:+$DATA_DIR/logs}"
@@ -54,7 +61,9 @@ log "update starting (user=$OWNER repo=$REPO_DIR)"
 # git ownership safety (root operating on a user-owned repo, or vice versa)
 run_owner git config --global --add safe.directory "$REPO_DIR" >/dev/null 2>&1 || true
 
-BRANCH="$(run_owner git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
+# Keep only the last line and valid ref characters, so any stray profile/MOTD output
+# can never end up in the refspec passed to `git fetch`.
+BRANCH="$(run_owner git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null | tail -n1 | tr -dc 'A-Za-z0-9._/-')"
 [[ "$BRANCH" == "HEAD" || -z "$BRANCH" ]] && BRANCH=main
 
 log "backing up database first…"

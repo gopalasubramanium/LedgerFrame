@@ -25,18 +25,27 @@ export function UpdateBanner() {
   function update() {
     run("update", async () => {
       const r = await api.admin("update");
-      if (!r.ok) { setMsg("Update could not start (use the CLI: ./scripts/update.sh)."); throw new Error(r.output || "could not start"); }
+      if (!r.ok) {
+        setMsg(r.output?.includes("install.sh") ? "System controls aren't installed — re-run ./scripts/install.sh on the device." : "Update could not start (use the CLI: ./scripts/update.sh).");
+        throw new Error(r.output || "could not start");
+      }
       setMsg("Updating in the background… the page reloads automatically when done.");
+      const fromVer = (await api.updateStatus().catch(() => null))?.version ?? "";
       await new Promise<void>((resolve, reject) => {
         let tries = 0;
+        let sawRunning = false;
         const iv = setInterval(async () => {
           tries += 1;
           try {
             const s = await api.updateStatus();
+            if (s.running) sawRunning = true;
             if (s.failed) { clearInterval(iv); setMsg("Update failed — see Settings → log, or run ./scripts/update.sh."); reject(new Error(s.status)); return; }
-            if (info && s.version === info.latest && !s.running) { clearInterval(iv); resolve(); window.location.reload(); return; }
+            // Done when the script reported success and the API is back — robust to
+            // version-string differences and stale status from a prior run.
+            const finished = !s.running && s.ok && (s.version !== fromVer || sawRunning);
+            if (finished) { clearInterval(iv); resolve(); window.location.reload(); return; }
           } catch { /* API restarting — keep waiting */ }
-          if (tries > 150) { clearInterval(iv); setMsg("Update is taking a while — refresh in a moment."); reject(new Error("timeout")); }
+          if (tries > 180) { clearInterval(iv); setMsg("Update is taking a while — refresh in a moment."); reject(new Error("timeout")); }
         }, 4000);
       });
       return true;

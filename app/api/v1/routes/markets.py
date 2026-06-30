@@ -193,7 +193,7 @@ async def instrument_detail(symbol: str, session: AsyncSession = Depends(get_db)
 async def instrument_news(symbol: str, session: AsyncSession = Depends(get_db)) -> dict:
     """News relevant to one instrument: provider news for the symbol + any RSS/Atom
     headlines mentioning the symbol or company name."""
-    from app.services.feeds import fetch_feeds
+    from app.services.feeds import fetch_feeds, fetch_symbol_news
 
     sym = symbol.upper()
     instr = (await session.execute(select(Instrument).where(Instrument.symbol == sym))).scalars().first()
@@ -206,6 +206,12 @@ async def instrument_news(symbol: str, session: AsyncSession = Depends(get_db)) 
             terms.add(first)
 
     items = list(await get_provider().get_news([sym]))
+    # Free per-symbol headlines (Yahoo Finance RSS) — the primary source so the page
+    # isn't empty when the market provider gives no news and no RSS feeds are set.
+    try:
+        items.extend(await fetch_symbol_news(sym))
+    except Exception:  # noqa: BLE001
+        pass
     try:
         for it in await fetch_feeds(session, limit=60):
             blob = f"{it.headline} {it.summary or ''}".lower()

@@ -2,6 +2,23 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.6.1 — 2026-06-30
+
+- **Fixed the web-UI update (important).** The one-click update failed at `git fetch`
+  because the helper ran git through a **login shell**, whose profile prints
+  "Wi-Fi is currently blocked by rfkill…" on Raspberry Pi OS — that text leaked into
+  the captured branch name and corrupted the git refspec. `update.sh` now runs git in
+  a **non-login** shell (`sudo -H -u`, not `sudo -iu`) and sanitises the branch name,
+  so updates run cleanly. The update banner/Settings flow also detect completion more
+  robustly and show an actionable message if system controls aren't installed.
+- **Instrument page — full-width chart + better layout.** The candlestick chart now
+  occupies its own full-width row; key statistics, your position/watchlist, and news
+  sit in a balanced row beneath it.
+- **Instrument news now actually populates.** Added a free, no-config per-symbol news
+  source (Yahoo Finance RSS) as the primary feed, so the instrument page shows
+  headlines for a ticker even when the market provider supplies none and no RSS feeds
+  are configured.
+
 ## v1.6.0 — 2026-06-30
 
 - **Richer instrument page.** The price chart is now a TradingView-style

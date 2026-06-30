@@ -94,8 +94,8 @@ export default function InstrumentDetail() {
         </div>
       </Card>
 
-      {/* Chart: candlesticks + volume + indicators (computed from real OHLC) */}
-      <Card className="col-span-12 lg:col-span-8">
+      {/* Chart: full-width row of its own — candlesticks + volume + indicators */}
+      <Card className="col-span-12">
         {/* OHLC read-out for the latest bar */}
         {last && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mb-2">
@@ -134,9 +134,9 @@ export default function InstrumentDetail() {
 
         {candles.length > 1 ? (
           chartType === "candle" ? (
-            <CandleChart candles={candles} height={420} opts={{ showMa: ind.ma, showBoll: ind.boll, showRsi: ind.rsi, showVolume: ind.vol }} />
+            <CandleChart candles={candles} height={480} opts={{ showMa: ind.ma, showBoll: ind.boll, showRsi: ind.rsi, showVolume: ind.vol }} />
           ) : (
-            <LineSeries x={candles.map((c) => new Date(c.ts).toLocaleDateString())} y={candles.map((c) => c.close)} height={360} />
+            <LineSeries x={candles.map((c) => new Date(c.ts).toLocaleDateString())} y={candles.map((c) => c.close)} height={420} />
           )
         ) : (
           <p className="text-muted">{history.loading ? "Loading history…" : "No history available for this period."}</p>
@@ -207,7 +207,7 @@ export default function InstrumentDetail() {
       )}
 
       {/* News for this instrument */}
-      <Card title={`${symbol} news`} className="col-span-12 lg:col-span-8">
+      <Card title={`${symbol} news`} className="col-span-12 lg:col-span-4">
         {news.loading && !news.data && <p className="text-muted text-sm">Loading…</p>}
         <ul className="divide-y divide-line/50">
           {(news.data?.items ?? []).map((item, i) => (
@@ -221,7 +221,7 @@ export default function InstrumentDetail() {
             </li>
           ))}
           {news.data && news.data.items.length === 0 && (
-            <li className="py-3 text-muted text-sm">No recent headlines mention {symbol}. Add RSS feeds in Settings → News.</li>
+            <li className="py-3 text-muted text-sm">No recent headlines for {symbol} right now. (Free Yahoo Finance feed; add your own in Settings → News.)</li>
           )}
         </ul>
       </Card>

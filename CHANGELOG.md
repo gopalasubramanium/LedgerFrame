@@ -2,6 +2,18 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.4.0 — 2026-06-30
+
+- **Redesigned Home into a clean master dashboard.** Replaced the uneven, cluttered
+  layout with aligned, equal-height rows that summarise every page: Portfolio (value
+  + key stats + net-worth sparkline, allocation donut), Insights (today's movers with
+  price + Δ/Δ%, 90-day performance vs benchmark, top-holding weights), Markets (world
+  indices, your markets, watchlist + FX), and News (briefing + headlines). Consistent
+  card sizes, logical grouping, less clutter.
+- **Customisable navigation.** Settings → Navigation lets you **reorder** the sidebar
+  (move Snapshot above Portfolio, etc.) and **rename** items (e.g. Home → Dashboard).
+  Saved per device, applied live.
+
 ## v1.3.2 — 2026-06-30
 
 - **Fixed the update script's migration error.** `./scripts/update.sh` printed a

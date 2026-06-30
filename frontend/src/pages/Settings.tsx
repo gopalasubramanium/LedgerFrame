@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card } from "../components/ui";
 import { AiConfigCard } from "../components/AiConfigCard";
+import { NavSettingsCard } from "../components/NavSettingsCard";
 import { useApp } from "../store/app";
 import { useActivity } from "../components/Activity";
 
@@ -226,6 +227,8 @@ export default function Settings() {
         <Toggle label="High contrast" on={highContrast} onClick={toggleHighContrast} />
         <p className="text-xs text-faint mt-2">Stored on this device.</p>
       </Card>
+
+      <NavSettingsCard className="col-span-12 lg:col-span-6" />
 
       {/* Network / Voice / AI system toggles */}
       <Card title="System controls" className="col-span-12 lg:col-span-6">

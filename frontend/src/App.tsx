@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AskPanel } from "./components/AskPanel";
 import { LockScreen } from "./components/LockScreen";
@@ -19,18 +19,7 @@ import Legal from "./pages/Legal";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { Footer } from "./components/Footer";
 import { ActivityPip } from "./components/Activity";
-
-const NAV = [
-  { path: "/", label: "Home" },
-  { path: "/portfolio", label: "Portfolio" },
-  { path: "/holdings", label: "Holdings" },
-  { path: "/markets", label: "Markets" },
-  { path: "/heatmap", label: "Heatmap" },
-  { path: "/news", label: "News" },
-  { path: "/snapshot", label: "Snapshot" },
-  { path: "/settings", label: "Settings" },
-  { path: "/legal", label: "Legal" },
-];
+import { loadNav, NAV_CHANGED_EVENT } from "./lib/nav";
 
 const ROTATION_PAGES = ["/", "/portfolio", "/markets", "/heatmap", "/news"];
 
@@ -39,8 +28,16 @@ export default function App() {
   const [asking, setAsking] = useState(false);
   const [rotate, setRotate] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [nav, setNav] = useState(loadNav);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Re-read the (user-customised) nav order/labels when Settings changes them.
+  useEffect(() => {
+    const onChange = () => setNav(loadNav());
+    window.addEventListener(NAV_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(NAV_CHANGED_EVENT, onChange);
+  }, []);
 
   const onRotate = useCallback((path: string) => navigate(path), [navigate]);
   const { paused } = useRotation({
@@ -58,7 +55,7 @@ export default function App() {
   const themeIcon = theme === "light" ? "☀" : theme === "dark" ? "☾" : "◑";
 
   const navLinks = (onClick?: () => void) =>
-    NAV.map((n) => (
+    nav.map((n) => (
       <NavLink
         key={n.path}
         to={n.path}

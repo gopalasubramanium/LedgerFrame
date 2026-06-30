@@ -37,6 +37,10 @@ const shots = [
 
 const run = async () => {
   for (const t of seed) await addTxn(t);
+  // Warm price-history so Performance / Net-worth / Home sparklines render.
+  await fetch(`${BASE}/api/v1/portfolio/performance?days=90&benchmark=SPY`).catch(() => {});
+  await fetch(`${BASE}/api/v1/portfolio/performance?days=365&benchmark=SPY&include_manual=true`).catch(() => {});
+  await new Promise((r) => setTimeout(r, 800));
 
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1680, height: 1050 }, deviceScaleFactor: 2 });

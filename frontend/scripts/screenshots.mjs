@@ -69,6 +69,12 @@ const run = async () => {
   await mp.screenshot({ path: OUT + "home-mobile.png" });
   console.log("saved home-mobile.png");
 
+  // Mobile settings (verifies the responsive layout — no text overlap)
+  await mp.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
+  await mp.waitForTimeout(800);
+  await mp.screenshot({ path: OUT + "settings-mobile.png", fullPage: true });
+  console.log("saved settings-mobile.png");
+
   await browser.close();
 };
 

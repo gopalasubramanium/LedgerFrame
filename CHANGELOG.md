@@ -2,6 +2,28 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.5.2 — 2026-06-30
+
+- **Home charts fill their cards.** The Portfolio and Performance sparklines now grow
+  to fill the card height instead of sitting as a thin strip with empty space above/
+  below — they're responsive across laptop and large-monitor widths.
+- **More reliable web-UI update.** `version-check` now reads the rate-limit-free
+  `releases/latest` redirect (so a shared/NATed IP no longer yields a false "up to
+  date"); update completion is detected robustly (status + version change, not an
+  exact tag-string match); and if the privileged helper/sudoers rule is missing the
+  UI now says exactly how to fix it (re-run `./scripts/install.sh`) instead of failing
+  opaquely. Service & maintenance shows a clear notice when in-app controls aren't
+  installed.
+- **Settings mobile layout.** Fixed text overlap on narrow screens — the numeric
+  fields reflow (2-up on mobile, 4-up on desktop), labels wrap, and info rows gap/wrap
+  instead of colliding.
+- **Settings → About & legal.** New card linking the in-app Terms/disclaimer page and
+  the GitHub License, full terms & disclaimers, and releases/changelog. Added a
+  dedicated **Legal & disclaimers** section to the README.
+- **Find/filter/sort in the transactions editor.** Holdings → Add/Edit → Transactions
+  now has a fixed toolbar with a search box and sortable, sticky column headers
+  (date/type/symbol/qty/price), so a specific scrip is easy to locate in a long ledger.
+
 ## v1.5.1 — 2026-06-30
 
 - **Fixed Movers / Contributors columns.** Restored the visible **price** column and

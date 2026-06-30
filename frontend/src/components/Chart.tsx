@@ -31,7 +31,7 @@ function tooltip(p: ReturnType<typeof palette>) {
 
 const DONUT_COLORS = ["#2f9e7c", "#4f8fd6", "#c79a4e", "#a06fc4", "#d2685f", "#5bb6b0", "#7a8aa0", "#cf8a52"];
 
-export function Sparkline({ points, up }: { points: number[]; up: boolean }) {
+export function Sparkline({ points, up, height = 48 }: { points: number[]; up: boolean; height?: number | string }) {
   const { theme } = useApp();
   const option = useMemo(() => {
     const p = palette();
@@ -52,7 +52,7 @@ export function Sparkline({ points, up }: { points: number[]; up: boolean }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points, up, theme]);
-  return <ReactECharts echarts={echarts} option={option} style={{ height: 48, width: "100%" }} />;
+  return <ReactECharts echarts={echarts} option={option} style={{ height, width: "100%" }} notMerge lazyUpdate />;
 }
 
 export function LineSeries({ x, y, height = 280 }: { x: string[]; y: number[]; height?: number }) {

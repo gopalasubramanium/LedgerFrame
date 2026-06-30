@@ -250,6 +250,26 @@ If LedgerFrame is useful to you, you can
 [support the project via PayPal](https://www.paypal.com/donate/?business=gopalasubramanium@gmail.com&item_name=Support%20LedgerFrame&no_recurring=0)
 ⭐ and a star on the repo helps too.
 
+## Legal & disclaimers
+
+- **Not financial advice.** LedgerFrame is an information and monitoring tool only. It
+  does **not** place orders, integrate with brokerages, or make buy/sell
+  recommendations. Nothing it displays is investment, tax, or legal advice — consult a
+  qualified professional before making financial decisions.
+- **No warranty.** The software is provided "as is", without warranty of any kind, to
+  the fullest extent permitted by law (see the [`LICENSE`](LICENSE)). You are solely
+  responsible for how you use it and for any decisions you make.
+- **Data accuracy & timeliness.** Bundled providers are demo / delayed / end-of-day.
+  Quotes may be stale, incomplete, or wrong; entitlement and staleness are shown on
+  each quote, but you must not rely on them for time-sensitive decisions.
+- **Third-party terms.** Market data and AI providers are governed by **their own**
+  terms of service and rate limits — you are responsible for complying with them. See
+  [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
+- **Your data stays local.** LedgerFrame is local-first; nothing leaves your device
+  unless you configure an external provider. You own and control your data.
+
+The in-app **Settings → About & legal** card and the **Legal** page link back here.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Market data & external providers are subject to their

@@ -80,7 +80,7 @@ export default function Home() {
             </div>
           }>
           {p ? (
-            <>
+            <div className="flex flex-col h-full">
               <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
                 <Figure label={`Total value (${ccy})`}>{money(p.total_value, ccy)}</Figure>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 flex-1 min-w-[16rem]">
@@ -91,10 +91,10 @@ export default function Home() {
                 </div>
               </div>
               {perfSeries.length > 1 && (
-                <div className="mt-3 -mb-1"><Sparkline points={perfSeries} up={perfSeries[perfSeries.length - 1] >= perfSeries[0]} /></div>
+                <div className="mt-3 flex-1 min-h-[88px]"><Sparkline points={perfSeries} up={perfSeries[perfSeries.length - 1] >= perfSeries[0]} height="100%" /></div>
               )}
               {p.has_stale && <div className="mt-2"><DataBadge stale /></div>}
-            </>
+            </div>
           ) : (
             <div className="space-y-3">
               <Skeleton className="h-9 w-44" />
@@ -133,14 +133,14 @@ export default function Home() {
         <Card title="Performance" className="col-span-12 md:col-span-6 lg:col-span-4 h-full"
           action={<Link to="/portfolio" className="lf-chip bg-elevated text-accent">vs {perf.data?.benchmark_symbol ?? "SPY"} →</Link>}>
           {perfSeries.length > 1 ? (
-            <>
-              <Sparkline points={perfSeries} up={perfSeries[perfSeries.length - 1] >= perfSeries[0]} />
+            <div className="flex flex-col h-full">
+              <div className="flex-1 min-h-[88px]"><Sparkline points={perfSeries} up={perfSeries[perfSeries.length - 1] >= perfSeries[0]} height="100%" /></div>
               <div className="grid grid-cols-3 gap-2 mt-2">
                 <Mini label="90d return" value={pct(perf.data?.stats?.return_pct ?? null)} tone={perf.data?.stats?.return_pct ?? null} />
                 <Mini label={`vs ${perf.data?.benchmark_symbol ?? "SPY"}`} value={pct(perf.data?.stats?.excess_pct ?? null)} tone={perf.data?.stats?.excess_pct ?? null} />
                 <Mini label="Max DD" value={pct(perf.data?.stats?.max_drawdown_pct ?? null)} tone={perf.data?.stats?.max_drawdown_pct ?? null} />
               </div>
-            </>
+            </div>
           ) : <p className="text-muted text-sm">{perf.loading ? "Loading…" : "Building price history…"}</p>}
         </Card>
 

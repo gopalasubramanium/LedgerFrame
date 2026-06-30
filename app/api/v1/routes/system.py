@@ -404,17 +404,31 @@ async def version_check() -> dict:
     available = False
     url = f"https://github.com/{_GITHUB_REPO}/releases/latest"
     try:
-        async with httpx.AsyncClient(timeout=6) as client:
-            r = await client.get(
-                f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest",
-                headers={"Accept": "application/vnd.github+json"},
-            )
-            if r.status_code == 200:
-                tag = r.json().get("tag_name", "")
-                if tag:
-                    latest = tag.lstrip("vV")
-                    available = _parse_ver(latest) > _parse_ver(current)
+        async with httpx.AsyncClient(timeout=6, follow_redirects=False) as client:
+            # Primary: the /releases/latest redirect carries the tag in its Location
+            # header and is NOT subject to the strict (60/hr) unauthenticated API
+            # rate limit — so a shared/NATed IP can't yield a false "up to date".
+            tag = ""
+            try:
+                rr = await client.get(url)
+                loc = rr.headers.get("location", "")
+                if "/tag/" in loc:
+                    tag = loc.rsplit("/tag/", 1)[1]
+                    url = loc
+            except Exception:  # noqa: BLE001
+                pass
+            # Fallback: the JSON API (covers cases where the redirect is unavailable).
+            if not tag:
+                r = await client.get(
+                    f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest",
+                    headers={"Accept": "application/vnd.github+json"},
+                )
+                if r.status_code == 200:
+                    tag = r.json().get("tag_name", "")
                     url = r.json().get("html_url", url)
+            if tag:
+                latest = tag.lstrip("vV")
+                available = _parse_ver(latest) > _parse_ver(current)
     except Exception:  # noqa: BLE001
         pass
     return {"current": current, "latest": latest, "update_available": available, "url": url}
@@ -488,11 +502,22 @@ async def run_admin(payload: AdminAction) -> dict:
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         out, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
+        text_out = (out or b"").decode(errors="replace")[-4000:]
+        # The web app may only run this one helper, password-less, via a scoped
+        # sudoers rule the installer writes. If that rule is missing (older install),
+        # `sudo -n` fails asking for a password — surface an actionable hint instead
+        # of a cryptic failure, since the whole point is to avoid the terminal.
+        if proc.returncode != 0 and ("password is required" in text_out or "a terminal is required" in text_out):
+            text_out = (
+                "The system-control sudoers rule is missing or outdated, so the web app "
+                "can't run privileged actions. Re-run the installer once on the device to "
+                "(re)install it: `cd ~/LedgerFrame && ./scripts/install.sh`.\n\n" + text_out
+            )
         return {
             "ok": proc.returncode == 0,
             "action": payload.action,
             "arg": payload.arg,
-            "output": (out or b"").decode(errors="replace")[-4000:],
+            "output": text_out,
         }
     except TimeoutError:
         raise HTTPException(504, "admin action timed out") from None

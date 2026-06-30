@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   api,
   ASSET_CLASSES,
@@ -61,15 +61,35 @@ const EMPTY_TXN: TxnInput = {
   quantity: 0, price: 0, fees: 0, taxes: 0, currency: "USD", note: "",
 };
 
+type TxnSortKey = "ts" | "type" | "symbol" | "quantity" | "price";
+
 function TxnManager({ onChanged }: { onChanged: () => void }) {
   const [rows, setRows] = useState<TxnRow[]>([]);
   const [editing, setEditing] = useState<TxnInput | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<{ key: TxnSortKey; dir: 1 | -1 }>({ key: "ts", dir: -1 });
 
   const reload = () => api.transactions().then((r) => setRows(r.transactions)).catch((e) => setErr(String(e)));
   useEffect(() => { reload(); }, []);
+
+  // Find/filter/sort so a specific scrip is easy to locate in a long ledger.
+  const view = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+      ? rows.filter((t) => `${t.symbol ?? ""} ${t.type} ${t.currency} ${t.note ?? ""} ${new Date(t.ts).toLocaleDateString()}`.toLowerCase().includes(q))
+      : rows;
+    const { key, dir } = sort;
+    return [...filtered].sort((a, b) => {
+      if (key === "ts") return (new Date(a.ts).getTime() - new Date(b.ts).getTime()) * dir;
+      if (key === "type" || key === "symbol") return String(a[key] ?? "").localeCompare(String(b[key] ?? "")) * dir;
+      return (((a[key] as number) ?? 0) - ((b[key] as number) ?? 0)) * dir;
+    });
+  }, [rows, query, sort]);
+  const toggleSort = (key: TxnSortKey) => setSort((s) => s.key === key ? { key, dir: (s.dir === 1 ? -1 : 1) } : { key, dir: 1 });
+  const arrow = (key: TxnSortKey) => sort.key === key ? <span className="ml-0.5">{sort.dir === 1 ? "▲" : "▼"}</span> : null;
 
   async function save(input: TxnInput) {
     setBusy(true); setErr("");
@@ -94,30 +114,37 @@ function TxnManager({ onChanged }: { onChanged: () => void }) {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-muted">{rows.length} transactions</span>
+    <div className="flex flex-col h-full min-h-0">
+      {/* Fixed toolbar: find + actions stay put while the ledger scrolls below. */}
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <input className="lf-input w-44 sm:w-56" placeholder="Find symbol / type / date…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <span className="text-xs text-faint whitespace-nowrap">{view.length}{query ? ` / ${rows.length}` : ""} txns</span>
+        </div>
         <div className="flex gap-2">
           <a className="lf-btn" href={api.csvTemplateUrl} download="ledgerframe-template.csv">CSV template</a>
           <ImportButton onDone={() => { reload(); onChanged(); }} onError={setErr} />
           <button className="lf-btn-accent" onClick={() => { setEditing({ ...EMPTY_TXN }); setEditId(null); }}>+ Add</button>
         </div>
       </div>
-      {err && <div className="lf-chip bg-down/15 text-down mb-2">{err}</div>}
-      <div className="overflow-x-auto">
+      {err && <div className="lf-chip bg-down/15 text-down mb-2 shrink-0">{err}</div>}
+      <div className="flex-1 min-h-0 overflow-auto border border-line/40 rounded-card">
         <table className="w-full text-sm">
-          <thead className="text-faint text-xs uppercase">
+          <thead className="text-faint text-xs uppercase sticky top-0 bg-surface z-10">
             <tr className="text-left border-b border-line">
-              <th className="py-2">Date</th><th>Type</th><th>Symbol</th>
-              <th className="text-right">Qty</th><th className="text-right">Price</th>
-              <th className="text-right">Fees</th><th className="text-right pr-3">Taxes</th>
-              <th>Ccy</th><th></th>
+              <th className="py-2 px-2 cursor-pointer select-none" onClick={() => toggleSort("ts")}>Date{arrow("ts")}</th>
+              <th className="cursor-pointer select-none" onClick={() => toggleSort("type")}>Type{arrow("type")}</th>
+              <th className="cursor-pointer select-none" onClick={() => toggleSort("symbol")}>Symbol{arrow("symbol")}</th>
+              <th className="text-right cursor-pointer select-none" onClick={() => toggleSort("quantity")}>Qty{arrow("quantity")}</th>
+              <th className="text-right cursor-pointer select-none" onClick={() => toggleSort("price")}>Price{arrow("price")}</th>
+              <th className="text-right">Fees</th><th className="text-right pr-2">Taxes</th>
+              <th>Ccy</th><th className="pr-2"></th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((t) => (
+            {view.map((t) => (
               <tr key={t.id} className="border-b border-line/50">
-                <td className="py-2 whitespace-nowrap">{new Date(t.ts).toLocaleDateString()} <span className="text-faint">{new Date(t.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></td>
+                <td className="py-2 px-2 whitespace-nowrap">{new Date(t.ts).toLocaleDateString()} <span className="text-faint">{new Date(t.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></td>
                 <td><span className="lf-chip bg-elevated capitalize">{t.type}</span></td>
                 <td>{t.symbol ?? "—"}</td>
                 <td className="text-right tnum">{t.quantity}</td>
@@ -125,7 +152,7 @@ function TxnManager({ onChanged }: { onChanged: () => void }) {
                 <td className="text-right tnum">{t.fees}</td>
                 <td className="text-right tnum">{t.taxes}</td>
                 <td>{t.currency}</td>
-                <td className="text-right whitespace-nowrap">
+                <td className="text-right whitespace-nowrap pr-2">
                   <button className="text-accent hover:underline mr-3" onClick={() => {
                     setEditId(t.id);
                     setEditing({ symbol: t.symbol ?? "", type: t.type, ts: t.ts.slice(0, 16), quantity: t.quantity, price: t.price, fees: t.fees, taxes: t.taxes, currency: t.currency, note: t.note ?? "" });
@@ -134,6 +161,9 @@ function TxnManager({ onChanged }: { onChanged: () => void }) {
                 </td>
               </tr>
             ))}
+            {view.length === 0 && (
+              <tr><td colSpan={9} className="py-6 text-center text-muted">{rows.length === 0 ? "No transactions yet — add one or import a CSV." : "No matches."}</td></tr>
+            )}
           </tbody>
         </table>
       </div>

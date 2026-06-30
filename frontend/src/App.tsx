@@ -108,16 +108,16 @@ export default function App() {
           className={`hidden md:flex md:flex-col shrink-0 border-r border-line bg-surface/40 py-3 px-2 transition-[width] duration-200 ${collapsed ? "w-16" : "w-44"}`}
           aria-label="Primary"
         >
-          <div className="flex-1 overflow-y-auto">{navLinks(undefined, collapsed)}</div>
           <button
-            className="touch flex items-center justify-center gap-2 mt-2 rounded-card text-xs font-medium text-faint hover:text-ink hover:bg-elevated/50"
+            className={`touch flex items-center gap-2 mb-2 rounded-card text-xs font-medium text-faint hover:text-ink hover:bg-elevated/50 ${collapsed ? "justify-center px-0" : "px-4 justify-start"}`}
             onClick={toggleCollapsed}
             title={collapsed ? "Expand menu" : "Collapse menu"}
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}
           >
-            <span aria-hidden="true">{collapsed ? "»" : "«"}</span>
+            <span aria-hidden="true" className="text-base leading-none">{collapsed ? "»" : "«"}</span>
             {!collapsed && <span>Collapse</span>}
           </button>
+          <div className="flex-1 overflow-y-auto">{navLinks(undefined, collapsed)}</div>
         </nav>
 
         {/* Mobile drawer */}

@@ -15,9 +15,11 @@ function stripThinking(t: string): string {
 
 const SUGGESTIONS = [
   "What moved in my portfolio today?",
+  "How is Tesla doing?",
   "How did the markets do?",
-  "How concentrated is my portfolio?",
   "How am I doing vs the benchmark?",
+  "What's happening with NVDA?",
+  "How concentrated is my portfolio?",
 ];
 
 // Touch-first "Ask" panel. Streams a grounded answer and shows the source facts
@@ -95,7 +97,7 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
           <input
             ref={inputRef}
             className="flex-1 touch rounded-card bg-base border border-line px-4 text-ink focus:ring-2 focus:ring-accent outline-none"
-            placeholder="Ask about your portfolio or the markets…"
+            placeholder="Ask about any stock, the markets, or your portfolio…"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ask(question)}

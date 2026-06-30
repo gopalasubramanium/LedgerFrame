@@ -12,12 +12,27 @@ export function UpdateBanner() {
   const [msg, setMsg] = useState("");
   const { run, isRunning } = useActivity();
 
+  // Re-check on mount, every 30 min, and whenever the tab regains focus — so the
+  // prompt appears without needing a full reload. Snooze is version-aware: a NEW
+  // release re-surfaces the banner even if a previous version was snoozed.
   useEffect(() => {
-    const snoozedUntil = Number(localStorage.getItem("lf_update_snooze") || 0);
-    if (Date.now() < snoozedUntil) return;
-    api.versionCheck()
-      .then((v) => { if (v.update_available) setInfo({ latest: v.latest, url: v.url }); })
-      .catch(() => {});
+    let cancelled = false;
+    const check = () => {
+      api.versionCheck()
+        .then((v) => {
+          if (cancelled || !v.update_available) return;
+          let snooze: { until?: number; version?: string } = {};
+          try { snooze = JSON.parse(localStorage.getItem("lf_update_snooze") || "{}"); } catch { /* ignore */ }
+          const snoozed = snooze.version === v.latest && Number(snooze.until || 0) > Date.now();
+          if (!snoozed) setInfo({ latest: v.latest, url: v.url });
+        })
+        .catch(() => {});
+    };
+    check();
+    const iv = setInterval(check, 30 * 60 * 1000);
+    const onFocus = () => check();
+    window.addEventListener("focus", onFocus);
+    return () => { cancelled = true; clearInterval(iv); window.removeEventListener("focus", onFocus); };
   }, []);
 
   if (!info) return null;
@@ -53,7 +68,7 @@ export function UpdateBanner() {
   }
 
   function snooze() {
-    localStorage.setItem("lf_update_snooze", String(Date.now() + 24 * 3600 * 1000));
+    if (info) localStorage.setItem("lf_update_snooze", JSON.stringify({ until: Date.now() + 24 * 3600 * 1000, version: info.latest }));
     setInfo(null);
   }
 

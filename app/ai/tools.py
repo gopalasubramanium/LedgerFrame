@@ -98,34 +98,6 @@ async def watchlist_quote_facts(session: AsyncSession) -> list[GroundingFact]:
     return facts
 
 
-async def symbol_facts(session: AsyncSession, symbols: list[str]) -> list[GroundingFact]:
-    """Quote + position facts for specific tickers named in the question."""
-    from app.models import Holding, Instrument
-
-    facts: list[GroundingFact] = []
-    for sym in symbols[:5]:
-        instr = (
-            await session.execute(select(Instrument).where(Instrument.symbol == sym))
-        ).scalars().first()
-        if not instr:
-            continue
-        q = await get_cached_quote(session, instr.symbol, instr.exchange)
-        name = instr.name if instr.name and instr.name.upper() != sym else sym
-        if q.price is not None:
-            facts.append(GroundingFact(
-                label=f"{name} price", value=_fmt(q.price, q.currency), source=q.source,
-                timestamp=q.received_at, entitlement=q.entitlement.value, is_stale=q.is_stale))
-        else:
-            facts.append(GroundingFact(label=f"{name} price", value="unavailable",
-                                       source=q.source, entitlement="unavailable"))
-        holding = (
-            await session.execute(select(Holding).where(Holding.instrument_id == instr.id))
-        ).scalars().first()
-        if holding and holding.quantity:
-            facts.append(GroundingFact(label=f"{name} holding", value=f"{holding.quantity} units"))
-    return facts
-
-
 async def market_facts(session: AsyncSession, limit: int = 14) -> list[GroundingFact]:
     """World indices + cross-asset benchmarks (the Global/Markets data) with % change."""
     from app.api.v1.routes.markets import _GLOBAL_MARKETS, _global_symbol
@@ -227,51 +199,179 @@ async def holdings_facts(session: AsyncSession, n: int = 8) -> list[GroundingFac
     ]
 
 
-def _extract_symbols(question: str) -> list[str]:
-    """Pull likely tickers from a question (e.g. AAPL, HDFC.BSE, BTC)."""
+# Common company / asset names → ticker, so "how is Tesla moving?" resolves even
+# when the word isn't a ticker and the instrument isn't held. The provider's search
+# is the fallback for anything not listed here.
+_ALIASES = {
+    "tesla": "TSLA", "apple": "AAPL", "microsoft": "MSFT", "amazon": "AMZN",
+    "alphabet": "GOOGL", "google": "GOOGL", "nvidia": "NVDA", "meta": "META",
+    "facebook": "META", "netflix": "NFLX", "broadcom": "AVGO", "intel": "INTC",
+    "advanced micro": "AMD", "palantir": "PLTR", "berkshire": "BRK.B",
+    "jpmorgan": "JPM", "visa": "V", "mastercard": "MA", "walmart": "WMT",
+    "coca cola": "KO", "coca-cola": "KO", "disney": "DIS", "boeing": "BA",
+    "exxon": "XOM", "ford": "F", "starbucks": "SBUX", "uber": "UBER",
+    "bitcoin": "BTC", "ethereum": "ETH", "ether": "ETH", "solana": "SOL",
+    "reliance": "RELIANCE.NSE", "hdfc": "HDFCBANK.BSE", "vodafone": "VOD.L",
+    "toyota": "7203.T",
+}
+
+
+# Uppercase words that look like tickers but aren't (so we don't quote "ETF"/"USD").
+_TICKER_STOP = {
+    "ETF", "USD", "SGD", "INR", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "AI", "PL",
+    "FX", "OK", "US", "UK", "EU", "CEO", "CFO", "IPO", "GDP", "FAQ", "ROI", "P/E",
+    "YTD", "EOD", "RSI", "MA", "ATH", "ESG", "API", "I", "A", "VS", "TV", "PM", "AM",
+}
+
+
+async def _resolve_symbols(session: AsyncSession, question: str) -> list[str]:
+    """Map a free-text question to up to 3 instrument symbols. Company/asset NAMES
+    (any case) resolve via the alias map; explicit TICKERS are recognised only when
+    typed in upper-case in the original text (so ordinary words like "an"/"overview"
+    are never mistaken for symbols)."""
     import re
 
-    stop = {
-        "WHAT", "HOW", "MY", "THE", "ETF", "USD", "SGD", "INR", "AI", "PL", "FX", "OK", "VS",
-        "DID", "ARE", "IS", "DO", "AND", "OR", "TODAY", "NOW", "ME", "WHY", "WHEN", "WHERE",
-        "MARKET", "MARKETS", "NEWS", "GLOBAL", "WORLD", "CASH", "RISK", "NET", "WORTH", "TOTAL",
-        "VALUE", "GAIN", "GAINS", "LOSS", "LOSSES", "RETURN", "RETURNS", "ALL", "ANY", "GOOD",
-        "BAD", "BUY", "SELL", "HOLD", "YTD", "BEST", "WORST", "TOP", "OWN", "HAVE", "DOING",
-        "PERFORM", "PORTFOLIO", "STOCKS", "PRICE", "PRICES", "MOVE", "MOVED", "UP", "DOWN",
-    }
-    out: list[str] = []
-    for tok in re.findall(r"\b[A-Z]{2,10}(?:\.[A-Z]{1,4})?\b", question.upper()):
-        if tok not in stop and tok not in out:
-            out.append(tok)
+    qlow = question.lower()
+    resolved: list[str] = []
+
+    def add(sym: str) -> None:
+        s = sym.upper()
+        if s not in resolved:
+            resolved.append(s)
+
+    # 1) Named companies / assets, in any case ("Tesla", "bitcoin").
+    for name, sym in _ALIASES.items():
+        if re.search(rf"(?<![a-z]){re.escape(name)}(?![a-z])", qlow):
+            add(sym)
+    # 2) Explicit tickers the user typed UPPER-CASE (AAPL, NVDA, BTC, HDFC.BSE).
+    for tok in re.findall(r"\b[A-Z]{2,6}(?:\.[A-Z]{1,4})?\b", question):
+        if tok not in _TICKER_STOP:
+            add(tok)
+    return resolved[:3]
+
+
+async def _one_instrument_facts(session: AsyncSession, sym: str) -> list[GroundingFact]:
+    from datetime import timedelta
+
+    from app.models import Holding, Instrument
+    from app.services.feeds import fetch_symbol_news
+    from app.services.market import get_history_cached, refresh_quote
+
+    out: list[GroundingFact] = []
+    q = await refresh_quote(session, sym)  # live fetch + cache (works for any symbol)
+    instr = (await session.execute(select(Instrument).where(Instrument.symbol == sym))).scalars().first()
+    name = instr.name if instr and instr.name and instr.name.upper() != sym else None
+    label = f"{name} ({sym})" if name else sym
+
+    if q.price is not None:
+        chg = f" ({q.change_pct:+.2f}% today)" if q.change_pct is not None else ""
+        out.append(GroundingFact(label=f"{label} price", value=f"{_fmt(q.price, q.currency)}{chg}",
+                                 source=q.source, timestamp=q.received_at,
+                                 entitlement=q.entitlement.value, is_stale=q.is_stale))
+    else:
+        out.append(GroundingFact(label=f"{label} price", value="unavailable",
+                                 source=q.source, entitlement="unavailable"))
+
+    # Trend + range from cached/fetched history (best effort, never fatal).
+    try:
+        end = datetime.now(UTC)
+        candles = await get_history_cached(session, sym, "1d", end - timedelta(days=180), end)
+        closes = [float(c.close) for c in candles if c.close is not None]
+        if len(closes) > 5:
+            first, last = closes[0], closes[-1]
+            if first:
+                out.append(GroundingFact(label=f"{label} ~6-month change",
+                                         value=f"{(last - first) / first * 100:+.1f}%", timestamp=end))
+            hi = max(float(c.high) for c in candles if c.high is not None)
+            lo = min(float(c.low) for c in candles if c.low is not None)
+            out.append(GroundingFact(label=f"{label} 6-month range",
+                                     value=f"{_fmt(Decimal(str(lo)), q.currency)} – {_fmt(Decimal(str(hi)), q.currency)}",
+                                     timestamp=end))
+    except Exception:  # noqa: BLE001
+        pass
+
+    if instr:
+        holding = (await session.execute(select(Holding).where(Holding.instrument_id == instr.id))).scalars().first()
+        if holding and holding.quantity:
+            out.append(GroundingFact(label=f"{label} — your position", value=f"{holding.quantity} units"))
+
+    # A couple of recent headlines for context (free Yahoo per-symbol feed).
+    try:
+        import asyncio
+        for it in (await asyncio.wait_for(fetch_symbol_news(sym, limit=3), timeout=6))[:2]:
+            out.append(GroundingFact(label=f"{label} headline · {it.source}", value=it.headline,
+                                     source=it.source or "news", timestamp=it.published_at))
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
-# Intent-routed fact gathering. Picks the RIGHT data for the question (markets,
-# news, net worth, performance/risk, allocation, movers, holdings, watchlist or a
-# specific ticker) and anchors portfolio questions with the headline numbers — so
-# the model has a rich, relevant, grounded dataset to reason over.
+async def instrument_deep_facts(session: AsyncSession, symbols: list[str], max_symbols: int = 2) -> list[GroundingFact]:
+    """Rich facts for specific instruments (held or not): live price + day move,
+    ~6-month trend/range, your position if any, and recent headlines."""
+    import asyncio
+
+    facts: list[GroundingFact] = []
+    for sym in symbols[:max_symbols]:
+        try:
+            facts += await asyncio.wait_for(_one_instrument_facts(session, sym), timeout=14)
+        except Exception:  # noqa: BLE001 — one slow/failed symbol must not break the answer
+            continue
+    return facts
+
+
+def _dedupe(facts: list[GroundingFact], cap: int = 20) -> list[GroundingFact]:
+    seen: set[str] = set()
+    out: list[GroundingFact] = []
+    for f in facts:
+        if f.label not in seen:
+            seen.add(f.label)
+            out.append(f)
+    return out[:cap]
+
+
+# Intent-routed fact gathering. Resolves any instruments named in the question
+# (by ticker OR company name, held or not) and gathers the RIGHT data — instrument
+# deep-dive, markets, news, net worth, performance/risk, allocation, movers,
+# holdings or watchlist — so the model has a rich, relevant, grounded dataset.
 async def gather_facts(session: AsyncSession, question: str) -> list[GroundingFact]:
     q = question.lower()
 
     def has(*ws: str) -> bool:
         return any(w in q for w in ws)
 
-    facts: list[GroundingFact] = []
-    syms = _extract_symbols(question)
-    if syms:
-        facts += await symbol_facts(session, syms)
+    symbols = await _resolve_symbols(session, question)
+    instrument_facts = await instrument_deep_facts(session, symbols) if symbols else []
 
     is_market = has("market", "indices", "index", "global", "world", "nasdaq", "s&p", "s & p",
                     "dow", "nikkei", "ftse", "hang seng", "nifty", "stoxx", "sensex", "wall street")
     is_news = has("news", "headline", "happening", "story", "stories", "going on")
     is_networth = has("net worth", "networth", "asset", "liabilit", "wealth", "cash")
     is_perf = has("perform", "return", "risk", "volatil", "drawdown", "sharpe", "benchmark",
-                  " vs ", "beat", "compare", "how am i", "doing", "yield", "dividend", "income")
+                  " vs ", "beat", "how am i", "doing", "yield", "dividend", "income")
     is_alloc = has("alloc", "exposure", "diversif", "concentrat", "sector", "weight", "spread")
     is_movers = has("mov", "gain", "los", "detractor", "best", "worst", "drop", "today", "up ", "down")
     is_holdings = has("biggest", "largest", "top holding", "what do i own", "position", "holding", "breakdown", "own")
     is_watch = has("watch", "watchlist")
+    # "Personal" = the question is about the user's own money, not just an instrument
+    # in the abstract. Generic verbs like "doing"/"moving" don't count.
+    import re as _re
+    personal = bool(_re.search(
+        r"\b(my|i|we|our|me|mine|portfolio|holdings?|positions?|net ?worth|allocation|"
+        r"diversif\w*|concentrat\w*|exposure|watchlist|own)\b", q))
+    portfolio_intent = is_networth or is_perf or is_alloc or is_movers or is_holdings
 
+    # Pure instrument question ("how is Tesla moving?") → keep the answer focused on
+    # the instrument(s); don't drown it in portfolio headline numbers.
+    if symbols and not personal and not is_watch:
+        facts = list(instrument_facts)
+        if is_market:
+            facts += await market_facts(session)
+        if is_news and not instrument_facts:
+            facts += await news_facts(session)
+        return _dedupe(facts)
+
+    facts: list[GroundingFact] = list(instrument_facts)
     if is_market:
         facts += await market_facts(session)
     if is_news:
@@ -289,21 +389,9 @@ async def gather_facts(session: AsyncSession, question: str) -> list[GroundingFa
     if is_watch:
         facts += await watchlist_quote_facts(session)
 
-    portfolio_intent = is_networth or is_perf or is_alloc or is_movers or is_holdings or bool(syms)
-    external_only = (is_market or is_news) and not portfolio_intent
-
+    external_only = (is_market or is_news) and not (portfolio_intent or symbols)
     if not facts:
-        # General/ambiguous question → a rich portfolio overview.
         facts = await portfolio_facts(session) + await movers_facts(session)
-    elif not external_only:
-        # Anchor portfolio questions with the headline numbers (prepended).
+    elif portfolio_intent or (not external_only and not symbols):
         facts = await portfolio_facts(session) + facts
-
-    # De-duplicate by label, preserving order; cap to keep the prompt focused.
-    seen: set[str] = set()
-    deduped: list[GroundingFact] = []
-    for f in facts:
-        if f.label not in seen:
-            seen.add(f.label)
-            deduped.append(f)
-    return deduped[:18]
+    return _dedupe(facts)

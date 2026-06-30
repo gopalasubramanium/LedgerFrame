@@ -2,6 +2,24 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.8.0 — 2026-06-30
+
+- **Smarter AI — answers about any instrument, held or not.** Ask "how is Tesla
+  doing?" or "what's happening with NVDA?" and the assistant now resolves the name/
+  ticker, fetches a **live quote, ~6-month trend & range, your position (if any) and
+  recent headlines**, and answers about *that instrument* — instead of replying "you
+  don't own it". Company names (Tesla, Apple, Nvidia, bitcoin…) resolve via an alias
+  map; explicit upper-case tickers are recognised directly. Intent routing now keeps
+  instrument questions focused and reserves the portfolio overview for questions about
+  *your* money. The system prompt was upgraded to a markets **and** portfolio analyst.
+  (Still fully grounded — every number comes from a verified fact; the model never
+  fabricates or computes values.)
+- **Reworked update / system notifications.** The "update available" banner now
+  re-checks on load, every 30 minutes, and on tab focus (no full reload needed), and
+  its snooze is **version-aware** — a new release re-surfaces it even if you dismissed
+  an older one. It also names the fix when system controls aren't installed.
+- **Sidebar collapse toggle moved to the top** of the rail (was at the bottom).
+
 ## v1.7.0 — 2026-06-30
 
 - **Collapsible sidebar (desktop).** The left navigation now collapses to a slim icon

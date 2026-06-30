@@ -2,6 +2,29 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.5.0 — 2026-06-30
+
+- **Progressive (lazy) Home loading.** The dashboard shell now paints immediately and
+  each card fills in as its own request resolves, with per-card skeletons — a slow
+  `/home` call no longer blanks the whole page.
+- **Free vs premium provider awareness.** LedgerFrame now learns whether an Alpha
+  Vantage key has **Index Data** (premium) access by probing once, and behaves
+  accordingly: premium keys show real index levels, free keys stop wasting quota on
+  index calls and fall back to ETF proxies, with premium-only panels left unrendered.
+  Settings → Data source shows the detected **plan** (Premium · real indices / Free
+  tier) and what it means.
+- **Movers/Contributors default to Δ%.** Today's movers and portfolio contributors now
+  read percent change by default (click any value to toggle to absolute), with tighter
+  type so instrument names stay visible.
+- **Richer Snapshot.** Reworked into an aligned KPI strip (net worth · assets ·
+  liabilities · cash) plus a 12-month net-worth trend (with % change) and an asset-mix
+  composition donut.
+- **Heatmap robustness.** Tiles now colour from each holding's own daily change when
+  the markets-overview quote is missing.
+- **README retitled.** Clarified that LedgerFrame *runs on any machine* (Linux/macOS/
+  Docker) and was simply **born on the Raspberry Pi** — the Pi/Hailo are an optional
+  kiosk target, not a requirement.
+
 ## v1.4.0 — 2026-06-30
 
 - **Redesigned Home into a clean master dashboard.** Replaced the uneven, cluttered

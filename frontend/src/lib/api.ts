@@ -117,7 +117,7 @@ export const api = {
   feedsTest: () => req<{ results: { url: string; ok: boolean; count: number; error: string | null; status: number | null }[] }>("/api/v1/news/feeds/test"),
 
   // --- Data source (mock ↔ live) ---
-  dataSource: () => req<{ provider: string; has_api_key: boolean; base_currency: string; stale_after_seconds: string; providers: string[]; admin_available: boolean }>("/api/v1/system/data-source"),
+  dataSource: () => req<{ provider: string; has_api_key: boolean; base_currency: string; stale_after_seconds: string; providers: string[]; supports_indices?: boolean; av_tier?: string | null; admin_available: boolean }>("/api/v1/system/data-source"),
   setDataSource: (d: { provider: string; api_key?: string; base_currency?: string; stale_after_seconds?: number }) =>
     req<{ ok: boolean; applied: boolean; note: string }>("/api/v1/system/data-source", { method: "PUT", body: JSON.stringify(d) }),
   config: () => req<Record<string, string>>("/api/v1/system/config"),

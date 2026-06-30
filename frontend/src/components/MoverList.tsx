@@ -17,21 +17,23 @@ export interface MoverItem {
 // change column toggles between absolute (Δ) and percent (Δ%) on click — shared by
 // Home (Today's Movers) and Portfolio (Contributors) for space-efficient density.
 export function MoverList({ title, rows, ccy, max = 5 }: { title: string; rows: MoverItem[]; ccy: string; max?: number }) {
-  const [showPct, setShowPct] = useState(false);
+  // Percent change is the default read; click any value (or the header) to switch
+  // to the absolute base-currency change.
+  const [showPct, setShowPct] = useState(true);
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs uppercase tracking-wide text-faint">{title}</span>
         <button
           className="text-[10px] font-semibold uppercase tracking-wide text-faint hover:text-accent"
-          title="Toggle change / change %"
+          title="Toggle change % / change"
           onClick={() => setShowPct((v) => !v)}
         >
           {showPct ? "Δ%" : "Δ"}
         </button>
       </div>
-      {rows.length === 0 && <div className="text-muted text-sm">—</div>}
-      <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-3 gap-y-1 text-sm">
+      {rows.length === 0 && <div className="text-muted text-xs">—</div>}
+      <ul className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 gap-y-1 text-xs">
         {rows.slice(0, max).map((r) => (
           <li key={r.symbol || r.label} className="contents">
             {r.symbol ? (
@@ -41,12 +43,9 @@ export function MoverList({ title, rows, ccy, max = 5 }: { title: string; rows: 
             ) : (
               <span className="truncate" title={r.name || r.label}>{r.name || r.label}</span>
             )}
-            <span className="tnum text-right text-muted">
-              {r.price == null ? "" : money(r.price, r.currency || ccy, true)}
-            </span>
             <button
-              className={`tnum text-right justify-self-end ${toneClass(r.day_change)}`}
-              title="Toggle change / change %"
+              className={`tnum text-right justify-self-end tabular-nums ${toneClass(r.day_change)}`}
+              title={r.price != null ? `${money(r.price, r.currency || ccy, true)} · click to toggle Δ%/Δ` : "click to toggle Δ%/Δ"}
               onClick={() => setShowPct((v) => !v)}
             >
               {showPct ? pct(r.day_change_pct ?? null) : signedMoney(r.day_change, ccy)}

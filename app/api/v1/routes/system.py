@@ -80,12 +80,33 @@ async def get_data_source() -> dict:
 
     env = read_env()
     settings = get_settings()
+    provider = env.get("LEDGERFRAME_MARKET_PROVIDER", settings.market_provider)
+
+    # Capabilities: does the *live* provider give real index levels? Alpha Vantage
+    # only does on a premium (Index Data) plan — we learn the tier from the key by
+    # probing one index, then cache it on the provider for the process lifetime.
+    supports_indices = False
+    av_tier: str | None = None
+    if provider != "mock" and bool(env.get("LEDGERFRAME_MARKET_API_KEY", settings.market_api_key)):
+        try:
+            from app.providers.market import get_provider
+
+            prov = get_provider()
+            if provider == "alphavantage" and getattr(prov, "_index_entitled", "n/a") is None:
+                await prov.get_quote("DJI")  # one probe; sets the learned tier
+            supports_indices = bool(getattr(prov, "supports_indices", False))
+            av_tier = getattr(prov, "av_tier", None)
+        except Exception:  # noqa: BLE001 — capabilities are best-effort, never fatal
+            pass
+
     return {
-        "provider": env.get("LEDGERFRAME_MARKET_PROVIDER", settings.market_provider),
+        "provider": provider,
         "has_api_key": bool(env.get("LEDGERFRAME_MARKET_API_KEY", settings.market_api_key)),
         "base_currency": env.get("LEDGERFRAME_BASE_CURRENCY", settings.base_currency),
         "stale_after_seconds": env.get("LEDGERFRAME_STALE_AFTER_SECONDS", str(settings.stale_after_seconds)),
         "providers": sorted(_MARKET_PROVIDERS),
+        "supports_indices": supports_indices,
+        "av_tier": av_tier,  # "premium" | "free" | "unknown" | null (non-AV)
         "restart_required": True,
         "admin_available": os.path.exists(_ADMIN_BIN),
     }

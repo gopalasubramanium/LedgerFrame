@@ -29,15 +29,20 @@ export default function Home() {
     (localStorage.getItem("lf_ticker") as TickerSrc) || "markets",
   );
 
-  if (loading && !data) return <HomeSkeleton />;
-  if (!data) return <p className="text-muted">Unable to load dashboard.</p>;
+  // Lazy / progressive: the page shell renders immediately and each card fills in
+  // as its own request resolves, so a slow /home call never blanks the whole page.
+  // Only show the full-page skeleton on the very first paint with nothing at all.
+  const cold = loading && !data && !summary.data && !holdings.data;
+  if (cold) return <HomeSkeleton />;
 
-  const p = data.portfolio;
+  const p = data?.portfolio;
   const s = summary.data;
-  const ccy = p.base_currency;
-  const open = data.market_status.state === "open";
+  const ccy = p?.base_currency ?? s?.base_currency ?? "SGD";
+  const open = data?.market_status?.state === "open";
   const watch = wl.data?.watchlists.flatMap((l) => l.items) ?? [];
   const indices = (glob.data?.groups ?? []).flatMap((g) => g.items);
+  const markets = data?.markets ?? [];
+  const fx = data?.fx ?? [];
   const allocClass = s ? Object.entries(s.allocation_by_class).map(([name, value]) => ({ name, value: Math.abs(value) })).filter((x) => x.value > 0) : [];
   const perfSeries = (perf.data?.series ?? []).map((x) => x.value);
   const topHoldings = [...(holdings.data?.holdings ?? [])].filter((h) => h.market_value > 0).sort((a, b) => b.market_value - a.market_value).slice(0, 5);
@@ -47,7 +52,7 @@ export default function Home() {
     tickerSrc === "holdings" ? (holdings.data?.holdings ?? []).filter((h) => h.symbol).map((h) => ({ symbol: h.symbol!, price: h.price, change_pct: h.day_change_pct ?? null, currency: h.currency } as Quote))
       : tickerSrc === "global" ? indices.map((i) => i.quote)
         : tickerSrc === "watchlist" ? watch.map((i) => i.quote)
-          : data.markets;
+          : markets;
   const setTicker = (sx: TickerSrc) => { localStorage.setItem("lf_ticker", sx); setTickerSrc(sx); };
 
   return (
@@ -62,7 +67,7 @@ export default function Home() {
           <option value="global">Global</option>
           <option value="watchlist">Watchlist</option>
         </select>
-        <div className="flex-1 min-w-0"><TickerStrip quotes={tickerQuotes} fx={data.fx} /></div>
+        <div className="flex-1 min-w-0"><TickerStrip quotes={tickerQuotes} fx={fx} /></div>
       </div>
 
       {/* Row 1 — Portfolio headline + allocation */}
@@ -74,19 +79,28 @@ export default function Home() {
               <Link to="/portfolio" className="lf-chip bg-elevated text-accent">Analytics →</Link>
             </div>
           }>
-          <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
-            <Figure label={`Total value (${ccy})`}>{money(p.total_value, ccy)}</Figure>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 flex-1 min-w-[16rem]">
-              <Mini label="Today" value={signedMoney(p.day_change, ccy)} tone={p.day_change} />
-              <Mini label="Total return" value={pct(p.total_return_pct)} tone={p.total_return_pct} />
-              <Mini label="Unrealised" value={signedMoney(p.unrealised_pl, ccy)} tone={p.unrealised_pl} />
-              <Mini label="Cost basis" value={money(s?.cost_basis ?? null, ccy)} tone={undefined} />
+          {p ? (
+            <>
+              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+                <Figure label={`Total value (${ccy})`}>{money(p.total_value, ccy)}</Figure>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 flex-1 min-w-[16rem]">
+                  <Mini label="Today" value={signedMoney(p.day_change, ccy)} tone={p.day_change} />
+                  <Mini label="Total return" value={pct(p.total_return_pct)} tone={p.total_return_pct} />
+                  <Mini label="Unrealised" value={signedMoney(p.unrealised_pl, ccy)} tone={p.unrealised_pl} />
+                  <Mini label="Cost basis" value={money(s?.cost_basis ?? null, ccy)} tone={undefined} />
+                </div>
+              </div>
+              {perfSeries.length > 1 && (
+                <div className="mt-3 -mb-1"><Sparkline points={perfSeries} up={perfSeries[perfSeries.length - 1] >= perfSeries[0]} /></div>
+              )}
+              {p.has_stale && <div className="mt-2"><DataBadge stale /></div>}
+            </>
+          ) : (
+            <div className="space-y-3">
+              <Skeleton className="h-9 w-44" />
+              <Skeleton className="h-12 w-full" />
             </div>
-          </div>
-          {perfSeries.length > 1 && (
-            <div className="mt-3 -mb-1"><Sparkline points={perfSeries} up={perfSeries[perfSeries.length - 1] >= perfSeries[0]} /></div>
           )}
-          {p.has_stale && <div className="mt-2"><DataBadge stale /></div>}
         </Card>
 
         <Card title="Allocation" className="col-span-12 lg:col-span-4 h-full"
@@ -156,7 +170,7 @@ export default function Home() {
         <CompactQuoteCard title="World indices" to="/markets"
           rows={indices.slice(0, 7).map((i) => ({ key: i.symbol, symbol: i.symbol, label: i.label.split("·").pop()?.trim() ?? i.symbol, quote: i.quote }))} />
         <CompactQuoteCard title="Markets" to="/markets"
-          rows={data.markets.slice(0, 7).map((q) => ({ key: q.symbol, symbol: q.symbol, label: q.symbol, quote: q }))} />
+          rows={markets.slice(0, 7).map((q) => ({ key: q.symbol, symbol: q.symbol, label: q.symbol, quote: q }))} />
         <Card title="Watchlist & FX" className="col-span-12 md:col-span-12 lg:col-span-4 h-full"
           action={<Link to="/markets" className="lf-chip bg-elevated text-accent">All →</Link>}>
           <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-x-3 gap-y-1.5 text-sm">
@@ -170,7 +184,7 @@ export default function Home() {
             {watch.length === 0 && <li className="text-muted text-sm col-span-3">No watchlist items.</li>}
           </ul>
           <div className="border-t border-line/60 mt-3 pt-2 grid grid-cols-2 gap-x-5 gap-y-1 text-sm">
-            {data.fx.slice(0, 4).map((f) => (
+            {fx.slice(0, 4).map((f) => (
               <div key={`${f.base}${f.quote}`} className="flex justify-between gap-2">
                 <span className="text-xs text-faint">{f.base}/{f.quote}</span>
                 <span className="tnum">{f.rate.toFixed(4)}</span>
@@ -188,10 +202,16 @@ export default function Home() {
               onClick={() => run("briefing", async () => { const r = await api.refreshBriefing(); refetch(); return r; },
                 { pending: "Regenerating briefing", success: "Briefing updated", error: "Couldn't refresh briefing" })}>↻ Refresh</button>
           }>
-          <p className="text-ink leading-relaxed text-sm">{data.briefing.text}</p>
-          <p className="text-xs text-faint mt-3">
-            {data.briefing.generated_at ? `Generated ${timeAgo(data.briefing.generated_at)}` : "Not yet generated"} · Information only, not financial advice.
-          </p>
+          {data?.briefing ? (
+            <>
+              <p className="text-ink leading-relaxed text-sm">{data.briefing.text}</p>
+              <p className="text-xs text-faint mt-3">
+                {data.briefing.generated_at ? `Generated ${timeAgo(data.briefing.generated_at)}` : "Not yet generated"} · Information only, not financial advice.
+              </p>
+            </>
+          ) : (
+            <div className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-11/12" /><Skeleton className="h-4 w-4/5" /></div>
+          )}
         </Card>
 
         <Card title="Headlines" className="col-span-12 lg:col-span-5 h-full"

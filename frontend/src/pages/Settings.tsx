@@ -173,6 +173,28 @@ export default function Settings() {
         <button className="lf-btn-accent" onClick={saveDataSource}>Save & apply</button>
         <p className="text-xs text-faint mt-2">Applies immediately (no restart). See docs/DATA_SOURCES.md for keys & limits.</p>
 
+        {provider !== "mock" && (ds.data?.av_tier || ds.data?.supports_indices) && (
+          <div className="mt-3 rounded-lg bg-elevated/60 border border-line/60 px-3 py-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-faint uppercase tracking-wide">Plan</span>
+              {ds.data?.av_tier === "premium" ? (
+                <span className="lf-chip bg-up/15 text-up">Premium · real indices</span>
+              ) : ds.data?.av_tier === "free" ? (
+                <span className="lf-chip bg-warn/15 text-warn">Free tier</span>
+              ) : ds.data?.supports_indices ? (
+                <span className="lf-chip bg-up/15 text-up">Real indices</span>
+              ) : (
+                <span className="lf-chip bg-elevated text-muted">No live indices</span>
+              )}
+            </div>
+            <p className="text-faint mt-1.5 leading-relaxed">
+              {ds.data?.supports_indices
+                ? "World indices (S&P 500, Nasdaq, Dow…) show real index levels."
+                : "Index Data isn't available on this plan, so world indices use ETF proxies (SPY, QQQ…) and premium-only panels stay hidden. Upgrade the plan, or use the free Yahoo provider for real indices."}
+            </p>
+          </div>
+        )}
+
         <div className="border-t border-line mt-4 pt-3 space-y-2">
           <div className="text-xs uppercase tracking-wide text-faint">Data</div>
           <div className="flex flex-wrap gap-2">

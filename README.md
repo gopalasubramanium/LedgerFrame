@@ -2,14 +2,18 @@
 
 [![Repository](https://img.shields.io/badge/GitHub-LedgerFrame-2f9e7c?logo=github&logoColor=white)](https://github.com/gopalasubramanium/LedgerFrame)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ea88b)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%205-c51a4a?logo=raspberrypi&logoColor=white)](ARCHITECTURE.md)
+[![Runs anywhere](https://img.shields.io/badge/runs%20on-Linux%20·%20macOS%20·%20Docker%20·%20Raspberry%20Pi-2f9e7c)](#runs-anywhere)
 
-**A local-first, always-on personal financial intelligence display for Raspberry Pi 5 + Hailo AI HAT+ 2.**
+**A local-first, always-on personal financial intelligence display — runs on any machine.**
 
 A private, self-hosted "wealth desk": market monitoring, portfolio & net-worth
 tracking, benchmarked performance analytics, world-market views, optional local
 voice, and **grounded** AI explanations — all on your own hardware. Your data stays
 on the device by default; nothing leaves it unless you configure it to.
+
+> **Born on the Raspberry Pi**, but not tied to it. LedgerFrame runs fully on any
+> Linux/macOS machine or in Docker; the Raspberry Pi 5 and the Hailo AI HAT+ are an
+> optional (lovely) always-on kiosk target, not a requirement.
 
 > **Not a trading platform.** No order placement, no brokerage integration, no
 > buy/sell recommendations, no financial advice.

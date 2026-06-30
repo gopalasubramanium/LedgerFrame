@@ -86,11 +86,6 @@ def _row_field(row: dict, name: str):
 class ExternalMarketDataProvider:
     # Rate-limited: don't fetch on page load — serve cache, refresh via worker/button.
     fetch_on_demand = False
-    # Real indices are available on premium plans (Index Data API). The Global page
-    # uses AV index symbols (SPX, NDX, DJI…) and falls back to ETF proxies per-entry
-    # if the response isn't valid (e.g. the key isn't premium).
-    supports_indices = True
-
     def __init__(self, name: str, api_key: str):
         if not api_key:
             raise ValueError("external market provider requires an API key")
@@ -98,6 +93,21 @@ class ExternalMarketDataProvider:
         self._key = api_key
         self._mock = MockMarketDataProvider()
         self._sem = asyncio.Semaphore(1)  # respect tight free-tier rate limits
+        # Real indices need the premium Index Data API. We *learn* the key's tier
+        # from the first index response: None = unknown (attempt once), True =
+        # premium (use real indices), False = free (don't waste calls — proxies only).
+        self._index_entitled: bool | None = None
+
+    @property
+    def supports_indices(self) -> bool:
+        # Attempt indices until a response proves the key isn't entitled; after that
+        # the Global/Markets page uses ETF proxies and we stop burning quota.
+        return self._index_entitled is not False
+
+    @property
+    def av_tier(self) -> str:
+        """'premium' | 'free' | 'unknown' — based on learned Index Data entitlement."""
+        return {True: "premium", False: "free"}.get(self._index_entitled, "unknown")
 
     async def _get(self, params: dict) -> dict:
         params = {**params, "apikey": self._key}
@@ -127,6 +137,7 @@ class ExternalMarketDataProvider:
             if close is None:
                 raise ValueError("no close field")
             px, pclose = price(close), (price(prev) if prev else None)
+            self._index_entitled = True  # a valid index series ⇒ premium key
             return Quote(
                 symbol=sym, exchange=exchange, price=px,
                 previous_close=pclose,
@@ -136,6 +147,10 @@ class ExternalMarketDataProvider:
                 market_time=now, received_at=now,
             )
         except Exception as exc:  # noqa: BLE001 — never fabricate; fall back to proxy
+            # A "not yet entitled to index data" notice ⇒ free key; remember it so we
+            # stop attempting indices (rate-limit notices don't prove the tier).
+            if "entitle" in str(exc).lower():
+                self._index_entitled = False
             log.warning("AV index unavailable for %s: %s", sym, exc)
             return Quote(symbol=sym, exchange=exchange, price=None, currency="USD",
                          source=self.name, entitlement=EntitlementStatus.UNAVAILABLE,

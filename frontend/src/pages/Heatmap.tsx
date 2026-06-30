@@ -16,7 +16,7 @@ export default function HeatmapPage() {
     .map((h) => ({
       name: h.symbol as string,
       value: Math.max(1, h.market_value),
-      changePct: quoteBy.get(h.symbol as string)?.change_pct ?? 0,
+      changePct: quoteBy.get(h.symbol as string)?.change_pct ?? h.day_change_pct ?? 0,
     }));
 
   const coverage = items.length;

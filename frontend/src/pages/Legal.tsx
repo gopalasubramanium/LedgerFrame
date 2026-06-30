@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card } from "../components/ui";
 
+const REPO = "https://github.com/gopalasubramanium/LedgerFrame";
+
 // Terms, conditions, disclaimer & license. Acceptance is stored locally; the
 // "agree" box defaults to ticked, and the date of acceptance is recorded.
 export default function Legal() {
@@ -25,10 +27,10 @@ export default function Legal() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-3">
-      <h1 className="text-lg font-semibold shrink-0">Terms, disclaimer &amp; license</h1>
+    <div className="space-y-3 pb-4">
+      <h1 className="text-lg font-semibold">Terms, disclaimer &amp; license</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
         <Card title="Important disclaimer" className="text-sm">
           <ul className="list-disc pl-5 space-y-1 text-sm text-ink">
             <li><b>Not financial advice</b> — an information & tracking tool only; nothing here is a recommendation to buy, sell or hold.</li>
@@ -39,7 +41,7 @@ export default function Legal() {
           </ul>
         </Card>
 
-        <div className="grid grid-rows-2 gap-3 min-h-0">
+        <div className="grid gap-3">
           <Card title="Terms of use" className="text-sm">
             <p className="text-xs text-muted leading-relaxed">
               Self-hosted, local-first software you run on your own hardware, used at your own risk. Provided
@@ -57,7 +59,20 @@ export default function Legal() {
         </div>
       </div>
 
-      <Card className="shrink-0 py-3">
+      {/* Detailed legal documents on GitHub */}
+      <Card title="Full terms, conditions, disclaimer & license (on GitHub)">
+        <p className="text-sm text-muted mb-3">
+          The complete, authoritative documents live in the public repository. They may be updated between releases.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+          <a className="lf-btn justify-center" href={`${REPO}#legal--disclaimers`} target="_blank" rel="noreferrer">Terms &amp; disclaimers →</a>
+          <a className="lf-btn justify-center" href={`${REPO}/blob/main/LICENSE`} target="_blank" rel="noreferrer">MIT License (full text) →</a>
+          <a className="lf-btn justify-center" href={`${REPO}/blob/main/docs/DATA_SOURCES.md`} target="_blank" rel="noreferrer">Data-provider terms →</a>
+          <a className="lf-btn justify-center" href={`${REPO}/releases`} target="_blank" rel="noreferrer">Releases &amp; changelog →</a>
+        </div>
+      </Card>
+
+      <Card className="py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <label className="flex items-center gap-3">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-5 h-5 accent-accent" />

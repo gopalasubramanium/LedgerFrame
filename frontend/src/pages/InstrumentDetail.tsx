@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge } from "../components/ui";
-import { LineSeries } from "../components/Chart";
+import { CandleChart, LineSeries } from "../components/Chart";
 import { money, num, pct, signedMoney, timeAgo, toneClass } from "../lib/format";
 
 const PERIODS: { label: string; days: number }[] = [
@@ -18,6 +18,9 @@ const PERIODS: { label: string; days: number }[] = [
 export default function InstrumentDetail() {
   const { symbol = "" } = useParams();
   const [period, setPeriod] = useState(2); // 6M default
+  const [chartType, setChartType] = useState<"candle" | "line">("candle");
+  const [ind, setInd] = useState({ ma: true, boll: false, rsi: true, vol: true });
+  const toggleInd = (k: keyof typeof ind) => setInd((s) => ({ ...s, [k]: !s[k] }));
 
   const detail = useApi(
     () => fetch(`/api/v1/instruments/${encodeURIComponent(symbol)}`).then((r) => r.json()),
@@ -31,6 +34,7 @@ export default function InstrumentDetail() {
   const q = detail.data?.quote;
   const meta = detail.data?.instrument;
   const candles = history.data?.candles ?? [];
+  const last = candles.length ? candles[candles.length - 1] : null;
   const holding = (holdings.data?.holdings ?? []).find((h) => h.symbol === symbol);
 
   // Derived stats from the series.
@@ -90,32 +94,57 @@ export default function InstrumentDetail() {
         </div>
       </Card>
 
-      {/* Chart + period selector */}
+      {/* Chart: candlesticks + volume + indicators (computed from real OHLC) */}
       <Card className="col-span-12 lg:col-span-8">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Price</h2>
+        {/* OHLC read-out for the latest bar */}
+        {last && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mb-2">
+            <span className="text-sm font-semibold uppercase tracking-wide text-muted mr-1">{PERIODS[period].label}</span>
+            <Ohlc k="O" v={money(last.open, ccy, true)} />
+            <Ohlc k="H" v={money(last.high, ccy, true)} />
+            <Ohlc k="L" v={money(last.low, ccy, true)} />
+            <Ohlc k="C" v={money(last.close, ccy, true)} />
+            {stats?.periodPct != null && <span className={`tnum font-semibold ${toneClass(stats.periodPct)}`}>{pct(stats.periodPct)}</span>}
+            {last.volume != null && <span className="text-faint">Vol {num(last.volume, 0)}</span>}
+          </div>
+        )}
+
+        {/* Responsive toolbar: chart type · periods · indicators (all wrap on mobile) */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <div className="flex gap-1">
+            <Seg active={chartType === "candle"} onClick={() => setChartType("candle")}>Candles</Seg>
+            <Seg active={chartType === "line"} onClick={() => setChartType("line")}>Line</Seg>
+          </div>
+          <div className="flex flex-wrap gap-1">
             {PERIODS.map((p, i) => (
-              <button
-                key={p.label}
+              <button key={p.label}
                 className={`touch px-3 py-1 rounded-card text-sm ${i === period ? "bg-accent text-base" : "bg-elevated text-muted hover:text-ink"}`}
-                onClick={() => setPeriod(i)}
-              >
-                {p.label}
-              </button>
+                onClick={() => setPeriod(i)}>{p.label}</button>
             ))}
           </div>
+          {chartType === "candle" && (
+            <div className="flex flex-wrap gap-1">
+              <Seg active={ind.ma} onClick={() => toggleInd("ma")}>MA</Seg>
+              <Seg active={ind.boll} onClick={() => toggleInd("boll")}>Boll</Seg>
+              <Seg active={ind.rsi} onClick={() => toggleInd("rsi")}>RSI</Seg>
+              <Seg active={ind.vol} onClick={() => toggleInd("vol")}>Vol</Seg>
+            </div>
+          )}
         </div>
+
         {candles.length > 1 ? (
-          <LineSeries x={candles.map((c) => new Date(c.ts).toLocaleDateString())} y={candles.map((c) => c.close)} height={340} />
+          chartType === "candle" ? (
+            <CandleChart candles={candles} height={420} opts={{ showMa: ind.ma, showBoll: ind.boll, showRsi: ind.rsi, showVolume: ind.vol }} />
+          ) : (
+            <LineSeries x={candles.map((c) => new Date(c.ts).toLocaleDateString())} y={candles.map((c) => c.close)} height={360} />
+          )
         ) : (
-          <p className="text-muted">No history available.</p>
+          <p className="text-muted">{history.loading ? "Loading history…" : "No history available for this period."}</p>
         )}
-        {stats?.periodPct != null && (
-          <p className={`text-sm mt-2 ${toneClass(stats.periodPct)}`}>
-            {PERIODS[period].label}: {pct(stats.periodPct)}
-          </p>
-        )}
+        <p className="text-xs text-faint mt-2">
+          Indicators (MA/Bollinger/RSI) are computed from delayed/EOD prices for analysis only — not financial advice.
+          LedgerFrame is not a trading platform and does not place orders or show live order-book depth.
+        </p>
       </Card>
 
       {/* Key statistics */}
@@ -206,5 +235,20 @@ function Stat({ k, v }: { k: string; v: string }) {
       <dt className="text-muted">{k}</dt>
       <dd className="tnum text-right">{v}</dd>
     </>
+  );
+}
+
+function Ohlc({ k, v }: { k: string; v: string }) {
+  return <span className="tnum"><span className="text-faint">{k}</span> <span className="text-ink">{v}</span></span>;
+}
+
+function Seg({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      className={`touch px-2.5 py-1 rounded-card text-xs font-medium border ${active ? "bg-accent/15 border-accent text-accent" : "bg-elevated border-line text-muted hover:text-ink"}`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }

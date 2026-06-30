@@ -31,35 +31,32 @@ export function PerformancePanel({ height = 300, className = "" }: { height?: nu
       : "Add priced holdings to see performance.";
 
   return (
-    <Card
-      title="Performance vs benchmark"
-      className={className}
-      action={
-        <div className="flex items-center gap-2">
-          <select
-            className="touch rounded-card bg-elevated border border-line text-sm px-2 text-muted"
-            value={benchmark}
-            onChange={(e) => setBenchmark(e.target.value)}
-            title="Benchmark"
-          >
-            {(benches.data?.benchmarks ?? [{ symbol: "SPY", label: "S&P 500" }]).map((b) => (
-              <option key={b.symbol} value={b.symbol}>vs {b.label}</option>
-            ))}
-          </select>
-          <div className="flex gap-1">
-            {PERIODS.map((per, i) => (
-              <button
-                key={per.label}
-                className={`touch px-3 py-1 rounded-card text-sm ${i === p ? "bg-accent text-base" : "bg-elevated text-muted hover:text-ink"}`}
-                onClick={() => setP(i)}
-              >
-                {per.label}
-              </button>
-            ))}
-          </div>
+    <Card title="Performance vs benchmark" className={className}>
+      {/* Controls live in the body (not the header) so they wrap on mobile instead
+          of overflowing off-screen. */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <select
+          className="touch rounded-card bg-elevated border border-line text-sm px-2 py-1 text-muted"
+          value={benchmark}
+          onChange={(e) => setBenchmark(e.target.value)}
+          title="Benchmark"
+        >
+          {(benches.data?.benchmarks ?? [{ symbol: "SPY", label: "S&P 500" }]).map((b) => (
+            <option key={b.symbol} value={b.symbol}>vs {b.label}</option>
+          ))}
+        </select>
+        <div className="flex flex-wrap gap-1">
+          {PERIODS.map((per, i) => (
+            <button
+              key={per.label}
+              className={`touch px-3 py-1 rounded-card text-sm ${i === p ? "bg-accent text-base" : "bg-elevated text-muted hover:text-ink"}`}
+              onClick={() => setP(i)}
+            >
+              {per.label}
+            </button>
+          ))}
         </div>
-      }
-    >
+      </div>
       {d && d.series.length > 1 ? (
         <BenchmarkChart
           x={d.series.map((s) => new Date(s.ts).toLocaleDateString())}

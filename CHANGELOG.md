@@ -2,6 +2,23 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.6.0 — 2026-06-30
+
+- **Richer instrument page.** The price chart is now a TradingView-style
+  **candlestick** view with a **volume** sub-pane, optional **moving averages
+  (MA20/50)**, **Bollinger bands**, and an **RSI(14)** sub-pane — all computed from the
+  real OHLC, plus zoom/pan, an O/H/L/C read-out, and a Candles/Line toggle. (No
+  fabricated bid/ask depth and no order placement — LedgerFrame remains an analysis
+  tool, not a trading platform.)
+- **Performance period buttons fixed on mobile.** The Portfolio "Performance vs
+  benchmark" controls (1M/3M/6M/1Y/5Y + benchmark) now wrap inside the card instead of
+  overflowing off-screen.
+- **Legal page reworked for the detail + mobile.** It now flows/scrolls instead of
+  cramming into one screen (no more overlapped text on phones) and gains a card linking
+  the **full terms, conditions, disclaimer & license on GitHub** (License, terms &
+  disclaimers, data-provider terms, releases). The temporary About/legal additions on
+  the Settings page were reverted.
+
 ## v1.5.2 — 2026-06-30
 
 - **Home charts fill their cards.** The Portfolio and Performance sparklines now grow

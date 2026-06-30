@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card } from "../components/ui";
@@ -149,10 +148,10 @@ export default function Settings() {
         </select>
         <label className="block text-sm text-muted mb-1">Timezone</label>
         <input className="lf-input mb-3" value={conf.timezone ?? ""} onChange={(e) => setC("timezone", e.target.value)} placeholder="Asia/Singapore" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Num label="Rotation (s)" v={rotation} set={setRotation} min={10} max={300} />
           <Num label="Refresh (s)" v={refresh} set={setRefresh} min={15} max={3600} />
-          <Num label="Screen sleep (min)" v={sleepMin} set={setSleepMin} min={0} max={180} />
+          <Num label="Screen sleep (min, 0=off)" v={sleepMin} set={setSleepMin} min={0} max={180} />
           <Num label="Stale after (s)" v={conf.stale_after_seconds ?? "900"} set={(v) => setC("stale_after_seconds", v)} min={30} max={86400} />
         </div>
         <div className="flex gap-2 mt-3">
@@ -377,24 +376,6 @@ export default function Settings() {
         <p className="text-xs text-faint mt-2">For live market prices and paid providers, set keys in <code>.env</code> — see docs/DATA_SOURCES.md.</p>
       </Card>
 
-      {/* About & legal */}
-      <Card title="About & legal" className="col-span-12 lg:col-span-6">
-        <p className="text-sm text-muted">
-          LedgerFrame v{status?.version ?? "—"} — a private, self-hosted wealth desk.
-          <b className="text-ink"> Not a trading platform</b>: information only, not financial advice.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-sm">
-          <Link to="/legal" className="lf-btn justify-center">Terms, disclaimer & privacy →</Link>
-          <a className="lf-btn justify-center" href="https://github.com/gopalasubramanium/LedgerFrame/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License (GitHub) →</a>
-          <a className="lf-btn justify-center" href="https://github.com/gopalasubramanium/LedgerFrame#legal--disclaimers" target="_blank" rel="noreferrer">Full terms & disclaimers →</a>
-          <a className="lf-btn justify-center" href="https://github.com/gopalasubramanium/LedgerFrame/releases" target="_blank" rel="noreferrer">Releases & changelog →</a>
-        </div>
-        <p className="text-xs text-faint mt-3">
-          Released under the MIT License. You are responsible for how you use it and for complying with each data
-          provider's terms. No warranty; see the full text on GitHub.
-        </p>
-      </Card>
-
       {msg && (
         <div className="fixed bottom-4 right-4 z-50 max-w-sm">
           <div className="lf-card bg-elevated border-accent text-ink shadow-card flex items-start gap-3 px-4 py-3">
@@ -410,9 +391,9 @@ export default function Settings() {
 
 function Num({ label, v, set, min, max }: { label: string; v: string; set: (s: string) => void; min: number; max: number }) {
   return (
-    <label className="block min-w-0">
-      <span className="block text-xs uppercase tracking-wide text-faint leading-tight">{label}</span>
-      <input type="number" min={min} max={max} className="lf-input tnum mt-1 w-full" value={v} onChange={(e) => set(e.target.value)} />
+    <label className="block">
+      <span className="text-xs uppercase tracking-wide text-faint">{label}</span>
+      <input type="number" min={min} max={max} className="lf-input tnum mt-1" value={v} onChange={(e) => set(e.target.value)} />
     </label>
   );
 }
@@ -428,9 +409,9 @@ function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: (
 }
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between items-baseline gap-3 py-1 text-sm border-b border-line/50">
-      <span className="text-muted shrink-0">{k}</span>
-      <span className="text-ink text-right min-w-0 break-words" title={v}>{v}</span>
+    <div className="flex justify-between py-1 text-sm border-b border-line/50">
+      <span className="text-muted">{k}</span>
+      <span className="text-ink text-right">{v}</span>
     </div>
   );
 }

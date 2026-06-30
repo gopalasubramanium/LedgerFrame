@@ -2,6 +2,13 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.5.1 — 2026-06-30
+
+- **Fixed Movers / Contributors columns.** Restored the visible **price** column and
+  added explicit column headers (name · **Price** · **Δ%**), so the change column is
+  unambiguously the change — the percent value is no longer mistaken for a price. The
+  change column still toggles between Δ% (default) and absolute Δ on click.
+
 ## v1.5.0 — 2026-06-30
 
 - **Progressive (lazy) Home loading.** The dashboard shell now paints immediately and

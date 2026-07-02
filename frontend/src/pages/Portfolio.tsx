@@ -18,6 +18,7 @@ export default function Portfolio() {
 
   const allocClass = s ? Object.entries(s.allocation_by_class).map(([name, value]) => ({ name, value: Math.abs(value) })) : [];
   const allocCcy = s ? Object.entries(s.allocation_by_currency).map(([name, value]) => ({ name, value: Math.abs(value) })) : [];
+  const allocSector = s ? Object.entries(s.allocation_by_sector ?? {}).map(([name, value]) => ({ name, value: Math.abs(value) })) : [];
 
   return (
     <div className="space-y-4">
@@ -51,6 +52,11 @@ export default function Portfolio() {
           {allocClass.length ? <Donut data={allocClass} /> : <p className="text-muted">No holdings.</p>}
           <Legend items={allocClass} ccy={ccy} />
         </Card>
+        <Card title="Sector exposure" className="col-span-12 md:col-span-6 lg:col-span-4">
+          {allocSector.length ? <Donut data={allocSector} /> : <p className="text-muted text-sm">No classified stocks/funds yet — sectors show once equities are priced.</p>}
+          <Legend items={allocSector} ccy={ccy} />
+          {allocSector.length > 0 && <p className="text-xs text-faint mt-2">Stocks & funds only (excludes cash, property & unclassified).</p>}
+        </Card>
         <Card title="Currency exposure" className="col-span-12 md:col-span-6 lg:col-span-4">
           {allocCcy.length ? <Donut data={allocCcy} /> : <p className="text-muted">No holdings.</p>}
           <Legend items={allocCcy} ccy={ccy} />
@@ -59,7 +65,7 @@ export default function Portfolio() {
           <Concentration holdings={holdings.data?.holdings ?? []} total={s?.total_value ?? 0} />
         </Card>
 
-        <KeyStatsPanel className="col-span-12" />
+        <KeyStatsPanel className="col-span-12 lg:col-span-8" />
       </div>
     </div>
   );

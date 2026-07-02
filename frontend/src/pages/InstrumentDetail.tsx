@@ -157,6 +157,7 @@ export default function InstrumentDetail() {
           <Stat k={`${PERIODS[period].label} high`} v={stats ? money(stats.periodHigh, ccy) : "—"} />
           <Stat k={`${PERIODS[period].label} low`} v={stats ? money(stats.periodLow, ccy) : "—"} />
           <Stat k="Volume (last)" v={candles.length ? num(candles[candles.length - 1].volume ?? 0, 0) : "—"} />
+          <Stat k="Sector" v={meta?.sector ?? "—"} />
           <Stat k="Asset class" v={meta?.asset_class ?? "—"} />
         </dl>
 
@@ -210,7 +211,7 @@ export default function InstrumentDetail() {
       <Card title={`${symbol} news`} className="col-span-12 lg:col-span-4">
         {news.loading && !news.data && <p className="text-muted text-sm">Loading…</p>}
         <ul className="divide-y divide-line/50">
-          {(news.data?.items ?? []).map((item, i) => (
+          {(news.data?.items ?? []).slice(0, 5).map((item, i) => (
             <li key={i} className="py-2">
               {item.url ? (
                 <a className="text-sm text-ink hover:text-accent" href={item.url} target="_blank" rel="noreferrer">{item.headline}</a>

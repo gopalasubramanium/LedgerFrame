@@ -2,6 +2,26 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.9.0 — 2026-07-02
+
+- **Sector exposure** on Portfolio (a donut + legend of your stock/fund sector mix —
+  Technology, Financials, Energy…) and a compact "Top sectors" bar list on Home. Uses
+  provider sector metadata where available, with a built-in map for common tickers so
+  it's populated without a paid fundamentals feed. Instrument pages now show the
+  **Sector** in the header and Key statistics.
+- **Rich-text briefings & answers.** The Daily briefing (Home), AI briefing (News) and
+  the Ask panel now render **Markdown** — headings, **bold**, lists and tables — for
+  much better readability. The assistant is allowed light formatting (and small
+  comparison tables) while staying concise and fully grounded.
+- **News page enrichment.** Added a "markets at a glance" indices strip and a
+  **My holdings** filter that flags/limits headlines mentioning your positions.
+- **Instrument news capped** to 5 items so the page isn't a long scroll.
+- **Sidebar collapse control** now uses a clear, equal-sized chevron icon that's
+  legible in both light and dark themes (was a hard-to-see glyph).
+- **Verified end-to-end:** auto-update version detection confirmed (an older running
+  version correctly detects the newer GitHub release and shows the snoozable banner);
+  131 backend + 9 e2e tests green.
+
 ## v1.8.0 — 2026-06-30
 
 - **Smarter AI — answers about any instrument, held or not.** Ask "how is Tesla

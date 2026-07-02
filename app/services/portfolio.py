@@ -22,6 +22,33 @@ from app.providers.market import get_provider
 from app.services import fx
 from app.services.market import get_cached_quote, refresh_quote
 
+# Fallback sector classification for common tickers, used only when the market
+# provider doesn't supply a sector. Keeps "sector exposure" populated on real data
+# without a paid fundamentals feed. Extend freely.
+_SECTOR_MAP: dict[str, str] = {
+    "AAPL": "Technology", "MSFT": "Technology", "NVDA": "Technology", "AVGO": "Technology",
+    "INTC": "Technology", "AMD": "Technology", "ORCL": "Technology", "CRM": "Technology",
+    "ADBE": "Technology", "CSCO": "Technology", "PLTR": "Technology", "IBM": "Technology",
+    "GOOGL": "Communication Services", "GOOG": "Communication Services", "META": "Communication Services",
+    "NFLX": "Communication Services", "DIS": "Communication Services", "T": "Communication Services",
+    "VZ": "Communication Services", "VOD.L": "Communication Services",
+    "AMZN": "Consumer Discretionary", "TSLA": "Consumer Discretionary", "HD": "Consumer Discretionary",
+    "NKE": "Consumer Discretionary", "MCD": "Consumer Discretionary", "SBUX": "Consumer Discretionary",
+    "UBER": "Consumer Discretionary", "F": "Consumer Discretionary", "7203.T": "Consumer Discretionary",
+    "WMT": "Consumer Staples", "KO": "Consumer Staples", "PEP": "Consumer Staples",
+    "PG": "Consumer Staples", "COST": "Consumer Staples",
+    "JPM": "Financials", "BAC": "Financials", "WFC": "Financials", "GS": "Financials",
+    "MS": "Financials", "V": "Financials", "MA": "Financials", "BRK.B": "Financials",
+    "HDFCBANK.BSE": "Financials", "D05": "Financials", "D05.SI": "Financials",
+    "XOM": "Energy", "CVX": "Energy", "SHEL": "Energy", "BP.L": "Energy", "RELIANCE.NSE": "Energy",
+    "JNJ": "Health Care", "PFE": "Health Care", "UNH": "Health Care", "MRK": "Health Care",
+    "LLY": "Health Care", "ABBV": "Health Care",
+    "BA": "Industrials", "CAT": "Industrials", "GE": "Industrials", "UPS": "Industrials",
+    "NEE": "Utilities", "DUK": "Utilities",
+    "BTC": "Crypto", "ETH": "Crypto", "SOL": "Crypto",
+    "SPY": "Index / ETF", "QQQ": "Index / ETF", "VOO": "Index / ETF", "GLD": "Commodities",
+}
+
 
 @dataclass
 class FifoResult:
@@ -102,6 +129,7 @@ class HoldingValue:
     name: str | None
     symbol: str | None
     asset_class: str
+    sector: str | None
     quantity: Decimal
     native_currency: str
     price: Decimal | None
@@ -139,6 +167,16 @@ class PortfolioValuation:
         out: dict[str, Decimal] = defaultdict(lambda: ZERO)
         for h in self.holdings:
             out[getattr(h, key, "Other") or "Other"] += h.market_value_base
+        return dict(out)
+
+    def sector_allocation(self) -> dict[str, Decimal]:
+        """Sector exposure of the stock/fund sleeve (only positive-value holdings
+        that have a resolved sector) — cash, property and unclassified assets are
+        excluded so the mix reads as a clean 'energy / tech / financials' picture."""
+        out: dict[str, Decimal] = defaultdict(lambda: ZERO)
+        for h in self.holdings:
+            if h.sector and h.market_value_base > 0:
+                out[h.sector] += h.market_value_base
         return dict(out)
 
 
@@ -214,12 +252,18 @@ async def value_portfolio(
         display_name = iname if (iname and symbol and iname.upper() != symbol.upper()
                                  and "(DEMO)" not in iname and "(CSV)" not in iname) else None
 
+        # Sector: prefer provider metadata; fall back to a built-in map of common
+        # tickers so the exposure view is populated even when the provider omits it.
+        sector = (instrument.sector if instrument and instrument.sector else None) \
+            or (_SECTOR_MAP.get(symbol.upper()) if symbol else None)
+
         hv = HoldingValue(
             holding_id=h.id,
             label=h.label or (symbol or "Manual asset"),
             name=display_name,
             symbol=symbol,
             asset_class=h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class),
+            sector=sector,
             quantity=D(h.quantity),
             native_currency=native_ccy,
             price=price_native,

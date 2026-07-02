@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { streamChat } from "../lib/api";
 import type { GroundingFact } from "../lib/types";
 import { timeAgo } from "../lib/format";
+import { Markdown } from "./Markdown";
 
 // Hide reasoning-model chain-of-thought (<think>…</think>) from the displayed
 // answer, including a still-streaming, not-yet-closed think block.
@@ -135,8 +136,8 @@ export function AskPanel({ onClose }: { onClose: () => void }) {
           )}
 
           {visibleAnswer && (
-            <div className="bg-base rounded-card p-4 mb-4 whitespace-pre-wrap text-ink leading-relaxed">
-              {visibleAnswer}
+            <div className="bg-base rounded-card p-4 mb-4">
+              <Markdown>{visibleAnswer}</Markdown>
               {busy && <span className="lf-caret">▋</span>}
             </div>
           )}

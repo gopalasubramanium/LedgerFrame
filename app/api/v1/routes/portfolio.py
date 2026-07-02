@@ -62,6 +62,7 @@ async def portfolio_summary(session: AsyncSession = Depends(get_db)) -> dict:
         "has_stale": val.has_stale,
         "allocation_by_class": {k: to_display(v) for k, v in val.allocation("asset_class").items()},
         "allocation_by_currency": {k: to_display(v) for k, v in val.allocation("native_currency").items()},
+        "allocation_by_sector": {k: to_display(v) for k, v in val.sector_allocation().items()},
         "top_gainers": [_hv(h) for h in gainers],
         "top_losers": [_hv(h) for h in losers],
     }

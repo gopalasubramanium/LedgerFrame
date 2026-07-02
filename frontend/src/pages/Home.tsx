@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../hooks/useApi";
 import { Card, ChangePill, DataBadge, Figure, Skeleton } from "../components/ui";
+import { Markdown } from "../components/Markdown";
 import { useActivity } from "../components/Activity";
 import { MoverList } from "../components/MoverList";
 import { Donut, Sparkline } from "../components/Chart";
@@ -44,6 +45,8 @@ export default function Home() {
   const markets = data?.markets ?? [];
   const fx = data?.fx ?? [];
   const allocClass = s ? Object.entries(s.allocation_by_class).map(([name, value]) => ({ name, value: Math.abs(value) })).filter((x) => x.value > 0) : [];
+  const allocSector = s ? Object.entries(s.allocation_by_sector ?? {}).map(([name, value]) => ({ name, value: Math.abs(value) })).filter((x) => x.value > 0).sort((a, b) => b.value - a.value) : [];
+  const sectorTotal = allocSector.reduce((acc, x) => acc + x.value, 0) || 1;
   const perfSeries = (perf.data?.series ?? []).map((x) => x.value);
   const topHoldings = [...(holdings.data?.holdings ?? [])].filter((h) => h.market_value > 0).sort((a, b) => b.market_value - a.market_value).slice(0, 5);
   const gross = topHoldings.reduce((acc, h) => acc + h.market_value, 0) || 1;
@@ -106,17 +109,38 @@ export default function Home() {
         <Card title="Allocation" className="col-span-12 lg:col-span-4 h-full"
           action={<Link to="/portfolio" className="lf-chip bg-elevated text-accent">More →</Link>}>
           {allocClass.length ? (
-            <div className="flex items-center gap-3">
-              <div className="w-28 shrink-0"><Donut data={allocClass} /></div>
-              <ul className="flex-1 min-w-0 grid grid-cols-1 gap-y-1 text-sm">
-                {allocClass.sort((a, b) => b.value - a.value).slice(0, 5).map((a) => (
-                  <li key={a.name} className="flex justify-between gap-2">
-                    <span className="text-muted capitalize truncate">{a.name.replace("_", " ")}</span>
-                    <span className="tnum">{money(a.value, ccy, true)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <>
+              <div className="flex items-center gap-3">
+                <div className="w-28 shrink-0"><Donut data={allocClass} /></div>
+                <ul className="flex-1 min-w-0 grid grid-cols-1 gap-y-1 text-sm">
+                  {allocClass.sort((a, b) => b.value - a.value).slice(0, 5).map((a) => (
+                    <li key={a.name} className="flex justify-between gap-2">
+                      <span className="text-muted capitalize truncate">{a.name.replace("_", " ")}</span>
+                      <span className="tnum">{money(a.value, ccy, true)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {allocSector.length > 0 && (
+                <div className="border-t border-line/60 mt-3 pt-2">
+                  <div className="text-xs uppercase tracking-wide text-faint mb-1.5">Top sectors</div>
+                  <ul className="space-y-1.5">
+                    {allocSector.slice(0, 4).map((a) => {
+                      const w = Math.min(100, (a.value / sectorTotal) * 100);
+                      return (
+                        <li key={a.name}>
+                          <div className="flex justify-between text-xs gap-2">
+                            <span className="text-muted truncate">{a.name}</span>
+                            <span className="tnum text-faint shrink-0">{w.toFixed(0)}%</span>
+                          </div>
+                          <div className="h-1 rounded-full bg-elevated mt-0.5"><div className="h-full rounded-full bg-accent" style={{ width: `${w}%` }} /></div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </>
           ) : <p className="text-muted text-sm">No holdings yet.</p>}
         </Card>
       </div>
@@ -204,7 +228,7 @@ export default function Home() {
           }>
           {data?.briefing ? (
             <>
-              <p className="text-ink leading-relaxed text-sm">{data.briefing.text}</p>
+              <Markdown className="text-sm">{data.briefing.text}</Markdown>
               <p className="text-xs text-faint mt-3">
                 {data.briefing.generated_at ? `Generated ${timeAgo(data.briefing.generated_at)}` : "Not yet generated"} · Information only, not financial advice.
               </p>

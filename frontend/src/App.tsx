@@ -109,12 +109,15 @@ export default function App() {
           aria-label="Primary"
         >
           <button
-            className={`touch flex items-center gap-2 mb-2 rounded-card text-xs font-medium text-faint hover:text-ink hover:bg-elevated/50 ${collapsed ? "justify-center px-0" : "px-4 justify-start"}`}
+            className={`touch flex items-center gap-3 mb-2 rounded-card text-sm font-medium text-muted hover:text-ink hover:bg-elevated/60 ${collapsed ? "justify-center px-0" : "px-4 justify-start"}`}
             onClick={toggleCollapsed}
             title={collapsed ? "Expand menu" : "Collapse menu"}
             aria-label={collapsed ? "Expand menu" : "Collapse menu"}
           >
-            <span aria-hidden="true" className="text-base leading-none">{collapsed ? "»" : "«"}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
+              strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 shrink-0" aria-hidden="true">
+              {collapsed ? <path d="M13 18l6-6-6-6M5 18l6-6-6-6" /> : <path d="M11 18l-6-6 6-6M19 18l-6-6 6-6" />}
+            </svg>
             {!collapsed && <span>Collapse</span>}
           </button>
           <div className="flex-1 overflow-y-auto">{navLinks(undefined, collapsed)}</div>

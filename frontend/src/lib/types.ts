@@ -46,6 +46,7 @@ export interface PortfolioSummary {
   has_stale: boolean;
   allocation_by_class: Record<string, number>;
   allocation_by_currency: Record<string, number>;
+  allocation_by_sector: Record<string, number>;
   top_gainers: HoldingRow[];
   top_losers: HoldingRow[];
 }

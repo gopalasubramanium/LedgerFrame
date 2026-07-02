@@ -54,14 +54,16 @@ Light theme, a collapsible icon sidebar, and mobile are first-class:
 - **Deterministic engine** — valuations, FIFO cost basis, allocations, net worth,
   and risk stats are computed in Python with `Decimal`. **The AI never calculates a number.**
 - **Grounded AI** — answers are built only from verified, timestamped facts; the
-  model explains, it never invents. Falls back to deterministic templates when no
-  model is available.
+  model explains, it never invents. Ask about **any instrument** (held or not) —
+  Tesla, NVDA, bitcoin — and it fetches a live quote, ~6-month trend and headlines.
+  Briefings and answers render as **rich text** (headings, bold, tables). Falls back
+  to deterministic templates when no model is available.
 - **Honest market data** — runs in **DEMO mode** out of the box; switch to a live
   provider from Settings. A live provider that can't serve a symbol shows "—",
   never a fabricated price.
 - **Wealth-manager UI** — slate + emerald design, **light / dark / system** themes,
   a **collapsible icon sidebar**, candlestick instrument charts (MA/Bollinger/RSI),
-  benchmark picker, key-stats panel, responsive on phone and desk display.
+  **sector exposure**, benchmark picker, key-stats panel, responsive on phone and desk.
 - **Private by design** — localhost-only by default, Argon2 PIN (auto-prompts on
   expiry), encrypted backups (`age`), no telemetry.
 

@@ -175,12 +175,14 @@ async def instrument_detail(symbol: str, session: AsyncSession = Depends(get_db)
         from app.services.market import backfill_instrument_name
 
         await backfill_instrument_name(session, instr.symbol)  # fill the display name once
+        from app.services.portfolio import _SECTOR_MAP
+
         meta = {
             "symbol": instr.symbol, "name": instr.name,
             "asset_class": instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class),
             "currency": currency_for_symbol(instr.symbol, instr.exchange) or instr.currency,
             "exchange": instr.exchange,
-            "sector": instr.sector, "country": instr.country,
+            "sector": instr.sector or _SECTOR_MAP.get(instr.symbol.upper()), "country": instr.country,
         }
     else:
         results = await get_provider().search_instruments(symbol)

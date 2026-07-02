@@ -20,7 +20,7 @@ const LINKS: { label: string; href: string; icon: React.ReactNode }[] = [
   { label: "Facebook", href: "https://www.facebook.com/gopala.subramanium", icon: (
     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>
   ) },
-  { label: "Support (PayPal)", href: "https://www.paypal.com/donate/?business=gopalasubramanium@gmail.com&item_name=Support%20LedgerFrame&no_recurring=0", icon: (
+  { label: "Support (PayPal)", href: "https://paypal.me/sgopala", icon: (
     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M7.2 21l.5-3H5.1c-.5 0-.8-.4-.7-.9L6.7 4.3c.1-.5.6-.9 1.1-.9h6.4c2.7 0 4.6 1.4 4.2 4-.5 3.2-2.7 4.6-5.7 4.6H10l-.8 4.9c-.1.6-.6 1-1.2 1H7.2zm4-11.7h1.9c1.4 0 2.4-.6 2.6-1.9.2-1-.4-1.5-1.5-1.5h-1.7l-.5 2.9 -.8 0.5z"/></svg>
   ) },
 ];

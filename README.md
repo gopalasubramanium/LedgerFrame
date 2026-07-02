@@ -250,7 +250,7 @@ The implementation was generated with Claude under that direction.
 [Facebook](https://www.facebook.com/gopala.subramanium)
 
 If LedgerFrame is useful to you, you can
-[support the project via PayPal](https://www.paypal.com/donate/?business=gopalasubramanium@gmail.com&item_name=Support%20LedgerFrame&no_recurring=0)
+[support the project via PayPal](https://paypal.me/sgopala)
 ⭐ and a star on the repo helps too.
 
 ## Legal & disclaimers

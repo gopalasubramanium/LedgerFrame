@@ -2,6 +2,13 @@
 
 All notable changes to LedgerFrame. Dates are UTC.
 
+## v1.9.1 — 2026-07-02
+
+- **Fixed the Support link.** PayPal's donate button isn't available for accounts in
+  some countries (e.g. Singapore), which showed "Donations aren't supported in this
+  organisation's country". Switched the footer + README support link to **PayPal.Me**
+  (`paypal.me/sgopala`), which works there.
+
 ## v1.9.0 — 2026-07-02
 
 - **Sector exposure** on Portfolio (a donut + legend of your stock/fund sector mix —

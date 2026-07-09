@@ -75,7 +75,7 @@ and order are fixed and match §3.
 | **News** | `/news` | Markets | Canonical home for the briefing and grouped headlines. |
 | **Review** | `/review` | Planning | Canonical home for review verdicts + attention; Mark-reviewed with history. |
 | **Policy** | `/policy` | Planning | Canonical home for investment-policy intent and drift (computed live). |
-| **Cash flow** | `/planning` *(rename undecided — §8)* | Planning | Goals, Obligations, Contributions (renamed from "Planning", D-056). |
+| **Cash flow** | `/cash-flow` | Planning | Goals, Obligations, Contributions (renamed from "Planning", D-056; route matches page name per D-022). |
 | **Scenarios** | `/scenarios` | Planning | Deterministic what-if shocks on today's values; a scenario, never a forecast. |
 | **Insurance** | `/insurance` | Planning | Protection register; cash value excluded from Net worth. |
 | **Estate** | `/estate` | Planning | Will/executor, contacts, document-readiness register; isolated, no FKs. |
@@ -115,8 +115,10 @@ Reports and Pricing Health enter the sidebar in v2 (previously orphaned, D-041).
 | Route | Disposition |
 |-------|-------------|
 | `/snapshot` | **Redirect → `/net-worth`**, kept for migration (D-022/D-042). |
+| `/planning` | **Redirect → `/cash-flow`**, kept for migration — same rationale as `/snapshot` (D-022/D-056). |
 | `/global` | **Removed, no legacy redirect** (D-042). |
 | `/net-worth` | New canonical route; nav label = H1 = route (D-022). |
+| `/cash-flow` | New canonical route for the Cash flow page; nav label = route (D-022 principle applied to the D-056 rename). |
 
 ### Rotation eligibility (D-044)
 
@@ -273,7 +275,7 @@ summary reuses the canonical page's reader, never a second code path.
 - **Summarises:** —. Drift is summarised *by* Review and the Reports Pack, not
   the reverse.
 
-### Cash flow (`/planning`, renamed) — D-036, D-056, D-057
+### Cash flow (`/cash-flow`) — D-036, D-056, D-057
 
 - **Owns:** Goals, Obligations, Contributions (D-057). Protected semantics:
   **contributions don't reduce runway**; **'once' obligations are excluded from
@@ -281,7 +283,8 @@ summary reuses the canonical page's reader, never a second code path.
 - **Summarises:** links to the **runway result on Net worth** (runway is
   canonical there, D-036), not a second runway computation.
 - **Nav:** sits in the **Planning** group (D-056). The page label is "Cash flow";
-  "Planning" survives only as the group name.
+  "Planning" survives only as the group name. Canonical route `/cash-flow`;
+  `/planning` redirects (§3).
 
 ### Scenarios (`/scenarios`) — D-058
 
@@ -431,9 +434,7 @@ D-075, D-076, D-077, D-078. Where the audit recommended a canonical home
 
 ## Needs decision
 
-- **Cash flow route.** D-056 renamed the page "Planning" → **Cash flow** and
-  placed it in the Planning nav group, but did **not** decide whether the route
-  `/planning` is retained or renamed to `/cash-flow` (with a redirect, by
-  analogy to `/snapshot`→`/net-worth`). D-042's route dispositions cover only
-  `/global` and `/snapshot`. Left undecided here rather than guessed; resolve
-  before the navigation is implemented.
+- (none) — the Cash flow route is resolved: canonical **`/cash-flow`**, with
+  **`/planning` redirecting** for migration, applying D-022's route-matches-page-name
+  principle to the D-056 rename (same rationale as `/snapshot`→`/net-worth`).
+  Recorded in §2, §3, and §5.

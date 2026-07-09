@@ -33,6 +33,18 @@ starts from files, not memory.
   never-overwrite-NAV, honest-NULL FX, no-FK isolation); Review threshold
   named-constants table w/ rationale (D-059, values from 04 §13); scope principle
   (D-065/P-7); first-run checklist (D-045); Settings Privacy section (D-069).
+- **docs/specs/DESIGN-BRIEF.md** — the Rebuild Playbook design brief, committed
+  verbatim so the design source never leaves the repo again.
+- **docs/specs/DESIGN-SYSTEM.md** — principles (numbers-first, semantic-only
+  colour, typographic hierarchy, provenance-first); design tokens (slate palette
+  light/dark, type scale 12/13/14/16/20/28, spacing, density comfortable/compact)
+  — concrete values PROPOSED, to ratify at kitchen-sink review; four page
+  templates + per-page mapping; full component inventory (props + usage rules);
+  the compose-components hard rule; house-SVG chart policy + D-053 treemap/ECharts
+  escape hatch; WCAG-AA / keyboard / reduced-motion / high-contrast a11y baseline.
+- **INFORMATION-ARCHITECTURE.md amended** — Cash flow route resolved to
+  `/cash-flow` (D-022 principle), `/planning` redirects; Needs-decision item
+  cleared.
 
 ## IN-PROGRESS
 
@@ -41,22 +53,23 @@ starts from files, not memory.
 ## NEXT
 
 Remaining specs, one per session, in `docs/plans/spec-generation.md` order:
-1. docs/specs/DESIGN-SYSTEM.md
-2. docs/specs/SECURITY-BASELINE.md
+1. docs/specs/SECURITY-BASELINE.md
+2. **DEF backfill session** — once the app source is available, fill
+   MASTER-DATA §2/§3/§6 (DEF-1..DEF-6) and reconcile the three Review constant
+   names (DEF-7) against `services/review.py`. Also the kitchen-sink review to
+   ratify the PROPOSED design tokens.
 
 ## Needs decision
 
-- **App source not in repo → DEF-1..DEF-6 blocked.** MASTER-DATA.md §9 lists
-  six vocabularies whose authoritative values live in service-layer code that
-  is not committed here (currency union, asset_subclass, ACCOUNT_KINDS,
-  POLICY_TYPES/FREQUENCIES, DOC_CATEGORIES/CONTACT_ROLES, sector seed). They
-  are left unfilled per the no-guessing rule. To resolve: commit the app code
-  here (or run the extraction against it) and fill the seed lists in place.
-  These are mechanical, not product decisions.
-- **Cash flow route (D-056).** Page renamed Planning → Cash flow, but whether
-  the route becomes `/cash-flow` (with redirect) or stays `/planning` is not
-  decided. See INFORMATION-ARCHITECTURE.md "Needs decision". Product decision.
-- **Review threshold constant names (DEF-7, partial).** The threshold *values*
-  were recovered from 04-CALCULATION-ENGINE §13 and are written into
-  PRODUCT-SPEC.md §5; three constant *names* are proposed and need reconciling
-  against `services/review.py` when the app source is available. Mechanical.
+- **App source not in repo → DEF-1..DEF-7 blocked (mechanical).** MASTER-DATA §9
+  lists six vocabularies whose authoritative values live in service-layer code
+  not committed here (currency union, asset_subclass, ACCOUNT_KINDS,
+  POLICY_TYPES/FREQUENCIES, DOC_CATEGORIES/CONTACT_ROLES, sector seed). DEF-7
+  adds three Review constant *names* (values already recovered, PRODUCT-SPEC §5).
+  All to be handled together in the DEF backfill session. Not product decisions.
+- **Design token ratification.** The PROPOSED palette/type/spacing/density values
+  in DESIGN-SYSTEM §2 are working values until ratified at the kitchen-sink
+  review; the UI/serif font choice may need an ADR if self-hosting adds a
+  dependency. Not blocking.
+- ~~Cash flow route~~ — **resolved**: `/cash-flow` canonical, `/planning`
+  redirects (D-022 principle applied to D-056).

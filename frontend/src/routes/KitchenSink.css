@@ -1,0 +1,134 @@
+@import "../components/ui/structure.css";
+
+.ks {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-12);
+}
+
+.ks__bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  margin-bottom: var(--space-7);
+  background: var(--bg);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.ks__section {
+  margin-top: var(--space-10);
+}
+.ks__h2 {
+  font-size: var(--font-size-20);
+  line-height: var(--line-20);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-width) solid var(--border);
+}
+.ks__note {
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  margin: 0 0 var(--space-5);
+}
+
+.ks__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--space-5);
+}
+.ks__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: flex-start;
+}
+
+/* A labeled specimen: the state name + the rendered component. */
+.ks__specimen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 16rem;
+}
+.ks__label {
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+}
+.ks__stack { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* Loading skeleton (state demo only; not a §5 component). */
+.ks__skeleton {
+  height: var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border);
+}
+
+/* Swatch board (indirection: inline sets --swatch to a token var; no raw values) */
+.ks__swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--space-4);
+}
+.ks__swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ks__swatch-chip {
+  height: var(--space-9);
+  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--border);
+  background: var(--swatch);
+}
+.ks__swatch-name {
+  font-size: var(--font-size-12);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+/* Type-scale board */
+.ks__type-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-5);
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.ks__type-name {
+  min-width: 10rem;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-12);
+}
+.type-28 { font-size: var(--font-size-28); line-height: var(--line-28); font-weight: var(--weight-semibold); }
+.type-20 { font-size: var(--font-size-20); line-height: var(--line-20); font-weight: var(--weight-semibold); }
+.type-16 { font-size: var(--font-size-16); line-height: var(--line-16); font-weight: var(--weight-medium); }
+.type-14 { font-size: var(--font-size-14); line-height: var(--line-14); }
+.type-13 { font-size: var(--font-size-13); line-height: var(--line-13); }
+.type-12 { font-size: var(--font-size-12); line-height: var(--line-12); font-weight: var(--weight-medium); }
+
+/* Spacing board */
+.ks__space-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+.ks__space-name { min-width: 8rem; color: var(--text-tertiary); font-size: var(--font-size-12); }
+.ks__space-bar {
+  width: var(--bar);
+  height: var(--space-4);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.ks__stat-rail { display: flex; flex-wrap: wrap; gap: var(--space-4); }

@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { DisplayProvider } from "./theme/DisplayProvider";
 import App from "./App";
@@ -18,7 +19,9 @@ function renderApp() {
   return render(
     <ThemeProvider>
       <DisplayProvider>
-        <App />
+        <MemoryRouter>
+          <App />
+        </MemoryRouter>
       </DisplayProvider>
     </ThemeProvider>,
   );

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import "./charts.css";
 import type { TreemapNode } from "../../mocks/types";
 
@@ -87,6 +88,8 @@ export function Treemap({ nodes, "aria-label": ariaLabel }: TreemapProps) {
   const tiles = squarify(nodes);
   return (
     <div className="lf-treemap">
+      {/* Rects fill the container (distortion is fine for area). Labels are an
+       * HTML overlay positioned by percentage so text stays crisp and square. */}
       <svg
         className="lf-treemap__svg"
         viewBox={`0 0 ${W} ${H}`}
@@ -95,26 +98,34 @@ export function Treemap({ nodes, "aria-label": ariaLabel }: TreemapProps) {
         aria-label={ariaLabel ?? "Holdings heatmap"}
       >
         {tiles.map((t, i) => (
-          <g key={i}>
-            <rect
-              className={`lf-treemap__cell-rect lf-treemap__cell--${t.node.tone}`}
-              x={t.x}
-              y={t.y}
-              width={t.w}
-              height={t.h}
-            />
-            {t.w > 10 && t.h > 6 && (
-              <text
-                className={`lf-treemap__label${t.node.tone === "flat" ? " lf-treemap__label--flat" : ""}`}
-                x={t.x + 1.5}
-                y={t.y + 4.5}
-              >
-                {t.node.label}
-              </text>
-            )}
-          </g>
+          <rect
+            key={i}
+            className={`lf-treemap__cell-rect lf-treemap__cell--${t.node.tone}`}
+            x={t.x}
+            y={t.y}
+            width={t.w}
+            height={t.h}
+          />
         ))}
       </svg>
+      <div className="lf-treemap__labels" aria-hidden="true">
+        {tiles.map((t, i) =>
+          t.w > 8 && t.h > 6 ? (
+            <span
+              key={i}
+              className={`lf-treemap__label${t.node.tone === "flat" ? " lf-treemap__label--flat" : ""}`}
+              style={
+                {
+                  "--tx": `${(t.x / W) * 100}%`,
+                  "--ty": `${(t.y / H) * 100}%`,
+                } as CSSProperties
+              }
+            >
+              {t.node.label}
+            </span>
+          ) : null,
+        )}
+      </div>
     </div>
   );
 }

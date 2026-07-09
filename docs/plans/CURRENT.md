@@ -226,17 +226,33 @@ ROADMAP.md and DESIGN-BRIEF.md.
   (segment palette; generic Select) in `docs/plans/design-system-build.md` and
   Needs decision below.
 
+- **Frontend foundation — PHASE D DONE (kitchen sink + ratification).**
+  `/kitchen-sink` route renders every §5 component in every meaningful state
+  (loading/empty/error/stale/negative/low-confidence/long-RTL labels), both
+  themes + both densities switchable live, organized for a ratification
+  walk-through; a **token swatch board** labels palette/type/spacing with token
+  names. `docs/plans/RATIFICATION.md` lists every PROPOSED token group + every
+  component with checkboxes + the two open interpretations + a sign-off block.
+  Visually verified in headless Chromium (treemap-label distortion found and
+  fixed). 23 tests; check + build green.
+
+**Frontend foundation milestone COMPLETE** (Phases A/B/C/D). See
+`docs/plans/design-system-build.md` for the full record. The four page templates
+(overview/entity-detail/worklist/settings) and real pages remain deliberately
+out of scope — components only.
+
 ## IN-PROGRESS
 
-- **Frontend foundation — PHASE D (kitchen sink + ratification).** Build the
-  `/kitchen-sink` route (every component × every state), the token swatch board,
-  and `docs/plans/RATIFICATION.md`.
+- (none)
 
 ## NEXT
 
-1. **Kitchen-sink / ratification review** — ratify the PROPOSED values: the
-   design tokens (DESIGN-SYSTEM §2) and the authored DEF-2/DEF-6 vocabularies
-   (MASTER-DATA §2/§6).
+1. **Kitchen-sink / ratification review** — the surface now exists: run
+   `cd frontend && npm run dev`, open `/#/kitchen-sink`, and walk
+   `docs/plans/RATIFICATION.md` to ratify the PROPOSED design tokens
+   (DESIGN-SYSTEM §2), resolve the two open interpretations (segment palette;
+   generic Select), and confirm the authored DEF-2/DEF-6 vocabularies
+   (MASTER-DATA §2/§6). Clear the PROPOSED markers for what is approved.
 2. **Feature build (post-freeze)** — per the API-CONTRACT delta table, each
    gated by its own plan file: `/refdata` (D-005), entity CRUD (D-065), holdings
    CSV export (D-050), the Realised P/L / Review / Ongoing-cost renames (D-026/

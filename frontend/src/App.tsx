@@ -1,18 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchHealth } from "./api/health";
 import type { HealthResult } from "./api/health";
-import { useTheme } from "./theme/theme-context";
-import { useDisplay } from "./theme/display-context";
+import { DisplayControls } from "./components/DisplayControls";
 import "./App.css";
 
-const THEME_LABEL: Record<string, string> = {
-  light: "Light",
-  dark: "Dark",
-  system: "System",
-};
-
 // A column of varied-width figures. With tabular numerals they align on the
-// decimal regardless of digit widths / signs (DESIGN-SYSTEM §1, Phase B proof).
+// decimal regardless of digit widths / signs (DESIGN-SYSTEM §1).
 const TABULAR_SAMPLE = [
   "1,234.56",
   "-89.00",
@@ -44,17 +38,6 @@ function HealthRow({ health }: { health: HealthResult | null }) {
 }
 
 export default function App() {
-  const { choice, resolved, cycle } = useTheme();
-  const {
-    density,
-    toggleDensity,
-    contrastPref,
-    contrast,
-    setContrastPref,
-    motionPref,
-    motion,
-    setMotionPref,
-  } = useDisplay();
   const [health, setHealth] = useState<HealthResult | null>(null);
 
   useEffect(() => {
@@ -75,71 +58,9 @@ export default function App() {
 
         <HealthRow health={health} />
 
-        <div className="boot__row">
-          <span className="boot__label">Theme</span>
-          <button
-            type="button"
-            className="boot__btn"
-            onClick={cycle}
-            aria-label="Cycle theme: light, dark, system"
-          >
-            {THEME_LABEL[choice]}
-            {choice === "system" ? ` (${resolved})` : ""}
-          </button>
-        </div>
-
-        <div className="boot__row">
-          <span className="boot__label">Density</span>
-          <button
-            type="button"
-            className="boot__btn"
-            onClick={toggleDensity}
-            aria-label="Toggle density"
-          >
-            {density}
-          </button>
-        </div>
-
-        <div className="boot__row">
-          <span className="boot__label">Contrast</span>
-          <button
-            type="button"
-            className="boot__btn"
-            onClick={() =>
-              setContrastPref(
-                contrastPref === "system"
-                  ? "high"
-                  : contrastPref === "high"
-                    ? "normal"
-                    : "system",
-              )
-            }
-            aria-label="Cycle contrast preference"
-          >
-            {contrastPref}
-            {contrastPref === "system" ? ` (${contrast})` : ""}
-          </button>
-        </div>
-
-        <div className="boot__row">
-          <span className="boot__label">Motion</span>
-          <button
-            type="button"
-            className="boot__btn"
-            onClick={() =>
-              setMotionPref(
-                motionPref === "system"
-                  ? "reduced"
-                  : motionPref === "reduced"
-                    ? "full"
-                    : "system",
-              )
-            }
-            aria-label="Cycle motion preference"
-          >
-            {motionPref}
-            {motionPref === "system" ? ` (${motion})` : ""}
-          </button>
+        <div>
+          <p className="boot__label boot__caption">Display settings (per-device)</p>
+          <DisplayControls />
         </div>
 
         <div>
@@ -159,6 +80,10 @@ export default function App() {
             ))}
           </ul>
         </div>
+
+        <Link className="lf-btn lf-btn--primary" to="/kitchen-sink">
+          Open the kitchen sink →
+        </Link>
       </div>
     </div>
   );

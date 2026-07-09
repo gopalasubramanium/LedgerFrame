@@ -251,7 +251,21 @@ Scope:
   long names, multiple currencies, and stale / low-confidence / manual /
   unavailable provenance. 22 tests. Check + build green; drift clean. Two
   under-specified points flagged (see Needs decision).
-- PHASE D — NOT STARTED
+- **PHASE D — DONE.** `/kitchen-sink` route (HashRouter; linked from the boot
+  screen) renders every §5 component in every meaningful state — loading, empty,
+  error, stale, negative, low-confidence/unavailable, long/RTL-length labels —
+  organized top-down for a ratification walk-through, with a live control bar
+  (theme/density/contrast/motion). A **token swatch board** (`TokenBoard`) shows
+  the palette, type scale, and spacing, each specimen **labeled with its token
+  name**. `docs/plans/RATIFICATION.md` enumerates every PROPOSED token group and
+  every component with checkboxes, plus the two open interpretations, and a
+  sign-off block. **Visually verified** in headless Chromium: palette board,
+  inputs, provenance badges, stat tiles + sparklines, DataTable (gain/loss,
+  densities), donuts (incl. the non-equity bucket), line+benchmark and
+  candles+MA/BB/RSI charts, squarified treemap, quotes/ticker, ReviewCards. Fixed
+  a treemap-label distortion found in review (labels moved to a crisp HTML
+  overlay). 23 tests (incl. a full-sink render crash-test); check + build green;
+  drift clean.
 
 ## Needs decision (surfaced in Phase C — non-blocking, for kitchen-sink review)
 

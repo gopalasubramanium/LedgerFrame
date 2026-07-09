@@ -1,0 +1,7 @@
+@import "../components/ui/structure.css";
+
+.lf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

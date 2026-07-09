@@ -6,9 +6,11 @@ transactions, and manual assets; imports; tags; soft-delete + undo; server-side
 CSV export. It owns *management*, not *analytics* (Portfolio owns analytics,
 D-023).
 
-> **DO NOT BUILD YET.** §9 lists open blockers (a contract reshape for mergers
-> and four component-inventory amendments). Build starts only after the owner
-> resolves them. This plan is for review first.
+> **REVIEWED — all §9 items resolved 2026-07-10 (owner).** Build proceeds per §8.
+> **Ratification gate:** the four §5 component amendments (Dialog/Drawer,
+> FileInput, Toast, PIN-confirm) are built token-compliant and landed in
+> `/kitchen-sink` first, then the **build pauses for the owner's ratification
+> look** before Holdings assembly (Phase 1) starts. Resolutions are recorded in §9.
 
 ---
 
@@ -213,17 +215,23 @@ coverage noted; anything unexercised carries build+test risk.*
 
 ## 8. BUILD PHASES
 
-*One commit per phase. Backend deltas first. **Build does not start until §9 is
-cleared** (the merger reshape + the four component amendments).*
+*One commit per phase. §9 is resolved (2026-07-10). Component amendment first
+(it is the ratification gate), then backend deltas, then assembly, then tests.*
 
-- **Phase 0 — Contract deltas (§3b), backend-first.** `GET /refdata` (D-005),
-  `GET /portfolio/holdings.csv` (D-050), and the `TransactionIn` **reshape** for
-  the merger target (D-019). Each regenerates `API-CONTRACT.json` +
+- **Phase 0a — Component amendment (DESIGN-SYSTEM §5).** Build **Dialog/Drawer**,
+  **FileInput**, **Toast/Snackbar**, and **ConfirmDialog + PIN** (the PIN overlay
+  reuses Dialog — §9-5), all token-compliant (drift green). Amend DESIGN-SYSTEM
+  §5 (PROPOSED — ratify at the look). Add every one to `/kitchen-sink` in all
+  meaningful states; tests. **→ PAUSE for the owner's ratification look before
+  Phase 1.**
+- **Phase 0b — Contract deltas (§3b), backend-first.** `GET /refdata` (D-005),
+  `GET /portfolio/holdings.csv` (D-050), the `TransactionIn` **reshape** for the
+  merger target (D-019), and **explicit response schemas** for
+  `portfolio/holdings`, `portfolio/summary`, and `import/preview` (replace
+  `additionalProperties: true`, §9-6). Each regenerates `API-CONTRACT.json` +
   `docs/openapi.json` in the same commit; drift check green. *(Where `/refdata`
-  or `holdings.csv` are delivered by their own dedicated plans, Holdings is
-  sequenced after them.)*
-- **Phase 1 — Page assembly.** Compose the ratified components (plus the
-  amended CRUD-editor / FileInput / Undo-toast / PIN-confirm once ratified):
+  or `holdings.csv` ship via their own plans, Holdings is sequenced after them.)*
+- **Phase 1 — Page assembly.** Compose the ratified + newly-ratified components:
   holdings table + summary header; transactions ledger; one Add flow; import
   preview→commit + review queue; tags editor; soft-delete + undo + purge; export.
   Honest empty/error/stale states throughout.
@@ -233,7 +241,7 @@ cleared** (the merger reshape + the four component amendments).*
 
 ---
 
-## 9. NEEDS DECISION *(open — resolve before build)*
+## 9. NEEDS DECISION *(RESOLVED 2026-07-10 — owner; see resolutions below)*
 
 | # | Item | Why it blocks / what's needed | Proposed resolution (for owner to approve) |
 |---|------|-------------------------------|--------------------------------------------|
@@ -245,6 +253,31 @@ cleared** (the merger reshape + the four component amendments).*
 | **6** | **Untyped response shapes** | `GET /portfolio/holdings`, `/portfolio/summary`, and `POST /import/preview` are `additionalProperties: true` in the frozen contract — the **exact fields** for the table columns and the review-queue rows are **not pinned**. | Not a hard blocker (responses are reader-driven). **Confirm the reader's field set** at Phase 1 start against the live app; optionally pin these response schemas in a follow-up contract tighten. Which reader feeds the header (`/portfolio/summary` vs `/portfolio/stats`) must be named. |
 | **7** | **Account selector = user data, not a master** | An account picker is not a MASTER-DATA vocabulary; the ratification put non-master selects on `ui/Select`. | Confirm **`ui/Select` over `/accounts`** is acceptable for account selection (recommended), vs. wanting a richer account picker. Low-risk. |
 
-**Sign-off to start build:** items 1–5 resolved (contract reshape approved + the
-four component amendments ratified) · items 6–7 confirmed. Until then, Holdings
-stays in review.
+### Resolutions (2026-07-10, owner)
+
+- **§9-1 — Merger reshape: APPROVED.** Backend-first `TransactionIn` reshape to
+  carry the merger target (`related_instrument_id`; ratio in `price`), contract
+  regenerated in the **same commit** (Phase 0b).
+- **§9-2 / §9-3 / §9-4 — Dialog/Drawer · FileInput · Toast: APPROVED as a
+  DESIGN-SYSTEM §5 amendment.** Built token-compliant and added to
+  `/kitchen-sink`; **owner ratifies the four sections before Holdings assembly
+  starts** (Phase 0a → pause).
+- **§9-5 — PIN-confirm: APPROVED (spec-gap resolution).** The PIN-gated
+  purge/confirm **reuses the newly amended `Dialog` primitive** for the overlay —
+  structural consistency, no inventory sprawl (a masked PIN entry lives inside
+  the ConfirmDialog).
+- **§9-6 — Response typing: APPROVED as a contract delta (freeze rule).** Replace
+  `additionalProperties: true` with an **explicit, strongly-typed schema** for
+  `portfolio/holdings` (and `portfolio/summary`, `import/preview`), same-commit
+  contract update (Phase 0b). Name the header reader (`portfolio/summary`).
+- **§9-7 — Account picker: CONFIRMED.** `ui/Select` over `/accounts` (user
+  records) — no `MasterSelect`, no new component.
+- **Reclassify hook (3a note): APPROVED as a product call — lightest mechanism.**
+  Prefer **reusing the existing instrument-edit path with a deep-link from the
+  Review `other`-overuse signal**; add `POST /portfolio/reclassify` **only if**
+  the existing path genuinely can't serve the nudge — with a same-commit contract
+  update if so.
+
+**Sign-off:** all §9 items resolved (2026-07-10). Build proceeds per §8; the
+Phase 0a component amendment pauses at `/kitchen-sink` for the owner's
+ratification look before Phase 1 assembly.

@@ -1,0 +1,40 @@
+.lf-file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: var(--border-width) dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--motion-fast), background var(--motion-fast);
+}
+.lf-file--drag {
+  border-color: var(--accent);
+  background: var(--surface-raised);
+}
+.lf-file--disabled {
+  opacity: 0.55;
+}
+
+/* Native input hidden but still in the DOM for a11y + programmatic click.
+ * Standard sr-only clip; the hairline sizes route through the token. */
+.lf-file__native {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  padding: 0;
+  margin: calc(-1 * var(--border-width));
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.lf-file__name {
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

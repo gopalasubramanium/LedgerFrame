@@ -218,11 +218,15 @@ coverage noted; anything unexercised carries build+test risk.*
 *One commit per phase. §9 is resolved (2026-07-10). Component amendment first
 (it is the ratification gate), then backend deltas, then assembly, then tests.*
 
-- **Phase 0a — Component amendment (DESIGN-SYSTEM §5).** Build **Dialog/Drawer**,
-  **FileInput**, **Toast/Snackbar**, and **ConfirmDialog + PIN** (the PIN overlay
-  reuses Dialog — §9-5), all token-compliant (drift green). Amend DESIGN-SYSTEM
-  §5 (PROPOSED — ratify at the look). Add every one to `/kitchen-sink` in all
-  meaningful states; tests. **→ PAUSE for the owner's ratification look before
+- **Phase 0a — Component amendment (DESIGN-SYSTEM §5). ✅ DONE — awaiting
+  ratification look.** Built **Dialog/Drawer**, **FileInput**, **Toast/Snackbar**,
+  and **ConfirmDialog + PIN** (PIN overlay reuses Dialog — §9-5), token-compliant
+  (drift green; added a `--scrim` token). DESIGN-SYSTEM §5 amended (PROPOSED).
+  All four in `/kitchen-sink` (new "§5 amendments" section) in their meaningful
+  states; 6 dedicated tests (focus-trap/Esc/restore, PIN-gated confirm + numeric
+  filter, file-choose, toast auto-dismiss + undo). Visually verified in headless
+  Chromium (Dialog, PIN-confirm, FileInput, undo Toast). `npm run check` (29
+  tests) + build green. **⏸ PAUSED for the owner's ratification look before
   Phase 1.**
 - **Phase 0b — Contract deltas (§3b), backend-first.** `GET /refdata` (D-005),
   `GET /portfolio/holdings.csv` (D-050), the `TransactionIn` **reshape** for the

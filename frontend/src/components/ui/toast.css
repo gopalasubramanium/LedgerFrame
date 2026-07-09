@@ -1,0 +1,84 @@
+.lf-toasts {
+  position: fixed;
+  z-index: 200;
+  left: 50%;
+  bottom: var(--space-6);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(28rem, calc(100vw - var(--space-8)));
+  pointer-events: none;
+}
+
+.lf-toast {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  pointer-events: auto;
+  animation: lf-toast-in var(--motion-duration) ease-out;
+}
+
+.lf-toast__msg {
+  flex: 1;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+
+.lf-toast__action {
+  flex-shrink: 0;
+  font: inherit;
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-semibold);
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+.lf-toast__action:hover { background: var(--surface); }
+
+.lf-toast__close {
+  flex-shrink: 0;
+  font: inherit;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+.lf-toast__close:hover { color: var(--text-primary); }
+
+/* Countdown bar: shrinks over the toast lifetime (the undo window). */
+.lf-toast__bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: var(--space-1);
+  width: 100%;
+  transform-origin: left;
+  background: var(--accent);
+  animation: lf-toast-countdown var(--toast-ms) linear forwards;
+}
+
+/* Reduced motion: no entrance animation, no shrinking bar (timer still fires). */
+:root[data-motion="reduced"] .lf-toast { animation: none; }
+:root[data-motion="reduced"] .lf-toast__bar { animation: none; opacity: 0; }
+
+@keyframes lf-toast-in {
+  from { opacity: 0; transform: translateY(var(--space-4)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes lf-toast-countdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}

@@ -41,6 +41,8 @@
   --focus-ring: #24476f;
   /* Treemap neutral mix endpoint (magnitude scale, amended 2026-07-10). */
   --treemap-base: #f1f5f9;
+  /* Modal backdrop scrim (Dialog, amended 2026-07-10 — Holdings page-build §5). */
+  --scrim: rgba(15, 23, 42, 0.45);
 }
 
 :root[data-theme="dark"] {
@@ -62,6 +64,8 @@
   --focus-ring: #6f9fd4;
   /* Treemap neutral mix endpoint (magnitude scale, amended 2026-07-10). */
   --treemap-base: #1e293b;
+  /* Modal backdrop scrim (Dialog, amended 2026-07-10 — Holdings page-build §5). */
+  --scrim: rgba(0, 0, 0, 0.6);
 }
 
 /* High contrast (§7, D-078): boost border + secondary/tertiary text contrast.

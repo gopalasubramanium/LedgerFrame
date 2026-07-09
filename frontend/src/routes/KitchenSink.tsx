@@ -6,9 +6,12 @@ import { DisplayControls } from "../components/DisplayControls";
 import { TokenBoard } from "./TokenBoard";
 import {
   AllocationDonut,
+  ConfirmDialog,
   DataTable,
   DateInput,
+  Dialog,
   EmptyState,
+  FileInput,
   GlossaryTerm,
   InstrumentPicker,
   MasterSelect,
@@ -24,6 +27,7 @@ import {
   TickerStrip,
   Treemap,
   TrendStat,
+  useToast,
 } from "../components/ui";
 import type { Column, QuoteSource, SortState } from "../components/ui";
 import {
@@ -102,6 +106,15 @@ export function KitchenSink() {
   // DataTable (sort + filter demo)
   const [sort, setSort] = useState<SortState>({ key: "value", dir: "desc" });
   const [filter, setFilter] = useState("");
+
+  // §5 amendment demos (Dialog / ConfirmDialog / FileInput / Toast)
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [uploaded, setUploaded] = useState<string | null>(null);
+  const [purged, setPurged] = useState<string | null>(null);
+  const toast = useToast();
 
   const columns: Column<Holding>[] = useMemo(
     () => [
@@ -398,6 +411,140 @@ export function KitchenSink() {
           </Specimen>
         </div>
       </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        title="§5 amendments — PROPOSED, ratify at this look (2026-07-10)"
+        note="Added for the Holdings page-build (page-holdings.md §9): Dialog/Drawer, ConfirmDialog + PIN, FileInput, and the undo Toast. Token-compliant; verify focus-trap, Esc, backdrop dismiss, both themes/densities, and reduced motion."
+      >
+        <div className="ks__row">
+          <Specimen label="Dialog · center (CRUD editor container)">
+            <button type="button" className="lf-btn" onClick={() => setDialogOpen(true)}>
+              Open dialog
+            </button>
+          </Specimen>
+          <Specimen label="Dialog · drawer variant">
+            <button type="button" className="lf-btn" onClick={() => setDrawerOpen(true)}>
+              Open drawer
+            </button>
+          </Specimen>
+          <Specimen label="ConfirmDialog · destructive">
+            <button type="button" className="lf-btn" onClick={() => setConfirmOpen(true)}>
+              Delete something…
+            </button>
+          </Specimen>
+          <Specimen label="ConfirmDialog · PIN-gated (purge-deleted)">
+            <button type="button" className="lf-btn" onClick={() => setPinOpen(true)}>
+              Purge deleted [PIN]
+            </button>
+            {purged && <span className="ks__label">{purged}</span>}
+          </Specimen>
+          <Specimen label="FileInput · CSV import (click or drag)">
+            <FileInput
+              accept=".csv"
+              aria-label="Import CSV"
+              label="Choose CSV"
+              onChange={(files) => {
+                setUploaded(files[0]?.name ?? null);
+                toast.show({ message: `Selected ${files[0]?.name ?? "file"}` });
+              }}
+            />
+            {uploaded && <span className="ks__label">Last: {uploaded}</span>}
+          </Specimen>
+          <Specimen label="Toast · plain">
+            <button
+              type="button"
+              className="lf-btn"
+              onClick={() => toast.show({ message: "Holding saved." })}
+            >
+              Show toast
+            </button>
+          </Specimen>
+          <Specimen label="Toast · undo (10s soft-delete window)">
+            <button
+              type="button"
+              className="lf-btn"
+              onClick={() =>
+                toast.show({
+                  message: "Transaction deleted.",
+                  action: { label: "Undo", onClick: () => toast.show({ message: "Restored." }) },
+                })
+              }
+            >
+              Delete with undo
+            </button>
+          </Specimen>
+        </div>
+      </Section>
+
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        title="Add transaction"
+        footer={
+          <>
+            <button type="button" className="lf-btn" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </button>
+            <button type="button" className="lf-btn lf-btn--primary" onClick={() => setDialogOpen(false)}>
+              Save
+            </button>
+          </>
+        }
+      >
+        <div className="ks__stack">
+          <Specimen label="Type">
+            <MasterSelect master="txn_type" value="buy" onChange={() => {}} />
+          </Specimen>
+          <Specimen label="Amount">
+            <MoneyInput value="1000.00" currency="SGD" onChange={() => {}} aria-label="Amount" />
+          </Specimen>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Edit holding"
+        variant="drawer"
+        footer={
+          <button type="button" className="lf-btn lf-btn--primary" onClick={() => setDrawerOpen(false)}>
+            Done
+          </button>
+        }
+      >
+        <p className="type-14">A drawer variant of the same primitive — slides from the side for edit/detail panels.</p>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete holding?"
+        message="This soft-deletes the holding; you can undo within 10 seconds from the toast."
+        confirmLabel="Delete"
+        destructive
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          toast.show({
+            message: "Holding deleted.",
+            action: { label: "Undo", onClick: () => toast.show({ message: "Restored." }) },
+          });
+        }}
+      />
+
+      <ConfirmDialog
+        open={pinOpen}
+        title="Purge deleted rows?"
+        message="This permanently removes all soft-deleted holdings and transactions. This cannot be undone."
+        confirmLabel="Purge"
+        destructive
+        requirePin
+        onCancel={() => setPinOpen(false)}
+        onConfirm={() => {
+          setPinOpen(false);
+          setPurged("Purged (PIN accepted).");
+        }}
+      />
     </div>
   );
 }

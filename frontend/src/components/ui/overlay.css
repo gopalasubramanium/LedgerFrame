@@ -1,0 +1,114 @@
+/* Dialog / Drawer + ConfirmDialog (DESIGN-SYSTEM §5.4, amended 2026-07-10 —
+ * Holdings page-build §5). Token-only; motion respects --motion-duration. */
+
+.lf-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  background: var(--scrim);
+  animation: lf-fade var(--motion-duration) ease-out;
+}
+.lf-scrim--center {
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+.lf-scrim--drawer {
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.lf-dialog {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  box-shadow: var(--shadow-1);
+  max-height: 100%;
+  overflow: hidden;
+}
+.lf-scrim--center .lf-dialog {
+  width: 100%;
+  max-width: 32rem;
+  border-radius: var(--radius-lg);
+  animation: lf-pop var(--motion-duration) ease-out;
+}
+.lf-scrim--drawer .lf-dialog {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 0;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  animation: lf-slide var(--motion-duration) ease-out;
+}
+
+.lf-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: var(--border-width) solid var(--border);
+}
+.lf-dialog__title {
+  margin: 0;
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.lf-dialog__close {
+  flex-shrink: 0;
+  font: inherit;
+  font-size: var(--font-size-16);
+  line-height: 1;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+.lf-dialog__close:hover { color: var(--text-primary); }
+
+.lf-dialog__body {
+  padding: var(--space-6);
+  overflow-y: auto;
+  color: var(--text-primary);
+}
+.lf-dialog__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.lf-confirm__msg {
+  margin: 0 0 var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+}
+.lf-confirm__pin-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+}
+
+@keyframes lf-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lf-pop {
+  from { opacity: 0; transform: translateY(var(--space-3)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes lf-slide {
+  from { transform: translateX(var(--space-8)); }
+  to { transform: translateX(0); }
+}

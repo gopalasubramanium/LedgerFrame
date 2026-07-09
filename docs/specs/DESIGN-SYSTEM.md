@@ -218,6 +218,14 @@ Built **before any page** (brief). Every component lives in
 Categorical props resolve through MASTER-DATA.md (never inline lists); monetary
 props are backend-computed `Decimal` strings (never client-computed).
 
+> **AMENDMENT 2026-07-10 (Holdings page-build).** Four components are added — a
+> **FileInput** (§5.1), **Dialog** + **ConfirmDialog** (§5.4), and a
+> **Toast/Snackbar** (§5.5) — resolving `page-holdings.md` §9-2..5. They are
+> marked **PROPOSED — ratify at the kitchen-sink look**; they are built
+> token-compliant (drift check green) and demonstrated at `/kitchen-sink`. Until
+> the owner's look, they are working components; a `--scrim` backdrop token was
+> added to §2.1. No other component changed.
+
 ### 5.1 Inputs (the only sanctioned way to accept user input)
 
 | Component | Props (surface) | Usage rules |
@@ -228,6 +236,8 @@ props are backend-computed `Decimal` strings (never client-computed).
 | **DateInput** | `value` (ISO `yyyy-mm-dd`), `onChange`, `min?`, `max?` | Replaces every inline `type="date"`; stores ISO. |
 | **InstrumentPicker** (D-012) | `value` (instrument id), `onSelect`, `allowCreate`, `scope?` | Typeahead over existing instruments + provider search; **explicit "create new instrument"** path (no silent auto-create); selecting sets currency/asset_class from the instrument. Used for symbol entry and the merger "Absorbed into" field (D-019). |
 | **MasterSelect** | `master` (vocabulary/master id), `value`, `onChange`, `allowCreate?` (extensible masters only) | **The** select for every categorical field. Fixed vocabularies from `/refdata`; extensible masters from their endpoints (MASTER-DATA §1). **Never** an inline option list. `allowCreate` only where the master is user-extensible (institution, sector, tag). |
+| **FileInput** *(amended)* | `onChange` (FileList), `accept?`, `multiple?`, `disabled?`, `aria-label`, `label?` | The sanctioned file control (CSV import); wraps the native input internally (§6 — no raw `<input type="file">`). Click-to-browse + drag-and-drop; shows the chosen filename. **Amended 2026-07-10 (Holdings page-build §9-3).** |
+| **Select** | `value`, `onChange`, `options`, `disabled?`, `aria-label` | Generic select for **non-master view-scope / user-record** choices (e.g. QuoteCardRow source, the account picker over `/accounts`). Categorical **data** fields use MasterSelect instead. *(Ratified 2026-07-10.)* |
 
 ### 5.2 Data display
 
@@ -256,6 +266,8 @@ props are backend-computed `Decimal` strings (never client-computed).
 | **EmptyState** | `message`, `reason`, `action?` | Every empty/"—" region shows a **reason** (Product Guarantee 3: "—" with a reason, never blank). |
 | **ReviewCard** | `sections` (verdicts), `attention`, `link` | Summary-with-link on Home/Net worth; canonical body on Review. **Enforcement corollary:** shows no figure the Review page does not (P-1). |
 | **GlossaryTerm** | `term` (`term-*` id), `children` | Popover linking a shown term to its GLOSSARY entry; term spelling must match GLOSSARY exactly. |
+| **Dialog** *(amended)* | `open`, `onClose`, `title`, `children`, `footer?`, `variant?` (`center`\|`drawer`), `dismissOnBackdrop?` | The worklist **CRUD-editor** container (Add flow, edit forms, import wizard) and the base for ConfirmDialog. Focus-trapped, Esc-to-close, backdrop-dismiss, restores focus on close; portal + `--scrim` backdrop + `--shadow-1`. **Amended 2026-07-10 (Holdings page-build §9-2).** |
+| **ConfirmDialog** *(amended)* | `open`, `title`, `message`, `confirmLabel?`, `destructive?`, `requirePin?`, `onCancel`, `onConfirm` | Confirm overlay for destructive actions; **reuses Dialog**. `requirePin` gates confirmation on a masked PIN (purge-deleted, D-002/D-049). **Amended 2026-07-10 (Holdings page-build §9-5).** |
 
 ### 5.5 Global chrome (D-066) — composed, not per-page
 
@@ -265,6 +277,14 @@ check + banner included), and the **Ask panel** (P-6: SSE streaming, fact-pack
 before answer, validated-before-display, ephemeral, privacy-mode label always
 visible — D-067). The Detail toggle leaves the top bar but only Home branches on
 it (D-040/D-066). The **first-run checklist** (D-045) replaces PersonaOnboarding.
+
+**Toast / Snackbar** *(amended 2026-07-10 — Holdings page-build §9-4).* A
+transient, timed, dismissible notification with an optional action slot, provided
+via a `ToastProvider` + `useToast()` `show(spec)`. Auto-dismisses after
+`durationMs` (default **10000** — the soft-delete undo window, D-049) with a
+visible countdown bar; ARIA live-region (`role="status"`, `aria-live="polite"`);
+countdown + entrance animation disabled under reduced motion (the dismiss timer
+still fires). It carries **no figure and no provenance** — status only.
 
 ---
 

@@ -145,6 +145,11 @@
   cursor: pointer;
 }
 .lf-btn:hover { border-color: var(--accent); }
+.lf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lf-btn:disabled:hover { border-color: var(--border-strong); }
 .lf-btn--primary {
   background: var(--accent);
   color: var(--accent-contrast);

@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ThemeProvider } from "../theme/ThemeProvider";
 import { DisplayProvider } from "../theme/DisplayProvider";
+import { ToastProvider } from "../components/ui";
 import { KitchenSink } from "./KitchenSink";
 
 afterEach(cleanup);
@@ -13,9 +14,11 @@ test("kitchen sink renders every section without throwing", () => {
   render(
     <ThemeProvider>
       <DisplayProvider>
-        <MemoryRouter>
-          <KitchenSink />
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter>
+            <KitchenSink />
+          </MemoryRouter>
+        </ToastProvider>
       </DisplayProvider>
     </ThemeProvider>,
   );
@@ -31,6 +34,7 @@ test("kitchen sink renders every section without throwing", () => {
     /charts/,
     /quotes/,
     /Structure & chrome/,
+    /§5 amendments/,
   ]) {
     expect(screen.getByRole("heading", { name: section })).toBeInTheDocument();
   }

@@ -268,8 +268,17 @@ out of scope — components only.
 
 ## IN-PROGRESS
 
-- (none) — **page-holdings.md awaits owner review** of its NEEDS DECISION items
-  before any build starts.
+- **Holdings build — PHASE 0a DONE, ⏸ PAUSED for ratification look.** All
+  `page-holdings.md` §9 items resolved by the owner (2026-07-10). Built the four
+  DESIGN-SYSTEM §5 component amendments — **Dialog/Drawer**, **ConfirmDialog +
+  PIN** (reuses Dialog), **FileInput**, **Toast/Snackbar** (10s undo) — all
+  token-compliant (added a `--scrim` token; drift green), amended into
+  DESIGN-SYSTEM §5 as PROPOSED, and demonstrated in the new `/kitchen-sink` "§5
+  amendments" section. 29 tests + build green; visually verified in headless
+  Chromium. **Awaiting the owner's ratification look at `/#/kitchen-sink` before
+  Phase 1 (Holdings assembly).** Remaining phases: 0b (contract deltas —
+  `/refdata`, `holdings.csv`, `TransactionIn` merger reshape, typed
+  holdings/summary/import-preview responses), 1 (assembly), 2 (tests).
 
 ## NEXT
 

@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Argon2 PIN hashing and signed session tokens."""
+"""Argon2 PIN hashing.
+
+Token round-trip/expiry/tamper tests were removed with `verify_token` (D-080):
+that helper is deleted, so the tests that exercised it are gone too. Signed-token
+behaviour is covered via the DB-backed auth flow in the integration suite.
+"""
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
-from app.core.security import hash_pin, issue_token, verify_pin, verify_token
+from app.core.security import hash_pin, verify_pin
 
 
 def test_pin_hash_and_verify():
@@ -20,20 +23,3 @@ def test_pin_hash_and_verify():
 def test_short_pin_rejected():
     with pytest.raises(ValueError):
         hash_pin("12")
-
-
-def test_token_roundtrip():
-    t = issue_token()
-    assert verify_token(t)
-
-
-def test_token_expiry():
-    t = issue_token()
-    # Zero max-age → already expired.
-    time.sleep(1)
-    assert not verify_token(t, max_age_seconds=0)
-
-
-def test_tampered_token_rejected():
-    t = issue_token()
-    assert not verify_token(t + "x")

@@ -375,7 +375,6 @@ async def rebuild_holdings_from_transactions(session: AsyncSession) -> int:
         if res.quantity <= ZERO:
             continue
         instrument = await session.get(Instrument, instrument_id)
-        account = await session.get(Account, account_id)
         # The instrument's trading currency (from its exchange suffix) is
         # authoritative — a .BSE stock trades in INR no matter what currency the
         # transaction row happened to default to. Fall back to the txn currency.
@@ -392,8 +391,6 @@ async def rebuild_holdings_from_transactions(session: AsyncSession) -> int:
             avg_cost=res.avg_cost,
             currency=ccy,
         ))
-        if account:  # keep instrument currency aligned to traded currency
-            pass
         count += 1
     await session.flush()
     return count

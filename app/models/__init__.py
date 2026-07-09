@@ -105,16 +105,6 @@ class Setting(Base):
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
 
 
-class ProviderConfig(Base):
-    __tablename__ = "provider_configs"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    kind: Mapped[str] = mapped_column(String(40))  # market | ai | voice
-    name: Mapped[str] = mapped_column(String(80))
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    config_json: Mapped[str] = mapped_column(Text, default="{}")  # never holds raw secrets
-    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
-
-
 # --------------------------------------------------------------------------- #
 # Accounts, instruments, market data
 # --------------------------------------------------------------------------- #
@@ -415,69 +405,6 @@ class MarketNews(Base):
     published_at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
     symbols_csv: Mapped[str] = mapped_column(String(255), default="")
     fetched_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
-
-
-class Note(Base):
-    __tablename__ = "notes"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    instrument_id: Mapped[int | None] = mapped_column(
-        ForeignKey("instruments.id"), nullable=True, index=True
-    )
-    body: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
-
-
-# --------------------------------------------------------------------------- #
-# Dashboards
-# --------------------------------------------------------------------------- #
-class DashboardConfig(Base):
-    __tablename__ = "dashboard_configs"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(80), default="default")
-    rotation_seconds: Mapped[int] = mapped_column(Integer, default=30)
-    focus_page: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    items: Mapped[list[DashboardRotationItem]] = relationship(
-        back_populates="config", cascade="all, delete-orphan"
-    )
-
-
-class DashboardRotationItem(Base):
-    __tablename__ = "dashboard_rotation_items"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    config_id: Mapped[int] = mapped_column(
-        ForeignKey("dashboard_configs.id", ondelete="CASCADE"), index=True
-    )
-    page: Mapped[str] = mapped_column(String(40))
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    sort_order: Mapped[int] = mapped_column(Integer, default=0)
-    config: Mapped[DashboardConfig] = relationship(back_populates="items")
-
-
-# --------------------------------------------------------------------------- #
-# AI conversations
-# --------------------------------------------------------------------------- #
-class AIConversation(Base):
-    __tablename__ = "ai_conversations"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(160), default="Conversation")
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
-    messages: Mapped[list[AIMessage]] = relationship(
-        back_populates="conversation", cascade="all, delete-orphan"
-    )
-
-
-class AIMessage(Base):
-    __tablename__ = "ai_messages"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    conversation_id: Mapped[int] = mapped_column(
-        ForeignKey("ai_conversations.id", ondelete="CASCADE"), index=True
-    )
-    role: Mapped[str] = mapped_column(String(16))  # user | assistant | system
-    content: Mapped[str] = mapped_column(Text)
-    facts_json: Mapped[str] = mapped_column(Text, default="{}")  # grounding facts shown to user
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
-    conversation: Mapped[AIConversation] = relationship(back_populates="messages")
 
 
 # --------------------------------------------------------------------------- #

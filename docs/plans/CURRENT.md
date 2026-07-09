@@ -145,18 +145,36 @@ ROADMAP.md and DESIGN-BRIEF.md.
     regeneration: 456 passed, 2 failed (both the missing-artifact case above);
     after: fully green. No legacy behaviour changed.
 
+- **Backend copy-in — PHASE B DONE (decision-driven prune).** Deleted exactly
+  what DECISIONS retired, nothing more:
+  - **Models** (`app/models/__init__.py`): `ProviderConfig` (D-014), `Note`
+    (D-015), `AIConversation`/`AIMessage` (D-016), `DashboardConfig`/
+    `DashboardRotationItem` (D-017), plus their references in `system.py`
+    (`reset-data`) and `seed/demo.py` (default-dashboard seed + `_DEMO_PAGES`).
+  - **D-080** dead code: `verify_token()`, the commented `_carry_forward`
+    duplicate (live one kept), the no-op `account` fetch + `if account: pass` in
+    `portfolio.py`.
+  - **D-042**: no bare server-side `/global` route exists — nothing to remove
+    (`/markets/global` is the kept Global-tab endpoint, D-051).
+  - **Migration** `f9e1a2b3c4d5_drop_retired_tables` (on head `d1e7a4c02f95`):
+    drops the six tables child-first, **data-guarded** (raises loudly if any
+    holds rows), with a full `downgrade()`. Verified: single head; clean upgrade;
+    guard aborts on a seeded row; downgrade/upgrade round-trip.
+  - **Tests removed (pruned-code only):** `test_token_roundtrip`/`_expiry`/
+    `_tampered_token_rejected` in `tests/unit/test_security.py` (they exercised
+    the deleted `verify_token`); PIN tests kept.
+  - **Suite: `pytest -q` → 455 passed, 0 failed** (was 458; −3 removed tests).
+    OpenAPI unchanged; inherited contract test still matches.
+
 ## IN-PROGRESS
 
-- **Backend copy-in — Phase B (prune) / Phase C (OpenAPI freeze)** next, per the
-  plan file.
+- **Backend copy-in — Phase C (OpenAPI freeze)** next, per the plan file.
 
 ## NEXT
 
-1. **Backend copy-in Phase B** — prune D-014..017 tables (+ data-guarded
-   migration on head `d1e7a4c02f95`), D-080 dead code, D-042 `/global` handling.
-2. **Backend copy-in Phase C** — freeze `docs/specs/API-CONTRACT.json` + delta
-   table + drift check.
-3. **Kitchen-sink / ratification review** — ratify the PROPOSED values: the
+1. **Backend copy-in Phase C** — freeze `docs/specs/API-CONTRACT.json` +
+   `API-CONTRACT.md` delta table (each row a decision ID) + a drift check.
+2. **Kitchen-sink / ratification review** — ratify the PROPOSED values: the
    design tokens (DESIGN-SYSTEM §2) and the authored DEF-2/DEF-6 vocabularies
    (MASTER-DATA §2/§6).
 

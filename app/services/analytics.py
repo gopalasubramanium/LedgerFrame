@@ -191,19 +191,6 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
     }
 
 
-#def _carry_forward(dates: list[datetime], series: dict[datetime, Decimal]) -> list[Decimal]:
-#    "#""Map each axis date to the most recent known value at or before it.""#"
-#    out: list[Decimal] = []
-#    last = Decimal("0")
-#    keys = sorted(series)
-#    j = 0
-#    for d in dates:
-#        while j < len(keys) and keys[j] <= d:
-#            last = series[keys[j]]
-#            j += 1
-#        out.append(last)
-#    return out
-
 def _carry_forward(dates: list[datetime], series: dict[datetime, Decimal]) -> list[Decimal]:
     """Map each axis date to the most recent known value at or before it."""
 

@@ -63,11 +63,6 @@ def decode_token(token: str, max_age_seconds: int | None = None) -> dict | None:
         return None
 
 
-def verify_token(token: str, max_age_seconds: int | None = None) -> bool:
-    """Signature + expiry only (no revocation). Kept for callers without a DB session."""
-    return decode_token(token, max_age_seconds) is not None
-
-
 # --- Scoped read-only API tokens (§2.4) ------------------------------------ #
 API_TOKEN_PREFIX = "lft_"
 

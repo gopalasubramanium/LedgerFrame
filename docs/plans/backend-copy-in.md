@@ -189,10 +189,48 @@ spec features.
 Populated as observations arise during A/B; this is the queue for post-freeze
 feature work (each gated by its own plan file, per CLAUDE.md scope rule):
 
-- (to be filled during execution)
+- **`ai.py` and `dashboard.py` routes survive the prune** — they do **not**
+  reference the dropped AI/dashboard tables (AI chat is already ephemeral;
+  rotation config is not read from `DashboardConfig`). They are reshaped later,
+  not pruned now: Ask panel / one-AI-pipeline (D-067/P-6) and Home composition
+  (D-046) will revisit them.
+- **Legacy route names still in place** — `planning.router` serves `/planning`
+  (rename to `/cash-flow`, D-056/D-022) and the snapshot route predates
+  `/net-worth` (D-022). Renames + redirects are Phase-C-delta / feature work.
+- **No `/refdata` endpoint yet** (D-005) — masters/refdata is feature work.
+- **`/markets/global` stays** — it is the Markets *Global tab* data endpoint
+  (D-051, KEEP); it is **not** the D-042 frontend `/global` page.
 
 ---
 
 ## Status
 
-- Plan written. Execution starts at Phase A.
+- Plan written; **Phase A DONE** (copy, 458 green); **Phase B DONE** (prune,
+  455 green). Phase C next.
+
+### Phase B result (deletions, exhaustive)
+
+- **Models removed** (`app/models/__init__.py`): `ProviderConfig` (D-014),
+  `Note` (D-015), `AIConversation` + `AIMessage` (D-016), `DashboardConfig` +
+  `DashboardRotationItem` (D-017).
+- **References cleaned:** `app/api/v1/routes/system.py` (`reset-data` import list
+  + delete loop + docstring — dropped `AIConversation/AIMessage/Note`);
+  `app/seed/demo.py` (dropped `DashboardConfig/DashboardRotationItem` import +
+  the default-dashboard seed block + the now-unused `_DEMO_PAGES`).
+- **D-080:** deleted `verify_token()` (`app/core/security.py`), the commented-out
+  `_carry_forward` duplicate (`app/services/analytics.py`, live one kept), the
+  no-op `account = await session.get(Account, …)` fetch + its `if account: pass`
+  block (`app/services/portfolio.py`; `Account` import retained — still used).
+- **D-042:** **no bare server-side `/global` route exists** — nothing to remove.
+  (`/markets/global` is the kept Global-tab endpoint.)
+- **Migration** `f9e1a2b3c4d5_drop_retired_tables.py` (down_revision
+  `d1e7a4c02f95`): drops the six tables child-first; **data-guarded** — raises
+  `RuntimeError` if any target table holds rows; `downgrade()` recreates all six.
+  Verified: single head; clean upgrade drops all six; guard aborts on a seeded
+  row; `downgrade -1`/`upgrade head` round-trips.
+- **Tests removed (pruned-code only):** `tests/unit/test_security.py` —
+  `test_token_roundtrip`, `test_token_expiry`, `test_tampered_token_rejected`
+  (all exercised the deleted `verify_token`); the PIN tests stay. No other test
+  referenced a pruned symbol.
+- **Suite:** `pytest -q` → **455 passed, 0 failed**. OpenAPI unchanged (prune
+  touched no route shape); the inherited contract test still matches.

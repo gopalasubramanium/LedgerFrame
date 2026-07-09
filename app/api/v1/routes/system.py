@@ -308,21 +308,18 @@ async def reset_data(session: AsyncSession = Depends(get_db)) -> dict:
     """Delete all demo/portfolio/market data so you can start fresh with live data.
 
     Removes transactions, holdings, instruments, quotes, price history, watchlists,
-    snapshots, news and notes. Keeps your settings, PIN, and provider config. Sets a
+    snapshots and news. Keeps your settings, PIN, and provider config. Sets a
     flag so demo data is NOT re-seeded afterwards.
     """
     from sqlalchemy import delete
 
     from app.models import (
         Account,
-        AIConversation,
-        AIMessage,
         Holding,
         Instrument,
         InstrumentIdentifier,
         MarketNews,
         NetWorthSnapshot,
-        Note,
         PortfolioSnapshot,
         PriceHistory,
         Quote,
@@ -335,7 +332,7 @@ async def reset_data(session: AsyncSession = Depends(get_db)) -> dict:
 
     # Delete children before parents to satisfy FK constraints.
     for model in (
-        AIMessage, AIConversation, WatchlistItem, Watchlist, Note, PriceHistory,
+        WatchlistItem, Watchlist, PriceHistory,
         Quote, Transaction, Holding, PortfolioSnapshot, NetWorthSnapshot, MarketNews,
         InstrumentIdentifier, Instrument, Account,
     ):

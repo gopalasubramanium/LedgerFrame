@@ -14,8 +14,6 @@ from app.core.money import D
 from app.models import (
     Account,
     AssetClass,
-    DashboardConfig,
-    DashboardRotationItem,
     Holding,
     Instrument,
     Transaction,
@@ -39,8 +37,6 @@ _DEMO_TXNS = [
     ("HDFCNIFTY", "buy", "2023-07-01", 500, 200.0, 0.0, "INR"),
     ("BTC", "buy", "2023-05-01", 0.15, 28000.0, 5.0, "USD"),
 ]
-
-_DEMO_PAGES = ["home", "portfolio", "markets", "heatmap", "news"]
 
 
 SEED_FLAG_KEY = "demo_seed_done"
@@ -129,12 +125,6 @@ async def seed_demo_data(session: AsyncSession) -> bool:
     await session.flush()
     for i, sym in enumerate(["AAPL", "MSFT", "NVDA", "VOO", "GLD", "BTC", "ETH", "^STI"]):
         session.add(WatchlistItem(watchlist_id=wl.id, instrument_id=instruments[sym].id, sort_order=i))
-
-    cfg = DashboardConfig(name="default", rotation_seconds=30)
-    session.add(cfg)
-    await session.flush()
-    for i, page in enumerate(_DEMO_PAGES):
-        session.add(DashboardRotationItem(config_id=cfg.id, page=page, sort_order=i))
 
     await session.flush()
     await rebuild_holdings_from_transactions(session)

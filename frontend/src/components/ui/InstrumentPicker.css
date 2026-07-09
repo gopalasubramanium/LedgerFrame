@@ -1,0 +1,54 @@
+.lf-picker {
+  position: relative;
+  width: 100%;
+}
+
+.lf-picker__menu {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  list-style: none;
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.lf-picker__option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.lf-picker__option:hover,
+.lf-picker__option--active {
+  background: var(--surface-raised);
+}
+
+.lf-picker__sym {
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-size-13);
+}
+.lf-picker__name {
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+}
+
+.lf-picker__create {
+  color: var(--accent);
+  font-weight: var(--weight-medium);
+}
+
+.lf-picker__empty {
+  padding: var(--space-3);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+}

@@ -1,0 +1,101 @@
+/* House-SVG chart layer (DESIGN-SYSTEM §4, D-053). No charting dependency.
+ * Colour is semantic: gain/loss only on gain/loss; category segments use the
+ * slate ramp + accent, never a rainbow. */
+
+.lf-spark {
+  display: block;
+  width: 100%;
+  height: var(--space-8);
+  overflow: visible;
+}
+.lf-spark__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.lf-spark__line--gain { stroke: var(--gain); }
+.lf-spark__line--loss { stroke: var(--loss); }
+
+/* Category segments — slate ramp + accent, never a rainbow (DESIGN-SYSTEM §4).
+ * A monochrome lightness ramp plus the one accent; cycles for >5 segments.
+ * Colour-blind safe (labels always carry text). */
+.lf-seg--0 { fill: var(--accent); stroke: var(--accent); background: var(--accent); }
+.lf-seg--1 { fill: var(--text-secondary); stroke: var(--text-secondary); background: var(--text-secondary); }
+.lf-seg--2 { fill: var(--border-strong); stroke: var(--border-strong); background: var(--border-strong); }
+.lf-seg--3 { fill: var(--text-tertiary); stroke: var(--text-tertiary); background: var(--text-tertiary); }
+.lf-seg--4 { fill: var(--text-primary); stroke: var(--text-primary); background: var(--text-primary); }
+
+/* Donut */
+.lf-donut {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+.lf-donut__svg { width: 9rem; height: 9rem; flex-shrink: 0; }
+.lf-donut__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 12rem;
+}
+.lf-donut__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  cursor: default;
+}
+.lf-donut__row--clickable { cursor: pointer; }
+.lf-donut__swatch {
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.lf-donut__label { color: var(--text-secondary); flex: 1; }
+.lf-donut__pct {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Price chart */
+.lf-pricechart { width: 100%; }
+.lf-pricechart__svg { width: 100%; height: 16rem; }
+.lf-pricechart__axis { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.lf-pricechart__line { fill: none; stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.lf-pricechart__bench { fill: none; stroke: var(--text-tertiary); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.lf-pricechart__overlay { fill: none; stroke: var(--attention); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.lf-candle--up { stroke: var(--gain); fill: var(--gain); }
+.lf-candle--down { stroke: var(--loss); fill: var(--loss); }
+.lf-pricechart__legend {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-12);
+  color: var(--text-secondary);
+}
+
+/* Treemap */
+.lf-treemap { width: 100%; }
+.lf-treemap__svg { width: 100%; height: 18rem; }
+.lf-treemap__cell-rect {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.lf-treemap__cell--gain { fill: var(--gain); }
+.lf-treemap__cell--loss { fill: var(--loss); }
+.lf-treemap__cell--flat { fill: var(--surface-raised); }
+.lf-treemap__label {
+  fill: var(--accent-contrast);
+  font-size: var(--font-size-12);
+  font-family: var(--font-ui);
+  pointer-events: none;
+}
+.lf-treemap__label--flat { fill: var(--text-primary); }

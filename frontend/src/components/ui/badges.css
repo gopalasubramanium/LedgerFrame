@@ -1,0 +1,59 @@
+.lf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.lf-badge__seg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.lf-badge__seg + .lf-badge__seg {
+  padding-left: var(--space-3);
+  border-left: var(--border-width) solid var(--border);
+}
+
+.lf-badge__strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Confidence bands — semantic, and never colour-only (band word is shown). */
+.lf-badge__conf--high {
+  color: var(--gain);
+}
+.lf-badge__conf--medium {
+  color: var(--attention);
+}
+.lf-badge__conf--low {
+  color: var(--loss);
+}
+
+/* StalenessChip — amber attention only (DESIGN-SYSTEM §2.1 rule). */
+.lf-stale {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--attention);
+  border-radius: var(--radius-sm);
+  color: var(--attention);
+  background: transparent;
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+.lf-stale__glyph {
+  font-weight: var(--weight-semibold);
+}

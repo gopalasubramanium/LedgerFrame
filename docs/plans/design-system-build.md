@@ -234,5 +234,38 @@ Scope:
   `system`; flash-free bootstrap extended to all axes. Tabular figures proven
   with a live decimal-aligned sample column. Every value carries a PROPOSED
   marker per §2.6. `npm run check` (now 4 tests) + build green; drift clean.
-- PHASE C — NOT STARTED
+- **PHASE C — DONE.** Full DESIGN-SYSTEM §5 inventory in
+  `src/components/ui/` (19 named components + a supporting `Sparkline` and a
+  generic `Select` primitive): MoneyInput, QuantityInput, PercentInput,
+  DateInput, InstrumentPicker, MasterSelect · DataTable, TrendStat,
+  AllocationDonut, PriceChart, Treemap, QuoteCardRow, TickerStrip ·
+  ProvenanceBadge, StalenessChip · PageHeader, EmptyState, ReviewCard,
+  GlossaryTerm. All to their §5 props surfaces + usage rules: no raw
+  `<input>`/`<select>` (inputs wrap natives internally); MasterSelect resolves
+  every categorical field through a mock `/refdata` registry (verbatim
+  MASTER-DATA seeds), never an inline list; money rendered from backend decimal
+  strings via display-only formatters (no frontend math); numbers right-aligned
+  + tabular + per-unit dp. Charts are **house SVG** (D-053) — Sparkline, donut,
+  price chart (candles/line + MA/BB/RSI + benchmark), **squarified** treemap —
+  no charting dependency; escape hatch untaken. Mock fixtures exercise negatives,
+  long names, multiple currencies, and stale / low-confidence / manual /
+  unavailable provenance. 22 tests. Check + build green; drift clean. Two
+  under-specified points flagged (see Needs decision).
 - PHASE D — NOT STARTED
+
+## Needs decision (surfaced in Phase C — non-blocking, for kitchen-sink review)
+
+- **Category/segment chart palette (DESIGN-SYSTEM §2.1/§4).** §4 says
+  allocation/category segments use "the slate ramp + accent, not a rainbow", but
+  §2.1 defines **no explicit categorical palette**. Phase C derived 5 segment
+  tones from existing tokens — `--accent`, `--text-secondary`, `--border-strong`,
+  `--text-tertiary`, `--text-primary` (a monochrome lightness ramp + the accent),
+  cycling for >5 segments. **Ratify or replace** at review (adjacent-shade
+  distinguishability + AA on surfaces). Used by AllocationDonut and Treemap-flat.
+- **Generic `Select` primitive.** DESIGN-SYSTEM §5 names MasterSelect (for
+  MASTER-DATA categorical fields) but no generic select, while §6 forbids raw
+  `<select>` and D-046's QuoteCardRow specifies a "source" **select**
+  (markets/holdings/global/watchlist — a view scope, not a data vocabulary).
+  Phase C added a thin `ui/Select` primitive for such view-scope controls.
+  **Confirm** this is the intended home for non-master selects (vs. folding into
+  MasterSelect).

@@ -211,11 +211,26 @@ ROADMAP.md and DESIGN-BRIEF.md.
   `system`. Tabular figures proven live. All PROPOSED per §2.6. Checks + build
   green.
 
+- **Frontend foundation — PHASE C DONE (components).** Full DESIGN-SYSTEM §5
+  inventory in `frontend/src/components/ui/` (19 named + `Sparkline` + a generic
+  `Select`): inputs (Money/Quantity/Percent/Date/InstrumentPicker/MasterSelect),
+  data display (DataTable, TrendStat, AllocationDonut, PriceChart, Treemap,
+  QuoteCardRow, TickerStrip), provenance (ProvenanceBadge, StalenessChip),
+  structure (PageHeader, EmptyState, ReviewCard, GlossaryTerm). No raw
+  `<input>`/`<select>`; MasterSelect resolves categoricals through a mock
+  `/refdata` registry (verbatim MASTER-DATA seeds); money from backend decimal
+  strings via display-only formatters (no frontend math); house-SVG charts only
+  (squarified treemap, no ECharts — D-053). Mock fixtures cover negatives, long
+  names, multi-currency, and stale/low-confidence/manual/unavailable provenance.
+  22 tests; check + build green; drift clean. Two under-specified points flagged
+  (segment palette; generic Select) in `docs/plans/design-system-build.md` and
+  Needs decision below.
+
 ## IN-PROGRESS
 
-- **Frontend foundation — PHASE C (components).** Build the full DESIGN-SYSTEM §5
-  inventory in `frontend/src/components/ui/` with realistic mock data from the
-  frozen API-CONTRACT schemas; house-SVG charts only (D-053).
+- **Frontend foundation — PHASE D (kitchen sink + ratification).** Build the
+  `/kitchen-sink` route (every component × every state), the token swatch board,
+  and `docs/plans/RATIFICATION.md`.
 
 ## NEXT
 
@@ -243,3 +258,11 @@ All open items are **ratification of authored PROPOSED values** (not blocking):
   dependency.
 - ~~Cash flow route~~ — **resolved**: `/cash-flow` canonical, `/planning`
   redirects (D-022 principle applied to D-056).
+- **Segment/category chart palette (DESIGN-SYSTEM §4)** — §4 mandates "slate ramp
+  + accent" for allocation/category segments but §2.1 defines no explicit
+  categorical palette. Phase C derived 5 tones from existing tokens (accent +
+  slate lightness ramp); ratify or replace at kitchen-sink.
+- **Generic `Select` primitive** — added in Phase C for non-master view-scope
+  selects (D-046 QuoteCardRow source), since §5 names only MasterSelect and §6
+  bans raw `<select>`. Confirm this is the intended home vs. folding into
+  MasterSelect.

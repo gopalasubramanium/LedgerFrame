@@ -1,0 +1,63 @@
+/* Shared styling for the sanctioned input controls (DESIGN-SYSTEM §5.1 / §6).
+ * Token-only; density-aware via --control-height. */
+
+.lf-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  color: var(--text-primary);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  transition: border-color var(--motion-fast);
+}
+.lf-field:focus-within {
+  border-color: var(--accent);
+}
+.lf-field--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.lf-field--block {
+  display: flex;
+  width: 100%;
+}
+
+.lf-field__adornment {
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  user-select: none;
+}
+
+.lf-field__input,
+.lf-field__select {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+/* Numeric controls: right-aligned tabular figures (DESIGN-SYSTEM §1). */
+.lf-field__input--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lf-field__select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: var(--space-4);
+}
+
+.lf-field__input:disabled,
+.lf-field__select:disabled {
+  cursor: not-allowed;
+}

@@ -1,0 +1,152 @@
+/* PageHeader (DESIGN-SYSTEM §5.4) */
+.lf-pageheader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: var(--border-width) solid var(--border);
+}
+.lf-pageheader__title {
+  margin: 0;
+  font-size: var(--font-size-28);
+  line-height: var(--line-28);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.lf-pageheader__subtitle {
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+}
+.lf-pageheader__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* EmptyState (DESIGN-SYSTEM §5.4) — always shows a reason (Product Guarantee 3) */
+.lf-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-9) var(--space-5);
+  text-align: center;
+  border: var(--border-width) dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+}
+.lf-empty__message {
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  color: var(--text-primary);
+}
+.lf-empty__reason {
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+  max-width: 32rem;
+}
+
+/* ReviewCard (DESIGN-SYSTEM §5.4) */
+.lf-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.lf-review__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.lf-review__title {
+  margin: 0;
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  font-weight: var(--weight-semibold);
+}
+.lf-review__attention {
+  color: var(--attention);
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-semibold);
+}
+.lf-review__section {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: var(--border-width) solid var(--border);
+}
+.lf-review__verdict {
+  flex-shrink: 0;
+  width: var(--space-3);
+  height: var(--space-3);
+  margin-top: var(--space-2);
+  border-radius: 50%;
+}
+.lf-review__verdict--ok { background: var(--gain); }
+.lf-review__verdict--attention { background: var(--attention); }
+.lf-review__verdict--info { background: var(--text-tertiary); }
+.lf-review__label { color: var(--text-primary); }
+.lf-review__detail { color: var(--text-secondary); font-size: var(--font-size-13); }
+.lf-review__link {
+  align-self: flex-start;
+  color: var(--accent);
+  font-size: var(--font-size-13);
+  text-decoration: none;
+}
+
+/* GlossaryTerm (DESIGN-SYSTEM §5.4) */
+.lf-term {
+  border-bottom: var(--border-width) dotted var(--border-strong);
+  cursor: help;
+  position: relative;
+}
+.lf-term__pop {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  top: 100%;
+  margin-top: var(--space-2);
+  width: 18rem;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+.lf-term__pop-title {
+  display: block;
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-2);
+}
+
+/* Shared button used by PageHeader actions etc. */
+.lf-btn {
+  font: inherit;
+  font-size: var(--font-size-13);
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  min-height: var(--control-height);
+  cursor: pointer;
+}
+.lf-btn:hover { border-color: var(--accent); }
+.lf-btn--primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}

@@ -110,6 +110,15 @@ Group names are guessable from contents (P-4); "Stewardship" was rejected.
 
 Reports and Pricing Health enter the sidebar in v2 (previously orphaned, D-041).
 
+### Sidebar responsive behaviour (D-102)
+
+- **Laptop width and up:** the sidebar is **fixed and always visible**.
+- **Below laptop width:** the sidebar is **off-canvas/collapsible**, opened by a
+  **top-bar toggle** (part of the D-066 chrome).
+- Only *visibility* is responsive. The six groups, their fixed order, and their
+  non-reorderability (D-043) never change — narrow widths hide/reveal the same nav,
+  they do not restructure it.
+
 ### Route dispositions (D-042 — deliberate asymmetry)
 
 | Route | Disposition |

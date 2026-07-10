@@ -675,6 +675,22 @@ clarifying notes recorded in the guide.
   Advanced toggle (Simple default), hover crosshair + tooltip, period selector with
   honest short-history. DESIGN-SYSTEM §5.2 marker flips PROPOSED → ratified.
 
+- **D-102 — Sidebar responsive behaviour** (owner, 2026-07-11; page-chrome C-6).
+  Closes an IA gap: D-043 fixes the six sidebar groups and their order but never
+  specified narrow-width behaviour. Resolution: the sidebar is **fixed (always
+  visible) at laptop widths and up**, and **off-canvas/collapsible below laptop
+  width**, opened by a **top-bar toggle**. The groups, their order, and their
+  non-reorderability (D-043) are unchanged — only visibility is responsive, never
+  content or arrangement. Recorded in INFORMATION-ARCHITECTURE §3.
+- **D-103 — Purge-PIN NEVER binds to the unlock session** (owner, 2026-07-11;
+  page-chrome C-5). The destructive purge (the only irreversible action) **always
+  demands fresh PIN entry**, regardless of lock state — an unlocked/ambient session
+  does **not** satisfy the purge PIN. Rationale: the PIN is the access lock (D-002),
+  and on a wall-mounted appliance an unlocked session is ambient; the point of no
+  return therefore requires deliberate re-entry, not ambient authority. This settles
+  the page-holdings §9 follow-up (purge-PIN→session binding): the binding is
+  **deliberately none**. Recorded in SECURITY-BASELINE §3.
+
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.
 **D-090 and D-091 were ratified 2026-07-10** (D-090 with the ETF-Bonus amendment);

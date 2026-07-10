@@ -125,18 +125,21 @@ panels. The **four page templates** render inside the shell's main region.
 
 ---
 
-## 9. NEEDS DECISION (surface to owner BEFORE build)
+## 9. NEEDS DECISION — ALL RESOLVED (owner, 2026-07-11)
 
-| # | Item | Why it blocks | Proposed resolution |
-|---|------|---------------|---------------------|
-| C-1 | **New chrome components** (Sidebar/TopBar/StaleBanner/UpdateBanner/DemoBadge/Clock/LockScreen) are not in the ratified inventory | New components forbidden without a DESIGN-SYSTEM amendment | Author them as PROPOSED, ratify at `/kitchen-sink` (Phase 0a) before assembly. |
-| C-2 | **Ask panel (D-067)** is chrome per §5.5 but rides the AI pipeline | Same deferral as the Instrument Detail explainer (ND-2/ND-5) | **DEFER to the AI-surfaces milestone**; shell leaves a slot; D-067 recorded pending, not dropped. |
-| C-3 | **Version-check endpoint + no-egress guard** | UpdateBanner must make zero calls under no-egress (D-075) | Confirm the endpoint exists; if not, add it with the no-egress guard (contract delta). |
-| C-4 | **First-run checklist (D-045)** scope | Is it part of this chrome build or its own plan? | Recommend a **separate small plan** after the shell; the shell only reserves where it appears. |
-| C-5 | **LockScreen ↔ session/PIN contract** | Must match SECURITY-BASELINE (D-002, unlock session, purge-PIN binding) | Pin the unlock/session flow against SECURITY-BASELINE before build; ties to the deferred purge-PIN→session binding (page-holdings §9 follow-up). |
-| C-6 | **Sidebar collapse / responsive behaviour** | IA doesn't specify collapse at narrow widths | Decide: collapsible/off-canvas sidebar at narrow widths vs fixed; propose off-canvas with a top-bar toggle. |
+| # | Item | Resolution (owner, 2026-07-11) |
+|---|------|--------------------------------|
+| C-1 | **New chrome components** not in the ratified inventory | **Authorized** — author all seven (Sidebar/TopBar/StaleBanner/UpdateBanner/DemoBadge/Clock/LockScreen) as PROPOSED; owner ratifies at `/kitchen-sink` in **Phase 0a before shell assembly**. |
+| C-2 | **Ask panel (D-067)** rides the AI pipeline | **Deferral confirmed** — same call as the Instrument Detail explainer; shell **reserves a slot**, D-067 recorded **pending, not dropped**. |
+| C-3 | **Version-check endpoint + no-egress guard** | **Proceed** — endpoints already exist (`system/version-check`, `system/update-status`). **Verify both make zero outbound calls under no-egress + add the network-trace acceptance test**; patch only if the guard is missing. Not a new-endpoint delta. |
+| C-4 | **First-run checklist (D-045)** scope | **Accepted** — checklist is **its own small plan after the shell**; chrome reserves the **first-run gate slot only**. |
+| C-5 | **LockScreen ↔ session/PIN contract** | **Reconcile as proposed** against SECURITY-BASELINE (`auth/set-pin`, `auth/unlock`, `auth/lock`, `auth/state` exist). **Owner sub-decision (D-103): purge-PIN NEVER binds to the unlock session — purge always demands fresh PIN, regardless of lock state.** Recorded in SECURITY-BASELINE §3 + DECISIONS D-103. |
+| C-6 | **Sidebar collapse / responsive behaviour** | **Approved (D-102)** — **off-canvas/collapsible below laptop width with a top-bar toggle; fixed at laptop+**. Added to INFORMATION-ARCHITECTURE §3 (gap closed). |
 
 ---
 
-**Sign-off to start build:** C-1..C-6 resolved · §3b deltas approved · Phase-0a
-component amendments ratified · Ask panel deferral (C-2) recorded.
+**Sign-off to start build:** ✅ C-1..C-6 resolved (owner 2026-07-11). §3b reduces
+to verification (C-3 endpoints exist; C-5 auth surface exists). **Proceeding: Phase
+0a (author the seven components + kitchen-sink specimens), then PAUSE for owner
+ratification** before shell assembly. Ask panel deferral (C-2) recorded; D-102 (IA)
+and D-103 (SECURITY-BASELINE) recorded.

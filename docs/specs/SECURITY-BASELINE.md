@@ -70,6 +70,13 @@ for #10). Accepted-with-ADR: #1, #2, #3, #5, #6, #7, #8, #9, #13.
 - **Disk-encryption guidance (normative):** confidentiality of the stored ledger
   relies on **OS disk encryption** (FileVault / LUKS / BitLocker). SECURITY-BASELINE
   and first-run guidance must state this plainly.
+- **Purge-PIN never binds to the unlock session (D-103).** The destructive purge
+  is the only irreversible action; it **always demands fresh PIN entry**, regardless
+  of lock state. An unlocked or ambient session does **not** satisfy the purge PIN —
+  there is deliberately **no** purge-PIN→session binding. Rationale: on a wall-mounted
+  appliance an unlocked session is ambient, so the point of no return requires a
+  deliberate, explicit re-entry rather than ambient session authority. (This is the
+  standing resolution of the page-holdings purge-PIN follow-up.)
 - **ROADMAP R-1:** optional passphrase mode (8–64 chars) (D-002).
 
 ---

@@ -613,6 +613,27 @@ async def purge_deleted(session: AsyncSession = Depends(get_db)) -> dict:
             "transactions_purged": len(dead_txns), "holdings_rebuilt": rebuilt}
 
 
+class DeletedCount(BaseModel):
+    holdings: int
+    transactions: int
+    total: int
+
+
+@router.get("/portfolio/deleted-count", response_model=DeletedCount)
+async def deleted_count(session: AsyncSession = Depends(get_db)) -> dict:
+    """Count of soft-deleted rows awaiting purge — so the UI can hide the
+    (PIN-gated) purge control at zero and show the count when non-empty."""
+    from sqlalchemy import func
+
+    hc = (await session.execute(
+        select(func.count()).select_from(Holding).where(Holding.deleted_at.isnot(None))
+    )).scalar_one()
+    tc = (await session.execute(
+        select(func.count()).select_from(Transaction).where(Transaction.deleted_at.isnot(None))
+    )).scalar_one()
+    return {"holdings": hc, "transactions": tc, "total": hc + tc}
+
+
 @router.get("/portfolio/import/template", response_class=PlainTextResponse)
 async def csv_template() -> str:
     return TRANSACTION_TEMPLATE

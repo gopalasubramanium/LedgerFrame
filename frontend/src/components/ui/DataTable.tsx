@@ -33,6 +33,9 @@ export interface Column<R> {
   align?: "left" | "right";
   format?: ColumnFormat;
   sortable?: boolean;
+  /** Truncate long text with an ellipsis (max-width) so it never forces the
+   *  table wider than the viewport — graceful degradation at laptop widths. */
+  truncate?: boolean;
   /** Custom cell renderer; overrides format. */
   render?: (row: R) => ReactNode;
 }
@@ -192,12 +195,14 @@ export function DataTable<R>({
                           ? " lf-table__td--loss"
                           : "";
                   }
+                  const cell = renderCell(col, row);
                   return (
                     <td
                       key={col.key}
-                      className={`lf-table__td${isNum ? " lf-table__td--num" : ""}${toneClass}`}
+                      className={`lf-table__td${isNum ? " lf-table__td--num" : ""}${toneClass}${col.truncate ? " lf-table__td--trunc" : ""}`}
+                      title={col.truncate && typeof cell === "string" ? cell : undefined}
                     >
-                      {renderCell(col, row)}
+                      {cell}
                     </td>
                   );
                 })}

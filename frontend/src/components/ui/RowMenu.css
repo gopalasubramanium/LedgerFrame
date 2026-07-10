@@ -1,0 +1,61 @@
+.lf-rowmenu {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
+.lf-rowmenu__trigger {
+  font: inherit;
+  font-size: var(--font-size-16);
+  line-height: 1;
+  color: var(--text-secondary);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+  min-height: var(--control-height);
+  cursor: pointer;
+}
+.lf-rowmenu__trigger:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.lf-rowmenu__menu {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  top: 100%;
+  margin-top: var(--space-1);
+  min-width: 9rem;
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+}
+
+.lf-rowmenu__item {
+  font: inherit;
+  font-size: var(--font-size-13);
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lf-rowmenu__item:hover {
+  background: var(--surface-raised);
+}
+.lf-rowmenu__item--danger {
+  color: var(--loss);
+}
+.lf-rowmenu__item:disabled {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}

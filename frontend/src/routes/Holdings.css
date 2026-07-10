@@ -78,6 +78,13 @@
   border-color: var(--accent);
   background: var(--surface-raised);
 }
+/* D-092 signpost tile — visually distinct from asset-type tiles (it navigates). */
+.hold__tile--signpost {
+  border-style: dashed;
+}
+.hold__tile--signpost .hold__tile-title {
+  color: var(--accent);
+}
 .hold__tile-title {
   font-size: var(--font-size-13);
   line-height: var(--line-13);
@@ -173,3 +180,47 @@
   align-items: center;
   gap: var(--space-2);
 }
+
+/* D-093 import review grid */
+.imp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.imp__summary {
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+}
+.imp__grid {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  max-height: 26rem;
+}
+.imp__head,
+.imp__row {
+  display: grid;
+  grid-template-columns: 9rem 7rem 8rem 6rem 6rem 5rem 4rem 5rem;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--border);
+}
+.imp__head {
+  position: sticky;
+  top: 0;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
+  font-weight: var(--weight-semibold);
+}
+.imp__row:last-child { border-bottom: 0; }
+.imp__row--error { background: color-mix(in srgb, var(--loss) 10%, transparent); }
+.imp__row--excluded { opacity: 0.5; }
+.imp__cell--bad :is(.lf-field) { border-color: var(--loss); }
+.imp__status { font-size: var(--font-size-12); }
+.imp__bad { color: var(--loss); font-weight: var(--weight-semibold); }
+.imp__ok { color: var(--gain); }
+.imp__dup { color: var(--attention); }

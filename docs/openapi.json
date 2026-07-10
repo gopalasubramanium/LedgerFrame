@@ -489,6 +489,29 @@
         "title": "DataSourceIn",
         "type": "object"
       },
+      "DeletedCount": {
+        "properties": {
+          "holdings": {
+            "title": "Holdings",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "transactions": {
+            "title": "Transactions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "holdings",
+          "transactions",
+          "total"
+        ],
+        "title": "DeletedCount",
+        "type": "object"
+      },
       "DocumentIn": {
         "properties": {
           "category": {
@@ -7987,6 +8010,72 @@
           }
         },
         "summary": "Cost Of Ownership Report",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/portfolio/deleted-count": {
+      "get": {
+        "description": "Count of soft-deleted rows awaiting purge \u2014 so the UI can hide the\n(PIN-gated) purge control at zero and show the count when non-empty.",
+        "operationId": "deleted_count_api_v1_portfolio_deleted_count_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedCount"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deleted Count",
         "tags": [
           "portfolio"
         ]

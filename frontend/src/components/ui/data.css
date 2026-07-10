@@ -82,6 +82,14 @@
 }
 .lf-table__td--gain { color: var(--gain); }
 .lf-table__td--loss { color: var(--loss); }
+/* Graceful degradation: long text truncates instead of forcing the table wider
+ * than the viewport (no mandatory horizontal scroll at laptop widths). */
+.lf-table__td--trunc {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .lf-table__filter { min-width: 14rem; }
 .lf-table__toolbar {
   display: flex;

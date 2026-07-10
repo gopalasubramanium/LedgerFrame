@@ -83,13 +83,33 @@ export interface AccountRow {
   currency?: string | null;
 }
 
-export interface ImportPreview {
-  ok?: boolean;
-  rows?: unknown[];
-  duplicates?: number;
-  errors?: string[];
+export interface ImportRow {
+  row: number;
+  ok: boolean;
+  error?: string | null;
+  duplicate?: boolean;
+  date?: string;
+  type?: string;
+  symbol?: string;
+  quantity?: string;
+  price?: string;
+  fees?: string;
+  taxes?: string;
+  currency?: string;
+  note?: string;
+  asset_class?: string;
+  country?: string;
   [k: string]: unknown;
 }
+export interface ImportPreview {
+  batch?: string;
+  already_imported?: boolean;
+  summary?: { total: number; valid: number; errors: number; duplicates: number; new: number };
+  rows: ImportRow[];
+}
+
+export interface DeletedCount { holdings: number; transactions: number; total: number; }
+export const getDeletedCount = () => apiGet<DeletedCount>("/portfolio/deleted-count");
 
 export const getHoldings = () => apiGet<HoldingsResponse>("/portfolio/holdings");
 export const getSummary = () => apiGet<SummaryResponse>("/portfolio/summary");
@@ -100,6 +120,8 @@ export const getTags = () => apiGet<{ tags: string[] }>("/portfolio/tags");
 
 export const addTransaction = (t: TransactionIn) =>
   apiSend<{ ok: boolean; transaction_id: number }>("/portfolio/transactions", "POST", t);
+export const updateTransaction = (id: number, t: TransactionIn) =>
+  apiSend<{ ok: boolean }>(`/portfolio/transactions/${id}`, "PUT", t);
 export const deleteTransaction = (id: number) =>
   apiSend<{ ok: boolean }>(`/portfolio/transactions/${id}`, "DELETE");
 export const restoreTransaction = (id: number) =>

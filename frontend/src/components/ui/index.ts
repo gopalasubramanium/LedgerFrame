@@ -18,6 +18,8 @@ export { MasterSelect } from "./MasterSelect";
 export type { MasterSelectProps } from "./MasterSelect";
 export { Select } from "./Select";
 export type { SelectProps, SelectOption } from "./Select";
+export { RowMenu } from "./RowMenu";
+export type { RowMenuProps, RowMenuItem } from "./RowMenu";
 
 // §5.2 Data display
 export { DataTable } from "./DataTable";

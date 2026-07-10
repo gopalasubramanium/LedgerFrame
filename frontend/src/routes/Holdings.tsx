@@ -13,6 +13,7 @@ import {
   MoneyInput,
   PageHeader,
   QuantityInput,
+  RowMenu,
   Select,
   StalenessChip,
   TextInput,
@@ -24,8 +25,10 @@ import { DisplayControls } from "../components/DisplayControls";
 import {
   addManualHolding,
   addTransaction,
+  deleteManualHolding,
   deleteTransaction,
   getAccounts,
+  getDeletedCount,
   getHoldings,
   getSummary,
   getTags,
@@ -33,16 +36,20 @@ import {
   importCommit,
   importPreview,
   purgeDeleted,
+  restoreManualHolding,
   restoreTransaction,
   setHoldingTags,
+  updateTransaction,
 } from "../api/holdings";
 import type {
   AccountRow,
   HoldingRow,
+  ImportRow,
   SummaryResponse,
   TransactionRow,
 } from "../api/holdings";
 import { apiDownload } from "../api/client";
+import { getMaster } from "../mocks/refdata";
 import { formatMoney, formatSignedMoney } from "../format/number";
 
 // Holdings — the canonical management surface (IA §5; D-023/D-049/D-050). Owns
@@ -66,6 +73,7 @@ export function Holdings() {
   const [txns, setTxns] = useState<TransactionRow[]>([]);
   const [accounts, setAccounts] = useState<AccountRow[]>([]);
   const [baseCcy, setBaseCcy] = useState("");
+  const [deletedCount, setDeletedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,15 +81,17 @@ export function Holdings() {
   const [importOpen, setImportOpen] = useState(false);
   const [purgeOpen, setPurgeOpen] = useState(false);
   const [tagsFor, setTagsFor] = useState<HoldingRow | null>(null);
+  const [editTxn, setEditTxn] = useState<TransactionRow | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [h, s, t, a] = await Promise.all([
+    const [h, s, t, a, d] = await Promise.all([
       getHoldings(),
       getSummary(),
       getTransactions(),
       getAccounts(),
+      getDeletedCount(),
     ]);
     if (h.ok) {
       setHoldings(h.data.holdings);
@@ -92,6 +102,7 @@ export function Holdings() {
     if (s.ok) setSummary(s.data);
     if (t.ok) setTxns(t.data.transactions);
     if (a.ok) setAccounts(a.data.accounts);
+    setDeletedCount(d.ok ? d.data.total : 0);
     setLoading(false);
   }, []);
 
@@ -121,30 +132,65 @@ export function Holdings() {
     [reload, toast],
   );
 
+  const softDeleteHolding = useCallback(
+    async (row: HoldingRow) => {
+      // Only manual holdings (no instrument/symbol) are deletable directly;
+      // instrument-backed holdings are derived — remove via their transactions.
+      if (row.symbol) {
+        toast.show({ message: "Remove this holding by deleting its transactions in the ledger below." });
+        return;
+      }
+      const res = await deleteManualHolding(row.id);
+      if (!res.ok) {
+        toast.show({ message: `Couldn't delete: ${res.error}` });
+        return;
+      }
+      await reload();
+      toast.show({
+        message: `Deleted ${row.label ?? "holding"}.`,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            await restoreManualHolding(row.id);
+            await reload();
+          },
+        },
+      });
+    },
+    [reload, toast],
+  );
+
   const holdingColumns = useMemo<Column<HoldingRow>[]>(
     () => [
       { key: "symbol", label: "Symbol", sortable: true, render: (h) => h.symbol ?? h.label ?? "—" },
-      { key: "name", label: "Name", render: (h) => h.name ?? h.label ?? "—" },
+      { key: "name", label: "Name", truncate: true, render: (h) => h.name ?? h.label ?? "—" },
       { key: "asset_class", label: "Class", sortable: true },
       { key: "quantity", label: "Position", format: "quantity", sortable: true },
       { key: "price", label: "Price", format: "price" },
       { key: "market_value", label: `Value (${baseCcy})`, format: "money", sortable: true },
       { key: "unrealised_pl", label: "Unrealised P/L", format: "signed-money", sortable: true },
       { key: "day_change", label: "Today's change", format: "signed-money" },
-      { key: "valuation_label", label: "Source", render: provenanceCell },
+      { key: "valuation_label", label: "Source", truncate: true, render: provenanceCell },
       {
         key: "id",
         label: "",
         render: (h) => (
-          <span className="hold__rowactions">
-            <button type="button" className="hold__linkbtn" onClick={() => setTagsFor(h)}>
-              Tags
-            </button>
-          </span>
+          <RowMenu
+            aria-label={`Actions for ${h.symbol ?? h.label ?? "holding"}`}
+            items={[
+              {
+                label: "Details",
+                disabled: !h.symbol,
+                onClick: () => { if (h.symbol) window.location.hash = `#/instrument/${h.symbol}`; },
+              },
+              { label: "Tags", onClick: () => setTagsFor(h) },
+              { label: "Delete", danger: true, onClick: () => softDeleteHolding(h) },
+            ]}
+          />
         ),
       },
     ],
-    [baseCcy],
+    [baseCcy, softDeleteHolding],
   );
 
   const txnColumns = useMemo<Column<TransactionRow>[]>(
@@ -155,15 +201,18 @@ export function Holdings() {
       { key: "quantity", label: "Qty", format: "quantity" },
       { key: "price", label: "Price", format: "price" },
       { key: "amount", label: "Amount", format: "signed-money" },
+      { key: "note", label: "Note", truncate: true, render: (t) => t.note ?? "—" },
       {
         key: "id",
         label: "",
         render: (t) => (
-          <span className="hold__rowactions">
-            <button type="button" className="hold__linkbtn" onClick={() => softDeleteTxn(t)}>
-              Delete
-            </button>
-          </span>
+          <RowMenu
+            aria-label={`Actions for ${t.type} ${t.symbol ?? ""}`}
+            items={[
+              { label: "Edit", onClick: () => setEditTxn(t) },
+              { label: "Delete", danger: true, onClick: () => softDeleteTxn(t) },
+            ]}
+          />
         ),
       },
     ],
@@ -234,9 +283,11 @@ export function Holdings() {
       <div className="hold__section">
         <div className="hold__bar">
           <h2 className="hold__h2">Transactions</h2>
-          <button type="button" className="lf-btn" onClick={() => setPurgeOpen(true)}>
-            Purge deleted [PIN]
-          </button>
+          {deletedCount > 0 && (
+            <button type="button" className="lf-btn" onClick={() => setPurgeOpen(true)}>
+              Purge {deletedCount} deleted [PIN]
+            </button>
+          )}
         </div>
         {txns.length === 0 ? (
           <EmptyState
@@ -282,6 +333,19 @@ export function Holdings() {
           onDone={() => {
             setTagsFor(null);
             toast.show({ message: "Tags saved." });
+          }}
+        />
+      )}
+
+      {editTxn && (
+        <TxnEditDialog
+          txn={editTxn}
+          onClose={() => setEditTxn(null)}
+          onError={(m) => toast.show({ message: m })}
+          onDone={async () => {
+            setEditTxn(null);
+            await reload();
+            toast.show({ message: "Transaction updated." });
           }}
         />
       )}
@@ -348,6 +412,9 @@ interface AssetTile {
   subtitle: string;
   branch: "listed" | "manual";
   assetClass: string; // MASTER-DATA AssetClass value
+  /** D-092 signpost: navigate here instead of branching the form (e.g. Insurance
+   *  has its own register, D-062). */
+  nav?: string;
 }
 const ASSET_TILES: AssetTile[] = [
   { id: "stock_etf", label: "Stocks & ETFs", subtitle: "Exchange-listed shares & funds (live quotes).", branch: "listed", assetClass: "equity" },
@@ -361,6 +428,8 @@ const ASSET_TILES: AssetTile[] = [
   { id: "private", label: "Private asset", subtitle: "Unlisted holdings valued manually.", branch: "manual", assetClass: "private" },
   { id: "liability", label: "Liability", subtitle: "A debt — counts against net worth.", branch: "manual", assetClass: "liability" },
   { id: "other", label: "Other", subtitle: "Doesn't fit — the honest escape valve.", branch: "manual", assetClass: "other" },
+  // D-092 signpost — Insurance never branches this form (its own register, D-062).
+  { id: "insurance", label: "Insurance", subtitle: "Policies live in their own register — we'll take you there.", branch: "manual", assetClass: "other", nav: "#/insurance" },
 ];
 
 // --- Add flow: type-first entry (D-089) → single listed/manual flow (D-049) ---
@@ -486,14 +555,20 @@ function AddDialog({
             <button
               key={t.id}
               type="button"
-              className="hold__tile"
+              className={`hold__tile${t.nav ? " hold__tile--signpost" : ""}`}
               onClick={() => {
+                if (t.nav) {
+                  // D-092: signpost — leave the Add form, go to the register.
+                  onClose();
+                  window.location.hash = t.nav;
+                  return;
+                }
                 setTile(t);
                 setMode(t.branch);
                 if (t.branch === "manual") setAssetClass(t.assetClass);
               }}
             >
-              <span className="hold__tile-title">{t.label}</span>
+              <span className="hold__tile-title">{t.label}{t.nav ? " →" : ""}</span>
               <span className="hold__tile-sub">{t.subtitle}</span>
             </button>
           ))}
@@ -633,7 +708,107 @@ function AddDialog({
   );
 }
 
-// --- Import: preview → review → commit (D-012 review queue) -------------------
+// --- Edit an existing transaction (row action → PUT /transactions/{id}) --------
+function TxnEditDialog({
+  txn,
+  onClose,
+  onDone,
+  onError,
+}: {
+  txn: TransactionRow;
+  onClose: () => void;
+  onDone: () => void;
+  onError: (msg: string) => void;
+}) {
+  const [type, setType] = useState(txn.type);
+  const [symbol, setSymbol] = useState(txn.symbol ?? "");
+  const [qty, setQty] = useState(String(txn.quantity ?? 0));
+  const [price, setPrice] = useState(String(txn.price ?? 0));
+  const [date, setDate] = useState(txn.ts.slice(0, 10));
+  const [currency, setCurrency] = useState(txn.currency);
+  const [note, setNote] = useState(txn.note ?? "");
+
+  async function save() {
+    const res = await updateTransaction(txn.id, {
+      symbol: symbol.trim() ? symbol.trim().toUpperCase() : null,
+      type,
+      ts: `${date}T00:00:00`,
+      quantity: Number(qty),
+      price: Number(price),
+      currency,
+      note: note.trim() || null,
+      related_instrument_id: txn.related_instrument_id ?? null,
+    });
+    if (!res.ok) return onError(`Couldn't update: ${res.error}`);
+    onDone();
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Edit transaction"
+      footer={
+        <>
+          <button type="button" className="lf-btn" onClick={onClose}>Cancel</button>
+          <button type="button" className="lf-btn lf-btn--primary" onClick={save}>Save</button>
+        </>
+      }
+    >
+      <div className="hold__form">
+        <div className="hold__field">
+          <span className="hold__label">Type</span>
+          <MasterSelect master="txn_type" value={type} onChange={setType} />
+        </div>
+        <div className="hold__field">
+          <span className="hold__label">Symbol</span>
+          <TextInput value={symbol} onChange={setSymbol} aria-label="Symbol" placeholder="(optional)" />
+        </div>
+        <div className="hold__field">
+          <span className="hold__label">Quantity</span>
+          <QuantityInput value={qty} onChange={setQty} aria-label="Quantity" />
+        </div>
+        <div className="hold__field">
+          <span className="hold__label">Price / amount</span>
+          <MoneyInput value={price} currency={currency} onChange={setPrice} aria-label="Price" />
+        </div>
+        <div className="hold__field">
+          <span className="hold__label">Date</span>
+          <DateInput value={date} onChange={setDate} aria-label="Transaction date" />
+        </div>
+        <div className="hold__field">
+          <span className="hold__label">Currency</span>
+          <MasterSelect master="currency" value={currency} onChange={setCurrency} />
+        </div>
+        <div className="hold__field">
+          <span className="hold__label">Note</span>
+          <TextInput value={note} onChange={setNote} aria-label="Note" placeholder="(optional)" />
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
+// --- Import: editable review grid (D-093) -------------------------------------
+type ReviewRow = ImportRow & { excluded: boolean };
+const CSV_COLS = ["date", "symbol", "type", "quantity", "price", "fees", "taxes", "currency", "note", "asset_class", "country"];
+const TXN_TYPE_SET = new Set(getMaster("txn_type").options.map((o) => o.value));
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}/;
+
+function rowIssues(r: ReviewRow): { type: boolean; date: boolean; any: boolean } {
+  const badType = !TXN_TYPE_SET.has((r.type ?? "").toLowerCase());
+  const badDate = !ISO_DATE.test(r.date ?? "");
+  return { type: badType, date: badDate, any: badType || badDate };
+}
+function csvCell(v: unknown): string {
+  const s = v == null ? "" : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+function buildCsv(rows: ReviewRow[]): string {
+  const lines = rows.map((r) => CSV_COLS.map((c) => csvCell(r[c])).join(","));
+  return [CSV_COLS.join(","), ...lines].join("\n") + "\n";
+}
+
 function ImportDialog({
   onClose,
   onDone,
@@ -643,25 +818,35 @@ function ImportDialog({
   onDone: (imported: number) => void;
   onError: (msg: string) => void;
 }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [rows, setRows] = useState<ReviewRow[] | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function doPreview(f: File) {
-    setFile(f);
+    setBusy(true);
     const res = await importPreview(f);
-    if (!res.ok) {
-      onError(`Preview failed: ${res.error}`);
-      setPreview(null);
-      return;
-    }
-    setPreview(JSON.stringify(res.data, null, 2));
+    setBusy(false);
+    if (!res.ok) return onError(`Preview failed: ${res.error}`);
+    // Duplicates are excluded by default (the backend skips them anyway); the
+    // user can re-include if wanted.
+    setRows((res.data.rows ?? []).map((r) => ({ ...r, excluded: Boolean(r.duplicate) })));
   }
 
+  function patch(i: number, p: Partial<ReviewRow>) {
+    setRows((rs) => (rs ? rs.map((r, idx) => (idx === i ? { ...r, ...p } : r)) : rs));
+  }
+
+  const included = rows?.filter((r) => !r.excluded) ?? [];
+  const unresolved = rows?.filter((r) => !r.excluded && rowIssues(r).any).length ?? 0;
+  const canCommit = Boolean(rows) && included.length > 0 && unresolved === 0;
+
   async function doCommit() {
-    if (!file) return;
+    if (!rows) return;
+    setBusy(true);
+    const file = new File([buildCsv(included)], "review.csv", { type: "text/csv" });
     const res = await importCommit(file);
+    setBusy(false);
     if (!res.ok) return onError(`Import failed: ${res.error}`);
-    onDone(res.data.imported ?? 0);
+    onDone(res.data.imported ?? included.length);
   }
 
   return (
@@ -671,23 +856,84 @@ function ImportDialog({
       title="Import transactions (CSV)"
       footer={
         <>
-          <button type="button" className="lf-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button type="button" className="lf-btn lf-btn--primary" disabled={!file} onClick={doCommit}>
-            Commit import
-          </button>
+          <button type="button" className="lf-btn" onClick={onClose}>Cancel</button>
+          {rows && (
+            <button type="button" className="lf-btn lf-btn--primary" disabled={!canCommit || busy} onClick={doCommit}>
+              Commit {included.length} row{included.length === 1 ? "" : "s"}
+            </button>
+          )}
         </>
       }
     >
-      <div className="hold__form">
-        <FileInput accept=".csv" aria-label="Import CSV" label="Choose CSV" onChange={(fs) => doPreview(fs[0])} />
-        <span className="hold__sub">
-          Preview is a dry run — unresolved symbols are flagged for review before commit; imports never silently
-          create instruments (D-012).
-        </span>
-        {preview && <pre className="hold__preview">{preview}</pre>}
-      </div>
+      {!rows ? (
+        <div className="hold__form">
+          <FileInput accept=".csv" aria-label="Import CSV" label="Choose CSV" onChange={(fs) => doPreview(fs[0])} />
+          <span className="hold__sub">
+            A dry run — every row is reviewed before anything is written. Fix flagged
+            cells inline or exclude the row; imports never silently create bad data (D-012).
+          </span>
+        </div>
+      ) : (
+        <div className="imp">
+          <div className="imp__summary">
+            {included.length} to import · {(rows.length - included.length)} excluded ·{" "}
+            {unresolved > 0 ? (
+              <span className="imp__bad">{unresolved} row{unresolved === 1 ? "" : "s"} need a fix or exclusion</span>
+            ) : (
+              <span className="imp__ok">all rows resolved</span>
+            )}
+          </div>
+          <div className="imp__grid" role="table" aria-label="Import review">
+            <div className="imp__head" role="row">
+              <span>Date</span><span>Symbol</span><span>Type</span><span>Qty</span><span>Price</span><span>Ccy</span><span>Status</span><span />
+            </div>
+            {rows.map((r, i) => {
+              const iss = rowIssues(r);
+              return (
+                <div
+                  className={`imp__row${r.excluded ? " imp__row--excluded" : iss.any ? " imp__row--error" : ""}`}
+                  role="row"
+                  key={r.row ?? i}
+                >
+                  <span className={iss.date ? "imp__cell--bad" : ""}>
+                    <DateInput value={(r.date ?? "").slice(0, 10)} onChange={(v) => patch(i, { date: v })} aria-label={`Date row ${r.row}`} />
+                  </span>
+                  <span>
+                    <TextInput value={r.symbol ?? ""} onChange={(v) => patch(i, { symbol: v.toUpperCase() })} aria-label={`Symbol row ${r.row}`} placeholder="(none)" />
+                  </span>
+                  <span className={iss.type ? "imp__cell--bad" : ""}>
+                    <MasterSelect master="txn_type" value={TXN_TYPE_SET.has((r.type ?? "").toLowerCase()) ? (r.type as string).toLowerCase() : ""} onChange={(v) => patch(i, { type: v })} />
+                  </span>
+                  <span>
+                    <QuantityInput value={r.quantity ?? "0"} onChange={(v) => patch(i, { quantity: v })} aria-label={`Quantity row ${r.row}`} />
+                  </span>
+                  <span>
+                    <QuantityInput value={r.price ?? "0"} onChange={(v) => patch(i, { price: v })} aria-label={`Price row ${r.row}`} />
+                  </span>
+                  <span>
+                    <MasterSelect master="currency" value={r.currency ?? "USD"} onChange={(v) => patch(i, { currency: v })} />
+                  </span>
+                  <span className="imp__status">
+                    {r.error ? <span className="imp__bad" title={r.error}>error</span>
+                      : r.duplicate ? <span className="imp__dup">duplicate</span>
+                      : iss.any ? <span className="imp__bad">fix</span>
+                      : <span className="imp__ok">ok</span>}
+                  </span>
+                  <span>
+                    <button
+                      type="button"
+                      className="hold__linkbtn"
+                      onClick={() => patch(i, { excluded: !r.excluded })}
+                    >
+                      {r.excluded ? "Include" : "Exclude"}
+                    </button>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </Dialog>
   );
 }

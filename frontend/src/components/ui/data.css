@@ -66,6 +66,7 @@
 .lf-table__th {
   position: sticky;
   top: 0;
+  z-index: 1;
   background: var(--surface-raised);
   color: var(--text-secondary);
   font-weight: var(--weight-semibold);
@@ -74,6 +75,15 @@
   padding: var(--cell-pad-y) var(--cell-pad-x);
   border-bottom: var(--border-width) solid var(--border);
   white-space: nowrap;
+}
+/* D-101 refinement (visual middle path, no structural split) — the sticky column
+   header owns its FULL width including the reserved scrollbar gutter: the last
+   header cell paints the header fill + bottom border across the gutter zone, so the
+   scrollbar track reads as starting BELOW the header row, not beside it. */
+.lf-table__th:last-child {
+  box-shadow:
+    var(--scrollbar-size) 0 0 0 var(--surface-raised),
+    var(--scrollbar-size) var(--border-width) 0 0 var(--border);
 }
 .lf-table__th--num { text-align: right; }
 .lf-table__th--sortable { cursor: pointer; user-select: none; }

@@ -23,6 +23,13 @@
   font-size: var(--font-size-16);
   font-weight: var(--weight-semibold);
 }
+/* D-100 companion — card header: title left, canonical-home link top-right. */
+.ins__cardhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
 /* Quote card — border/background/padding come from the .lf-card primitive (D-100). */
 .ins__price {
   display: flex;

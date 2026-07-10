@@ -290,3 +290,16 @@ Both are **PROPOSED pending the owner's visual ratify** at the next look.
   (`overflow: hidden`). **Verified rendered** (Holdings: `toolbarOutsideScroll: true`,
   the filter bar sits outside the scroll on both themes). Kitchen sink specimen
   updated. Both are the platform-wide primitives.
+
+**Cross-ratify refinements (owner, 2026-07-11) — verified rendered both themes:**
+- **D-100 companion rule** — a card's canonical-home cross-link lives in the card
+  HEADER, top-right (the News pattern). Moved Quote → "Markets ↗" and Position →
+  "Holdings ↗" into their headers (`.ins__cardhead`, title-left/link-right); News
+  already followed it. Recorded in DESIGN-SYSTEM card usage rules.
+- **D-101 refinement (scrollbar vs column header)** — the **visual middle path
+  worked, no structural split**: the sticky column-header owns the reserved gutter
+  (last `th` paints the header fill + bottom border across it via `box-shadow`), so
+  the scroll track reads as starting BELOW the header. Verified in cropped
+  table-edge screenshots (both themes): the header block + bottom rule span to the
+  right border; the scroll region begins below it. (The two-table split was NOT
+  needed.)

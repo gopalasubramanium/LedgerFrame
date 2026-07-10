@@ -152,6 +152,10 @@ export function InstrumentDetail() {
         <>
           {/* Quote — the canonical Markets reader, scoped. Unpriced → "—" + reason. */}
           <section className="ins__section lf-card ins__quote">
+            <div className="ins__cardhead">
+              <h2 className="ins__h2">Quote</h2>
+              <Link className="ins__link" to="/markets">Markets ↗</Link>
+            </div>
             <div className="lf-card__body">
               <div className="ins__price">
                 {quote?.price != null ? (
@@ -171,7 +175,6 @@ export function InstrumentDetail() {
                 {quote?.source && <span className="ins__tag">Source: {quote.source}</span>}
                 {quote?.entitlement && <span className="ins__tag">{quote.entitlement}</span>}
                 {quote?.is_stale && <StalenessChip isStale asOf={quote.received_at ?? ""} />}
-                <Link className="ins__link" to="/markets">Markets ↗</Link>
               </div>
             </div>
           </section>
@@ -223,14 +226,18 @@ export function InstrumentDetail() {
 
           {/* Position if held — the canonical holdings reader, scoped (ND-1, P-3). */}
           <section className="ins__section lf-card">
-            <h2 className="ins__h2">Your position</h2>
+            {/* D-100 companion: the canonical-home cross-link lives in the card
+                HEADER, top-right (the News pattern), for every summary-with-link card. */}
+            <div className="ins__cardhead">
+              <h2 className="ins__h2">Your position</h2>
+              <Link className="ins__link" to="/holdings">Holdings ↗</Link>
+            </div>
             {position ? (
               <dl className="ins__facts lf-card__body">
                 <Fact label="Quantity" num value={position.quantity != null ? String(position.quantity) : "—"} />
                 <Fact label={`Value (${baseCcy})`} num value={position.market_value != null ? formatMoney(position.market_value) : "—"} />
                 <Fact label="Cost basis" num value={position.cost_basis != null ? formatMoney(position.cost_basis) : "—"} />
                 <Fact label="Unrealised P/L" num value={position.unrealised_pl != null ? formatSignedMoney(position.unrealised_pl) : "—"} signed={position.unrealised_pl} />
-                <span className="ins__factlink"><Link className="ins__link" to="/holdings">Holdings ↗</Link></span>
               </dl>
             ) : (
               <EmptyState message="Not in your portfolio" reason="You hold no position in this instrument." action={<Link className="lf-btn" to="/holdings">Go to Holdings</Link>} />
@@ -261,7 +268,7 @@ export function InstrumentDetail() {
 
           {/* News — scoped reader (D-037, P-3). Caps at ~5 visible; scrolls internally. */}
           <section className="ins__section lf-card">
-            <div className="ins__bar">
+            <div className="ins__cardhead">
               <h2 className="ins__h2">News</h2>
               <Link className="ins__link" to="/news">News ↗</Link>
             </div>

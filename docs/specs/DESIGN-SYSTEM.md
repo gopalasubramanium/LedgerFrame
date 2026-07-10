@@ -155,7 +155,11 @@ standard).** `.lf-card` (`components/ui/structure.css`) = a soft `--border` on
 in `.lf-card__body` — an inner panel on `--surface` with its own border — giving
 **depth (layered), not a single flat fill** (the Holdings net-worth card family is
 the standard). Both themes + high-contrast follow automatically. Instrument Detail's
-six sections adopt it; kitchen-sink specimen shows the layered card.
+six sections adopt it; kitchen-sink specimen shows the layered card. **Companion
+rule (2026-07-11): a card's canonical-home cross-link lives in the card HEADER,
+top-right** (title left, link right — the News pattern), for every
+summary-with-link card (Quote → Markets, Position → Holdings, News → News); never in
+the body.
 
 **D-101 — themed scrollbars + header-outside-scroll (ratified w/ amendment
 2026-07-11).** All scrollbars are styled in `index.css` via standards
@@ -169,7 +173,10 @@ below the section/card header — the header stays OUTSIDE the scroll container.
 (the only scrolling element; `scrollbar-gutter: stable`, sticky column header);
 `.lf-table-wrap` keeps the border + rounded corners (`overflow: hidden`) so the thumb
 never overlaps the border. Kitchen-sink scrollable-panel specimen shows
-header-outside-scroll.
+header-outside-scroll. **Refinement (2026-07-11): the sticky column header owns its
+full width including the reserved gutter** — the last header cell paints the header
+fill + bottom border across the gutter zone (a `box-shadow`, no structural split), so
+the scrollbar track reads as starting BELOW the column header, not beside it.
 
 ### 2.5 Density modes (D-045 / D-078)
 

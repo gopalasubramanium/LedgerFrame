@@ -7,6 +7,7 @@ compute any of these numbers. Cost basis uses FIFO by default.
 
 from __future__ import annotations
 
+import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -23,6 +24,8 @@ from app.providers.market import get_provider
 from app.schemas.common import ValuationMethod
 from app.services import fx
 from app.services.market import get_cached_quote, refresh_quote
+
+log = logging.getLogger("ledgerframe")
 
 # Fallback sector classification for common tickers, used only when the market
 # provider doesn't supply a sector. Keeps "sector exposure" populated on real data
@@ -211,6 +214,129 @@ def entity_account_filter(model, entity_id: int | None):
     return model.account_id.in_(select(Account.id).where(Account.entity_id == entity_id))
 
 
+async def _value_one_holding(session: AsyncSession, h, base_currency: str, warm: bool) -> HoldingValue:
+    """Value a single holding at its latest cached quote, converted to base
+    currency. May raise on edge data — value_portfolio catches it and degrades
+    the holding to Unavailable rather than crashing the whole reader."""
+    instrument = (
+        await session.get(Instrument, h.instrument_id) if h.instrument_id else None
+    )
+    symbol = instrument.symbol if instrument else None
+    # Authoritative native currency, with a guaranteed non-null fallback to base
+    # currency so a NULL/empty currency never reaches fx.convert as None.
+    native_ccy = (
+        currency_for_symbol(symbol, instrument.exchange if instrument else None)
+        or h.currency
+        or (instrument.currency if instrument else None)
+        or base_currency
+    )
+
+    price_native: Decimal | None = None
+    is_stale = False
+    is_priced = True
+
+    quote = None
+    val_method = ValuationMethod.MARKET_QUOTE.value
+    if h.manual_value is not None:
+        mv_native = D(h.manual_value)
+        val_method = ValuationMethod.MANUAL_VALUATION.value
+    elif symbol and instrument and not instrument.is_manual_price:
+        quote = await get_cached_quote(session, symbol, instrument.exchange)
+        if quote.price is None and warm and getattr(get_provider(), "fetch_on_demand", True):
+            # No cached quote yet — fetch one for cheap providers (mock/csv).
+            quote = await refresh_quote(session, symbol, instrument.exchange)
+        if quote.price is not None:
+            price_native = D(quote.price)
+            mv_native = D(h.quantity) * price_native
+            is_stale = quote.is_stale
+            val_method = (ValuationMethod.OFFICIAL_NAV.value
+                          if quote.source == "amfi_nav" else ValuationMethod.MARKET_QUOTE.value)
+        else:
+            mv_native = D(h.quantity) * D(h.avg_cost)  # fall back to cost; mark unpriced
+            is_priced = False
+            val_method = ValuationMethod.ESTIMATED_VALUE.value
+    else:
+        # A manual-priced instrument or a manual asset with no live source.
+        mv_native = D(h.quantity) * D(h.avg_cost)
+        is_priced = False
+        val_method = ValuationMethod.MANUAL_VALUATION.value
+
+    cost_native = D(h.quantity) * D(h.avg_cost)
+
+    day_change_native = ZERO
+    if price_native is not None and quote is not None and quote.previous_close:
+        day_change_native = (price_native - D(quote.previous_close)) * D(h.quantity)
+
+    mv_base = await fx.convert(mv_native, native_ccy, base_currency)
+    cost_base = await fx.convert(cost_native, native_ccy, base_currency)
+    day_base = await fx.convert(day_change_native, native_ccy, base_currency)
+
+    sign = Decimal("-1") if h.asset_class == AssetClass.LIABILITY else Decimal("1")
+    mv_base *= sign
+    cost_base *= sign
+
+    iname = (instrument.name or "").strip() if instrument else ""
+    display_name = iname if (iname and symbol and iname.upper() != symbol.upper()
+                             and "(DEMO)" not in iname and "(CSV)" not in iname) else None
+    sector = (instrument.sector if instrument and instrument.sector else None) \
+        or (_SECTOR_MAP.get(symbol.upper()) if symbol else None)
+
+    return HoldingValue(
+        holding_id=h.id,
+        label=h.label or (symbol or "Manual asset"),
+        name=display_name,
+        symbol=symbol,
+        asset_class=h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class),
+        sector=sector,
+        quantity=D(h.quantity),
+        native_currency=native_ccy,
+        price=price_native,
+        market_value_base=money(mv_base),
+        cost_basis_base=money(cost_base),
+        unrealised_pl_base=money(mv_base - cost_base),
+        day_change_base=money(day_base),
+        is_stale=is_stale,
+        is_priced=is_priced,
+        valuation_method=val_method,
+        exchange=instrument.exchange if instrument else None,
+        source=quote.source if quote else None,
+        entitlement=quote.entitlement.value if quote else None,
+        price_ts=quote.received_at if quote else None,
+        source_override=getattr(instrument, "source_override", None) if instrument else None,
+        country=((instrument.listing_country or instrument.country) if instrument else None),
+        liquidity_profile=(getattr(instrument, "liquidity_profile", None) if instrument else None),
+        account_id=h.account_id,
+    )
+
+
+def _unavailable_holding(h, base_currency: str) -> HoldingValue:
+    """A holding whose valuation raised: shown Unavailable (0, unpriced) — never a
+    fabricated number — and contributes nothing to totals (honesty invariant)."""
+    try:
+        ac = h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class or "other")
+    except Exception:  # noqa: BLE001
+        ac = "other"
+    return HoldingValue(
+        holding_id=h.id,
+        label=getattr(h, "label", None) or "Holding",
+        name=None,
+        symbol=None,
+        asset_class=ac,
+        sector=None,
+        quantity=D(getattr(h, "quantity", 0) or 0),
+        native_currency=base_currency,
+        price=None,
+        market_value_base=ZERO,
+        cost_basis_base=ZERO,
+        unrealised_pl_base=ZERO,
+        day_change_base=ZERO,
+        is_stale=True,
+        is_priced=False,
+        valuation_method=ValuationMethod.UNAVAILABLE.value,
+        account_id=getattr(h, "account_id", None),
+    )
+
+
 async def value_portfolio(
     session: AsyncSession, base_currency: str, warm: bool = True, entity_id: int | None = None
 ) -> PortfolioValuation:
@@ -232,110 +358,23 @@ async def value_portfolio(
     rows = (await session.execute(q)).scalars().all()
 
     for h in rows:
-        instrument = (
-            await session.get(Instrument, h.instrument_id) if h.instrument_id else None
-        )
-        symbol = instrument.symbol if instrument else None
-        # Authoritative native currency: the instrument's venue currency (from its
-        # symbol suffix) wins, so even holdings stored before this inference get
-        # valued/displayed correctly. Falls back to the stored currency.
-        native_ccy = (
-            currency_for_symbol(symbol, instrument.exchange if instrument else None)
-            or h.currency
-            or (instrument.currency if instrument else base_currency)
-        )
-
-        price_native: Decimal | None = None
-        is_stale = False
-        is_priced = True
-
-        quote = None
-        val_method = ValuationMethod.MARKET_QUOTE.value
-        if h.manual_value is not None:
-            mv_native = D(h.manual_value)
-            val_method = ValuationMethod.MANUAL_VALUATION.value
-        elif symbol and instrument and not instrument.is_manual_price:
-            quote = await get_cached_quote(session, symbol, instrument.exchange)
-            if quote.price is None and warm and getattr(get_provider(), "fetch_on_demand", True):
-                # No cached quote yet — fetch one for cheap providers (mock/csv).
-                # Rate-limited providers serve cache only (refresh via worker/button).
-                quote = await refresh_quote(session, symbol, instrument.exchange)
-            if quote.price is not None:
-                price_native = D(quote.price)
-                mv_native = D(h.quantity) * price_native
-                is_stale = quote.is_stale
-                # An official NAV (e.g. AMFI) flows through the quote path but is not a
-                # market quote — label it honestly.
-                val_method = (ValuationMethod.OFFICIAL_NAV.value
-                              if quote.source == "amfi_nav" else ValuationMethod.MARKET_QUOTE.value)
-            else:
-                mv_native = D(h.quantity) * D(h.avg_cost)  # fall back to cost; mark unpriced
-                is_priced = False
-                val_method = ValuationMethod.ESTIMATED_VALUE.value
-        else:
-            # A manual-priced instrument or a manual asset with no live source.
-            mv_native = D(h.quantity) * D(h.avg_cost)
-            is_priced = False
-            val_method = ValuationMethod.MANUAL_VALUATION.value
-
-        cost_native = D(h.quantity) * D(h.avg_cost)
-
-        # Day change from previous close where we have a quote.
-        day_change_native = ZERO
-        if price_native is not None and quote is not None and quote.previous_close:
-            day_change_native = (price_native - D(quote.previous_close)) * D(h.quantity)
-
-        mv_base = await fx.convert(mv_native, native_ccy, base_currency)
-        cost_base = await fx.convert(cost_native, native_ccy, base_currency)
-        day_base = await fx.convert(day_change_native, native_ccy, base_currency)
-
-        # Liabilities count as negative value toward net worth.
-        sign = Decimal("-1") if h.asset_class == AssetClass.LIABILITY else Decimal("1")
-        mv_base *= sign
-        cost_base *= sign
-
-        # A human name (company/fund), only when it's more than the bare ticker.
-        iname = (instrument.name or "").strip() if instrument else ""
-        display_name = iname if (iname and symbol and iname.upper() != symbol.upper()
-                                 and "(DEMO)" not in iname and "(CSV)" not in iname) else None
-
-        # Sector: prefer provider metadata; fall back to a built-in map of common
-        # tickers so the exposure view is populated even when the provider omits it.
-        sector = (instrument.sector if instrument and instrument.sector else None) \
-            or (_SECTOR_MAP.get(symbol.upper()) if symbol else None)
-
-        hv = HoldingValue(
-            holding_id=h.id,
-            label=h.label or (symbol or "Manual asset"),
-            name=display_name,
-            symbol=symbol,
-            asset_class=h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class),
-            sector=sector,
-            quantity=D(h.quantity),
-            native_currency=native_ccy,
-            price=price_native,
-            market_value_base=money(mv_base),
-            cost_basis_base=money(cost_base),
-            unrealised_pl_base=money(mv_base - cost_base),
-            day_change_base=money(day_base),
-            is_stale=is_stale,
-            is_priced=is_priced,
-            valuation_method=val_method,
-            exchange=instrument.exchange if instrument else None,
-            source=quote.source if quote else None,
-            entitlement=quote.entitlement.value if quote else None,
-            price_ts=quote.received_at if quote else None,
-            source_override=getattr(instrument, "source_override", None) if instrument else None,
-            country=((instrument.listing_country or instrument.country) if instrument else None),
-            liquidity_profile=(getattr(instrument, "liquidity_profile", None) if instrument else None),
-            account_id=h.account_id,
-        )
+        # A reader must never 500 on one bad holding: value it in isolation and,
+        # on any failure, degrade it to Unavailable (honest, not fabricated) and
+        # log which holding + why, so the root cause is diagnosable from the logs.
+        try:
+            hv = await _value_one_holding(session, h, base_currency, warm)
+        except Exception as exc:  # noqa: BLE001
+            log.warning(
+                "valuation failed for holding id=%s label=%r — showing it as "
+                "Unavailable (not fabricated): %s", h.id, getattr(h, "label", None), exc,
+            )
+            hv = _unavailable_holding(h, base_currency)
         val.holdings.append(hv)
         val.total_value += hv.market_value_base
         val.cost_basis += hv.cost_basis_base
         val.unrealised_pl += hv.unrealised_pl_base
         val.day_change += hv.day_change_base
-        val.has_stale = val.has_stale or is_stale
+        val.has_stale = val.has_stale or hv.is_stale
 
     val.total_value = money(val.total_value)
     val.cost_basis = money(val.cost_basis)

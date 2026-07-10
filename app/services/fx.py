@@ -61,6 +61,11 @@ async def get_rate(base: str, quote: str) -> Decimal:
 
 
 async def convert(amount: Decimal, base: str, quote: str) -> Decimal:
+    # Defence-in-depth: a missing/unknown currency must not crash valuation. With
+    # no currency to convert from/to, value the amount at face in the target
+    # currency rather than raise (callers guarantee a real currency in practice).
+    if not base or not quote:
+        return D(amount)
     if base.upper() == quote.upper():
         return D(amount)
     rate = await get_rate(base, quote)

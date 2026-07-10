@@ -266,6 +266,21 @@ out of scope — components only.
     filled from the specs. **Not built — owner reviews first.** Its NEEDS DECISION
     surfaces real pre-build blockers (below).
 
+- **BUG FIX — holdings/CSV/summary 500 (blocking, 2026-07-10).** The valuation
+  reader (`value_portfolio`, shared by holdings, holdings.csv, summary) could
+  **crash the whole reader** on one problematic holding. Could **not** reproduce
+  the owner's exact trigger (demo data + a full Add-flow replay both return 200),
+  so fixed the **class**: (1) confirmed + fixed a concrete crash —
+  `fx.convert(amount, None, base)` did `None.upper()` → `AttributeError`; guarded
+  `fx.convert` against a falsy currency + gave `value_portfolio`'s `native_ccy` a
+  base-currency fallback; (2) **per-holding resilience** — extracted
+  `_value_one_holding`; any per-holding failure now degrades to an **Unavailable**
+  row (0, unpriced — honest, not fabricated) and is **logged** (`holding id/label
+  + reason`), so the reader never 500s and the root cause is diagnosable from the
+  logs. 460 backend tests (+1 resilience regression); ruff clean; demo + replay
+  verified 200. **Owner: if it still misbehaves, the warning log now names the
+  offending holding + reason — share that line to fix the root cause at source.**
+
 ## IN-PROGRESS
 
 - **Holdings acceptance walk — 4 findings fixed 2026-07-10; owner to resume the

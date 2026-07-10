@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import "./inputs.css";
-import { getMaster, humanize } from "../../mocks/refdata";
+import { getMaster } from "../../mocks/refdata";
 import { useRefdataVocabs } from "../../refdata/refdata-context";
 
 // THE select for every categorical field (DESIGN-SYSTEM §5.1 / §6). Fixed-vocab
@@ -41,10 +41,9 @@ export function MasterSelect({
   // labelled registry offline. Value may be a just-created row not yet in the
   // seed — show it regardless.
   const options = useMemo(() => {
-    const live = vocabs?.[master];
-    let base = live
-      ? live.map((v) => ({ value: v, label: humanize(v) }))
-      : def.options;
+    // Prefer the live SERVED {value,label} options (D-005; item 3b); fall back to the
+    // labelled registry offline.
+    let base = vocabs?.[master] ?? def.options;
     // D-090 form-level filtering: keep only the whitelisted subset (never a copy
     // of the master — the subset is supplied by the caller from /refdata).
     if (include) base = base.filter((o) => include.includes(o.value));

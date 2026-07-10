@@ -10,24 +10,33 @@ from sqlalchemy import select
 from app.models import Instrument
 
 
+def _vals(data, key):
+    # item 3b — each vocab is now {value, label}; extract values for assertions.
+    return [o["value"] for o in data[key]]
+
+
 async def test_refdata_serves_fixed_vocabularies(app_client):
     r = await app_client.get("/api/v1/refdata")
     assert r.status_code == 200
     data = r.json()
     # AssetClass (13) and TxnType (11, incl. merger) come from the code enums.
     assert len(data["asset_class"]) == 13
-    assert "liability" in data["asset_class"]
+    assert "liability" in _vals(data, "asset_class")
     assert len(data["txn_type"]) == 11
-    assert "merger" in data["txn_type"]
+    assert "merger" in _vals(data, "txn_type")
     # Authored DEF-2 asset_subclass (6).
-    assert data["asset_subclass"] == ["crypto", "derivative", "equity", "etf", "mutual_fund", "reit"]
+    assert _vals(data, "asset_subclass") == ["crypto", "derivative", "equity", "etf", "mutual_fund", "reit"]
     # ValuationMethod (9) + EntitlementStatus (5).
     assert len(data["valuation_method"]) == 9
-    assert data["entitlement"] == ["real-time", "delayed", "end-of-day", "cached", "unavailable"]
+    assert _vals(data, "entitlement") == ["real-time", "delayed", "end-of-day", "cached", "unavailable"]
     # Domain vocabs sourced from their service constants.
-    assert data["account_kind"][0] == "brokerage"
-    assert "term_life" in data["policy_type"]
-    assert data["premium_frequency"] == ["monthly", "quarterly", "annual", "single"]
+    assert _vals(data, "account_kind")[0] == "brokerage"
+    assert "term_life" in _vals(data, "policy_type")
+    assert _vals(data, "premium_frequency") == ["monthly", "quarterly", "annual", "single"]
+    # item 3b — served DISPLAY LABELS (never hardcoded in the UI): acronyms/brands
+    # overridden, snake_case titleized.
+    labels = {o["value"]: o["label"] for o in data["asset_class"]}
+    assert labels["equity"] == "Equity" and labels["etf"] == "ETF" and labels["mutual_fund"] == "Mutual fund"
 
 
 async def test_holdings_response_is_typed(app_client):
@@ -91,7 +100,7 @@ async def test_txn_applicability_matrix(app_client):
     assert r.status_code == 200
     m = r.json()
     # Every AssetClass value has a row.
-    ac = (await app_client.get("/api/v1/refdata")).json()["asset_class"]
+    ac = _vals((await app_client.get("/api/v1/refdata")).json(), "asset_class")
     assert set(ac) <= set(m)
     # Ratified judgment calls.
     assert "bonus" in m["etf"]            # amendment: ETF bonus ON
@@ -125,9 +134,12 @@ async def test_refdata_serves_source_override_vocab(app_client):
     """ND-3 — per-instrument source-override routing options, sourced from the
     market-router CAPABILITIES (never drifts)."""
     data = (await app_client.get("/api/v1/refdata")).json()
-    so = data["source_override"]
+    so = _vals(data, "source_override")
     assert so[0] == "auto"                       # clears the override
     assert "coingecko" in so and "amfi_nav" in so and "kite" in so
+    # Served labels for the routing brands (item 3b).
+    labels = {o["value"]: o["label"] for o in data["source_override"]}
+    assert labels["coingecko"] == "CoinGecko" and labels["amfi_nav"] == "AMFI"
 
 
 async def test_meta_keys_gaps_persist(app_client):

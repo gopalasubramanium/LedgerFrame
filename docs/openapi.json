@@ -11320,7 +11320,7 @@
     },
     "/api/v1/refdata": {
       "get": {
-        "description": "Every fixed vocabulary, keyed by id. Extensible masters (currency,\ninstitution, sector, tag) are served by their own endpoints, not here.",
+        "description": "Every fixed vocabulary, keyed by id, each as `{value, label}` pairs so the UI\nrenders served DISPLAY LABELS and never hardcodes a mapping (D-005; item 3b).\nExtensible masters (currency, institution, sector, tag) are served by their own\nendpoints, not here.",
         "operationId": "refdata_api_v1_refdata_get",
         "parameters": [
           {
@@ -11363,7 +11363,10 @@
                 "schema": {
                   "additionalProperties": {
                     "items": {
-                      "type": "string"
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
                     },
                     "type": "array"
                   },

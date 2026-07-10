@@ -32,6 +32,34 @@ def _values(enum_cls) -> list[str]:
     return [m.value for m in enum_cls]
 
 
+# Item 3b (2026-07-10) — /refdata serves DISPLAY LABELS alongside values so the UI
+# never hardcodes a mapping (D-005). Most labels titleize the snake_case value;
+# acronyms/brands that titleize wrong are overridden here (the single source).
+_LABEL_OVERRIDES = {
+    "etf": "ETF", "reit": "REIT", "amfi_nav": "AMFI", "coingecko": "CoinGecko",
+    "alphavantage": "AlphaVantage", "ecb_fx": "ECB FX", "eodhd": "EODHD", "csv": "CSV",
+    "isin": "ISIN", "cusip": "CUSIP", "figi": "FIGI", "sedol": "SEDOL",
+    "amfi_code": "AMFI code", "kite_token": "Kite token", "coingecko_id": "CoinGecko ID",
+    "provider_symbol": "Provider symbol", "us": "US", "us-europe": "US / Europe",
+}
+
+
+def _label(value: str) -> str:
+    ov = _LABEL_OVERRIDES.get(value.lower())
+    if ov:
+        return ov
+    # Titleize snake_case / all-lower enums (mutual_fund -> "Mutual fund"); leave
+    # already display-ready values (India, Singapore, APAC, SGD) untouched.
+    if "_" in value or value.islower():
+        s = value.replace("_", " ")
+        return s[:1].upper() + s[1:]
+    return value
+
+
+def _labeled(values: list[str]) -> list[dict[str, str]]:
+    return [{"value": v, "label": _label(v)} for v in values]
+
+
 # Authored / no-single-code-home vocabularies (MASTER-DATA §2/§4).
 _ASSET_SUBCLASS = ["crypto", "derivative", "equity", "etf", "mutual_fund", "reit"]  # DEF-2 §2 †
 _LIQUIDITY_PROFILE = ["listed", "redeemable", "locked", "illiquid", "manual"]  # §2
@@ -80,10 +108,12 @@ _TXN_APPLICABILITY: dict[str, list[str]] = {
 
 
 @router.get("/refdata")
-async def refdata() -> dict[str, list[str]]:
-    """Every fixed vocabulary, keyed by id. Extensible masters (currency,
-    institution, sector, tag) are served by their own endpoints, not here."""
-    return {
+async def refdata() -> dict[str, list[dict[str, str]]]:
+    """Every fixed vocabulary, keyed by id, each as `{value, label}` pairs so the UI
+    renders served DISPLAY LABELS and never hardcodes a mapping (D-005; item 3b).
+    Extensible masters (currency, institution, sector, tag) are served by their own
+    endpoints, not here."""
+    raw = {
         "txn_type": _values(TxnType),
         "asset_class": _values(AssetClass),
         "asset_subclass": _ASSET_SUBCLASS,
@@ -109,6 +139,7 @@ async def refdata() -> dict[str, list[str]]:
         "id_type": _ID_TYPE,
         "source_override": _source_override_values(),
     }
+    return {vocab: _labeled(values) for vocab, values in raw.items()}
 
 
 @router.get("/refdata/txn-applicability")

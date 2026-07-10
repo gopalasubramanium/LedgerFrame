@@ -50,7 +50,7 @@ import type {
   TransactionRow,
 } from "../api/holdings";
 import { apiDownload } from "../api/client";
-import { useTxnApplicability } from "../refdata/refdata-context";
+import { useLabelFor, useTxnApplicability } from "../refdata/refdata-context";
 import { getMaster } from "../mocks/refdata";
 import { formatMoney, formatSignedMoney } from "../format/number";
 
@@ -95,6 +95,8 @@ export function Holdings() {
   // bounded (family portfolios are tens of positions; page-holdings §9-25).
   const [holdSort, setHoldSort] = useState<SortState | undefined>(undefined);
   const [holdFilter, setHoldFilter] = useState("");
+
+  const labelFor = useLabelFor(); // item 3b — served display labels for enums
 
   const onHoldSort = useCallback((key: string) => {
     setHoldSort((s) =>
@@ -270,10 +272,10 @@ export function Holdings() {
           </span>
         ),
       },
-      // Class as a compact chip rather than a wide text column.
+      // Class as a compact chip, with the SERVED display label (item 3b — no raw enum).
       {
         key: "asset_class", label: "Class", sortable: true,
-        render: (h) => <span className="hold__chip">{h.asset_class}</span>,
+        render: (h) => <span className="hold__chip">{labelFor("asset_class", h.asset_class)}</span>,
       },
       { key: "quantity", label: "Position", format: "quantity", sortable: true },
       // Price dropped from the table to fit a 1366px laptop (item 2): it is "—" for
@@ -303,13 +305,14 @@ export function Holdings() {
         ),
       },
     ],
-    [baseCcy, softDeleteHolding],
+    [baseCcy, softDeleteHolding, labelFor],
   );
 
   const txnColumns = useMemo<Column<TransactionRow>[]>(
     () => [
       { key: "ts", label: "Date", sortable: true, render: (t) => t.ts.slice(0, 10) },
-      { key: "type", label: "Type", sortable: true },
+      // Served display label for the type (item 3b — no raw enum).
+      { key: "type", label: "Type", sortable: true, render: (t) => labelFor("txn_type", t.type) },
       { key: "symbol", label: "Symbol", sortable: true, render: (t) => t.symbol ?? "—" },
       { key: "quantity", label: "Qty", format: "quantity", sortable: true },
       { key: "price", label: "Price", format: "price", sortable: true },
@@ -329,7 +332,7 @@ export function Holdings() {
         ),
       },
     ],
-    [softDeleteTxn],
+    [softDeleteTxn, labelFor],
   );
 
   return (

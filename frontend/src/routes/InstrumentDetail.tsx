@@ -24,6 +24,7 @@ import {
 } from "../api/instruments";
 import type { Candle, InstrumentDetail as Detail, NewsItem } from "../api/instruments";
 import type { HoldingRow } from "../api/holdings";
+import { useLabelFor } from "../refdata/refdata-context";
 import { formatMoney, formatPrice, formatSignedMoney } from "../format/number";
 
 // Instrument Detail (IA §360; entity-detail template) — a scoped view (P-3) of the
@@ -35,6 +36,7 @@ export function InstrumentDetail() {
   const { symbol = "" } = useParams();
   const sym = symbol.toUpperCase();
   const toast = useToast();
+  const labelFor = useLabelFor(); // item 3b — served display labels for enums
 
   const [detail, setDetail] = useState<Detail | null>(null);
   const [candles, setCandles] = useState<Candle[]>([]);
@@ -147,13 +149,13 @@ export function InstrumentDetail() {
           <section className="ins__section">
             <h2 className="ins__h2">Identity</h2>
             <dl className="ins__facts">
-              <Fact label="Class" value={meta?.asset_class} chip />
-              <Fact label="Subclass" value={meta?.asset_subclass} chip />
+              <Fact label="Class" value={meta?.asset_class ? labelFor("asset_class", meta.asset_class) : null} chip />
+              <Fact label="Subclass" value={meta?.asset_subclass ? labelFor("asset_subclass", meta.asset_subclass) : null} chip />
               <Fact label="Exchange" value={meta?.exchange} />
               <Fact label="Sector" value={meta?.sector} />
               <Fact label="Country" value={meta?.listing_country ?? meta?.country} />
               <Fact label="Currency" value={meta?.currency} />
-              {meta?.source_override && <Fact label="Source override" value={meta.source_override} chip />}
+              {meta?.source_override && <Fact label="Source override" value={labelFor("source_override", meta.source_override)} chip />}
             </dl>
           </section>
 

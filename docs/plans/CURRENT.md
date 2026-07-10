@@ -362,16 +362,20 @@ out of scope — components only.
     (`MANUAL_META_FIELDS`) → `meta`. Review signal `_INCOMPLETE_DETAILS_MIN = 1`
     (severity `info`) — *"N holdings have incomplete details"*, never a hard wall
     (PRODUCT-SPEC §5). MASTER-DATA §11 → RATIFIED.
-  - **D-094 (recorded).** Audit: `DataTable` is presentational; the page wired
-    neither sort nor filter (raw API order; txns capped at 500). **Holdings** →
-    client-side sort/filter **shipped** (bounded dataset; explicit assumption +
-    ~1,000-position revisit threshold). **Transactions** → server-side sort/filter/
-    windowing **recorded, ships next commit** (contract delta drafted in
-    API-CONTRACT.md; CSV export stays full-dataset server-side, D-050). Worklist
-    rule added to `TEMPLATE-page-build.md` §4/§7.
-  - **463 backend** (+3: applicability, `_META_KEYS` gaps, review signal) +
-    **45 frontend** (+3) tests; ruff/contract-drift/tokens/lint/typecheck/build
-    green.
+  - **D-094 (recorded + both tables done).** Audit: `DataTable` is presentational;
+    the page wired neither sort nor filter (raw API order; txns capped at 500).
+    **Holdings** → client-side sort/filter **shipped** (bounded dataset; explicit
+    assumption + ~1,000-position revisit threshold). **Transactions** →
+    **server-side shipped** (own commit): `GET /portfolio/transactions` gains
+    sort/dir/filter/offset/limit + **`total`**; sort+filter over the full dataset,
+    windowed (100/page), UI states *"Showing X–Y of Z"* with Prev/Next + debounced
+    filter — **500-row silent cap gone**; numeric columns cast for value-sort; CSV
+    export stays full-dataset (D-050). Worklist rule added to
+    `TEMPLATE-page-build.md` §4/§7.
+  - **Commit 1** (D-090/D-091/D-094-record + Holdings client-side): **463 backend**
+    (+3) + **45 frontend** (+3). **Commit 2** (transactions server-side): **467
+    backend** (+4 paging) + **46 frontend** (+1). ruff/contract-drift/tokens/lint/
+    typecheck/build green throughout.
 
 - **D-090 / D-091 — PROPOSED spec tables (owner, 2026-07-10; SUPERSEDED — see the
   ratified+shipped entry above), + compact picker fixed now.**

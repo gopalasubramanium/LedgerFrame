@@ -50,7 +50,7 @@ export interface DataTableProps<R> {
   rows: R[];
   sort?: SortState;
   onSort?: (key: string) => void;
-  filter?: { value: string; onChange: (v: string) => void; placeholder?: string };
+  filter?: { value: string; onChange: (v: string) => void; placeholder?: string; ariaLabel?: string };
   /** Server-side export trigger (P-5); the client never builds the file. */
   onExport?: () => void;
   stickyHeader?: boolean;
@@ -103,7 +103,7 @@ export function DataTable<R>({
                 type="search"
                 value={filter.value}
                 placeholder={filter.placeholder ?? "Filter…"}
-                aria-label="Filter table"
+                aria-label={filter.ariaLabel ?? "Filter table"}
                 onChange={(e) => filter.onChange(e.target.value)}
               />
             </span>

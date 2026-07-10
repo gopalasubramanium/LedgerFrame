@@ -576,15 +576,16 @@ clarifying notes recorded in the guide.
     **explicit assumption with a threshold note**: if a portfolio ever approaches
     ~1,000 positions, revisit and move Holdings server-side too (page-holdings
     §9-25). *Shipped this batch.*
-  - **Transactions — must be server-side.** Sort **and** filter must execute
-    **server-side over the full dataset** (never over the loaded page), with
-    pagination / cursor / windowed loading. Default view: most recent first,
-    windowed. The `GET /portfolio/transactions` endpoint gains
-    sort/dir/filter/offset/limit params (+ a total count) — a **contract delta**
-    via the freeze rule, regenerated in the same commit that ships it. **CSV
-    export stays full-dataset server-side regardless of what is loaded** (D-050).
-    *Recorded now; endpoint + frontend rewire ship as the next commit* (contract
-    delta drafted in API-CONTRACT.md).
+  - **Transactions — server-side (shipped, 2026-07-10).** Sort **and** filter
+    execute **server-side over the full dataset** (never the loaded page), with
+    windowed loading (`offset`/`limit`, default 100, most-recent first). The
+    response carries **`total`** so the UI states *"Showing X–Y of Z"* and **never
+    silently truncates** — the old 500-row cap is gone (the headline defect). The
+    `GET /portfolio/transactions` endpoint gained sort/dir/filter/offset/limit
+    params + total — contract regenerated same commit, drift green. Numeric columns
+    (amount/quantity/price, stored as `DecimalText`) are **cast to numeric for
+    ORDER BY** so sorting is by value, not lexicographic. **CSV export stays
+    full-dataset server-side regardless of the loaded window** (D-050).
   - **Worklist rule:** every table's page-build plan must state its **dataset-size
     assumption** and **where sort/filter execute** (client vs server). Added to
     `TEMPLATE-page-build.md`.

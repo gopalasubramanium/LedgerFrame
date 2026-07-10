@@ -116,8 +116,36 @@ export const getDeletedCount = () => apiGet<DeletedCount>("/portfolio/deleted-co
 
 export const getHoldings = () => apiGet<HoldingsResponse>("/portfolio/holdings");
 export const getSummary = () => apiGet<SummaryResponse>("/portfolio/summary");
-export const getTransactions = () =>
-  apiGet<{ transactions: TransactionRow[] }>("/portfolio/transactions");
+
+// D-094 — the transactions ledger is windowed; sort/filter/paging run SERVER-SIDE
+// over the full dataset. `total` is the honest denominator so the UI can state
+// "Showing X–Y of Z" and never silently truncate.
+export interface TransactionsQuery {
+  limit?: number;
+  offset?: number;
+  sort?: string;
+  dir?: "asc" | "desc";
+  filter?: string;
+}
+export interface TransactionsResponse {
+  transactions: TransactionRow[];
+  total: number;
+  offset: number;
+  limit: number;
+  sort: string;
+  dir: "asc" | "desc";
+  filter: string;
+}
+export const getTransactions = (q: TransactionsQuery = {}) => {
+  const p = new URLSearchParams();
+  if (q.limit != null) p.set("limit", String(q.limit));
+  if (q.offset != null) p.set("offset", String(q.offset));
+  if (q.sort) p.set("sort", q.sort);
+  if (q.dir) p.set("dir", q.dir);
+  if (q.filter) p.set("filter", q.filter);
+  const qs = p.toString();
+  return apiGet<TransactionsResponse>(`/portfolio/transactions${qs ? `?${qs}` : ""}`);
+};
 export const getAccounts = () => apiGet<{ accounts: AccountRow[] }>("/accounts");
 export const getTags = () => apiGet<{ tags: string[] }>("/portfolio/tags");
 

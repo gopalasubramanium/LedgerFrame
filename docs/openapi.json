@@ -10489,6 +10489,7 @@
     },
     "/api/v1/portfolio/transactions": {
       "get": {
+        "description": "The transactions ledger, windowed. D-094: sort + filter run server-side over\nthe full non-deleted dataset; `total` reports its full size so the client can\nstate \"Showing X\u2013Y of Z\" and never silently truncate. Default: most-recent\nfirst. The full-dataset CSV export (statements/holdings, D-050) is unaffected \u2014\nit ignores this window entirely.",
         "operationId": "list_transactions_api_v1_portfolio_transactions_get",
         "parameters": [
           {
@@ -10496,9 +10497,58 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 500,
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "ts",
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dir",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "title": "Dir",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filter"
             }
           },
           {

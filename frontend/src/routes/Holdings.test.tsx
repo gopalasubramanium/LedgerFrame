@@ -297,15 +297,56 @@ test("D-094 holdings filter runs client-side (bounded dataset)", async () => {
   renderPage();
   await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
   expect(screen.getByText("MSFT")).toBeInTheDocument();
-  await user.type(screen.getByLabelText("Filter table"), "msft");
+  await user.type(screen.getByLabelText("Filter holdings"), "msft");
   await waitFor(() => expect(screen.queryByText("AAPL")).toBeNull());
   expect(screen.getByText("MSFT")).toBeInTheDocument();
+});
+
+test("D-094 transactions ledger is server-side: window stated, sort/filter/page hit the API", async () => {
+  vi.mocked(api.getTransactions).mockResolvedValue({
+    ok: true,
+    data: {
+      transactions: [
+        { id: 7, type: "buy", ts: "2024-05-01T00:00:00", symbol: "AAPL", currency: "USD", amount: -1900 },
+      ],
+      total: 250, offset: 0, limit: 100, sort: "ts", dir: "desc", filter: "",
+    },
+  });
+  const user = userEvent.setup();
+  renderPage();
+  await waitFor(() => expect(screen.getByText(/2024-05-01/)).toBeInTheDocument());
+  // The window is explicit — the full total is stated, never silently truncated.
+  expect(screen.getByText("Showing 1–1 of 250")).toBeInTheDocument();
+
+  // Sorting a column refetches server-side with the sort params.
+  await user.click(screen.getByText("Amount"));
+  await waitFor(() =>
+    expect(vi.mocked(api.getTransactions)).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: "amount", dir: "asc", offset: 0 }),
+    ),
+  );
+
+  // Next page refetches with the new offset (server-side paging).
+  await user.click(screen.getByRole("button", { name: /Next/ }));
+  await waitFor(() =>
+    expect(vi.mocked(api.getTransactions)).toHaveBeenCalledWith(
+      expect.objectContaining({ offset: 100 }),
+    ),
+  );
+
+  // Filtering refetches server-side (debounced) with the filter term.
+  await user.type(screen.getByLabelText("Filter transactions"), "aapl");
+  await waitFor(() =>
+    expect(vi.mocked(api.getTransactions)).toHaveBeenCalledWith(
+      expect.objectContaining({ filter: "aapl", offset: 0 }),
+    ),
+  );
 });
 
 test("deleting a transaction soft-deletes and offers Undo", async () => {
   vi.mocked(api.getTransactions).mockResolvedValue({
     ok: true,
-    data: { transactions: [{ id: 7, type: "buy", ts: "2024-05-01T00:00:00", symbol: "AAPL", currency: "USD", amount: -1900 }] },
+    data: { transactions: [{ id: 7, type: "buy", ts: "2024-05-01T00:00:00", symbol: "AAPL", currency: "USD", amount: -1900 }], total: 1, offset: 0, limit: 100, sort: "ts", dir: "desc", filter: "" },
   });
   const user = userEvent.setup();
   renderPage();
@@ -322,7 +363,7 @@ test("deleting a transaction soft-deletes and offers Undo", async () => {
 test("row menu Edit opens the edit dialog and updates the transaction", async () => {
   vi.mocked(api.getTransactions).mockResolvedValue({
     ok: true,
-    data: { transactions: [{ id: 9, type: "buy", ts: "2024-05-01T00:00:00", symbol: "AAPL", quantity: 5, price: 100, currency: "USD", amount: -500 }] },
+    data: { transactions: [{ id: 9, type: "buy", ts: "2024-05-01T00:00:00", symbol: "AAPL", quantity: 5, price: 100, currency: "USD", amount: -500 }], total: 1, offset: 0, limit: 100, sort: "ts", dir: "desc", filter: "" },
   });
   const user = userEvent.setup();
   renderPage();

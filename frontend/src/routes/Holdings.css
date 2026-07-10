@@ -33,6 +33,19 @@
   font-size: var(--font-size-13);
 }
 
+/* D-094 — transactions window pager: "Showing X–Y of Z" + Prev/Next. */
+.hold__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.hold__pagerbtns {
+  display: flex;
+  gap: var(--space-3);
+}
+
 .hold__form {
   display: flex;
   flex-direction: column;

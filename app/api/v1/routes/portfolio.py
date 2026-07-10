@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import Float, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_auth, require_pin
@@ -313,18 +314,72 @@ def _txn_cash_impact(t: TransactionIn):
     return D(0)
 
 
+# D-094: server-side sortable columns for the transactions ledger. Sort AND filter
+# execute in SQL over the FULL dataset (never the loaded window) — the old 500-row
+# silent cap is gone; the window is explicit and the response reports the total.
+_TXN_SORT_COLS = {
+    "ts": Transaction.ts,
+    "type": Transaction.type,
+    "amount": Transaction.amount,
+    "quantity": Transaction.quantity,
+    "price": Transaction.price,
+    "currency": Transaction.currency,
+    "symbol": Instrument.symbol,
+}
+# amount/quantity/price are stored as text (DecimalText); cast to numeric for
+# ORDER BY so sorting is by value, not lexicographic ("9" would beat "10").
+_TXN_NUMERIC_SORT = {"amount", "quantity", "price"}
+
+
 @router.get("/portfolio/transactions")
-async def list_transactions(limit: int = 500, session: AsyncSession = Depends(get_db)) -> dict:
-    rows = (
-        await session.execute(  # §3.5 R9: don't show soft-deleted transactions in the ledger
-            select(Transaction).where(Transaction.deleted_at.is_(None)).order_by(Transaction.ts.desc()).limit(limit))
-    ).scalars().all()
+async def list_transactions(
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    sort: Annotated[str, Query()] = "ts",
+    dir: Annotated[str, Query()] = "desc",
+    filter: Annotated[str | None, Query()] = None,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    """The transactions ledger, windowed. D-094: sort + filter run server-side over
+    the full non-deleted dataset; `total` reports its full size so the client can
+    state "Showing X–Y of Z" and never silently truncate. Default: most-recent
+    first. The full-dataset CSV export (statements/holdings, D-050) is unaffected —
+    it ignores this window entirely."""
+    sort_key = sort if sort in _TXN_SORT_COLS else "ts"
+    descending = dir != "asc"
+    col = _TXN_SORT_COLS[sort_key]
+
+    # §3.5 R9: soft-deleted rows never appear in the ledger.
+    conds = [Transaction.deleted_at.is_(None)]
+    q = (filter or "").strip()
+    if q:
+        like = f"%{q}%"
+        conds.append(or_(
+            Transaction.type.ilike(like),
+            Transaction.currency.ilike(like),
+            Transaction.note.ilike(like),
+            Instrument.symbol.ilike(like),
+        ))
+
+    stmt = (
+        select(Transaction, Instrument.symbol.label("symbol"))
+        .outerjoin(Instrument, Transaction.instrument_id == Instrument.id)
+        .where(*conds)
+    )
+    # Full filtered count — the honest denominator, computed before the window.
+    total = (await session.execute(
+        select(func.count()).select_from(stmt.subquery())
+    )).scalar_one()
+
+    order_col = cast(col, Float) if sort_key in _TXN_NUMERIC_SORT else col
+    ordering = order_col.desc() if descending else order_col.asc()
+    rows = (await session.execute(
+        # id tiebreak keeps paging stable when the sort column ties.
+        stmt.order_by(ordering, Transaction.id.desc()).limit(limit).offset(offset)
+    )).all()
+
     out = []
-    for t in rows:
-        symbol = None
-        if t.instrument_id:
-            instr = await session.get(Instrument, t.instrument_id)
-            symbol = instr.symbol if instr else None
+    for t, symbol in rows:
         out.append({
             "id": t.id, "account_id": t.account_id, "symbol": symbol,
             "type": t.type.value if hasattr(t.type, "value") else str(t.type),
@@ -334,7 +389,15 @@ async def list_transactions(limit: int = 500, session: AsyncSession = Depends(ge
             "amount": to_display(D(t.amount)), "currency": t.currency, "note": t.note,
             "related_instrument_id": t.related_instrument_id,  # D-019 merger target
         })
-    return {"transactions": out}
+    return {
+        "transactions": out,
+        "total": int(total),
+        "offset": offset,
+        "limit": limit,
+        "sort": sort_key,
+        "dir": "desc" if descending else "asc",
+        "filter": q,
+    }
 
 
 @router.post("/portfolio/transactions", dependencies=[Depends(require_auth)])

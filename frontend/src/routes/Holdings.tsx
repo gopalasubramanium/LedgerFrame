@@ -86,8 +86,7 @@ export function Holdings() {
   const [editTxn, setEditTxn] = useState<TransactionRow | null>(null);
 
   // D-094 — Holdings sort/filter run CLIENT-SIDE. Acceptable because the dataset is
-  // bounded (family portfolios are tens of positions; page-holdings §9-25). The
-  // Transactions ledger is unbounded and moves to server-side sort/filter/paging.
+  // bounded (family portfolios are tens of positions; page-holdings §9-25).
   const [holdSort, setHoldSort] = useState<SortState | undefined>(undefined);
   const [holdFilter, setHoldFilter] = useState("");
 
@@ -117,13 +116,49 @@ export function Holdings() {
     return rows;
   }, [holdings, holdFilter, holdSort]);
 
-  const reload = useCallback(async () => {
+  // D-094 — the Transactions ledger is UNBOUNDED: sort/filter/paging run
+  // SERVER-SIDE over the full dataset (the old 500-row silent cap is gone). Every
+  // change refetches; `txnTotal` is the honest denominator for "Showing X–Y of Z".
+  const [txnSort, setTxnSort] = useState<SortState>({ key: "ts", dir: "desc" });
+  const [txnFilter, setTxnFilter] = useState(""); // input value (immediate)
+  const [txnQuery, setTxnQuery] = useState(""); // debounced value sent to the server
+  const [txnOffset, setTxnOffset] = useState(0);
+  const [txnTotal, setTxnTotal] = useState(0);
+
+  // Debounce the filter box → one request per pause, and reset to the first page.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setTxnQuery(txnFilter.trim());
+      setTxnOffset(0);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [txnFilter]);
+
+  const onTxnSort = useCallback((key: string) => {
+    setTxnOffset(0); // sorting the full dataset — start from the top
+    setTxnSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  }, []);
+
+  const reloadTxns = useCallback(async () => {
+    const t = await getTransactions({
+      limit: TXN_PAGE,
+      offset: txnOffset,
+      sort: txnSort.key,
+      dir: txnSort.dir,
+      filter: txnQuery || undefined,
+    });
+    if (t.ok) {
+      setTxns(t.data.transactions);
+      setTxnTotal(t.data.total ?? t.data.transactions.length);
+    }
+  }, [txnOffset, txnSort, txnQuery]);
+
+  const reloadCore = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [h, s, t, a, d] = await Promise.all([
+    const [h, s, a, d] = await Promise.all([
       getHoldings(),
       getSummary(),
-      getTransactions(),
       getAccounts(),
       getDeletedCount(),
     ]);
@@ -134,15 +169,23 @@ export function Holdings() {
       setError(h.error);
     }
     if (s.ok) setSummary(s.data);
-    if (t.ok) setTxns(t.data.transactions);
     if (a.ok) setAccounts(a.data.accounts);
     setDeletedCount(d.ok ? d.data.total : 0);
     setLoading(false);
   }, []);
 
+  // Full refresh after a mutation — both the core reads and the current txn window.
+  const reload = useCallback(async () => {
+    await Promise.all([reloadCore(), reloadTxns()]);
+  }, [reloadCore, reloadTxns]);
+
   useEffect(() => {
-    reload();
-  }, [reload]);
+    reloadCore();
+  }, [reloadCore]);
+  // Refetch the ledger whenever the window (sort/filter/page) changes — server-side.
+  useEffect(() => {
+    reloadTxns();
+  }, [reloadTxns]);
 
   const softDeleteTxn = useCallback(
     async (row: TransactionRow) => {
@@ -231,10 +274,10 @@ export function Holdings() {
     () => [
       { key: "ts", label: "Date", sortable: true, render: (t) => t.ts.slice(0, 10) },
       { key: "type", label: "Type", sortable: true },
-      { key: "symbol", label: "Symbol", render: (t) => t.symbol ?? "—" },
-      { key: "quantity", label: "Qty", format: "quantity" },
-      { key: "price", label: "Price", format: "price" },
-      { key: "amount", label: "Amount", format: "signed-money" },
+      { key: "symbol", label: "Symbol", sortable: true, render: (t) => t.symbol ?? "—" },
+      { key: "quantity", label: "Qty", format: "quantity", sortable: true },
+      { key: "price", label: "Price", format: "price", sortable: true },
+      { key: "amount", label: "Amount", format: "signed-money", sortable: true },
       { key: "note", label: "Note", truncate: true, render: (t) => t.note ?? "—" },
       {
         key: "id",
@@ -314,7 +357,7 @@ export function Holdings() {
             rows={visibleHoldings}
             sort={holdSort}
             onSort={onHoldSort}
-            filter={{ value: holdFilter, onChange: setHoldFilter, placeholder: "Filter holdings…" }}
+            filter={{ value: holdFilter, onChange: setHoldFilter, placeholder: "Filter holdings…", ariaLabel: "Filter holdings" }}
           />
         )}
       </div>
@@ -329,13 +372,53 @@ export function Holdings() {
             </button>
           )}
         </div>
-        {txns.length === 0 ? (
+        {txnTotal === 0 && !txnQuery ? (
           <EmptyState
             message="No transactions"
             reason="Record a buy, sell, dividend, or merger from “Add”, or import a CSV."
           />
         ) : (
-          <DataTable columns={txnColumns} rows={txns} />
+          <>
+            <DataTable
+              columns={txnColumns}
+              rows={txns}
+              sort={txnSort}
+              onSort={onTxnSort}
+              filter={{
+                value: txnFilter,
+                onChange: setTxnFilter,
+                placeholder: "Filter transactions…",
+                ariaLabel: "Filter transactions",
+              }}
+            />
+            {/* D-094: the window is explicit — the full total is always stated, so
+                the ledger never silently truncates (the old 500-row cap). */}
+            <div className="hold__pager">
+              <span className="hold__sub" aria-live="polite">
+                {txnTotal === 0
+                  ? "No transactions match your filter."
+                  : `Showing ${txnOffset + 1}–${Math.min(txnOffset + txns.length, txnTotal)} of ${txnTotal}`}
+              </span>
+              <span className="hold__pagerbtns">
+                <button
+                  type="button"
+                  className="lf-btn"
+                  disabled={txnOffset === 0}
+                  onClick={() => setTxnOffset(Math.max(0, txnOffset - TXN_PAGE))}
+                >
+                  ← Prev
+                </button>
+                <button
+                  type="button"
+                  className="lf-btn"
+                  disabled={txnOffset + TXN_PAGE >= txnTotal}
+                  onClick={() => setTxnOffset(txnOffset + TXN_PAGE)}
+                >
+                  Next →
+                </button>
+              </span>
+            </div>
+          </>
         )}
       </div>
 
@@ -441,6 +524,9 @@ function PageHeaderHoldings({
 
 // Total-cash transaction types: entered as a single "Amount", not qty × price.
 const AMOUNT_TYPES = ["dividend", "interest", "fee"];
+
+// D-094 — server-side transactions window size (rows per page).
+const TXN_PAGE = 100;
 
 // D-094 — client-side cell comparator for the bounded Holdings table. Numbers
 // (incl. decimal strings) compare numerically; everything else locale-string.

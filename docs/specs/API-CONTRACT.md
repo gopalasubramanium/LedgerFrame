@@ -51,17 +51,18 @@ merger reshape (D-019, adds `related_instrument_id`), and the typed
 **125 paths**; the per-master `*/meta` removals (D-005) stay pending until their
 pages migrate.
 
-**Drafted, not yet shipped (D-094):** `GET /api/v1/portfolio/transactions` will
-gain server-side **sort / dir / filter / offset / limit** query params **plus a
-total count** in the response, so sort and filter run over the full dataset (not
-the loaded page) with windowed loading. Same-path **reshape** — no new path;
-regenerate the contract in the commit that ships it (row below).
+**Delivered 2026-07-10 (D-094):** `GET /api/v1/portfolio/transactions` gained
+server-side **sort / dir / filter / offset / limit** query params **plus `total`,
+`offset`, `limit`, `sort`, `dir`, `filter`** in the response, so sort and filter
+run over the full dataset (not the loaded page) with windowed loading and an
+explicit total — the old 500-row silent cap is gone. Same-path **reshape** — no
+new path; still **125 paths** (row below).
 
 | Kind | Endpoint (current → intended) | Decision | Note |
 |------|-------------------------------|----------|------|
 | **add ✅** | `GET /api/v1/refdata` | **D-005** | **Delivered 2026-07-10.** Single fixed-vocabulary endpoint (22 vocabs). Retires the per-master meta endpoints and all frontend inline lists. |
 | **add ✅** | `GET /api/v1/refdata/txn-applicability` | **D-090** | **Delivered 2026-07-10.** AssetClass → offered TxnTypes for the Add-flow Type dropdown (MASTER-DATA §10). Form-level filter only; frontend zero-copy (D-005). |
-| **reshape** | `GET /api/v1/portfolio/transactions` (+ sort/dir/filter/offset/limit + total) | **D-094** | **Drafted, not shipped.** Server-side sort/filter/windowing over the full dataset (never the loaded page); default most-recent-first. CSV export stays full-dataset server-side (D-050). Regenerate the contract the commit it ships. |
+| **reshape ✅** | `GET /api/v1/portfolio/transactions` (+ sort/dir/filter/offset/limit + total) | **D-094** | **Delivered 2026-07-10.** Server-side sort/filter/windowing over the full dataset (never the loaded page); default most-recent-first; response carries `total` so the UI states "Showing X–Y of Z" and never silently truncates. Numeric columns cast for value-sort. CSV export stays full-dataset server-side (D-050). |
 | **remove** | `GET /api/v1/insurance/meta` → (into `/refdata`) | **D-005** | Insurance vocab moves to `/refdata`; endpoint removed once `/refdata` lands. |
 | **remove** | `GET /api/v1/estate/meta` → (into `/refdata`) | **D-005** | Estate vocab (doc categories, contact roles) moves to `/refdata`. |
 | **add** | `POST /api/v1/entities`, `PATCH /api/v1/entities/{id}`, `DELETE /api/v1/entities/{id}` | **D-065** | Entity CRUD; only `GET /api/v1/entities` exists today. |

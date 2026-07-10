@@ -491,12 +491,14 @@ reshaped. **No engine changes.**
     portfolios are tens of positions). **Explicit assumption + threshold:** if a
     portfolio ever approaches **~1,000 positions**, revisit and move Holdings
     server-side (D-094).
-  - **Transactions — server-side (recorded; ships next commit).** Sort **and**
-    filter must run server-side over the **full dataset**, windowed (most-recent
-    first); CSV export stays full-dataset server-side (D-050). The
-    `GET /portfolio/transactions` sort/dir/filter/offset/limit + total params are
-    a **contract delta** (drafted in API-CONTRACT.md; regenerated the commit it
-    ships). Left unchanged this batch to keep the review surface clean.
+  - **Transactions — server-side (shipped, own commit).** `GET
+    /portfolio/transactions` gained sort/dir/filter/offset/limit + a **`total`**;
+    sort and filter run over the **full dataset** (never the loaded page), windowed
+    (100/page, most-recent first). The UI states *"Showing X–Y of Z"* with
+    Prev/Next and a debounced server-side filter box — the **500-row silent cap is
+    gone**. Numeric columns cast for value-sort. CSV export stays full-dataset
+    server-side (D-050). Contract regenerated, drift green; +4 backend paging tests,
+    +1 frontend server-side test.
   - **Worklist rule** added to `TEMPLATE-page-build.md` §4/§7: every table's plan
     states its dataset-size assumption and where sort/filter execute.
 

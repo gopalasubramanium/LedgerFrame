@@ -103,6 +103,19 @@ amendment request (also list it in §9).*
 **Affordances the ratified inventory lacks (amendment required before build — see §9):**
 - …
 
+**Tables — dataset-size posture (D-094, required for every `DataTable`):** for
+each table on the page, state (a) its **dataset-size assumption** (bounded / small
+vs unbounded / growing, with the reasoning) and (b) **where sort and filter
+execute** — client-side or server-side.
+- **Bounded** (e.g. holdings, accounts, policy rows — tens of rows): client-side
+  sort/filter is acceptable; record the assumption **and** a threshold at which to
+  revisit (move server-side).
+- **Unbounded / append-only** (e.g. transactions, audit log, price history):
+  **server-side** — sort **and** filter run over the **full dataset** (never the
+  loaded page), with pagination / cursor / windowed loading; default view + a
+  server-side full-dataset CSV export (D-050) regardless of what is loaded. The
+  endpoint's sort/filter/page params are a **contract delta** (§3b).
+
 ---
 
 ## 5. VOCABULARIES
@@ -147,6 +160,9 @@ the theme/density matrix. Written as checkable statements.*
 - [ ] **Keyboard + WCAG AA** (focus ring, aria-sort, labels).
 - [ ] **No frontend money math** — every figure comes from the backend.
 - [ ] **Terms** match GLOSSARY; **categoricals** come from MASTER-DATA via /refdata.
+- [ ] **Tables (D-094):** each table's dataset-size assumption + sort/filter
+      location (§4) is honoured — bounded tables filter/sort client-side; unbounded
+      tables filter/sort **server-side over the full dataset**, not the loaded page.
 
 ---
 

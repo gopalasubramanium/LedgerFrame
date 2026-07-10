@@ -74,6 +74,9 @@ export interface ManualHoldingIn {
   asset_class: string;
   value: number;
   currency?: string;
+  // D-091 per-class OPTIONAL-PROMPTED detail; only whitelisted keys are persisted
+  // (backend `_META_KEYS`). Values are short strings.
+  meta?: Record<string, string>;
 }
 
 export interface AccountRow {

@@ -44,6 +44,32 @@ _REGION = ["India", "Singapore", "US", "Europe", "APAC", "Other"]  # §4 (D-083)
 _ID_TYPE = ["isin", "cusip", "figi", "sedol", "amfi_code", "kite_token",
             "coingecko_id", "provider_symbol"]  # §2
 
+# D-090 (ratified 2026-07-10) — AssetClass → the TxnTypes the Add-flow Type
+# dropdown OFFERS for that class. MASTER-DATA §10 is the canonical statement; this
+# is its backend home so the frontend carries no copy (D-005). Form-level filtering
+# ONLY — the engine (`compute_fifo`) is unchanged and processes every type, and CSV
+# imports of odd-but-real historical events are NOT filtered by this matrix
+# (importer validates and commits regardless). Ratification amendment: ETF Bonus is
+# ON (ETF unit splits/consolidations occur). Crypto corporate actions OFF (enable on
+# request); retirement/liability interest ON; MF split+bonus ON; FD/bond/cash
+# interest ON (the Manual-branch transaction path this implies is approved).
+_TXN_APPLICABILITY: dict[str, list[str]] = {
+    "equity":        ["buy", "sell", "dividend", "fee", "split", "bonus", "merger", "transfer"],
+    "etf":           ["buy", "sell", "dividend", "fee", "split", "bonus", "merger", "transfer"],
+    "mutual_fund":   ["buy", "sell", "dividend", "fee", "split", "bonus", "merger", "transfer"],
+    "bond":          ["buy", "sell", "interest", "fee", "transfer"],
+    "cash":          ["interest", "deposit", "withdrawal", "fee", "transfer"],
+    "fixed_deposit": ["interest", "deposit", "withdrawal", "fee", "transfer"],
+    "commodity":     ["buy", "sell", "fee", "transfer"],
+    "crypto":        ["buy", "sell", "fee", "transfer"],
+    "property":      ["buy", "sell", "fee", "transfer"],
+    "private":       ["buy", "sell", "fee", "transfer"],
+    "retirement":    ["interest", "deposit", "withdrawal", "fee", "transfer"],
+    "liability":     ["interest", "deposit", "withdrawal", "fee", "transfer"],
+    "other":         ["buy", "sell", "dividend", "interest", "deposit", "withdrawal",
+                      "fee", "split", "bonus", "merger", "transfer"],
+}
+
 
 @router.get("/refdata")
 async def refdata() -> dict[str, list[str]]:
@@ -74,3 +100,11 @@ async def refdata() -> dict[str, list[str]]:
         "premium_frequency": list(PREMIUM_FREQUENCIES),
         "id_type": _ID_TYPE,
     }
+
+
+@router.get("/refdata/txn-applicability")
+async def txn_applicability() -> dict[str, list[str]]:
+    """D-090 — per-AssetClass TxnType applicability for the Add-flow Type dropdown.
+    Keyed by asset_class value → the offered txn_type values (MASTER-DATA §10).
+    Form-level filtering only; the engine and the CSV importer ignore it."""
+    return _TXN_APPLICABILITY

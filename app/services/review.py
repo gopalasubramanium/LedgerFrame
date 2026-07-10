@@ -28,6 +28,11 @@ _OBLIGATION_SOON_DAYS = 30
 _INSURANCE_SOON_DAYS = 30
 _RUNWAY_LOW_MONTHS = 6
 _CORP_ACTION_RECENT_DAYS = 45   # window for "corporate action recorded — verify" reminders
+_INCOMPLETE_DETAILS_MIN = 1     # D-091: manual holdings with no optional detail recorded (≥ this many surfaces)
+
+# D-091: manual classes that carry meaningful optional detail; a bare value with no
+# `meta` at all is what the "incomplete details" signal flags (never a hard wall).
+_DETAIL_CLASSES = frozenset({"fixed_deposit", "bond", "property", "retirement", "private"})
 
 
 def _item(area: str, title: str, severity: str = "review") -> dict:
@@ -135,6 +140,31 @@ async def review_report(session: AsyncSession) -> dict:
             sym = instr.symbol if instr else "an instrument"
             kind = (t.type.value if hasattr(t.type, "value") else str(t.type)).title()
             items.append(_item("corporate", f"{kind} on {sym} recorded — verify quantity & cost"))
+    except Exception:  # noqa: BLE001
+        pass
+
+    # Manual holdings recorded as a bare value, with no optional detail (D-091).
+    # A low-priority nudge to enrich them — never a hard wall, never advice.
+    try:
+        from app.models import Holding
+        rows = (await session.execute(
+            select(Holding).where(
+                Holding.manual_value.isnot(None),
+                Holding.deleted_at.is_(None),
+            )
+        )).scalars().all()
+        incomplete = sum(
+            1 for h in rows
+            if (h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class))
+            in _DETAIL_CLASSES and not (h.meta and h.meta.strip() not in ("", "{}"))
+        )
+        if incomplete >= _INCOMPLETE_DETAILS_MIN:
+            items.append(_item(
+                "data",
+                f"{incomplete} holding{'s' if incomplete != 1 else ''} "
+                f"{'have' if incomplete != 1 else 'has'} incomplete details",
+                severity="info",
+            ))
     except Exception:  # noqa: BLE001
         pass
 

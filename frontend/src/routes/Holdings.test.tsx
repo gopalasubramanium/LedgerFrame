@@ -239,6 +239,69 @@ test("D-093 import review grid gates Commit until errors are fixed or excluded",
   expect(within(dialog).getByRole("button", { name: /Commit/ })).toBeEnabled();
 });
 
+test("D-091 manual FD tile prompts optional detail; meta is submitted", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  await user.click(screen.getByRole("button", { name: "Add" }));
+  const dialog = screen.getByRole("dialog");
+  await user.click(within(dialog).getByText("Fixed deposit"));
+  // Per-class OPTIONAL-PROMPTED fields appear (never required).
+  expect(within(dialog).getByLabelText("Interest rate (%)")).toBeInTheDocument();
+  expect(within(dialog).getByLabelText("Maturity date")).toBeInTheDocument();
+  await user.type(within(dialog).getByLabelText("Label"), "My FD");
+  await user.type(within(dialog).getByLabelText("Interest rate (%)"), "3.5");
+  await user.click(within(dialog).getByRole("button", { name: "Save" }));
+  expect(vi.mocked(api.addManualHolding)).toHaveBeenCalledWith(
+    expect.objectContaining({
+      asset_class: "fixed_deposit",
+      meta: expect.objectContaining({ rate: "3.5" }),
+    }),
+  );
+});
+
+test("D-090 manual FD tile can record a cash-flow transaction, types filtered", async () => {
+  // Applicability served (only the txn-applicability path returns data).
+  vi.mocked(client.apiGet).mockImplementation((async (path: string) =>
+    path === "/refdata/txn-applicability"
+      ? { ok: true, data: { fixed_deposit: ["interest", "deposit", "withdrawal", "fee", "transfer"] } }
+      : { ok: false, error: "no refdata in test" }) as typeof client.apiGet);
+  const user = userEvent.setup();
+  renderPage();
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  await user.click(screen.getByRole("button", { name: "Add" }));
+  const dialog = screen.getByRole("dialog");
+  await user.click(within(dialog).getByText("Fixed deposit"));
+  // Choose "record a transaction" instead of adding the holding.
+  await user.selectOptions(within(dialog).getByLabelText("Record"), "txn");
+  const typeSelect = within(dialog).getByLabelText("Transaction type") as HTMLSelectElement;
+  const opts = Array.from(typeSelect.options).map((o) => o.value);
+  expect(opts).toContain("interest");
+  expect(opts).not.toContain("buy"); // D-090: cash-flow only, no buy/sell
+  await user.type(within(dialog).getByLabelText("Amount"), "120");
+  await user.click(within(dialog).getByRole("button", { name: "Save" }));
+  expect(vi.mocked(api.addTransaction)).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "interest", symbol: null, quantity: 1, price: 120 }),
+  );
+});
+
+test("D-094 holdings filter runs client-side (bounded dataset)", async () => {
+  vi.mocked(api.getHoldings).mockResolvedValue({
+    ok: true,
+    data: {
+      base_currency: "SGD",
+      holdings: [row(), row({ id: 2, symbol: "MSFT", name: "Microsoft", market_value: 500 })],
+    },
+  });
+  const user = userEvent.setup();
+  renderPage();
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  expect(screen.getByText("MSFT")).toBeInTheDocument();
+  await user.type(screen.getByLabelText("Filter table"), "msft");
+  await waitFor(() => expect(screen.queryByText("AAPL")).toBeNull());
+  expect(screen.getByText("MSFT")).toBeInTheDocument();
+});
+
 test("deleting a transaction soft-deletes and offers Undo", async () => {
   vi.mocked(api.getTransactions).mockResolvedValue({
     ok: true,

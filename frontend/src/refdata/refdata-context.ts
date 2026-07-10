@@ -5,8 +5,25 @@ import { createContext, useContext } from "react";
 // labelled registry so the UI degrades gracefully offline.
 export type Vocabs = Record<string, string[]>;
 
-export const RefdataContext = createContext<Vocabs | null>(null);
+// D-090 — per-AssetClass → offered TxnTypes for the Add-flow Type dropdown, from
+// GET /refdata/txn-applicability (MASTER-DATA §10). The frontend carries no copy
+// of the matrix; null until loaded (no filtering applied while null → show all).
+export type TxnApplicability = Record<string, string[]>;
+
+export interface RefdataValue {
+  vocabs: Vocabs | null;
+  txnApplicability: TxnApplicability | null;
+}
+
+export const RefdataContext = createContext<RefdataValue>({
+  vocabs: null,
+  txnApplicability: null,
+});
 
 export function useRefdataVocabs(): Vocabs | null {
-  return useContext(RefdataContext);
+  return useContext(RefdataContext).vocabs;
+}
+
+export function useTxnApplicability(): TxnApplicability | null {
+  return useContext(RefdataContext).txnApplicability;
 }

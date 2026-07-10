@@ -531,20 +531,27 @@ clarifying notes recorded in the guide.
     only).
 
 - **D-090 — Transaction-type applicability matrix** (owner, 2026-07-10;
-  **PROPOSED — ratify before enforcement**). A table of **AssetClass × TxnType**
+  **RATIFIED 2026-07-10 with one amendment**). A table of **AssetClass × TxnType**
   stating which types the Add-flow Type dropdown offers per class (MASTER-DATA
-  §10, every cell PROPOSED). **Form-level filtering only — the engine is
-  unchanged.** Guidance folded in: Indian mutual funds have splits + bonus units;
-  interest → FD/bond/cash; dividend → equity/ETF/MF; merger/split/bonus →
-  provider-quoted securities. The dropdown filters by the picked class after
-  ratification. page-holdings §9-17.
-- **D-091 — Per-class creation-time field spec** (owner, 2026-07-10; **PROPOSED —
-  ratify before enforcement**). A per-`AssetClass` table of **REQUIRED** (only
-  what valuation/honesty need) vs **OPTIONAL-PROMPTED** creation fields
-  (MASTER-DATA §11), seeded from the existing D-049 `_META_KEYS` whitelist.
-  Verified present vs missing (gaps: property `cost`, private `round`).
-  Incomplete optional details → a **low-priority Review signal**
-  ("N holdings have incomplete details"), **never a hard wall**. page-holdings §9-18.
+  §10). **Form-level filtering only — the engine is unchanged**, and CSV imports
+  of odd-but-real historical events are **not** filtered by it (importer commits
+  regardless). **Amendment: ETF Bonus ON** (ETF unit splits/consolidations occur).
+  Confirmed as proposed: crypto corporate actions OFF; retirement/liability
+  interest ON; MF split+bonus ON; FD/bond/cash interest ON — the **Manual-branch
+  transaction path** this implies is **approved** (matches the FD tile's "interest
+  recorded separately" promise). Shipped: matrix served at
+  `GET /refdata/txn-applicability` (frontend zero-copy, D-005); Listed dropdown
+  filtered; Manual "Record transaction" sub-mode (interest/deposit/withdrawal/
+  fee/transfer). page-holdings §9-17.
+- **D-091 — Per-class creation-time field spec** (owner, 2026-07-10;
+  **RATIFIED 2026-07-10**). A per-`AssetClass` table of **REQUIRED** (only what
+  valuation/honesty need) vs **OPTIONAL-PROMPTED** creation fields (MASTER-DATA
+  §11), seeded from the D-049 `_META_KEYS` whitelist. Ratified **including** the
+  two whitelist gaps (property `cost`, private `round`, both added to `_META_KEYS`)
+  and the **incomplete-details Review signal** — a manual holding recorded with no
+  optional detail surfaces as *"N holdings have incomplete details"* (severity
+  `info`, `_INCOMPLETE_DETAILS_MIN = 1`), **never a hard wall**. Frontend now
+  prompts the OPTIONAL fields on the Manual Add form. page-holdings §9-18.
 
 - **D-092 — Insurance signpost tile** (owner, 2026-07-10). The Add type-picker
   gains an **Insurance** tile that **navigates to the Insurance register and
@@ -559,10 +566,33 @@ clarifying notes recorded in the guide.
   reconstructing a corrected CSV from the included rows and re-uploading (the
   commit path re-validates). No engine change. page-holdings §9-21.
 
+- **D-094 — Table dataset-size posture: Holdings client-side, Transactions
+  server-side** (owner, 2026-07-10). Audit finding: the `DataTable` component is
+  presentational (it accepts `sort`/`filter` props); the Holdings page previously
+  wired **neither**, so both tables rendered in raw API order and Transactions was
+  silently capped at `limit=500`. Decision:
+  - **Holdings — client-side sort/filter is acceptable** because the dataset is
+    bounded (family portfolios are tens of positions). This is recorded as an
+    **explicit assumption with a threshold note**: if a portfolio ever approaches
+    ~1,000 positions, revisit and move Holdings server-side too (page-holdings
+    §9-25). *Shipped this batch.*
+  - **Transactions — must be server-side.** Sort **and** filter must execute
+    **server-side over the full dataset** (never over the loaded page), with
+    pagination / cursor / windowed loading. Default view: most recent first,
+    windowed. The `GET /portfolio/transactions` endpoint gains
+    sort/dir/filter/offset/limit params (+ a total count) — a **contract delta**
+    via the freeze rule, regenerated in the same commit that ships it. **CSV
+    export stays full-dataset server-side regardless of what is loaded** (D-050).
+    *Recorded now; endpoint + frontend rewire ship as the next commit* (contract
+    delta drafted in API-CONTRACT.md).
+  - **Worklist rule:** every table's page-build plan must state its **dataset-size
+    assumption** and **where sort/filter execute** (client vs server). Added to
+    `TEMPLATE-page-build.md`.
+
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.
-D-090 and D-091 are **PROPOSED** (awaiting owner ratification before the form
-reshape).
+**D-090 and D-091 were ratified 2026-07-10** (D-090 with the ETF-Bonus amendment);
+**D-094** records the table dataset-size posture. None changes an earlier decision.
 
 ---
 

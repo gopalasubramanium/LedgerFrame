@@ -340,10 +340,18 @@ change only by code + migration.
 
 ---
 
-## 10. Transaction-type applicability matrix (D-090 — **PROPOSED**)
+## 10. Transaction-type applicability matrix (D-090 — **RATIFIED 2026-07-10**)
 
-**Status: every cell is PROPOSED — ratify before enforcement** (owner,
-2026-07-10; Holdings page-build §9-17). This table states which `TxnType`s the
+**Status: RATIFIED** (owner, 2026-07-10) **with one amendment: ETF Bonus is ON**
+(ETF unit splits and consolidations do occur; offering the type costs nothing, and
+omitting it would force a fake sell+buy). Confirmed as proposed: crypto corporate
+actions OFF; retirement/liability interest ON; mutual-fund split+bonus ON;
+FD/bond/cash interest ON (the Manual-branch transaction path this implies is
+approved — it matches the FD tile's "interest recorded separately" promise). The
+matrix is served from the backend at `GET /refdata/txn-applicability`
+(`app/api/v1/routes/refdata.py`) so the frontend carries no copy (D-005); the Add
+flow reads it live and falls back to the full type list when it is unavailable.
+Holdings page-build §9-17. This table states which `TxnType`s the
 Add-flow **Type dropdown offers per `AssetClass`**. It is **form-level filtering
 only — the engine is unchanged** (`compute_fifo` processes every type
 regardless; this narrows what the UI *offers*). **The matrix governs what the
@@ -362,7 +370,7 @@ X(fer/transfer).
 | AssetClass | Buy | Sell | Div | Int | Dep | W | Fee | Spl | Bon | M | X |
 |------------|:---:|:----:|:---:|:---:|:---:|:-:|:---:|:---:|:---:|:-:|:-:|
 | equity | ✓ | ✓ | ✓ | — | — | — | ✓ | ✓ | ✓ | ✓ | ✓ |
-| etf | ✓ | ✓ | ✓ | — | — | — | ✓ | ✓ | — | ✓ | ✓ |
+| etf | ✓ | ✓ | ✓ | — | — | — | ✓ | ✓ | ✓ | ✓ | ✓ |
 | mutual_fund | ✓ | ✓ | ✓ | — | — | — | ✓ | ✓ | ✓ | ✓ | ✓ |
 | bond | ✓ | ✓ | — | ✓ | — | — | ✓ | — | — | — | ✓ |
 | cash | — | — | — | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
@@ -375,27 +383,31 @@ X(fer/transfer).
 | liability | — | — | — | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
 | other | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-**Rationale + judgment calls to ratify:**
+**Rationale + judgment calls (all ratified 2026-07-10):**
 - **Dividend** → equity/ETF/mutual_fund only (owner). **Interest** → bond, cash,
   fixed_deposit (owner) + retirement, liability (debts/accounts accrue interest)
-  — *the last two are judgment calls to confirm*.
+  — **confirmed ON** at ratification.
 - **Split/Bonus/Merger** → provider-quoted securities. Bonus is **on** for
-  mutual_fund (Indian MF bonus units, owner) and equity, **off** for ETF.
-  **Crypto corporate actions are OFF** (a judgment call — crypto is
-  provider-quoted but token redenominations are atypical; enable on request).
+  mutual_fund (Indian MF bonus units, owner), equity, **and ETF** (ratification
+  amendment — ETF unit splits/consolidations occur). **Crypto corporate actions
+  are OFF** (confirmed — token redenominations are atypical; enable on request).
 - **Buy/Sell** → acquirable/tradeable classes; **off** for pure balances
   (cash, FD, retirement, liability). **Fee/Transfer** → all (any holding can
   incur a standalone charge or move between accounts).
-- **Implementation note:** the Type dropdown lives in the **Listed** Add branch
-  (equity/ETF, mutual_fund, crypto today). Rows for **manually-valued** classes
-  (FD/bond/cash interest, retirement/liability flows) imply a **transaction path
-  on the Manual branch** that does not exist yet — **ratifying those rows also
-  approves adding that path** (still no engine change).
+- **Implementation (shipped):** in the **Listed** Add branch the Type dropdown
+  filters to the picked class's row. For **manually-valued** classes the Manual
+  branch now offers a **"Record transaction"** sub-mode (interest / deposit /
+  withdrawal / fee / transfer — buy/sell excluded, since a manual holding *is* the
+  position) that records an instrument-less cash-flow transaction via the existing
+  `POST /portfolio/transactions` (`quantity 1 × price = amount`) — **no engine
+  change**. Holdings page-build §9-17.
 
-## 11. Per-class creation-time fields (D-091 — **PROPOSED**)
+## 11. Per-class creation-time fields (D-091 — **RATIFIED 2026-07-10**)
 
-**Status: PROPOSED — ratify before enforcement** (owner, 2026-07-10;
-page-holdings §9-18). **REQUIRED** = only what valuation/honesty need;
+**Status: RATIFIED** (owner, 2026-07-10) — including the two whitelist gaps
+(property `cost`, private `round`, both now in `_META_KEYS`) and the
+incomplete-details Review signal. page-holdings §9-18. **REQUIRED** = only what
+valuation/honesty need;
 **OPTIONAL-PROMPTED** = offered at creation, never a hard wall. The optional set
 starts from the existing D-049 backend whitelist `_META_KEYS`
 (`app/api/v1/routes/portfolio.py:466`); **verified present** unless flagged
@@ -406,9 +418,9 @@ starts from the existing D-049 backend whitelist `_META_KEYS`
 | equity / etf / mutual_fund / crypto *(Listed)* | instrument, txn fields (qty/price or amount) | instrument-level taxonomy lives on the instrument, not here |
 | bond *(Manual)* | label, value, currency | issuer, **coupon**, **maturity_date**, face_value, clean/dirty_price, accrued_interest |
 | fixed_deposit | label, value, currency | **rate**, **maturity_date**, start_date, payout_frequency, principal, accrued_interest, maturity_value, issuer, renewal_reminder |
-| property | label (name), value, currency | address, valuation_date, valuation_source, next_review_date, **cost (gap — add to `_META_KEYS`)** |
+| property | label (name), value, currency | address, valuation_date, valuation_source, next_review_date, **cost (gap closed — now in `_META_KEYS`)** |
 | retirement | label, value, currency | scheme_name, statement_date, contribution_balance, valuation_source |
-| private | label (name), value, currency | company, ownership, valuation_date, valuation_source, next_review_date, **round (gap — add to `_META_KEYS`)** |
+| private | label (name), value, currency | company, ownership, valuation_date, valuation_source, next_review_date, **round (gap closed — now in `_META_KEYS`)** |
 | cash | label, value, currency | issuer |
 | commodity / liability / other | label, value, currency | valuation_date, valuation_source, note (base keys, always allowed) |
 
@@ -417,16 +429,20 @@ starts from the existing D-049 backend whitelist `_META_KEYS`
   coupon/maturity, property address/valuation-date, retirement scheme,
   private company/ownership, cash issuer. Property/private **name** = the
   holding `label`.
-- **Missing (gaps to add to `_META_KEYS`):** property **`cost`** (acquisition
-  cost) and private-asset **`round`** (funding round). Backend whitelist change,
-  no schema change (`meta` is JSON).
-- **Frontend gap:** the Manual Add form currently collects **none** of these
-  (label/class/value/currency only). The D-091 reshape adds the per-class
-  OPTIONAL-PROMPTED fields; the backend already persists them (minus the 2 gaps).
-- **Review signal (PROPOSED, new):** incomplete optional details surface as a
-  **low-priority** Review item — *"N holdings have incomplete details"* — **never
-  a hard wall** (proposed constant `_INCOMPLETE_DETAILS_MIN = 1`; on ratification
-  it joins PRODUCT-SPEC §5, per-signal try/except like the rest, D-059).
+- **Gaps closed (shipped):** property **`cost`** (acquisition cost) and
+  private-asset **`round`** (funding round) added to `_META_KEYS`
+  (`app/api/v1/routes/portfolio.py`). Backend whitelist change only, no schema
+  change (`meta` is JSON).
+- **Frontend (shipped):** the Manual Add form now prompts the per-class
+  OPTIONAL-PROMPTED fields (`MANUAL_META_FIELDS` in `Holdings.tsx`, rendered with
+  ratified inputs by kind), submitted as `meta`; the backend persists only the
+  whitelisted keys.
+- **Review signal (ratified, shipped):** a manual holding in {fixed_deposit, bond,
+  property, retirement, private} recorded with **no** optional detail surfaces as a
+  **low-priority** Review item — *"N holdings have incomplete details"* (severity
+  `info`) — **never a hard wall**. Constant `_INCOMPLETE_DETAILS_MIN = 1`
+  (`app/services/review.py`), per-signal try/except like the rest (D-059); recorded
+  in PRODUCT-SPEC §5.
 
 ---
 

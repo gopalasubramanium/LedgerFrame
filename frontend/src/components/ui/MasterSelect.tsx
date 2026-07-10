@@ -15,6 +15,10 @@ export interface MasterSelectProps {
   onChange: (value: string) => void;
   allowCreate?: boolean;
   disabled?: boolean;
+  /** Restrict the offered options to this subset of the master's values (still
+   *  the master's vocabulary — used for D-090 form-level filtering). When set,
+   *  only values present here are shown; order/labels follow the master. */
+  include?: string[];
   "aria-label"?: string;
 }
 
@@ -24,6 +28,7 @@ export function MasterSelect({
   onChange,
   allowCreate,
   disabled,
+  include,
   "aria-label": ariaLabel,
 }: MasterSelectProps) {
   const def = useMemo(() => getMaster(master), [master]);
@@ -37,14 +42,17 @@ export function MasterSelect({
   // seed — show it regardless.
   const options = useMemo(() => {
     const live = vocabs?.[master];
-    const base = live
+    let base = live
       ? live.map((v) => ({ value: v, label: humanize(v) }))
       : def.options;
+    // D-090 form-level filtering: keep only the whitelisted subset (never a copy
+    // of the master — the subset is supplied by the caller from /refdata).
+    if (include) base = base.filter((o) => include.includes(o.value));
     if (value && !base.some((o) => o.value === value)) {
       return [...base, { value, label: value }];
     }
     return base;
-  }, [vocabs, master, def.options, value]);
+  }, [vocabs, master, def.options, value, include]);
 
   if (creating) {
     return (

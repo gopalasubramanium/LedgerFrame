@@ -392,8 +392,8 @@ reshaped. **No engine changes.**
   interest → FD/bond/cash; dividend → equity/ETF/MF; corporate actions →
   provider-quoted). After ratification the Type dropdown filters by the picked
   class (**form-level only, engine unchanged**). Judgment calls flagged (crypto
-  corporate actions off; retirement/liability interest). **Reshape deferred to
-  the owner's ratification.**
+  corporate actions off; retirement/liability interest). **→ RATIFIED + SHIPPED
+  2026-07-10 (see §9-25).**
 - **§9-18 — Per-class creation-time field spec (D-091, PROPOSED).** Authored a
   PROPOSED per-class **REQUIRED vs OPTIONAL-PROMPTED** table — MASTER-DATA
   **§11** — seeded from the existing D-049 `_META_KEYS` whitelist. **Verified:**
@@ -402,7 +402,8 @@ reshaped. **No engine changes.**
   whitelist; **gaps** = property `cost`, private `round` (whitelist additions,
   no schema change). The frontend Manual form collects none of these yet.
   Incomplete optional details → a **low-priority Review signal** (never a hard
-  wall; proposed `_INCOMPLETE_DETAILS_MIN`). **Reshape deferred to ratification.**
+  wall; proposed `_INCOMPLETE_DETAILS_MIN`). **→ RATIFIED + SHIPPED 2026-07-10
+  (see §9-25).**
 - **§9-19 — Compact type picker (fixed now).** The "What are you adding?" grid is
   now **compact** (smaller type, tighter grid, `-webkit-line-clamp` subtitles,
   shorter copy) so all **11 tiles + Cancel fit without scrolling** on a laptop
@@ -463,6 +464,41 @@ reshaped. **No engine changes.**
      header from an unlock session (a Settings/Security concern). The
      ConfirmDialog PIN is the **deliberate UX gate** (D-049); binding it to real
      session auth lands with the unlock flow.
+
+### D-090/D-091 ratified + D-094 recorded — acceptance walk #6 (2026-07-10, owner)
+
+- **§9-25 — D-090 ratified (ETF Bonus amendment) + shipped.** Matrix served at
+  `GET /refdata/txn-applicability` (frontend zero-copy, D-005; +1 path → **125**).
+  The **Listed** Type dropdown filters to the picked class's row (`MasterSelect`
+  gains an `include` subset prop). The **Manual** branch gains a **"Record
+  transaction"** sub-mode offering the class's cash-flow types
+  (interest/deposit/withdrawal/fee/transfer; buy/sell excluded — a manual holding
+  *is* the position), recorded instrument-less via the existing
+  `POST /portfolio/transactions` (`qty 1 × price = amount`; `_txn_cash_impact`
+  signs it). **No engine change.** MASTER-DATA §10 flipped to RATIFIED; ETF Bonus
+  cell ✓.
+- **§9-25 — D-091 ratified + shipped.** `_META_KEYS` gains property **`cost`** and
+  private **`round`**. The Manual Add form prompts the per-class OPTIONAL-PROMPTED
+  fields (`MANUAL_META_FIELDS`, ratified inputs by kind), submitted as `meta`.
+  Review signal `_INCOMPLETE_DETAILS_MIN = 1` (severity `info`) surfaces
+  *"N holdings have incomplete details"* for bare-value manual holdings in the
+  detail-bearing classes — never a hard wall. MASTER-DATA §11 flipped to RATIFIED.
+- **§9-26 — D-094 table dataset-size posture.** **Audit:** `DataTable` is
+  presentational; the page previously wired **neither** sort nor filter, so both
+  tables rendered in raw API order and Transactions was capped at `limit=500`.
+  - **Holdings — client-side sort/filter (shipped).** Wired `sort`/`onSort` +
+    a filter box; numeric-aware comparator; the dataset is **bounded** (family
+    portfolios are tens of positions). **Explicit assumption + threshold:** if a
+    portfolio ever approaches **~1,000 positions**, revisit and move Holdings
+    server-side (D-094).
+  - **Transactions — server-side (recorded; ships next commit).** Sort **and**
+    filter must run server-side over the **full dataset**, windowed (most-recent
+    first); CSV export stays full-dataset server-side (D-050). The
+    `GET /portfolio/transactions` sort/dir/filter/offset/limit + total params are
+    a **contract delta** (drafted in API-CONTRACT.md; regenerated the commit it
+    ships). Left unchanged this batch to keep the review surface clean.
+  - **Worklist rule** added to `TEMPLATE-page-build.md` §4/§7: every table's plan
+    states its dataset-size assumption and where sort/filter execute.
 
 **Sign-off:** all §9 items resolved (2026-07-10). Build proceeds per §8; the
 Phase 0a component amendment pauses at `/kitchen-sink` for the owner's

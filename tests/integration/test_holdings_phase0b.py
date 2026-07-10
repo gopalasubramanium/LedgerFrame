@@ -83,3 +83,39 @@ async def test_merger_related_instrument_id_roundtrips(app_client, session):
     txns = (await app_client.get("/api/v1/portfolio/transactions")).json()["transactions"]
     merger = next(t for t in txns if t["type"] == "merger")
     assert merger["related_instrument_id"] == bbb.id
+
+
+async def test_txn_applicability_matrix(app_client):
+    """D-090 — the Add-flow Type dropdown filter matrix, served from /refdata."""
+    r = await app_client.get("/api/v1/refdata/txn-applicability")
+    assert r.status_code == 200
+    m = r.json()
+    # Every AssetClass value has a row.
+    ac = (await app_client.get("/api/v1/refdata")).json()["asset_class"]
+    assert set(ac) <= set(m)
+    # Ratified judgment calls.
+    assert "bonus" in m["etf"]            # amendment: ETF bonus ON
+    assert "bonus" not in m["crypto"]     # crypto corporate actions OFF
+    assert "interest" in m["retirement"] and "interest" in m["liability"]
+    assert "bonus" in m["mutual_fund"] and "split" in m["mutual_fund"]
+    assert "interest" in m["fixed_deposit"] and "interest" in m["bond"] and "interest" in m["cash"]
+    assert "dividend" in m["equity"] and "dividend" not in m["bond"]
+    # Pure balances don't offer buy/sell.
+    assert "buy" not in m["cash"] and "buy" not in m["fixed_deposit"]
+
+
+async def test_meta_keys_gaps_persist(app_client):
+    """D-091 — property `cost` and private `round` are now whitelisted."""
+    await app_client.post("/api/v1/portfolio/manual-holdings", json={
+        "label": "Flat", "asset_class": "property", "value": 900000, "currency": "SGD",
+        "meta": {"address": "1 Main St", "cost": "750000"},
+    })
+    await app_client.post("/api/v1/portfolio/manual-holdings", json={
+        "label": "Startup stake", "asset_class": "private", "value": 50000, "currency": "USD",
+        "meta": {"company": "Acme", "round": "Series A"},
+    })
+    rows = (await app_client.get("/api/v1/portfolio/manual-holdings")).json()["holdings"]
+    flat = next(h for h in rows if h["label"] == "Flat")
+    stake = next(h for h in rows if h["label"] == "Startup stake")
+    assert flat["meta"]["cost"] == "750000"
+    assert stake["meta"]["round"] == "Series A"

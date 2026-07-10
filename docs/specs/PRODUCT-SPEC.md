@@ -146,6 +146,7 @@ user-configurable (D-084).
 | `low` confidence band | < 50 | Low-confidence holding count | Below the medium band (≥50); poorly-sourced values deserve attention. |
 | `LEDGERFRAME_STALE_AFTER_SECONDS` | 900 (default) | Stale holding count | Quotes older than 15 min are flagged stale (EOD/NAV use a longer 30h threshold). |
 | `_OTHER_CLASS_OVERUSE_PCT` | 10 (%) (D-087) | `other`-classed holdings exceed ~10% of gross assets | `other` is the honest escape valve (D-087); over-use signals holdings that should be reclassified. |
+| `_INCOMPLETE_DETAILS_MIN` | **1** (D-091) | Manual holdings in {fixed_deposit, bond, property, retirement, private} recorded with **no** optional detail | Low-priority (`info`) nudge to enrich a bare-value holding — *never a hard wall*. A holding with any detail does not count. |
 | Policy band / concentration | per-policy | Out-of-band buckets; positions over `max_position_pct` | Uses the user's own policy bands and optional concentration limit — no fixed number. |
 
 The constant **names** are **reconciled verbatim** against

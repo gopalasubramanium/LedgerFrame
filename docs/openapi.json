@@ -10949,6 +10949,79 @@
         ]
       }
     },
+    "/api/v1/refdata/txn-applicability": {
+      "get": {
+        "description": "D-090 \u2014 per-AssetClass TxnType applicability for the Add-flow Type dropdown.\nKeyed by asset_class value \u2192 the offered txn_type values (MASTER-DATA \u00a710).\nForm-level filtering only; the engine and the CSV importer ignore it.",
+        "operationId": "txn_applicability_api_v1_refdata_txn_applicability_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "title": "Response Txn Applicability Api V1 Refdata Txn Applicability Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Txn Applicability",
+        "tags": [
+          "refdata"
+        ]
+      }
+    },
     "/api/v1/review/centre": {
       "get": {
         "description": "Review Centre (W1) \u2014 one consolidated verdict per section. Reporting only.",

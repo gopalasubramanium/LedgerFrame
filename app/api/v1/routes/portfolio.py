@@ -467,10 +467,12 @@ _META_KEYS = {
     "fixed_deposit": ["principal", "rate", "start_date", "maturity_date", "payout_frequency",
                       "accrued_interest", "maturity_value", "issuer", "renewal_reminder"],
     "bond": ["issuer", "coupon", "maturity_date", "face_value", "clean_price", "dirty_price", "accrued_interest"],
-    "property": ["address", "valuation_date", "valuation_source", "next_review_date"],
+    # D-091: `cost` (acquisition cost) added — a gap the per-class field spec found.
+    "property": ["address", "valuation_date", "valuation_source", "next_review_date", "cost"],
     "retirement": ["scheme_name", "statement_date", "contribution_balance", "valuation_source"],
     "insurance": ["policy_type", "cash_value", "statement_date", "insurer"],
-    "private": ["company", "ownership", "valuation_date", "valuation_source", "next_review_date"],
+    # D-091: `round` (funding round) added — the other whitelist gap the field spec found.
+    "private": ["company", "ownership", "valuation_date", "valuation_source", "next_review_date", "round"],
     "cash": ["issuer"],
     "other": ["valuation_date", "valuation_source", "note"],
 }

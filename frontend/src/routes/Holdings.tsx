@@ -12,6 +12,7 @@ import {
   MasterSelect,
   MoneyInput,
   PageHeader,
+  PercentInput,
   QuantityInput,
   RowMenu,
   Select,
@@ -20,7 +21,7 @@ import {
   TrendStat,
   useToast,
 } from "../components/ui";
-import type { Column } from "../components/ui";
+import type { Column, SortState } from "../components/ui";
 import { DisplayControls } from "../components/DisplayControls";
 import {
   addManualHolding,
@@ -49,6 +50,7 @@ import type {
   TransactionRow,
 } from "../api/holdings";
 import { apiDownload } from "../api/client";
+import { useTxnApplicability } from "../refdata/refdata-context";
 import { getMaster } from "../mocks/refdata";
 import { formatMoney, formatSignedMoney } from "../format/number";
 
@@ -82,6 +84,38 @@ export function Holdings() {
   const [purgeOpen, setPurgeOpen] = useState(false);
   const [tagsFor, setTagsFor] = useState<HoldingRow | null>(null);
   const [editTxn, setEditTxn] = useState<TransactionRow | null>(null);
+
+  // D-094 — Holdings sort/filter run CLIENT-SIDE. Acceptable because the dataset is
+  // bounded (family portfolios are tens of positions; page-holdings §9-25). The
+  // Transactions ledger is unbounded and moves to server-side sort/filter/paging.
+  const [holdSort, setHoldSort] = useState<SortState | undefined>(undefined);
+  const [holdFilter, setHoldFilter] = useState("");
+
+  const onHoldSort = useCallback((key: string) => {
+    setHoldSort((s) =>
+      s?.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
+    );
+  }, []);
+
+  const visibleHoldings = useMemo(() => {
+    let rows = holdings;
+    const q = holdFilter.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter((h) =>
+        [h.symbol, h.name, h.label, h.asset_class].some((v) =>
+          (v ?? "").toString().toLowerCase().includes(q),
+        ),
+      );
+    }
+    if (holdSort) {
+      const { key, dir } = holdSort;
+      const sign = dir === "asc" ? 1 : -1;
+      rows = [...rows].sort(
+        (a, b) => cmpCell(a[key as keyof HoldingRow], b[key as keyof HoldingRow]) * sign,
+      );
+    }
+    return rows;
+  }, [holdings, holdFilter, holdSort]);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -275,7 +309,13 @@ export function Holdings() {
             }
           />
         ) : (
-          <DataTable columns={holdingColumns} rows={holdings} />
+          <DataTable
+            columns={holdingColumns}
+            rows={visibleHoldings}
+            sort={holdSort}
+            onSort={onHoldSort}
+            filter={{ value: holdFilter, onChange: setHoldFilter, placeholder: "Filter holdings…" }}
+          />
         )}
       </div>
 
@@ -402,6 +442,60 @@ function PageHeaderHoldings({
 // Total-cash transaction types: entered as a single "Amount", not qty × price.
 const AMOUNT_TYPES = ["dividend", "interest", "fee"];
 
+// D-094 — client-side cell comparator for the bounded Holdings table. Numbers
+// (incl. decimal strings) compare numerically; everything else locale-string.
+function cmpCell(a: unknown, b: unknown): number {
+  const as = a == null ? "" : String(a);
+  const bs = b == null ? "" : String(b);
+  const an = Number(as);
+  const bn = Number(bs);
+  if (as !== "" && bs !== "" && !Number.isNaN(an) && !Number.isNaN(bn)) return an - bn;
+  return as.localeCompare(bs);
+}
+
+// D-091 — per-class OPTIONAL-PROMPTED creation fields (MASTER-DATA §11). Keys match
+// the backend `_META_KEYS` whitelist; only whitelisted keys are persisted. This is
+// form LAYOUT (field key + kind + label), not a categorical vocabulary — the
+// categorical values (currency, class) still come from /refdata.
+type MetaFieldKind = "text" | "money" | "percent" | "date";
+interface MetaField { key: string; label: string; kind: MetaFieldKind }
+const MANUAL_META_FIELDS: Record<string, MetaField[]> = {
+  fixed_deposit: [
+    { key: "rate", label: "Interest rate (%)", kind: "percent" },
+    { key: "maturity_date", label: "Maturity date", kind: "date" },
+    { key: "start_date", label: "Start date", kind: "date" },
+    { key: "issuer", label: "Issuer", kind: "text" },
+  ],
+  bond: [
+    { key: "issuer", label: "Issuer", kind: "text" },
+    { key: "coupon", label: "Coupon (%)", kind: "percent" },
+    { key: "maturity_date", label: "Maturity date", kind: "date" },
+    { key: "face_value", label: "Face value", kind: "money" },
+  ],
+  property: [
+    { key: "address", label: "Address", kind: "text" },
+    { key: "cost", label: "Acquisition cost", kind: "money" },     // D-091 gap closed
+    { key: "valuation_date", label: "Valuation date", kind: "date" },
+  ],
+  retirement: [
+    { key: "scheme_name", label: "Scheme name", kind: "text" },
+    { key: "statement_date", label: "Statement date", kind: "date" },
+  ],
+  private: [
+    { key: "company", label: "Company", kind: "text" },
+    { key: "ownership", label: "Ownership (%)", kind: "text" },
+    { key: "round", label: "Funding round", kind: "text" },        // D-091 gap closed
+    { key: "valuation_date", label: "Valuation date", kind: "date" },
+  ],
+  cash: [{ key: "issuer", label: "Bank / issuer", kind: "text" }],
+};
+
+// D-090 — the cash-flow txn types the Manual-branch "Record transaction" sub-mode
+// offers (e.g. FD interest recorded separately). buy/sell are excluded from manual
+// mode — a manual holding IS the position, so its cash events are these only. The
+// actual per-class subset is intersected with /refdata applicability at render.
+const MANUAL_CASHFLOW = ["interest", "deposit", "withdrawal", "fee", "transfer"];
+
 // D-089 — type-first entry: asset-type tiles in user vocabulary route to the
 // existing single D-049 flow. branch + assetClass come from MASTER-DATA
 // AssetClass (no new vocabulary). Listed = provider-quoted; Manual =
@@ -448,6 +542,9 @@ function AddDialog({
 }) {
   const [tile, setTile] = useState<AssetTile | null>(null); // D-089 entry step
   const [mode, setMode] = useState<"listed" | "manual">("listed");
+  // D-090 — manual branch can either add a holding or record a cash-flow txn.
+  const [manualAction, setManualAction] = useState<"holding" | "txn">("holding");
+  const applicability = useTxnApplicability(); // D-090 matrix from /refdata
   const [accountId, setAccountId] = useState("");
   const accountOptions = [
     { value: "", label: "— account —" },
@@ -467,6 +564,29 @@ function AddDialog({
   const [label, setLabel] = useState("");
   const [assetClass, setAssetClass] = useState("cash");
   const [value, setValue] = useState("0");
+  const [meta, setMeta] = useState<Record<string, string>>({}); // D-091 optional detail
+
+  // Active asset class drives the D-090 type filter (listed = tile's class;
+  // manual = the chosen manual class).
+  const activeClass = tile?.assetClass ?? assetClass;
+  // D-090 listed dropdown subset; undefined while applicability is still loading
+  // (MasterSelect then shows the full master — no filtering, graceful).
+  const listedTypes = applicability?.[activeClass];
+  // D-090 manual cash-flow subset (buy/sell excluded).
+  const manualTxnTypes = useMemo(
+    () => (applicability?.[activeClass] ?? []).filter((t) => MANUAL_CASHFLOW.includes(t)),
+    [applicability, activeClass],
+  );
+  const metaFields = MANUAL_META_FIELDS[activeClass] ?? [];
+
+  // Keep `type` inside the offered set for the active branch (D-090). Excludes
+  // `type` from deps so choosing an in-set value doesn't re-fire.
+  useEffect(() => {
+    if (!tile) return;
+    const allowed = mode === "listed" ? listedTypes : manualAction === "txn" ? manualTxnTypes : undefined;
+    if (allowed && allowed.length && !allowed.includes(type)) setType(allowed[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tile, mode, manualAction, listedTypes, manualTxnTypes]);
 
   async function submit() {
     if (mode === "listed") {
@@ -511,14 +631,34 @@ function AddDialog({
         related_instrument_id: type === "merger" ? absorbedInto : null,
       });
       if (!res.ok) return onError(`Couldn't add transaction: ${res.error}`);
+    } else if (manualAction === "txn") {
+      // D-090 Manual-branch transaction path: a cash-flow event (interest,
+      // deposit, withdrawal, fee, transfer) recorded separately against the
+      // account — instrument-less, single Amount. Engine unchanged: it stores
+      // amount = qty(1) × price(amount); _txn_cash_impact signs it per type.
+      const res = await addTransaction({
+        account_id: accountId ? Number(accountId) : null,
+        symbol: null,
+        type,
+        ts: `${date}T00:00:00`,
+        quantity: 1,
+        price: Number(price), // `price` state holds the Amount here
+        currency,
+      });
+      if (!res.ok) return onError(`Couldn't record transaction: ${res.error}`);
     } else {
       if (!label.trim()) return onError("A manual asset needs a label.");
+      // D-091: only non-empty whitelisted detail is sent; the backend drops the rest.
+      const cleanMeta = Object.fromEntries(
+        Object.entries(meta).filter(([, v]) => v != null && v !== ""),
+      );
       const res = await addManualHolding({
         account_id: accountId ? Number(accountId) : null,
         label: label.trim(),
         asset_class: assetClass,
         value: Number(value),
         currency,
+        ...(Object.keys(cleanMeta).length ? { meta: cleanMeta } : {}),
       });
       if (!res.ok) return onError(`Couldn't add manual asset: ${res.error}`);
     }
@@ -565,6 +705,8 @@ function AddDialog({
                 }
                 setTile(t);
                 setMode(t.branch);
+                setManualAction("holding"); // D-090: default to adding the holding
+                setMeta({}); // D-091: fresh optional-detail per type
                 if (t.branch === "manual") setAssetClass(t.assetClass);
               }}
             >
@@ -576,7 +718,11 @@ function AddDialog({
       ) : (
         <div className="hold__form">
           <div className="hold__chosen">
-            <button type="button" className="hold__linkbtn" onClick={() => setTile(null)}>
+            <button
+              type="button"
+              className="hold__linkbtn"
+              onClick={() => { setTile(null); setManualAction("holding"); setMeta({}); }}
+            >
               ← Change type
             </button>
             <span className="hold__sub">
@@ -604,7 +750,8 @@ function AddDialog({
             </div>
             <div className="hold__field">
               <span className="hold__label">Type</span>
-              <MasterSelect master="txn_type" value={type} onChange={setType} />
+              {/* D-090: only the types this asset class offers (from /refdata). */}
+              <MasterSelect master="txn_type" value={type} onChange={setType} include={listedTypes} />
             </div>
             {type === "merger" ? (
               <>
@@ -679,33 +826,119 @@ function AddDialog({
           </>
         ) : (
           <>
-            <div className="hold__field">
-              <span className="hold__label">Label</span>
-              <TextInput
-                value={label}
-                onChange={setLabel}
-                aria-label="Label"
-                placeholder="e.g. Flat, Gold bar, FD"
-              />
-            </div>
-            <div className="hold__field">
-              <span className="hold__label">Asset class</span>
-              <MasterSelect master="asset_class" value={assetClass} onChange={setAssetClass} />
-            </div>
-            <div className="hold__field">
-              <span className="hold__label">Value</span>
-              <MoneyInput value={value} currency={currency} onChange={setValue} aria-label="Value" />
-            </div>
-            <div className="hold__field">
-              <span className="hold__label">Currency</span>
-              <MasterSelect master="currency" value={currency} onChange={setCurrency} />
-            </div>
+            {/* D-090: for cash-flow classes, choose whether to add the holding or
+                record a separate cash-flow transaction (e.g. FD interest). */}
+            {manualTxnTypes.length > 0 && (
+              <div className="hold__field">
+                <span className="hold__label">Record</span>
+                <Select
+                  value={manualAction}
+                  onChange={(v) => setManualAction(v as "holding" | "txn")}
+                  options={[
+                    { value: "holding", label: "A holding (a value you track)" },
+                    { value: "txn", label: "A transaction (interest, deposit, fee…)" },
+                  ]}
+                  aria-label="Record"
+                />
+              </div>
+            )}
+            {manualAction === "txn" ? (
+              <>
+                <div className="hold__field">
+                  <span className="hold__label">Type</span>
+                  {/* D-090: only the cash-flow types this class offers (from /refdata). */}
+                  <MasterSelect master="txn_type" value={type} onChange={setType} include={manualTxnTypes} />
+                </div>
+                <div className="hold__field">
+                  <span className="hold__label">Amount</span>
+                  <MoneyInput value={price} currency={currency} onChange={setPrice} aria-label="Amount" />
+                  <span className="hold__sub">
+                    Recorded separately against the account — the holding’s value is
+                    unchanged (e.g. FD interest, D-090). No engine change.
+                  </span>
+                </div>
+                <div className="hold__field">
+                  <span className="hold__label">Date</span>
+                  <DateInput value={date} onChange={setDate} aria-label="Transaction date" />
+                </div>
+                <div className="hold__field">
+                  <span className="hold__label">Currency</span>
+                  <MasterSelect master="currency" value={currency} onChange={setCurrency} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="hold__field">
+                  <span className="hold__label">Label</span>
+                  <TextInput
+                    value={label}
+                    onChange={setLabel}
+                    aria-label="Label"
+                    placeholder="e.g. Flat, Gold bar, FD"
+                  />
+                </div>
+                <div className="hold__field">
+                  <span className="hold__label">Asset class</span>
+                  <MasterSelect master="asset_class" value={assetClass} onChange={setAssetClass} />
+                </div>
+                <div className="hold__field">
+                  <span className="hold__label">Value</span>
+                  <MoneyInput value={value} currency={currency} onChange={setValue} aria-label="Value" />
+                </div>
+                <div className="hold__field">
+                  <span className="hold__label">Currency</span>
+                  <MasterSelect master="currency" value={currency} onChange={setCurrency} />
+                </div>
+                {/* D-091 per-class OPTIONAL-PROMPTED detail — never required. */}
+                {metaFields.map((f) => (
+                  <div className="hold__field" key={f.key}>
+                    <span className="hold__label">{f.label}</span>
+                    <MetaFieldInput
+                      field={f}
+                      value={meta[f.key] ?? ""}
+                      currency={currency}
+                      onChange={(v) => setMeta((m) => ({ ...m, [f.key]: v }))}
+                    />
+                  </div>
+                ))}
+                {metaFields.length > 0 && (
+                  <span className="hold__sub">
+                    Optional — fill what you have. Missing details never block
+                    saving; they surface as a low-priority review note (D-091).
+                  </span>
+                )}
+              </>
+            )}
           </>
         )}
         </div>
       )}
     </Dialog>
   );
+}
+
+// Renders the right ratified input for a D-091 optional-detail field by kind.
+function MetaFieldInput({
+  field,
+  value,
+  currency,
+  onChange,
+}: {
+  field: MetaField;
+  value: string;
+  currency: string;
+  onChange: (v: string) => void;
+}) {
+  switch (field.kind) {
+    case "money":
+      return <MoneyInput value={value} currency={currency} onChange={onChange} aria-label={field.label} />;
+    case "percent":
+      return <PercentInput value={value} onChange={onChange} aria-label={field.label} />;
+    case "date":
+      return <DateInput value={value} onChange={onChange} aria-label={field.label} />;
+    default:
+      return <TextInput value={value} onChange={onChange} aria-label={field.label} />;
+  }
 }
 
 // --- Edit an existing transaction (row action → PUT /transactions/{id}) --------

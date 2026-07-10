@@ -348,8 +348,33 @@ out of scope — components only.
   Verified in headless Chromium; 39 frontend tests + build green (also fixed a
   ToastProvider timer leak on unmount). page-holdings §9-16.
 
-- **D-090 / D-091 — PROPOSED spec tables (owner, 2026-07-10; reshape awaits
-  ratification), + compact picker fixed now.**
+- **D-090 / D-091 RATIFIED + SHIPPED, D-094 recorded (owner, 2026-07-10).**
+  page-holdings §9-25/26; DECISIONS.md D-090/D-091/D-094.
+  - **D-090 (RATIFIED, ETF-Bonus amendment) — shipped.** Matrix served at
+    `GET /refdata/txn-applicability` (frontend zero-copy D-005; contract +1 →
+    **125 paths**). Listed Type dropdown filters by class (`MasterSelect` gains an
+    `include` subset prop); Manual branch gains a **"Record transaction"** sub-mode
+    (interest/deposit/withdrawal/fee/transfer; buy/sell excluded) posting an
+    instrument-less cash-flow txn via the existing endpoint. **No engine change.**
+    MASTER-DATA §10 → RATIFIED (ETF Bonus ✓).
+  - **D-091 (RATIFIED) — shipped.** `_META_KEYS` gains property `cost` + private
+    `round`; Manual Add form prompts the per-class OPTIONAL-PROMPTED fields
+    (`MANUAL_META_FIELDS`) → `meta`. Review signal `_INCOMPLETE_DETAILS_MIN = 1`
+    (severity `info`) — *"N holdings have incomplete details"*, never a hard wall
+    (PRODUCT-SPEC §5). MASTER-DATA §11 → RATIFIED.
+  - **D-094 (recorded).** Audit: `DataTable` is presentational; the page wired
+    neither sort nor filter (raw API order; txns capped at 500). **Holdings** →
+    client-side sort/filter **shipped** (bounded dataset; explicit assumption +
+    ~1,000-position revisit threshold). **Transactions** → server-side sort/filter/
+    windowing **recorded, ships next commit** (contract delta drafted in
+    API-CONTRACT.md; CSV export stays full-dataset server-side, D-050). Worklist
+    rule added to `TEMPLATE-page-build.md` §4/§7.
+  - **463 backend** (+3: applicability, `_META_KEYS` gaps, review signal) +
+    **45 frontend** (+3) tests; ruff/contract-drift/tokens/lint/typecheck/build
+    green.
+
+- **D-090 / D-091 — PROPOSED spec tables (owner, 2026-07-10; SUPERSEDED — see the
+  ratified+shipped entry above), + compact picker fixed now.**
   - **D-090 (MASTER-DATA §10, PROPOSED)** — AssetClass × TxnType applicability
     matrix; the Type dropdown will filter by class (form-level only, **engine
     unchanged**). Judgment calls flagged (crypto corporate actions off;

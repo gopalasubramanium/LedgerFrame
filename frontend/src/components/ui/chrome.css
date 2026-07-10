@@ -1,0 +1,243 @@
+/* Global chrome (DESIGN-SYSTEM §5.5, D-066) — PROPOSED 2026-07-11, page-chrome
+   Phase 0a. Composed ONCE around every page (never per-page). Token-only: every
+   colour/size resolves to a variable; px appears only in @media preludes. */
+
+/* ---- Sidebar (D-043 groups; D-102 responsive) ------------------------------ */
+.lf-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 15rem;
+  flex-shrink: 0;
+  background: var(--surface-raised);
+  border-right: var(--border-width) solid var(--border);
+  overflow-y: auto;
+}
+.lf-sidebar__brand {
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+.lf-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-3) var(--space-5);
+}
+.lf-sidebar__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.lf-sidebar__grouplabel {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.lf-sidebar__link {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.lf-sidebar__link:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.lf-sidebar__link.is-active {
+  background: var(--surface);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+  /* accent rail — nav emphasis, not a semantic value colour */
+  box-shadow: inset var(--border-width) 0 0 0 var(--accent);
+}
+
+/* Off-canvas below laptop width (D-102). At wide widths the sidebar is static
+   and always visible; the scrim + toggle never appear. */
+.lf-sidebar__scrim {
+  display: none;
+}
+@media (max-width: 900px) {
+  .lf-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform var(--motion-base);
+    box-shadow: var(--shadow-1);
+  }
+  .lf-sidebar.is-open {
+    transform: translateX(0);
+  }
+  .lf-sidebar__scrim.is-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: var(--scrim);
+  }
+}
+
+/* ---- TopBar (D-066) -------------------------------------------------------- */
+.lf-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  min-height: var(--control-height);
+  background: var(--surface-raised);
+  border-bottom: var(--border-width) solid var(--border);
+}
+.lf-topbar__navtoggle {
+  display: none; /* only shown at narrow widths (D-102) */
+}
+.lf-topbar__banners {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.lf-topbar__right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+@media (max-width: 900px) {
+  .lf-topbar__navtoggle {
+    display: inline-flex;
+  }
+}
+
+/* ---- Banners (StaleBanner / UpdateBanner) ---------------------------------- */
+.lf-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+.lf-banner__link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+.lf-banner__link:hover {
+  text-decoration: underline;
+}
+.lf-banner__dismiss {
+  font: inherit;
+  border: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0 var(--space-1);
+}
+.lf-banner__dismiss:hover {
+  color: var(--text-primary);
+}
+/* Stale — amber attention only (the semantic-colour rule, §2.1). */
+.lf-banner--stale {
+  border-color: var(--attention);
+  color: var(--attention);
+  background: transparent;
+}
+.lf-banner--stale .lf-banner__link {
+  color: var(--attention);
+}
+/* Update — informational (accent), never a semantic value colour. */
+.lf-banner--update {
+  border-color: var(--accent);
+}
+
+/* ---- DemoBadge ------------------------------------------------------------- */
+.lf-badge--demo {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---- Clock ----------------------------------------------------------------- */
+.lf-clock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lf-clock__tz {
+  font-size: var(--font-size-12);
+  color: var(--text-tertiary);
+}
+
+/* ---- LockScreen (D-002 access lock) ---------------------------------------- */
+.lf-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--bg);
+}
+.lf-lock__panel {
+  width: 22rem;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.lf-lock__brand {
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.lf-lock__title {
+  margin: 0;
+  font-size: var(--font-size-20);
+  line-height: var(--line-20);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.lf-lock__hint {
+  margin: 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+.lf-lock__label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.lf-lock__error {
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--loss);
+}
+.lf-lock__row {
+  display: flex;
+  gap: var(--space-3);
+}

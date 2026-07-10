@@ -1,0 +1,64 @@
+// Canonical sidebar nav model (D-043; INFORMATION-ARCHITECTURE §3). Six fixed
+// groups, fixed order, NOT user-reorderable — the nav-customization control was
+// removed (D-043/D-069). Group names are guessable from contents (P-4). Routes
+// are the IA canonical routes (D-022); redirects (/snapshot, /planning, /global)
+// are handled by the shell router, not listed here.
+export interface NavItem {
+  /** Nav label = H1 = route (D-022). Must match the IA page map spelling. */
+  label: string;
+  path: string;
+}
+
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+// The six groups, verbatim from INFORMATION-ARCHITECTURE §3. Do not reorder or
+// rename without a D-043 amendment.
+export const NAV_GROUPS: NavGroup[] = [
+  { label: "Overview", items: [{ label: "Home", path: "/" }] },
+  {
+    label: "Wealth",
+    items: [
+      { label: "Net worth", path: "/net-worth" },
+      { label: "Portfolio", path: "/portfolio" },
+      { label: "Holdings", path: "/holdings" },
+      { label: "Accounts", path: "/accounts" },
+    ],
+  },
+  {
+    label: "Markets",
+    items: [
+      { label: "Markets", path: "/markets" },
+      { label: "Heatmap", path: "/heatmap" },
+      { label: "News", path: "/news" },
+    ],
+  },
+  {
+    label: "Planning",
+    items: [
+      { label: "Review", path: "/review" },
+      { label: "Policy", path: "/policy" },
+      { label: "Cash flow", path: "/cash-flow" },
+      { label: "Scenarios", path: "/scenarios" },
+      { label: "Insurance", path: "/insurance" },
+      { label: "Estate", path: "/estate" },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
+      { label: "Reports", path: "/reports" },
+      { label: "Pricing Health", path: "/pricing-health" },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { label: "Settings", path: "/settings" },
+      { label: "Help", path: "/help" },
+      { label: "Legal", path: "/legal" },
+    ],
+  },
+];

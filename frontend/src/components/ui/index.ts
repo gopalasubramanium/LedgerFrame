@@ -57,6 +57,25 @@ export type { ReviewCardProps, ReviewSection, Verdict } from "./ReviewCard";
 export { GlossaryTerm } from "./GlossaryTerm";
 export type { GlossaryTermProps } from "./GlossaryTerm";
 
+// §5.5 Global chrome (D-066) — PROPOSED 2026-07-11 (page-chrome Phase 0a).
+// Ratify at the kitchen-sink look before shell assembly (C-1).
+export { Sidebar } from "./Sidebar";
+export type { SidebarProps } from "./Sidebar";
+export { NAV_GROUPS } from "./nav";
+export type { NavGroup, NavItem } from "./nav";
+export { TopBar } from "./TopBar";
+export type { TopBarProps } from "./TopBar";
+export { StaleBanner } from "./StaleBanner";
+export type { StaleBannerProps } from "./StaleBanner";
+export { UpdateBanner } from "./UpdateBanner";
+export type { UpdateBannerProps } from "./UpdateBanner";
+export { DemoBadge } from "./DemoBadge";
+export type { DemoBadgeProps } from "./DemoBadge";
+export { Clock } from "./Clock";
+export type { ClockProps } from "./Clock";
+export { LockScreen } from "./LockScreen";
+export type { LockScreenProps } from "./LockScreen";
+
 // §5.4 / §5.5 amendments (2026-07-10 — Holdings page-build). Ratified at the
 // kitchen-sink look (2026-07-10).
 export { Dialog } from "./Dialog";

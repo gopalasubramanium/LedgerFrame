@@ -118,7 +118,7 @@ panels. The **four page templates** render inside the shell's main region.
 ## 8. BUILD PHASES
 
 - **Phase 0 — Contract deltas (§3b):** verify/add version-check (+ no-egress guard), rotation config, lock/unlock; regenerate contract same commit.
-- **Phase 0a — §5 amendments:** ratify the new chrome components (Sidebar/TopBar/StaleBanner/UpdateBanner/DemoBadge/Clock/LockScreen) at `/kitchen-sink` before assembly (new components forbidden without amendment).
+- **Phase 0a — §5 amendments:** ratify the new chrome components (Sidebar/TopBar/StaleBanner/UpdateBanner/DemoBadge/Clock/LockScreen) at `/kitchen-sink` before assembly (new components forbidden without amendment). **← BUILT 2026-07-11, AWAITING OWNER RATIFICATION (see §10).**
 - **Phase 1 — Shell assembly:** sidebar + top bar + banners + lock gate wrap `<Routes>`; move `DisplayControls` into the top bar; wire redirects.
 - **Phase 2 — Tests:** nav/lock/redirect/no-egress render tests; drift/typecheck/lint green.
 - **Phase 3 — Owner acceptance walk (LIVE):** drive the real app (both themes + high-contrast + a narrow width), each finding → numbered §-entry, re-verified live. Done only after this walk.
@@ -143,3 +143,31 @@ to verification (C-3 endpoints exist; C-5 auth surface exists). **Proceeding: Ph
 0a (author the seven components + kitchen-sink specimens), then PAUSE for owner
 ratification** before shell assembly. Ask panel deferral (C-2) recorded; D-102 (IA)
 and D-103 (SECURITY-BASELINE) recorded.
+
+---
+
+## 10. PHASE 0a — BUILT, AWAITING RATIFICATION (2026-07-11)
+
+The seven chrome components are authored as **PROPOSED** in `frontend/src/components/ui/`
+and staged at `/kitchen-sink` under **"Global chrome (§5.5) — PROPOSED 2026-07-11"**.
+DESIGN-SYSTEM §5.5 gains the chrome-component inventory table (PROPOSED). `NAV_GROUPS`
+(`ui/nav.ts`) encodes the D-043 six groups verbatim from IA §3. **No shell assembly, no
+router wiring, no backend change yet** — Phase 1 does that after ratification.
+
+**Checks:** lint · typecheck · token-drift · **70 frontend tests** (8 new chrome tests)
+· build — all green.
+
+**Ratify at `/kitchen-sink` (both themes · both densities · high-contrast · a narrow
+width for D-102), then tell me to start Phase 1:**
+
+- [ ] **Sidebar** — six groups, fixed order (D-043), Holdings active-highlight reads clearly; brand wordmark; off-canvas at narrow width (verify the toggle + scrim live).
+- [ ] **TopBar** — banners + relocated DisplayControls + rotation (D-044) + Detail (D-040) toggles + Clock + DemoBadge arrange cleanly; wraps gracefully; nav toggle appears only at narrow width.
+- [ ] **StaleBanner** — amber; "N stale" → Pricing Health; hidden at 0.
+- [ ] **UpdateBanner** — accent; "vX available" → About; hidden when null; dismissible.
+- [ ] **DemoBadge** — reads as a warning; hidden when not demo.
+- [ ] **Clock** — timezone label; tabular figures.
+- [ ] **LockScreen** — full-screen PIN gate; access-lock hint; Unlock gated at 6+ digits; error state (try PIN `000000`).
+
+**On ratify → Phase 1** (shell assembly): mount Sidebar+TopBar+banners+lock gate around
+`<Routes>`, move DisplayControls out of the page into the TopBar, wire redirects
+(D-042/D-022/D-056), and add the C-3 no-egress network-trace test.

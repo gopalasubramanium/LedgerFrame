@@ -6,14 +6,17 @@ import { DisplayControls } from "../components/DisplayControls";
 import { TokenBoard } from "./TokenBoard";
 import {
   AllocationDonut,
+  Clock,
   ConfirmDialog,
   DataTable,
   DateInput,
+  DemoBadge,
   Dialog,
   EmptyState,
   FileInput,
   GlossaryTerm,
   InstrumentPicker,
+  LockScreen,
   MasterSelect,
   MetaStrip,
   MoneyInput,
@@ -25,11 +28,15 @@ import {
   QuoteCardRow,
   ReviewCard,
   Select,
+  Sidebar,
+  StaleBanner,
   StalenessChip,
   TextInput,
   TickerStrip,
+  TopBar,
   Treemap,
   TrendStat,
+  UpdateBanner,
   useToast,
 } from "../components/ui";
 import type { Column, QuoteSource, SortState } from "../components/ui";
@@ -120,6 +127,13 @@ export function KitchenSink() {
   const [uploaded, setUploaded] = useState<string | null>(null);
   const [purged, setPurged] = useState<string | null>(null);
   const toast = useToast();
+
+  // §5.5 global chrome demos (PROPOSED 2026-07-11 — page-chrome Phase 0a)
+  const [rotationOn, setRotationOn] = useState(false);
+  const [detailLevel, setDetailLevel] = useState<"simple" | "full">("simple");
+  const [updateDismissed, setUpdateDismissed] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
+  const [lockError, setLockError] = useState<string | null>(null);
 
   const columns: Column<Holding>[] = useMemo(
     () => [
@@ -547,6 +561,78 @@ export function KitchenSink() {
         </div>
       </Section>
 
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        title="Global chrome (§5.5) — PROPOSED 2026-07-11"
+        note="page-chrome Phase 0a (C-1): the app SHELL — Sidebar (D-043 six groups; D-102 responsive), TopBar (D-066; DisplayControls relocated here + rotation D-044 + Detail D-040 toggles), StaleBanner/UpdateBanner (status summaries, canonical elsewhere), DemoBadge, Clock, LockScreen (D-002). Composed once around every page; not yet wired into the app shell. Ratify the look in both themes/densities/contrast, then Phase 1 assembles the shell."
+      >
+        <div className="ks__stack">
+          <Specimen label="TopBar · full (banners + relocated DisplayControls + rotation + Detail + Clock + DemoBadge)">
+            <TopBar
+              onToggleNav={() =>
+                toast.show({ message: "Nav toggled — off-canvas sidebar at narrow widths (D-102)" })
+              }
+              banners={
+                <>
+                  <StaleBanner count={3} />
+                  {!updateDismissed && (
+                    <UpdateBanner version="2.1.0" onDismiss={() => setUpdateDismissed(true)} />
+                  )}
+                </>
+              }
+              controls={<DisplayControls />}
+              clock={<Clock timezone="Asia/Singapore" />}
+              demoBadge={<DemoBadge />}
+              rotationOn={rotationOn}
+              onToggleRotation={() => setRotationOn((v) => !v)}
+              detailLevel={detailLevel}
+              onToggleDetail={() =>
+                setDetailLevel((d) => (d === "simple" ? "full" : "simple"))
+              }
+            />
+          </Specimen>
+
+          <Specimen label="Sidebar · six fixed groups (D-043), Holdings active — fixed at laptop+, off-canvas below (D-102)">
+            <div className="ks__scrollpanel" style={{ height: "24rem", padding: 0, overflow: "hidden" }}>
+              <Sidebar activePath="/holdings" />
+            </div>
+          </Specimen>
+
+          <div className="ks__row">
+            <Specimen label="StaleBanner · N stale → Pricing Health">
+              <StaleBanner count={5} />
+            </Specimen>
+            <Specimen label="StaleBanner · none (hidden — honest)">
+              <StaleBanner count={0} />
+              <span className="ks__label">renders nothing at 0</span>
+            </Specimen>
+            <Specimen label="UpdateBanner · version available">
+              <UpdateBanner version="2.1.0" />
+            </Specimen>
+            <Specimen label="UpdateBanner · none / no-egress (hidden)">
+              <UpdateBanner version={null} />
+              <span className="ks__label">null under no-egress → nothing</span>
+            </Specimen>
+            <Specimen label="DemoBadge · active">
+              <DemoBadge active />
+            </Specimen>
+            <Specimen label="DemoBadge · inactive (hidden)">
+              <DemoBadge active={false} />
+              <span className="ks__label">renders nothing when not demo</span>
+            </Specimen>
+            <Specimen label="Clock · timezone (D-013)">
+              <Clock timezone="Asia/Singapore" />
+            </Specimen>
+            <Specimen label="LockScreen · full-screen PIN gate (D-002)">
+              <button type="button" className="lf-btn" onClick={() => { setLockError(null); setLockOpen(true); }}>
+                Show lock screen
+              </button>
+              <span className="ks__label">PIN 000000 shows the error state; any other 6+ digits unlocks</span>
+            </Specimen>
+          </div>
+        </div>
+      </Section>
+
       <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
@@ -632,6 +718,20 @@ export function KitchenSink() {
         onConfirm={() => {
           setPinOpen(false);
           setPurged("Purged (PIN accepted).");
+        }}
+      />
+
+      <LockScreen
+        open={lockOpen}
+        error={lockError}
+        onUnlock={(pin) => {
+          if (pin === "000000") {
+            setLockError("Incorrect PIN. Try again.");
+          } else {
+            setLockError(null);
+            setLockOpen(false);
+            toast.show({ message: "Unlocked." });
+          }
         }}
       />
     </div>

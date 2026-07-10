@@ -544,17 +544,39 @@ No open Instrument Detail blockers remain. `MetaStrip`, `PriceChart` amendment,
 `.lf-card`/`.lf-card__body`, and the themed-scrollbar/header-outside-scroll patterns
 are now platform-wide primitives.
 
+## PAGE-CHROME — C-1..C-6 RESOLVED; Phase 0a BUILT, AWAITING RATIFICATION (2026-07-11)
+
+- **Blockers C-1..C-6 resolved (owner, 2026-07-11)** — recorded in `page-chrome.md`
+  §9 + committed. Two changed specs: **D-102** (sidebar responsive: off-canvas below
+  laptop, fixed at laptop+; IA §3) and **D-103** (purge-PIN NEVER binds to the unlock
+  session — always fresh PIN; SECURITY-BASELINE §3). C-2 Ask-panel deferral confirmed
+  (slot reserved, D-067 pending); C-3 version-check endpoints already exist
+  (`system/version-check`, `system/update-status`) → verify no-egress + network-trace
+  test in Phase 1; C-4 first-run checklist is its own later plan (chrome reserves the
+  gate slot only); C-5 session contract reconciles against existing `auth/*` endpoints.
+- **Phase 0a BUILT (components + kitchen-sink specimens) — PROPOSED, awaiting owner
+  ratification.** Seven chrome components in `frontend/src/components/ui/`:
+  **Sidebar** (D-043 six groups from `ui/nav.ts`; D-102 responsive; router-driven
+  active + `activePath` preview override), **TopBar** (D-066 layout container;
+  relocates DisplayControls; owns rotation D-044 + Detail D-040 toggles; `askSlot`
+  reserved for D-067), **StaleBanner**, **UpdateBanner** (presentational; no-egress
+  guard is Phase-1 data-layer), **DemoBadge**, **Clock**, **LockScreen** (D-002 access
+  lock; min-6 PIN; reuses ConfirmDialog pattern). DESIGN-SYSTEM §5.5 gains the chrome
+  inventory table (PROPOSED). Staged at `/kitchen-sink` ("Global chrome (§5.5)");
+  ratification checklist in `page-chrome.md` §10. **No shell assembly / router wiring /
+  backend change yet** — Phase 1 after ratify. Checks: lint/typecheck/drift + **70
+  frontend tests** (8 new) + build all green.
+
 ## NEXT
 
-1. **Page-chrome — plan DRAFTED, owner reviews before build.**
-   `docs/plans/page-chrome.md` (PLAN ONLY): the app SHELL — D-043 grouped sidebar,
-   D-066 top bar (theme/density/contrast/motion move INTO it; StaleBanner; rotation
-   toggle; Clock; DemoBadge; UpdateBanner respecting no-egress), LockScreen (D-002),
-   four-template shell integration. Surfaces **C-1..C-6** blockers: new chrome
-   components need a §5 amendment (Phase 0a); the **Ask panel (D-067) is DEFERRED**
-   to the AI-surfaces milestone (like the explainer); version-check + no-egress
-   guard; first-run checklist scope; LockScreen↔session contract; sidebar responsive
-   behaviour. The entity-detail retrospective is folded into `TEMPLATE-page-build.md`.
+1. **Page-chrome Phase 1 — shell assembly (AFTER owner ratifies Phase 0a).** Mount
+   Sidebar+TopBar+banners+lock gate around `<Routes>`; move DisplayControls out of the
+   page into the TopBar; wire redirects (D-042/D-022/D-056: `/snapshot`→`/net-worth`,
+   `/planning`→`/cash-flow`, `/global` removed); add the C-3 no-egress network-trace
+   acceptance test; verify the four templates render inside the shell. Then Phase 2
+   (tests) + Phase 3 (owner live acceptance walk). First-run checklist (D-045) is its
+   own small plan afterward. Ask panel (D-067) stays deferred to the AI-surfaces
+   milestone. See `page-chrome.md` §8/§10.
 2. **Help copy task** (for the Help page plan, or a Holdings help section) —
    surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
    **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price

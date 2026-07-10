@@ -185,16 +185,18 @@ export function Holdings() {
         onExport={() => apiDownload("/portfolio/holdings.csv")}
       />
 
-      {/* Value/positions header — a linked P-1 summary of the Portfolio reader. */}
+      {/* Value/positions header — a linked P-1 summary. The figure is net of
+          liabilities, i.e. Net worth (GLOSSARY; D-021 retires "Total value"). */}
       <div className="hold__section">
         <TrendStat
-          label={`Total value · ${holdings.length} position${holdings.length === 1 ? "" : "s"}`}
+          label={`Net worth · ${holdings.length} position${holdings.length === 1 ? "" : "s"}`}
           value={summary ? `${baseCcy} ${formatMoney(summary.total_value)}` : "—"}
           delta={summary?.day_change}
           deltaDisplay={summary ? formatSignedMoney(summary.day_change) : undefined}
         />
         <span className="hold__sub">
-          Analytics live on <Link to="/portfolio">Portfolio</Link> — this is the management surface (D-023).
+          A linked summary — Net worth is canonical on <Link to="/net-worth">Net worth</Link>;
+          analytics on <Link to="/portfolio">Portfolio</Link> (D-023).
         </span>
       </div>
 
@@ -371,13 +373,28 @@ function AddDialog({
   async function submit() {
     if (mode === "listed") {
       if (!symbol.trim()) return onError("Enter or create an instrument first.");
+      // Corporate-action field mapping onto the pinned engine schema (§4.3,
+      // D-019 way; no engine change): split ratio → price (qty 0); bonus units
+      // → quantity at zero cost (no price); merger ratio → price + target.
+      let quantity: number;
+      let priceOrRatio: number;
+      if (type === "split" || type === "merger") {
+        quantity = 0;
+        priceOrRatio = Number(price);
+      } else if (type === "bonus") {
+        quantity = Number(qty);
+        priceOrRatio = 0;
+      } else {
+        quantity = Number(qty);
+        priceOrRatio = Number(price);
+      }
       const res = await addTransaction({
         account_id: accountId ? Number(accountId) : null,
         symbol: symbol.trim().toUpperCase(),
         type,
         ts: `${date}T00:00:00`,
-        quantity: Number(qty),
-        price: Number(price),
+        quantity,
+        price: priceOrRatio,
         currency,
         related_instrument_id: type === "merger" ? absorbedInto : null,
       });
@@ -462,10 +479,23 @@ function AddDialog({
                   />
                 </div>
                 <div className="hold__field">
-                  <span className="hold__label">Ratio</span>
+                  <span className="hold__label">Ratio (new shares per old, e.g. 1)</span>
                   <QuantityInput value={price} onChange={setPrice} aria-label="Merger ratio" />
                 </div>
               </>
+            ) : type === "split" ? (
+              // §4.3: split scales lots by the ratio (in the price field); no
+              // quantity or price of its own.
+              <div className="hold__field">
+                <span className="hold__label">Split ratio (e.g. 2 for a 2:1 split)</span>
+                <QuantityInput value={price} onChange={setPrice} aria-label="Split ratio" />
+              </div>
+            ) : type === "bonus" ? (
+              // §4.3: bonus adds shares at ZERO cost — units only, no price field.
+              <div className="hold__field">
+                <span className="hold__label">Bonus units (extra shares, zero cost)</span>
+                <QuantityInput value={qty} onChange={setQty} aria-label="Bonus units" />
+              </div>
             ) : (
               <>
                 <div className="hold__field">

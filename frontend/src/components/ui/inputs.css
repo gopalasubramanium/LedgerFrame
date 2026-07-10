@@ -16,6 +16,22 @@
   line-height: var(--line-14);
   transition: border-color var(--motion-fast);
 }
+
+/* Native popups (the <select> dropdown, the date picker) are NOT stylable, so
+ * they must inherit the app theme — bug fix 2026-07-10 (dark-theme Select was an
+ * unreadable light popup). `color-scheme` themes the native UI; `option` colours
+ * are tokenized for engines that honour them. `color-scheme` inherits, so
+ * setting it on the field wrapper reaches the control and its popup. */
+:root[data-theme="dark"] .lf-field {
+  color-scheme: dark;
+}
+:root[data-theme="light"] .lf-field {
+  color-scheme: light;
+}
+.lf-field__select option {
+  background: var(--surface);
+  color: var(--text-primary);
+}
 .lf-field:focus-within {
   border-color: var(--accent);
 }

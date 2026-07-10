@@ -114,6 +114,24 @@ test("Add opens the one Add flow with listed / manual branches", async () => {
   expect(within(dialog).getByRole("button", { name: "Manual asset" })).toBeInTheDocument();
 });
 
+test("split and bonus get purpose-labelled fields (D-019 way, §4.3 mapping)", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  await user.click(screen.getByRole("button", { name: "Add" }));
+  const dialog = screen.getByRole("dialog");
+  const typeSelect = within(dialog).getByLabelText("Transaction type");
+
+  await user.selectOptions(typeSelect, "split");
+  expect(within(dialog).getByLabelText("Split ratio")).toBeInTheDocument();
+  expect(within(dialog).queryByLabelText("Price")).toBeNull();
+  expect(within(dialog).queryByLabelText("Quantity")).toBeNull();
+
+  await user.selectOptions(typeSelect, "bonus");
+  expect(within(dialog).getByLabelText("Bonus units")).toBeInTheDocument();
+  expect(within(dialog).queryByLabelText("Price")).toBeNull(); // zero-cost per engine
+});
+
 test("deleting a transaction soft-deletes and offers Undo", async () => {
   vi.mocked(api.getTransactions).mockResolvedValue({
     ok: true,

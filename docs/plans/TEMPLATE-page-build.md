@@ -139,6 +139,11 @@ the theme/density matrix. Written as checkable statements.*
 - [ ] **Stale / low-confidence:** flagged, never hidden or faked.
 - [ ] **Negative / large / long-name data** render correctly (tabular, no overflow).
 - [ ] **Both densities** (comfortable/compact) and **both themes** (light/dark) correct.
+- [ ] **Interactive OPEN states verified manually in both themes** — native
+      popups (the `Select`/`MasterSelect` dropdown, the `DateInput` picker) and
+      overlays (Dialog/Drawer, Toast) are opened and checked in light AND dark
+      (a static screenshot misses them; native popups are not stylable and rely
+      on `color-scheme`). Add each interactive open state to `/kitchen-sink`.
 - [ ] **Keyboard + WCAG AA** (focus ring, aria-sort, labels).
 - [ ] **No frontend money math** — every figure comes from the backend.
 - [ ] **Terms** match GLOSSARY; **categoricals** come from MASTER-DATA via /refdata.

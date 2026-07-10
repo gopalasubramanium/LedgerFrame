@@ -299,6 +299,30 @@ coverage noted; anything unexercised carries build+test risk.*
   the existing path genuinely can't serve the nudge — with a same-commit contract
   update if so.
 
+### Acceptance-walk findings (2026-07-10, owner) — resolved
+
+- **§9-9 — Split/bonus purpose-labelled fields (resolved the D-019 way; no engine
+  change).** The generic price/quantity form was ambiguous for corporate actions.
+  Verified against the engine's **pinned §4.3 test vectors**
+  (`tests/unit/test_fifo.py`): **split** scales lots by the **ratio carried in the
+  `price` field** (qty ignored — `test_split_scales_lots`, `_split_4to1_…`);
+  **bonus** adds shares at **zero cost from the `quantity` field**, no price
+  (`test_bonus_adds_shares_at_zero_cost`). The Add flow now gives each a
+  purpose-labelled field mapping onto that existing schema — **split → "Split
+  ratio"** (→ price, qty 0); **bonus → "Bonus units"** (→ quantity, no price
+  field). Merger unchanged (Absorbed-into + Ratio). No engine/contract change.
+- **§9-10 — Select dark-theme popup (bug, fixed).** The native `<select>` open
+  popup ignored the theme (white popup, light text in dark). Fixed **inside the
+  ui input layer** (`inputs.css`): `color-scheme` themes the native popup +
+  tokenized `option` colours; every consumer (Select/MasterSelect/DateInput)
+  inherits. A "Select · open it in both themes" specimen added to `/kitchen-sink`;
+  TEMPLATE-page-build.md §7 now requires **manual open-state verification in both
+  themes**.
+- **§9-11 — Terminology (fixed).** "Total value" (retired, D-021) relabelled to
+  **"Net worth"** on the Holdings summary (the figure is net of liabilities per
+  GLOSSARY), shown as a linked P-1 summary to the Net worth page. Frontend
+  grepped for the other deprecated terms — none present.
+
 ### Surfaced during Phase 1 assembly (2026-07-10) — for the Holdings look
 
 - **§9-8 — free-text input gap → `TextInput`.** Assembly found the manual-asset

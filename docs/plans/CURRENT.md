@@ -268,8 +268,21 @@ out of scope — components only.
 
 ## IN-PROGRESS
 
-- (none) — **Holdings page (`/holdings`) built; awaiting an owner verification
-  look** (incl. ratifying the newly-surfaced `TextInput`, §9-8).
+- **Holdings acceptance walk — 4 findings fixed 2026-07-10; owner to resume the
+  walk.** (page-holdings.md §9-9..11)
+  - **Select dark-popup bug** — native `<select>`/date popups now follow the
+    theme via `color-scheme` + tokenized `option` colours in the ui input layer;
+    "open in both themes" specimen added to `/kitchen-sink`; TEMPLATE §7 now
+    requires manual open-state verification in both themes.
+  - **Split/bonus fields** (D-019 way, no engine change) — verified the pinned
+    §4.3 vectors, then gave each purpose-labelled fields: **split → "Split
+    ratio"** (→ price, qty 0); **bonus → "Bonus units"** (→ quantity, zero cost,
+    no price).
+  - **Terminology** — "Total value" (retired D-021) → **"Net worth"** on the
+    summary (net-of-liabilities), as a linked P-1 summary; frontend grep found no
+    other deprecated terms.
+  - Still pending owner: ratify **`TextInput`** (§9-8) at the Holdings look.
+  - 36 frontend tests + build green; drift/typecheck/lint clean.
 
 ## DONE (Holdings page-build — all phases)
 

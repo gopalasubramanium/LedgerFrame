@@ -23,6 +23,7 @@ import {
   QuantityInput,
   QuoteCardRow,
   ReviewCard,
+  Select,
   StalenessChip,
   TextInput,
   TickerStrip,
@@ -100,6 +101,7 @@ export function KitchenSink() {
   const [pct, setPct] = useState("12.50");
   const [date, setDate] = useState("2026-07-09");
   const [text, setText] = useState("Household flat");
+  const [scope, setScope] = useState("markets");
   const [assetClass, setAssetClass] = useState("equity");
   const [sector, setSector] = useState("Financials");
   const [instrument, setInstrument] = useState<string | undefined>("ins-1");
@@ -207,6 +209,19 @@ export function KitchenSink() {
           </Specimen>
           <Specimen label="MasterSelect · extensible + create (sector)">
             <MasterSelect master="sector" value={sector} onChange={setSector} allowCreate />
+          </Specimen>
+          <Specimen label="Select · OPEN IT in both themes (native popup follows theme)">
+            <Select
+              value={scope}
+              onChange={setScope}
+              aria-label="Scope"
+              options={[
+                { value: "markets", label: "Markets" },
+                { value: "holdings", label: "Holdings" },
+                { value: "global", label: "Global" },
+                { value: "watchlist", label: "Watchlist" },
+              ]}
+            />
           </Specimen>
           <Specimen label="InstrumentPicker · typeahead + create">
             <InstrumentPicker

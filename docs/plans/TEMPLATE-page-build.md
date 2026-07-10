@@ -28,6 +28,14 @@ mid-build.
 - **Honesty (Product Guarantee 3):** every empty / "—" region shows a **reason**;
   stale values are flagged (never hidden or faked); insufficient inputs render
   "—", never a fabricated number.
+- **Wired ≠ rendered ≠ accepted (Holdings retrospective).** The highest-impact
+  Holdings defects all passed the test suite: a 500-row silent cap, a
+  snapshot-vs-ledger CSV mismatch, a table overflowing 1366px, and a mock-backed
+  picker offering wrong-class results. Therefore: an affordance backed by **mock
+  fixtures** passes tests while failing live (flag every one — §4); **layout /
+  overflow / popover** claims are unprovable by unit tests (verify by rendering —
+  §7); the acceptance bar is **driving the real rendered app** (owner walk — §8
+  Phase 3), never green suites alone.
 
 ---
 
@@ -97,11 +105,29 @@ components. Name any prop or state the kitchen sink did **not** exercise — tho
 carry build+test risk. Any needed affordance NOT in the inventory is an
 amendment request (also list it in §9).*
 
-| Ratified component | Role on this page | Prop/state not exercised at kitchen-sink |
-|--------------------|-------------------|------------------------------------------|
+| Ratified component | Role on this page | Data source (real endpoint / **mock**) | Prop/state not exercised at kitchen-sink |
+|--------------------|-------------------|----------------------------------------|------------------------------------------|
+
+**Data source (Holdings retrospective).** For each component name whether it is
+wired to a **real endpoint** or a **mock fixture**. A mock-backed affordance passes
+every test while failing live (the InstrumentPicker shipped mock-backed through many
+"green" walks) — it is **not "done"** until wired to real data. Any still-mock
+affordance is a **§9 NEEDS DECISION** ("mock-backed affordance").
 
 **Affordances the ratified inventory lacks (amendment required before build — see §9):**
 - …
+
+**Component usage rules the build must honour (from DESIGN-SYSTEM §5/§6 + Holdings):**
+- **Row actions** live in a `RowMenu` (⋯) overflow — never wide always-visible
+  action columns (they force horizontal scroll; page-holdings §9-22/§9-36).
+- **Context-scoped pickers (D-097)** — any instrument/entity/account picker
+  **filters its pool by the active context** (asset class, entity…) and routes
+  search to that context's provider; a match under a **different** context is a
+  **navigate-to link, never a selectable result** into the wrong flow.
+- **Popover overlay (DESIGN-SYSTEM §6, universal)** — any custom dropdown/result
+  list **portals to the viewport** (fixed + `max-height` + internal scroll) and
+  overlays; it never expands a dialog or adds dialog-level scroll. Verified open
+  **inside a dialog** at `/kitchen-sink`.
 
 **Tables — dataset-size posture (D-094, required for every `DataTable`):** for
 each table on the page, state (a) its **dataset-size assumption** (bounded / small
@@ -119,6 +145,31 @@ execute** — client-side or server-side.
 Every table also **caps at a viewport-relative max height and scrolls internally**
 (sticky header), so a long table never grows the page unboundedly — this is the
 `DataTable` default (`--table-max-h`, `60vh`); a page overrides it only with reason.
+
+---
+
+## 4b. PER-VARIANT FIELD & ACTION SPECS
+
+*Fill this only if the page's entity has **variants** (asset class, policy type,
+account kind, document category…). The Holdings build learned this the hard way
+(D-089/D-090/D-091): a single generic form misclassifies and offers nonsense.*
+
+- **Entry is in the user's vocabulary (D-089).** The entry/selection step presents
+  **plain-language choices** (type-first tiles), not internal enum names; the
+  internal branch/mechanism is an implementation detail, never the front door.
+- **Actions per variant (D-090).** State which actions/types the form **offers per
+  variant** as an applicability matrix — **form-level filtering only, engine
+  unchanged**. Odd-but-real events entered by import are **not** filtered by UI
+  opinion.
+- **Fields per variant (D-091).** Per variant, list **REQUIRED** (only what
+  valuation/honesty need) vs **OPTIONAL-PROMPTED** fields; incomplete optional
+  detail is a low-priority Review signal, **never a hard wall**.
+- **Backend-served, frontend zero-copy (D-005).** The matrix / field-spec is served
+  from the backend (e.g. `/refdata/*`), never hardcoded in the frontend.
+
+| Variant | Actions/types offered | REQUIRED fields | OPTIONAL-PROMPTED fields | Served by |
+|---------|-----------------------|-----------------|--------------------------|-----------|
+| | | | | |
 
 ---
 
@@ -174,6 +225,19 @@ the theme/density matrix. Written as checkable statements.*
       surface exports a *report* that is deliberately not re-importable (e.g. a
       snapshot vs a ledger), the importer must **say so with one honest message**,
       never fail every row.
+- [ ] **Request-body assertion (Holdings §9-35):** for any payload assembled from
+      UI state (row selections, include/exclude, filters), a test asserts the
+      **actual request body** equals the intended data — not merely that a handler
+      was called. (The import "committed exactly the included rows" guard.)
+- [ ] **Rendered layout verification (Holdings §9-30/36/39):** every fit / overflow
+      / popover-overlay claim is verified by **rendering at 1366 AND 1920 in both
+      themes** (screenshot or measured `scrollWidth > clientWidth`), NOT by unit
+      tests — *"tests green is not acceptance for layout."* Row-action column fully
+      visible; no horizontal scroll for core columns; open popovers overlay without
+      expanding the dialog.
+- [ ] **Context-scoped picker (D-097):** verified **live** that a class/entity
+      picker never offers a wrong-context option; cross-context matches appear only
+      as navigate links.
 
 ---
 
@@ -189,6 +253,13 @@ tests. Never assemble the page against an endpoint that does not exist.*
   honest empty/error/stale states.
 - **Phase 2 — Tests:** component/render tests, the acceptance criteria (§7),
   drift + typecheck + lint green; visual check both themes/densities.
+- **Phase 3 — Owner acceptance walk (LIVE, Holdings retrospective):** the owner
+  drives the **real rendered app**, because the biggest Holdings defects surfaced
+  only there (silent 500-cap, snapshot-vs-ledger round-trip, 1366px overflow,
+  mock-backed picker), across ~10 walks. Each finding becomes a numbered
+  `page-<name>.md §9-*` entry, fixed and **re-verified live**. A page is **done only
+  after this walk**, not at green suites. Layout/popover/picker items MUST be
+  verified by rendering (screenshots / DOM measurement), not tests.
 
 ---
 
@@ -202,6 +273,9 @@ Categories to check every time:*
   or a request body that lacks a field a decision requires.
 - **Component gap** — an affordance no ratified component provides (needs a
   DESIGN-SYSTEM amendment before it can be built — new components are forbidden).
+- **Mock-backed affordance** — a component wired to a mock fixture, not a real
+  endpoint (§4). It passes tests but is not real; name the endpoint it needs and
+  whether that endpoint is a contract delta (§3b).
 - **Spec silence** — a behaviour the IA/decisions imply but do not specify.
 - **Terminology gap** — a term the page must show that is not yet in GLOSSARY.
 - **Vocabulary gap** — a categorical field with no MASTER-DATA vocabulary.

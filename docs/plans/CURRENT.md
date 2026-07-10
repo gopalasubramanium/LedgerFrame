@@ -302,10 +302,19 @@ out of scope — components only.
   - **PROPOSED for ratification:** D-090 (matrix, now with the import-bypass
     clause) + D-091 (per-class fields) in MASTER-DATA §10/§11.
 
-## IN-PROGRESS
+## HOLDINGS — DONE ✅ (page ACCEPTED at the true final pass, 2026-07-10)
 
-- **Holdings acceptance walk — 4 findings fixed 2026-07-10; owner to resume the
-  walk.** (page-holdings.md §9-9..11)
+**`/holdings` is complete and owner-accepted.** All ten acceptance/confirmation
+walks are resolved (page-holdings.md §9-1..39); the entries below are the walk log,
+kept as the build history. Everything that page-holdings.md surfaced is shipped and
+verified (the last two — D-097 class-aware picker and the popover overlay rule —
+were verified live in Chromium). The Holdings page is the reference instantiation of
+`TEMPLATE-page-build.md`; the retrospective folding its lessons back into the
+template is the next task. No open Holdings blockers remain.
+
+## IN-PROGRESS (Holdings walk log — page now DONE above)
+
+- **Holdings acceptance walk — 4 findings fixed 2026-07-10.** (page-holdings.md §9-9..11)
   - **Select dark-popup bug** — native `<select>`/date popups now follow the
     theme via `color-scheme` + tokenized `option` colours in the ui input layer;
     "open in both themes" specimen added to `/kitchen-sink`; TEMPLATE §7 now
@@ -511,9 +520,11 @@ out of scope — components only.
 
 ## NEXT
 
-1. **Resume the Holdings acceptance walk** (owner) — the 4 findings are fixed;
-   ratify **`TextInput`** (§9-8) at the look. The Holdings pre-build blockers and
-   the design-system ratification are all resolved (see DONE).
+1. **Template retrospective (IN PROGRESS)** — fold the Holdings build's lessons
+   into `TEMPLATE-page-build.md` (per-variant field specs, user-vocabulary entry,
+   row actions, dataset-size assumptions, wired-not-rendered affordances, round-trip
+   + request-body tests, rendered layout verification, popover overlay rule,
+   class-aware pickers). Then start the next page build (recommendation below).
 2. **Help copy task** (for the Help page plan, or a Holdings help section) —
    surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
    **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price

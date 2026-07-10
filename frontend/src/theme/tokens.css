@@ -145,6 +145,9 @@
   --border-width: 1px;
   --focus-width: 2px;
   --focus-offset: 2px;
+  /* Active nav-item rail (Sidebar is-active) — bolder than a hairline border so the
+     active page reads at a glance (page-chrome Phase 0a re-ratify, 2026-07-11). */
+  --nav-rail-width: 3px;
   /* D-101 — themed scrollbars: track = transparent, thumb = --border-strong (both
      tokens flip per theme + high-contrast, so scrollbars follow automatically). */
   --scrollbar-size: 10px;

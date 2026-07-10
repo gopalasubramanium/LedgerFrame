@@ -319,23 +319,26 @@ visible — D-067). The Detail toggle leaves the top bar but only Home branches 
 it (D-040/D-066). The **first-run checklist** (D-045) replaces PersonaOnboarding.
 
 **Chrome component inventory** *(amendment PROPOSED 2026-07-11 — page-chrome
-Phase 0a, C-1).* The pieces above are now built as named components in
-`src/components/ui/` (previously only `DisplayControls` existed). PROPOSED, to be
-ratified at `/kitchen-sink` before shell assembly:
+Phase 0a, C-1; **recomposed at re-ratify 2026-07-11** per owner amendments 1–4).*
+The pieces above are now built as named components in `src/components/ui/`
+(previously only `DisplayControls` existed). PROPOSED, to be ratified at
+`/kitchen-sink` before shell assembly:
 
 | Component | Props (surface) | Usage rules |
 |-----------|-----------------|-------------|
-| **Sidebar** | `open?`, `onClose?`, `groups?` (default `NAV_GROUPS`), `activePath?` | The ONE nav: six fixed groups in fixed order (D-043), NOT reorderable; active route from the router (NavLink). **Responsive (D-102):** fixed at laptop+, off-canvas below (opened by the TopBar toggle). `activePath` forces the highlight for previews only (kitchen sink). |
-| **TopBar** | `onToggleNav?`, `banners?`, `controls?`, `clock?`, `demoBadge?`, `rotationOn?`+`onToggleRotation?`, `detailLevel?`+`onToggleDetail?`, `askSlot?` | Composed once above every page (D-066). Layout container; the shell supplies the slots. Owns the two toggles that live only here — rotation (D-044) and Detail level (D-040, only Home branches). Shows the nav toggle at narrow widths (D-102). **`askSlot` is the reserved Ask-panel slot (D-067) — DEFERRED (C-2), left empty for now.** |
-| **StaleBanner** | `count`, `href?` (→ Pricing Health) | Status summary, NOT a canonical figure (P-1) — reads the summary reader, links to the canonical page, recomputes nothing. Amber attention only (§2.1). **Hidden at `count ≤ 0`** (no "0 stale" noise). |
-| **UpdateBanner** | `version` (`string \| null`), `href?` (→ Settings/About), `onDismiss?` | **Presentational only — makes no network call.** The version comes from a no-egress-guarded reader; under no-egress that reader does ZERO outbound calls and passes `null`, so the banner never renders (D-075/D-060). Zero-outbound is verified at the data layer (C-3), not in the component. |
+| **Sidebar** | `open?`, `onClose?`, `groups?` (default `NAV_GROUPS`), `activePath?`, `showAll?` | The ONE nav: six fixed groups in fixed order (D-043), NOT reorderable; active route from the router (NavLink), bolder accent rail (`--nav-rail-width`). **Progressive reveal:** every group header always renders; only **built pages** (`item.built`) appear as entries — a group with none built shows its header only; entries appear as pages ship. `showAll` previews the full skeleton (specimens). **Responsive (D-102):** fixed at laptop+, off-canvas below (opened by the TopBar toggle). Brand wordmark shows here at laptop+. `activePath` forces the highlight for previews only. |
+| **TopBar** | `onToggleNav?`, `controls?`, `clock?`, `demoBadge?`, `rotationOn?`+`onToggleRotation?`, `detailLevel?`+`onToggleDetail?`, `askSlot?` | Composed once above every page (D-066). **Slim (~48px), calm register.** Layout container; the shell supplies the slots. Right-aligned cluster is **icon-only** (tooltip + aria-label carry the state): the relocated display axes (`controls`), then the two toggles this bar owns — rotation (D-044) and Detail level (D-040, only Home branches) — then Clock + DemoBadge. **No banners inside** (they are strips below — amendment 2). Brand "LedgerFrame" sits top-left **only at narrow widths** (the sidebar carries it at laptop+ → exactly one brand visible, never two). Shows the nav toggle at narrow widths (D-102). **`askSlot` is the reserved Ask-panel slot (D-067) — DEFERRED (C-2), left empty for now.** |
+| **StaleBanner** | `count`, `href?` (→ Pricing Health) | Status summary, NOT a canonical figure (P-1) — reads the summary reader, links to the canonical page, recomputes nothing. **Renders as a full-width slim status strip BELOW the top bar, in normal flow (pushes content, never overlays), only when active** (amendment 2). Amber attention only (§2.1). **Hidden at `count ≤ 0`** (no "0 stale" noise). |
+| **UpdateBanner** | `version` (`string \| null`), `href?` (→ Settings/About), `onDismiss?` | Full-width status strip below the bar (as StaleBanner). **Presentational only — makes no network call.** The version comes from a no-egress-guarded reader; under no-egress that reader does ZERO outbound calls and passes `null`, so the strip never renders (D-075/D-060). Zero-outbound is verified at the data layer (C-3), not in the component. |
 | **DemoBadge** | `active?` | Signals demo/seed data (no figure is real). Renders nothing when not demo (honest). |
 | **Clock** | `timezone` (IANA, from Settings D-013), `now?` (freeze) | Device clock — no figure, no provenance. Ticks each minute; `now` freezes it (tests/specimens). Timezone is never guessed. |
 | **LockScreen** | `open`, `onUnlock(pin)`, `error?`, `busy?` | Full-screen PIN gate; **access lock, not encryption** (D-002/SECURITY-BASELINE §3). Numeric PIN, min 6 digits; reuses the ConfirmDialog masked-PIN pattern (no new input primitive). Unlock/session call + lockout `Retry-After` live in the shell (C-5). Unlocking grants ambient session access only — it does NOT authorize purge (D-103). |
 
 `NAV_GROUPS` (`ui/nav.ts`) is the canonical sidebar model, verbatim from
-INFORMATION-ARCHITECTURE §3 (D-043). Rotation and Detail toggles are plain buttons
-owned by TopBar, not separate components.
+INFORMATION-ARCHITECTURE §3 (D-043); each `NavItem` carries a `built` flag (only
+built pages appear as entries). Display axes, rotation, and Detail are rendered as
+**icon-only** `.lf-iconbtn` buttons (tooltip + aria-label carry state); rotation and
+Detail are plain buttons owned by TopBar, not separate components.
 
 **Toast / Snackbar** *(amended 2026-07-10 — Holdings page-build §9-4).* A
 transient, timed, dismissible notification with an optional action slot, provided

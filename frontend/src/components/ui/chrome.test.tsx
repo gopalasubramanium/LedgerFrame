@@ -15,7 +15,7 @@ import {
 afterEach(cleanup);
 
 // --- Sidebar (D-043 / D-102) ------------------------------------------------
-test("Sidebar renders the six fixed groups and highlights the active route", () => {
+test("Sidebar always renders all six group headers and highlights the active route", () => {
   const { container } = render(
     <MemoryRouter initialEntries={["/holdings"]}>
       <Sidebar />
@@ -27,9 +27,24 @@ test("Sidebar renders the six fixed groups and highlights the active route", () 
   expect(groupLabels).toEqual(NAV_GROUPS.map((g) => g.label));
   const active = screen.getByRole("link", { name: "Holdings" });
   expect(active.className).toContain("is-active");
-  // A non-current route is not active.
-  const portfolio = screen.getByRole("link", { name: "Portfolio" });
-  expect(portfolio.className).not.toContain("is-active");
+});
+
+test("Sidebar shows only built pages as entries; showAll reveals the full skeleton", () => {
+  const { rerender } = render(
+    <MemoryRouter initialEntries={["/holdings"]}>
+      <Sidebar />
+    </MemoryRouter>,
+  );
+  // Holdings is built; Portfolio is not yet — so only Holdings appears by default.
+  expect(screen.getByRole("link", { name: "Holdings" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Portfolio" })).toBeNull();
+
+  rerender(
+    <MemoryRouter initialEntries={["/holdings"]}>
+      <Sidebar showAll />
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole("link", { name: "Portfolio" })).toBeTruthy();
 });
 
 test("Sidebar activePath overrides router location for previews", () => {
@@ -48,7 +63,7 @@ test("StaleBanner is hidden at 0 and links to Pricing Health when stale", () => 
       <StaleBanner count={0} />
     </MemoryRouter>,
   );
-  expect(container.querySelector(".lf-banner")).toBeNull();
+  expect(container.querySelector(".lf-statusstrip")).toBeNull();
 
   rerender(
     <MemoryRouter>
@@ -67,7 +82,7 @@ test("UpdateBanner renders nothing when version is null and shows it otherwise",
       <UpdateBanner version={null} />
     </MemoryRouter>,
   );
-  expect(container.querySelector(".lf-banner")).toBeNull();
+  expect(container.querySelector(".lf-statusstrip")).toBeNull();
 
   rerender(
     <MemoryRouter>

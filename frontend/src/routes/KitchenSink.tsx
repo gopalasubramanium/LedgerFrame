@@ -563,51 +563,59 @@ export function KitchenSink() {
 
       {/* ---------------------------------------------------------------- */}
       <Section
-        title="Global chrome (§5.5) — PROPOSED 2026-07-11"
-        note="page-chrome Phase 0a (C-1): the app SHELL — Sidebar (D-043 six groups; D-102 responsive), TopBar (D-066; DisplayControls relocated here + rotation D-044 + Detail D-040 toggles), StaleBanner/UpdateBanner (status summaries, canonical elsewhere), DemoBadge, Clock, LockScreen (D-002). Composed once around every page; not yet wired into the app shell. Ratify the look in both themes/densities/contrast, then Phase 1 assembles the shell."
+        title="Global chrome (§5.5) — PROPOSED 2026-07-11 (recomposed at re-ratify)"
+        note="page-chrome Phase 0a (C-1): the app SHELL. Slim calm TopBar (D-066) with ICON-ONLY display controls (theme/density/contrast/motion) + rotation (D-044) + Detail (D-040) toggles right-aligned, Clock + DemoBadge; brand shows in the bar only at narrow widths (sidebar carries it at laptop+ — one brand at a time). StaleBanner/UpdateBanner are full-width status strips BELOW the bar, only when active. Sidebar shows all six D-043 group headers, with only BUILT pages as entries. LockScreen = D-002 access lock. Ratify in both themes/densities/contrast + a narrow width; hover the icon buttons for tooltips."
       >
         <div className="ks__stack">
-          <Specimen label="TopBar · full (banners + relocated DisplayControls + rotation + Detail + Clock + DemoBadge)">
-            <TopBar
-              onToggleNav={() =>
-                toast.show({ message: "Nav toggled — off-canvas sidebar at narrow widths (D-102)" })
-              }
-              banners={
-                <>
-                  <StaleBanner count={3} />
-                  {!updateDismissed && (
-                    <UpdateBanner version="2.1.0" onDismiss={() => setUpdateDismissed(true)} />
-                  )}
-                </>
-              }
-              controls={<DisplayControls />}
-              clock={<Clock timezone="Asia/Singapore" />}
-              demoBadge={<DemoBadge />}
-              rotationOn={rotationOn}
-              onToggleRotation={() => setRotationOn((v) => !v)}
-              detailLevel={detailLevel}
-              onToggleDetail={() =>
-                setDetailLevel((d) => (d === "simple" ? "full" : "simple"))
-              }
-            />
-          </Specimen>
-
-          <Specimen label="Sidebar · six fixed groups (D-043), Holdings active — fixed at laptop+, off-canvas below (D-102)">
-            <div className="ks__scrollpanel" style={{ height: "24rem", padding: 0, overflow: "hidden" }}>
-              <Sidebar activePath="/holdings" />
+          <Specimen label="App shell — slim TopBar (icon controls, right) + status strips BELOW the bar pushing content">
+            <div className="lf-card" style={{ padding: 0, overflow: "hidden" }}>
+              <TopBar
+                onToggleNav={() =>
+                  toast.show({ message: "Nav toggled — off-canvas sidebar at narrow widths (D-102)" })
+                }
+                controls={<DisplayControls />}
+                clock={<Clock timezone="Asia/Singapore" />}
+                demoBadge={<DemoBadge />}
+                rotationOn={rotationOn}
+                onToggleRotation={() => setRotationOn((v) => !v)}
+                detailLevel={detailLevel}
+                onToggleDetail={() =>
+                  setDetailLevel((d) => (d === "simple" ? "full" : "simple"))
+                }
+              />
+              <StaleBanner count={3} />
+              {!updateDismissed && (
+                <UpdateBanner version="2.1.0" onDismiss={() => setUpdateDismissed(true)} />
+              )}
+              <div style={{ padding: "var(--space-5)" }}>
+                <span className="ks__label">Page content renders here (strips push it down).</span>
+              </div>
             </div>
           </Specimen>
 
           <div className="ks__row">
-            <Specimen label="StaleBanner · N stale → Pricing Health">
+            <Specimen label="Sidebar · six D-043 headers, only BUILT pages as entries (Holdings active) — header-only where none built yet">
+              <div className="ks__scrollpanel" style={{ height: "26rem", padding: 0, overflow: "hidden" }}>
+                <Sidebar activePath="/holdings" />
+              </div>
+            </Specimen>
+            <Specimen label="Sidebar · full-skeleton preview (showAll — where pages will land as they ship)">
+              <div className="ks__scrollpanel" style={{ height: "26rem", padding: 0, overflow: "hidden" }}>
+                <Sidebar activePath="/holdings" showAll />
+              </div>
+            </Specimen>
+          </div>
+
+          <div className="ks__row">
+            <Specimen label="StaleBanner · N stale strip → Pricing Health">
               <StaleBanner count={5} />
             </Specimen>
             <Specimen label="StaleBanner · none (hidden — honest)">
               <StaleBanner count={0} />
               <span className="ks__label">renders nothing at 0</span>
             </Specimen>
-            <Specimen label="UpdateBanner · version available">
-              <UpdateBanner version="2.1.0" />
+            <Specimen label="UpdateBanner · version strip (dismissible)">
+              <UpdateBanner version="2.1.0" onDismiss={() => {}} />
             </Specimen>
             <Specimen label="UpdateBanner · none / no-egress (hidden)">
               <UpdateBanner version={null} />

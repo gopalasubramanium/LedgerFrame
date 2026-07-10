@@ -174,3 +174,31 @@
   color: var(--accent-contrast);
   border-color: var(--accent);
 }
+
+/* Icon-only control button (chrome top-bar cluster: display axes + rotation +
+   detail). Square, borderless-until-hover, slim; the visible glyph is decorative
+   and the accessible name lives in aria-label, the current value in the tooltip. */
+.lf-iconbtn {
+  font: inherit;
+  font-size: var(--font-size-16);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+  color: var(--text-secondary);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.lf-iconbtn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.lf-iconbtn[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}

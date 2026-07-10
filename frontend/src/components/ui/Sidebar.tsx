@@ -24,9 +24,19 @@ export interface SidebarProps {
       /kitchen-sink and no nav item would otherwise highlight). Omit in the shell —
       the router drives active state. */
   activePath?: string;
+  /** Preview the full skeleton with EVERY page as an entry (specimens only). In the
+      shell this stays false: only built pages (`item.built`) appear; every group
+      header shows regardless (progressive reveal of the fixed D-043 skeleton). */
+  showAll?: boolean;
 }
 
-export function Sidebar({ open = false, onClose, groups = NAV_GROUPS, activePath }: SidebarProps) {
+export function Sidebar({
+  open = false,
+  onClose,
+  groups = NAV_GROUPS,
+  activePath,
+  showAll = false,
+}: SidebarProps) {
   return (
     <>
       <div
@@ -40,26 +50,31 @@ export function Sidebar({ open = false, onClose, groups = NAV_GROUPS, activePath
       >
         <div className="lf-sidebar__brand">LedgerFrame</div>
         <div className="lf-sidebar__nav">
-          {groups.map((group) => (
-            <div className="lf-sidebar__group" key={group.label}>
-              <div className="lf-sidebar__grouplabel">{group.label}</div>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === "/"}
-                  className={({ isActive }) =>
-                    `lf-sidebar__link${
-                      isActive || activePath === item.path ? " is-active" : ""
-                    }`
-                  }
-                  onClick={onClose}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          ))}
+          {groups.map((group) => {
+            // Every group header always renders (fixed D-043 skeleton); only built
+            // pages appear as entries unless previewing the full nav.
+            const items = showAll ? group.items : group.items.filter((i) => i.built);
+            return (
+              <div className="lf-sidebar__group" key={group.label}>
+                <div className="lf-sidebar__grouplabel">{group.label}</div>
+                {items.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === "/"}
+                    className={({ isActive }) =>
+                      `lf-sidebar__link${
+                        isActive || activePath === item.path ? " is-active" : ""
+                      }`
+                    }
+                    onClick={onClose}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </nav>
     </>

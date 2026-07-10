@@ -2,18 +2,20 @@ import type { ReactNode } from "react";
 import "./chrome.css";
 import "./structure.css";
 
-// Global chrome (DESIGN-SYSTEM §5.5, D-066) — PROPOSED 2026-07-11. The ONE top bar,
-// composed once above every page. It is a layout container: the shell supplies the
-// pieces (banners, the relocated DisplayControls, Clock, DemoBadge, the reserved Ask
-// slot) and TopBar arranges them, plus it owns the two chrome toggles that live only
-// here — rotation (D-044) and Detail level (D-040; only Home branches on it). At
-// narrow widths it shows the sidebar nav toggle (D-102); at laptop+ that toggle is
-// hidden by CSS.
+// Global chrome (DESIGN-SYSTEM §5.5, D-066) — recomposed 2026-07-11 (page-chrome
+// Phase 0a re-ratify). The ONE top bar, composed once above every page. A slim
+// (~48px) calm register: NO banners live here (StaleBanner/UpdateBanner render as
+// full-width status strips BELOW the bar). Brand "LedgerFrame" sits top-LEFT but
+// only at narrow widths — at laptop+ the sidebar header carries it, so exactly one
+// brand is ever visible (never two, D-066).
+//
+// Right cluster, right-aligned and icon-only: the relocated display axes
+// (theme/density/contrast/motion via `controls`), then the two toggles this bar
+// owns — rotation (D-044) and Detail level (D-040, only Home branches) — then the
+// Clock and the DemoBadge. At narrow widths the sidebar nav toggle appears (D-102).
 export interface TopBarProps {
   /** Open the off-canvas sidebar at narrow widths (D-102). */
   onToggleNav?: () => void;
-  /** StaleBanner / UpdateBanner (status summaries; canonical elsewhere). */
-  banners?: ReactNode;
   /** The per-device display axes, relocated here from the page (D-066/D-078). */
   controls?: ReactNode;
   /** Timezone Clock (D-013). */
@@ -33,7 +35,6 @@ export interface TopBarProps {
 
 export function TopBar({
   onToggleNav,
-  banners,
   controls,
   clock,
   demoBadge,
@@ -48,38 +49,41 @@ export function TopBar({
       {onToggleNav && (
         <button
           type="button"
-          className="lf-btn lf-topbar__navtoggle"
+          className="lf-iconbtn lf-topbar__navtoggle"
           aria-label="Open navigation"
+          title="Menu"
           onClick={onToggleNav}
         >
           ☰
         </button>
       )}
-
-      <div className="lf-topbar__banners">{banners}</div>
+      <div className="lf-topbar__brand">LedgerFrame</div>
 
       <div className="lf-topbar__right">
+        {controls}
         {onToggleRotation && (
           <button
             type="button"
-            className={`lf-btn${rotationOn ? " lf-btn--primary" : ""}`}
+            className="lf-iconbtn"
             aria-pressed={rotationOn}
+            aria-label={`Rotation: ${rotationOn ? "On" : "Off"}. Click to toggle.`}
+            title={`Rotation: ${rotationOn ? "On" : "Off"}`}
             onClick={onToggleRotation}
           >
-            Rotation: {rotationOn ? "On" : "Off"}
+            ↻
           </button>
         )}
         {onToggleDetail && (
           <button
             type="button"
-            className="lf-btn"
-            aria-label="Toggle detail level"
+            className="lf-iconbtn"
+            aria-label={`Detail level: ${detailLevel === "full" ? "Full" : "Simple"}. Click to toggle.`}
+            title={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
             onClick={onToggleDetail}
           >
-            Detail: {detailLevel === "full" ? "Full" : "Simple"}
+            ⊕
           </button>
         )}
-        {controls}
         {clock}
         {demoBadge}
         {askSlot}

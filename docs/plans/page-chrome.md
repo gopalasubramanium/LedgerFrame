@@ -146,28 +146,39 @@ and D-103 (SECURITY-BASELINE) recorded.
 
 ---
 
-## 10. PHASE 0a — BUILT, AWAITING RATIFICATION (2026-07-11)
+## 10. PHASE 0a — RATIFIED WITH AMENDMENTS; RECOMPOSED, AWAITING RE-RATIFY (2026-07-11)
 
 The seven chrome components are authored as **PROPOSED** in `frontend/src/components/ui/`
-and staged at `/kitchen-sink` under **"Global chrome (§5.5) — PROPOSED 2026-07-11"**.
-DESIGN-SYSTEM §5.5 gains the chrome-component inventory table (PROPOSED). `NAV_GROUPS`
-(`ui/nav.ts`) encodes the D-043 six groups verbatim from IA §3. **No shell assembly, no
-router wiring, no backend change yet** — Phase 1 does that after ratification.
+and staged at `/kitchen-sink`. DESIGN-SYSTEM §5.5 carries the chrome-component inventory
+table. `NAV_GROUPS` (`ui/nav.ts`) encodes the D-043 six groups verbatim from IA §3, each
+`NavItem` with a `built` flag. **No shell assembly, no router wiring, no backend change
+yet** — Phase 1 does that after re-ratify.
 
-**Checks:** lint · typecheck · token-drift · **70 frontend tests** (8 new chrome tests)
-· build — all green.
+**Owner amendments applied (2026-07-11):**
+1. **TopBar recomposed** — slim (~48px) calm bar; display axes + rotation + Detail are
+   **icon-only** buttons (tooltip + aria-label carry state), right-aligned; Clock + DemoBadge
+   at right. Brand "LedgerFrame" top-left **only at narrow widths** (sidebar carries it at
+   laptop+ → one brand at a time, never two).
+2. **Banners OUT of the bar** — StaleBanner/UpdateBanner render as **full-width slim status
+   strips BELOW the top bar** (normal flow, push content, never overlay), only when active.
+3. **Sidebar progressive reveal** — all six D-043 group headers always show; only **built**
+   pages appear as entries (`item.built`; only Holdings today); header-only where none built.
+   `showAll` previews the full skeleton.
+4. **Bolder active rail** — new `--nav-rail-width: 3px` token (tokens.css); Sidebar `is-active`
+   uses it.
 
-**Ratify at `/kitchen-sink` (both themes · both densities · high-contrast · a narrow
-width for D-102), then tell me to start Phase 1:**
+**Checks:** lint · typecheck · token-drift · **71 frontend tests** (9 chrome + updated
+App/DisplayControls tests) · build — all green.
 
-- [ ] **Sidebar** — six groups, fixed order (D-043), Holdings active-highlight reads clearly; brand wordmark; off-canvas at narrow width (verify the toggle + scrim live).
-- [ ] **TopBar** — banners + relocated DisplayControls + rotation (D-044) + Detail (D-040) toggles + Clock + DemoBadge arrange cleanly; wraps gracefully; nav toggle appears only at narrow width.
-- [ ] **StaleBanner** — amber; "N stale" → Pricing Health; hidden at 0.
-- [ ] **UpdateBanner** — accent; "vX available" → About; hidden when null; dismissible.
-- [ ] **DemoBadge** — reads as a warning; hidden when not demo.
-- [ ] **Clock** — timezone label; tabular figures.
+**Re-ratify at `/kitchen-sink` (both themes · both densities · high-contrast · a narrow
+width for D-102; hover the icon buttons for tooltips), then tell me to start Phase 1:**
+
+- [ ] **App-shell specimen** — slim TopBar reads calm; icon controls legible + tooltips clear; status strips sit below the bar and push content; brand rule (narrow only in bar).
+- [ ] **Sidebar** — six headers, fixed order (D-043); only Holdings as an entry (header-only elsewhere); bolder active rail reads at a glance; `showAll` preview looks right; off-canvas at narrow width (toggle + scrim live).
+- [ ] **StaleBanner / UpdateBanner** — full-width strips; amber / accent; correct links; hidden at 0 / null; UpdateBanner dismissible.
+- [ ] **DemoBadge** — warning tone; hidden when not demo. **Clock** — timezone label; tabular figures.
 - [ ] **LockScreen** — full-screen PIN gate; access-lock hint; Unlock gated at 6+ digits; error state (try PIN `000000`).
 
-**On ratify → Phase 1** (shell assembly): mount Sidebar+TopBar+banners+lock gate around
-`<Routes>`, move DisplayControls out of the page into the TopBar, wire redirects
-(D-042/D-022/D-056), and add the C-3 no-egress network-trace test.
+**On re-ratify → Phase 1** (shell assembly): mount Sidebar + slim TopBar + status strips +
+lock gate around `<Routes>`, move DisplayControls out of the page into the TopBar, wire
+redirects (D-042/D-022/D-056), and add the C-3 no-egress network-trace test.

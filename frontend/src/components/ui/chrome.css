@@ -19,6 +19,13 @@
   color: var(--text-primary);
   letter-spacing: 0.01em;
 }
+/* Below laptop the sidebar goes off-canvas and the TopBar carries the brand;
+   hide the sidebar's own brand there so the drawer never shows a second one. */
+@media (max-width: 900px) {
+  .lf-sidebar__brand {
+    display: none;
+  }
+}
 .lf-sidebar__nav {
   display: flex;
   flex-direction: column;
@@ -56,8 +63,8 @@
   background: var(--surface);
   color: var(--text-primary);
   font-weight: var(--weight-medium);
-  /* accent rail — nav emphasis, not a semantic value colour */
-  box-shadow: inset var(--border-width) 0 0 0 var(--accent);
+  /* accent rail — nav emphasis, not a semantic value colour (bolder per re-ratify) */
+  box-shadow: inset var(--nav-rail-width) 0 0 0 var(--accent);
 }
 
 /* Off-canvas below laptop width (D-102). At wide widths the sidebar is static
@@ -86,85 +93,90 @@
   }
 }
 
-/* ---- TopBar (D-066) -------------------------------------------------------- */
+/* ---- TopBar (D-066) — slim, calm, no banners inside ------------------------ */
 .lf-topbar {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-5);
-  min-height: var(--control-height);
+  gap: var(--space-3);
+  padding: 0 var(--space-5);
+  min-height: 3rem; /* ~48px slim register */
   background: var(--surface-raised);
   border-bottom: var(--border-width) solid var(--border);
 }
+/* Brand appears in the bar ONLY at narrow widths; at laptop+ the sidebar header
+   carries it, so exactly one brand is ever visible (D-066). */
+.lf-topbar__brand {
+  display: none;
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
 .lf-topbar__navtoggle {
   display: none; /* only shown at narrow widths (D-102) */
-}
-.lf-topbar__banners {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  flex: 1 1 auto;
-  min-width: 0;
 }
 .lf-topbar__right {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--space-2);
   margin-left: auto;
 }
 @media (max-width: 900px) {
-  .lf-topbar__navtoggle {
+  .lf-topbar__navtoggle,
+  .lf-topbar__brand {
     display: inline-flex;
   }
 }
 
-/* ---- Banners (StaleBanner / UpdateBanner) ---------------------------------- */
-.lf-banner {
-  display: inline-flex;
+/* ---- Status strips (StaleBanner / UpdateBanner) ----------------------------
+   Full-width slim strips BELOW the top bar, in normal flow (they PUSH content,
+   never overlay), rendered only when active — the D-066 honesty surface, kept out
+   of the calm bar. */
+.lf-statusstrip {
+  display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  border: var(--border-width) solid var(--border);
+  width: 100%;
+  padding: var(--space-2) var(--space-5);
   font-size: var(--font-size-13);
   line-height: var(--line-13);
-  background: var(--surface);
-  color: var(--text-secondary);
+  border-bottom: var(--border-width) solid var(--border);
 }
-.lf-banner__link {
+.lf-statusstrip__link {
   color: var(--accent);
   text-decoration: none;
   font-weight: var(--weight-medium);
 }
-.lf-banner__link:hover {
+.lf-statusstrip__link:hover {
   text-decoration: underline;
 }
-.lf-banner__dismiss {
+.lf-statusstrip__dismiss {
   font: inherit;
   border: 0;
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
   padding: 0 var(--space-1);
+  margin-left: auto;
 }
-.lf-banner__dismiss:hover {
+.lf-statusstrip__dismiss:hover {
   color: var(--text-primary);
 }
 /* Stale — amber attention only (the semantic-colour rule, §2.1). */
-.lf-banner--stale {
-  border-color: var(--attention);
+.lf-statusstrip--stale {
   color: var(--attention);
-  background: transparent;
+  border-color: var(--attention);
+  background: var(--surface);
 }
-.lf-banner--stale .lf-banner__link {
+.lf-statusstrip--stale .lf-statusstrip__link {
   color: var(--attention);
 }
 /* Update — informational (accent), never a semantic value colour. */
-.lf-banner--update {
+.lf-statusstrip--update {
+  color: var(--text-secondary);
   border-color: var(--accent);
+  background: var(--surface);
 }
 
 /* ---- DemoBadge ------------------------------------------------------------- */

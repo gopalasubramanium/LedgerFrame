@@ -61,20 +61,21 @@ test("theme cycle advances light → dark → system and stamps data-theme", asy
   const user = userEvent.setup();
   renderApp();
 
-  const btn = screen.getByRole("button", { name: /cycle theme/i });
+  // Icon-only button (recomposed 2026-07-11): state lives in the tooltip/aria-label.
+  const btn = screen.getByRole("button", { name: /change theme/i });
   // Default choice is system.
-  expect(btn).toHaveTextContent(/System/);
+  expect(btn.getAttribute("title")).toMatch(/System/);
 
   await user.click(btn);
-  expect(btn).toHaveTextContent(/Light/);
+  expect(btn.getAttribute("title")).toMatch(/Light/);
   expect(document.documentElement).toHaveAttribute("data-theme", "light");
 
   await user.click(btn);
-  expect(btn).toHaveTextContent(/Dark/);
+  expect(btn.getAttribute("title")).toMatch(/Dark/);
   expect(document.documentElement).toHaveAttribute("data-theme", "dark");
 
   await user.click(btn);
-  expect(btn).toHaveTextContent(/System/);
+  expect(btn.getAttribute("title")).toMatch(/System/);
 });
 
 test("density toggle stamps data-density and persists per-device", async () => {
@@ -87,7 +88,7 @@ test("density toggle stamps data-density and persists per-device", async () => {
     "data-density",
     "comfortable",
   );
-  await user.click(screen.getByRole("button", { name: /toggle density/i }));
+  await user.click(screen.getByRole("button", { name: /change density/i }));
   expect(document.documentElement).toHaveAttribute("data-density", "compact");
   expect(localStorage.getItem("lf.density")).toBe("compact");
 });

@@ -7,6 +7,10 @@ export interface NavItem {
   /** Nav label = H1 = route (D-022). Must match the IA page map spelling. */
   label: string;
   path: string;
+  /** Whether the page is actually built + routed. Only built pages appear as nav
+      entries; a group with none built shows its header only (progressive reveal of
+      the fixed D-043 skeleton — page-chrome Phase 0a). Flip to true as each page ships. */
+  built?: boolean;
 }
 
 export interface NavGroup {
@@ -23,7 +27,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Net worth", path: "/net-worth" },
       { label: "Portfolio", path: "/portfolio" },
-      { label: "Holdings", path: "/holdings" },
+      { label: "Holdings", path: "/holdings", built: true },
       { label: "Accounts", path: "/accounts" },
     ],
   },

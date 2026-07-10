@@ -146,7 +146,17 @@ and D-103 (SECURITY-BASELINE) recorded.
 
 ---
 
-## 10. PHASE 0a — RATIFIED WITH AMENDMENTS; RECOMPOSED, AWAITING RE-RATIFY (2026-07-11)
+## 10. PHASE 0a — RATIFIED (owner, 2026-07-11) ✅
+
+**Phase 0a is RATIFIED.** Kitchen-sink look passed: the icon toggles (stateful-glyph
+rule, DESIGN-SYSTEM §5.5) and the LockScreen blur+scrim verified **illegible in both
+themes**; `☰` reserved and collision-free at narrow width. The seven chrome components,
+the stateful-glyph rule, and the LockScreen blur are ratified as committed
+(`acf2d1a` · `77a355e` · `f0f4419`). Build proceeds to Phase 1 (shell assembly).
+
+Full record of what was built + amended (kept as build history):
+
+### 10a. Build + amendment history (RATIFIED)
 
 The seven chrome components are authored as **PROPOSED** in `frontend/src/components/ui/`
 and staged at `/kitchen-sink`. DESIGN-SYSTEM §5.5 carries the chrome-component inventory

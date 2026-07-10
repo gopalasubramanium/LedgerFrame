@@ -554,8 +554,11 @@ are now platform-wide primitives.
   (`system/version-check`, `system/update-status`) → verify no-egress + network-trace
   test in Phase 1; C-4 first-run checklist is its own later plan (chrome reserves the
   gate slot only); C-5 session contract reconciles against existing `auth/*` endpoints.
-- **Phase 0a — RATIFIED WITH AMENDMENTS + ICON RE-RATIFY (2026-07-11), awaiting a final
-  quick look → then Phase 1.** Re-ratify amendments: (1) slim TopBar, **icon-only**
+- **Phase 0a — RATIFIED (owner, 2026-07-11) ✅.** Kitchen-sink look passed: icon toggles
+  (stateful-glyph rule, DESIGN-SYSTEM §5.5) + LockScreen blur+scrim verified illegible in
+  both themes; `☰` reserved, collision-free at narrow width. Commits `acf2d1a`/`77a355e`/
+  `f0f4419`. **Phase 1 (shell assembly) is now IN-PROGRESS** (see below). Re-ratify amendments
+  that landed: (1) slim TopBar, **icon-only**
   display/rotation/Detail controls, brand narrow-only; (2) StaleBanner/UpdateBanner as
   **full-width status strips BELOW the bar**; (3) Sidebar **progressive reveal** (all six
   D-043 headers, only built pages as entries — Holdings today; `NavItem.built`; `showAll`);

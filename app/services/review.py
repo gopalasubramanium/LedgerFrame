@@ -168,6 +168,29 @@ async def review_report(session: AsyncSession) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
+    # D-099 migration surface: instruments carrying an expense ratio on a class it
+    # doesn't apply to (only fund wrappers do). Surface for review — never silently
+    # deleted; the owner clears it (or reclassifies the instrument).
+    try:
+        from app.api.v1.routes.markets import FUND_WRAPPED_CLASSES
+        from app.models import Instrument
+        rows = (await session.execute(
+            select(Instrument).where(Instrument.annual_cost_bps.isnot(None))
+        )).scalars().all()
+        misplaced = sum(
+            1 for r in rows
+            if (r.asset_class.value if hasattr(r.asset_class, "value") else str(r.asset_class))
+            not in FUND_WRAPPED_CLASSES
+        )
+        if misplaced:
+            items.append(_item(
+                "data",
+                f"{misplaced} instrument{'s' if misplaced != 1 else ''} carry an expense ratio on a "
+                f"non-fund class — review (expense ratios apply to funds/ETFs only)",
+            ))
+    except Exception:  # noqa: BLE001
+        pass
+
     if not items:
         items.append(_item("ok", "Nothing needs a look right now.", severity="info"))
 

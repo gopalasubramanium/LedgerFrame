@@ -14,7 +14,7 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from app.db.base import get_sessionmaker
-from app.models import AuditEvent, Holding, Instrument
+from app.models import AssetClass, AuditEvent, Holding, Instrument
 
 
 async def test_set_ongoing_cost_is_metadata_only_no_rebuild(app_client):  # R7
@@ -26,6 +26,8 @@ async def test_set_ongoing_cost_is_metadata_only_no_rebuild(app_client):  # R7
         before_id, before_qty, before_avg = h.id, h.quantity, h.avg_cost
         instr = await s.get(Instrument, h.instrument_id)
         symbol = instr.symbol
+        instr.asset_class = AssetClass.ETF   # D-099: expense ratio is fund-class only
+        await s.commit()
         assert instr.annual_cost_bps is None                       # not set yet
 
     r = await app_client.put(f"/api/v1/instruments/{symbol}/ongoing-cost", json={"annual_cost_bps": 45})
@@ -49,7 +51,10 @@ async def test_set_ongoing_cost_is_metadata_only_no_rebuild(app_client):  # R7
 
 async def test_set_ongoing_cost_can_clear_to_null(app_client):
     async with get_sessionmaker()() as s:
-        symbol = (await s.execute(select(Instrument))).scalars().first().symbol
+        instr = (await s.execute(select(Instrument))).scalars().first()
+        symbol = instr.symbol
+        instr.asset_class = AssetClass.MUTUAL_FUND   # D-099: fund-class carries an expense ratio
+        await s.commit()
     await app_client.put(f"/api/v1/instruments/{symbol}/ongoing-cost", json={"annual_cost_bps": 30})
     r = await app_client.put(f"/api/v1/instruments/{symbol}/ongoing-cost", json={"annual_cost_bps": None})
     assert r.status_code == 200
@@ -70,3 +75,18 @@ async def test_ongoing_cost_rejects_negative(app_client):
 async def test_ongoing_cost_unknown_symbol_404(app_client):
     r = await app_client.put("/api/v1/instruments/NOPE__NOT_REAL/ongoing-cost", json={"annual_cost_bps": 10})
     assert r.status_code == 404
+
+
+async def test_ongoing_cost_rejects_non_fund_class(app_client):
+    """D-099 — an expense ratio applies to fund wrappers only; setting one on equity
+    is a category error and is rejected. Clearing (null) is always allowed."""
+    async with get_sessionmaker()() as s:
+        instr = (await s.execute(select(Instrument))).scalars().first()
+        symbol = instr.symbol
+        instr.asset_class = AssetClass.EQUITY
+        await s.commit()
+    bad = await app_client.put(f"/api/v1/instruments/{symbol}/ongoing-cost", json={"annual_cost_bps": 20})
+    assert bad.status_code == 400 and "fund" in bad.json()["detail"].lower()
+    # But clearing a non-fund row is allowed (so a bad row can be fixed).
+    ok = await app_client.put(f"/api/v1/instruments/{symbol}/ongoing-cost", json={"annual_cost_bps": None})
+    assert ok.status_code == 200

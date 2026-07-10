@@ -72,6 +72,8 @@
 .ins__fact { display: flex; flex-direction: column; gap: var(--space-1); }
 .ins__factlabel { font-size: var(--font-size-12); color: var(--text-secondary); }
 .ins__factval { font-size: var(--font-size-14); font-variant-numeric: tabular-nums; }
+/* Item 3a — numeric values right-aligned; text values keep the default left. */
+.ins__factval--num { text-align: right; }
 .ins__factlink { align-self: end; }
 .ins__chip {
   display: inline-block;
@@ -84,7 +86,17 @@
 .ins__cost { display: flex; align-items: center; gap: var(--space-4); margin: 0; font-variant-numeric: tabular-nums; }
 .ins__inline { padding-block: var(--space-1); }
 
-.ins__news { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+/* Item 4 — cap News at ~5 items visible; scroll the rest internally. */
+.ins__news {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 19rem;
+  overflow-y: auto;
+}
 .ins__newsitem { display: flex; flex-direction: column; gap: var(--space-1); }
 .ins__newshead { color: var(--text-primary); text-decoration: none; font-weight: var(--weight-medium); }
 .ins__newshead:hover { text-decoration: underline; }

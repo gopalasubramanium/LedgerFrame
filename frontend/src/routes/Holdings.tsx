@@ -255,7 +255,15 @@ export function Holdings() {
         key: "symbol", label: "Holding", sortable: true, truncate: true,
         render: (h) => (
           <span className="hold__ident">
-            <span className="hold__ident-sym">{h.symbol ?? h.label ?? "—"}</span>
+            {/* D-098: the symbol is a direct link to its instrument-detail page;
+                the row-menu Details stays as the discoverable path. */}
+            {h.symbol ? (
+              <Link className="hold__ident-sym hold__ident-link" to={`/instrument/${h.symbol}`}>
+                {h.symbol}
+              </Link>
+            ) : (
+              <span className="hold__ident-sym">{h.label ?? "—"}</span>
+            )}
             {h.name && h.name !== h.symbol && (
               <span className="hold__ident-name">{h.name}</span>
             )}

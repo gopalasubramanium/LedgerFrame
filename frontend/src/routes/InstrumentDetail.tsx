@@ -81,6 +81,8 @@ export function InstrumentDetail() {
     typeof meta?.history_status === "string" ? meta.history_status : "No price history from the source.";
   const assetDetail = meta?.asset_detail ?? {};
   const detailPanel = Object.entries(assetDetail)[0]; // class-conditional: mutual_fund / crypto / derivative
+  // D-099: an ongoing cost (expense ratio) applies only to fund-wrapped classes.
+  const isFundWrapped = ["mutual_fund", "etf"].includes(meta?.asset_class ?? "");
 
   return (
     <div className="ins">
@@ -98,7 +100,10 @@ export function InstrumentDetail() {
         }
         actions={
           <>
-            <button type="button" className="lf-btn" onClick={() => setCostOpen(true)}>Ongoing cost</button>
+            {/* D-099: expense ratio is fund-only — the action appears only there. */}
+            {isFundWrapped && (
+              <button type="button" className="lf-btn" onClick={() => setCostOpen(true)}>Ongoing cost</button>
+            )}
             <button type="button" className="lf-btn lf-btn--primary" onClick={() => setEditOpen(true)}>Edit</button>
           </>
         }
@@ -179,10 +184,10 @@ export function InstrumentDetail() {
             <h2 className="ins__h2">Your position</h2>
             {position ? (
               <dl className="ins__facts">
-                <Fact label="Quantity" value={position.quantity != null ? String(position.quantity) : "—"} />
-                <Fact label={`Value (${baseCcy})`} value={position.market_value != null ? formatMoney(position.market_value) : "—"} />
-                <Fact label="Cost basis" value={position.cost_basis != null ? formatMoney(position.cost_basis) : "—"} />
-                <Fact label="Unrealised P/L" value={position.unrealised_pl != null ? formatSignedMoney(position.unrealised_pl) : "—"} signed={position.unrealised_pl} />
+                <Fact label="Quantity" num value={position.quantity != null ? String(position.quantity) : "—"} />
+                <Fact label={`Value (${baseCcy})`} num value={position.market_value != null ? formatMoney(position.market_value) : "—"} />
+                <Fact label="Cost basis" num value={position.cost_basis != null ? formatMoney(position.cost_basis) : "—"} />
+                <Fact label="Unrealised P/L" num value={position.unrealised_pl != null ? formatSignedMoney(position.unrealised_pl) : "—"} signed={position.unrealised_pl} />
                 <span className="ins__factlink"><Link className="ins__link" to="/holdings">Holdings ↗</Link></span>
               </dl>
             ) : (
@@ -190,16 +195,29 @@ export function InstrumentDetail() {
             )}
           </section>
 
-          {/* Ongoing cost (expense ratio) — D-029. Stored in bps; shown as bps (no frontend math). */}
-          <section className="ins__section">
-            <h2 className="ins__h2">Ongoing cost (expense ratio)</h2>
-            <p className="ins__cost">
-              {meta?.annual_cost_bps != null ? `${meta.annual_cost_bps} bps / year` : "— (not set)"}
-              <button type="button" className="lf-btn ins__inline" onClick={() => setCostOpen(true)}>Set</button>
+          {/* Ongoing cost (expense ratio) — D-029, CLASS-SCOPED to fund wrappers
+              (D-099). Not rendered for equity/crypto/manual. Shown as bps (no math). */}
+          {isFundWrapped && (
+            <section className="ins__section">
+              <h2 className="ins__h2">Ongoing cost (expense ratio)</h2>
+              <p className="ins__cost">
+                {meta?.annual_cost_bps != null ? `${meta.annual_cost_bps} bps / year` : "— (not set)"}
+                <button type="button" className="lf-btn ins__inline" onClick={() => setCostOpen(true)}>Set</button>
+              </p>
+            </section>
+          )}
+
+          {/* AI explainer — DEFERRED to the AI-surfaces milestone (ND-2/ND-5); D-068
+              intact. Item-4 layout: sits ABOVE News. */}
+          <section className="ins__section ins__pending">
+            <h2 className="ins__h2">Explain this instrument</h2>
+            <p className="ins__reason">
+              The AI explainer (grounded + validated, D-068/P-6) arrives with the
+              AI-surfaces milestone (shared Ask panel). Deferred, not dropped.
             </p>
           </section>
 
-          {/* News — scoped reader (D-037, P-3). */}
+          {/* News — scoped reader (D-037, P-3). Caps at ~5 visible; scrolls internally. */}
           <section className="ins__section">
             <div className="ins__bar">
               <h2 className="ins__h2">News</h2>
@@ -217,15 +235,6 @@ export function InstrumentDetail() {
             ) : (
               <EmptyState message="No recent news" reason="No provider or feed headlines mention this instrument." />
             )}
-          </section>
-
-          {/* AI explainer — DEFERRED to the AI-surfaces milestone (ND-2/ND-5); D-068 intact. */}
-          <section className="ins__section ins__pending">
-            <h2 className="ins__h2">Explain this instrument</h2>
-            <p className="ins__reason">
-              The AI explainer (grounded + validated, D-068/P-6) arrives with the
-              AI-surfaces milestone (shared Ask panel). Deferred, not dropped.
-            </p>
           </section>
         </>
       )}
@@ -251,13 +260,14 @@ export function InstrumentDetail() {
   );
 }
 
-function Fact({ label, value, chip, signed }: { label: string; value?: string | null; chip?: boolean; signed?: number | null }) {
+function Fact({ label, value, chip, signed, num }: { label: string; value?: string | null; chip?: boolean; signed?: number | null; num?: boolean }) {
   const shown = value == null || value === "" ? "—" : value;
   const tone = signed == null ? "" : Number(signed) > 0 ? " ins__up" : Number(signed) < 0 ? " ins__down" : "";
+  // Item 3a: numeric values right-aligned + tabular; text values left-aligned.
   return (
     <div className="ins__fact">
       <dt className="ins__factlabel">{label}</dt>
-      <dd className={`ins__factval${tone}`}>{chip && shown !== "—" ? <span className="ins__chip">{shown}</span> : shown}</dd>
+      <dd className={`ins__factval${num ? " ins__factval--num" : ""}${tone}`}>{chip && shown !== "—" ? <span className="ins__chip">{shown}</span> : shown}</dd>
     </div>
   );
 }

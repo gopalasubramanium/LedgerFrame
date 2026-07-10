@@ -424,6 +424,15 @@ starts from the existing D-049 backend whitelist `_META_KEYS`
 | cash | label, value, currency | issuer |
 | commodity / liability / other | label, value, currency | valuation_date, valuation_source, note (base keys, always allowed) |
 
+**Ongoing cost (expense ratio) is CLASS-SCOPED (D-099, 2026-07-10).** The
+instrument-level `annual_cost_bps` applies **only to fund-wrapped classes —
+`mutual_fund` and `etf`**. Equity, crypto, and manual classes carry **no** expense
+ratio: the field/card is not shown, and `PUT /instruments/{symbol}/ongoing-cost`
+rejects a non-null bps on a non-fund class (clearing is always allowed). Existing
+non-fund rows with a bps are **surfaced for review** (Review signal), never silently
+deleted. This is an instrument attribute, not a manual-holding creation field, but is
+recorded here beside the other per-class field rules.
+
 **Findings (owner's verification list):**
 - **Already present** in the backend whitelist: FD rate/maturity, bond
   coupon/maturity, property address/valuation-date, retirement scheme,

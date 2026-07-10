@@ -257,6 +257,11 @@ async def _asset_detail(session: AsyncSession, identifiers: list[dict]) -> dict:
     return detail
 
 
+# D-099 — the classes an ongoing cost (expense ratio) applies to: fund wrappers
+# only. Equity/crypto/manual carry no expense ratio (MASTER-DATA §11).
+FUND_WRAPPED_CLASSES = frozenset({"mutual_fund", "etf"})
+
+
 class InstrumentPatch(BaseModel):
     asset_class: AssetClass | None = None
     country: str | None = None
@@ -326,6 +331,13 @@ async def set_instrument_ongoing_cost(symbol: str, payload: OngoingCostPatch,
     )).scalars().first()
     if instr is None:
         raise HTTPException(404, "unknown instrument")
+    # D-099: an ongoing cost (expense ratio) is CLASS-SCOPED — it belongs only to
+    # fund-wrapped classes. Setting one on equity/crypto/manual is a category error;
+    # reject it. Clearing (bps=None) is always allowed so an existing bad row can be
+    # fixed.
+    ac = instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class)
+    if bps is not None and ac not in FUND_WRAPPED_CLASSES:
+        raise HTTPException(400, f"expense ratio applies only to fund-wrapped classes ({', '.join(sorted(FUND_WRAPPED_CLASSES))}), not {ac}")
     instr.annual_cost_bps = Decimal(str(bps)) if bps is not None else None
     session.add(AuditEvent(category="mutation", action="set_ongoing_cost", detail=instr.symbol))
     await session.flush()

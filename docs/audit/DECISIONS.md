@@ -639,6 +639,21 @@ clarifying notes recorded in the guide.
   popover overlay rule** (custom popovers portal to the viewport; DESIGN-SYSTEM §6).
   page-holdings §9-38/39. Contract +1 → **127 paths**.
 
+- **D-098 — Entity references in tables link to their entity-detail page** (owner,
+  2026-07-10; Instrument Detail walk). The **symbol** in the Holdings identity cell
+  is a **direct link** to `/instrument/{symbol}`; the row-menu **Details** stays as
+  the discoverable path. Generalised to a worklist-template rule: *entity references
+  in tables link directly to their entity-detail page.* page-instrument-detail §I-1.
+- **D-099 — Ongoing cost (expense ratio) is CLASS-SCOPED** (owner, 2026-07-10;
+  Instrument Detail walk; **spec fix**). `annual_cost_bps` applies to **fund-wrapped
+  classes only — `mutual_fund`, `etf`** — not equity, crypto, or manual classes.
+  Equity/other pages show **no** expense-ratio field or card. Enforced: the Instrument
+  Detail Ongoing-cost section + action are gated by class; the
+  `PUT /instruments/{symbol}/ongoing-cost` **rejects** a non-null bps on a non-fund
+  class (clearing is always allowed). **Migration:** existing non-fund rows carrying a
+  bps are **surfaced for review** (a Review signal), **never silently deleted** — the
+  owner clears or reclassifies. Recorded in MASTER-DATA §11. page-instrument-detail §I-4.
+
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.
 **D-090 and D-091 were ratified 2026-07-10** (D-090 with the ETF-Bonus amendment);

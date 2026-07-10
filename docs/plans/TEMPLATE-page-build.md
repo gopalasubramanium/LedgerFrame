@@ -120,6 +120,10 @@ affordance is a **§9 NEEDS DECISION** ("mock-backed affordance").
 **Component usage rules the build must honour (from DESIGN-SYSTEM §5/§6 + Holdings):**
 - **Row actions** live in a `RowMenu` (⋯) overflow — never wide always-visible
   action columns (they force horizontal scroll; page-holdings §9-22/§9-36).
+- **Entity references link directly (D-098)** — a symbol/name/entity in a table cell
+  is a **direct link to its entity-detail page** (e.g. the Holdings symbol →
+  `/instrument/{symbol}`); any row-menu "Details" stays as the discoverable path,
+  not the only one.
 - **Context-scoped pickers (D-097)** — any instrument/entity/account picker
   **filters its pool by the active context** (asset class, entity…) and routes
   search to that context's provider; a match under a **different** context is a

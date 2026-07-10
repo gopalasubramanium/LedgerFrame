@@ -95,13 +95,24 @@ test("Edit submits a PATCH with exactly the edited fields (request-body assertio
   );
 });
 
-test("Ongoing cost submits the entered bps", async () => {
+test("Ongoing cost submits the entered bps (fund-wrapped only, D-099)", async () => {
+  // D-099: the expense-ratio action exists only for fund-wrapped classes.
+  vi.mocked(api.getInstrument).mockResolvedValue({
+    ok: true, data: { ...DETAIL, instrument: { ...DETAIL.instrument, symbol: "VOO", asset_class: "etf" } },
+  });
   const user = userEvent.setup();
-  renderAt();
-  await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL", level: 1 })).toBeInTheDocument());
+  renderAt("VOO");
+  await waitFor(() => expect(screen.getByRole("heading", { name: "VOO", level: 1 })).toBeInTheDocument());
   await user.click(screen.getByRole("button", { name: "Ongoing cost" }));
   const dialog = screen.getByRole("dialog");
   await user.type(within(dialog).getByLabelText("Annual cost (bps)"), "20");
   await user.click(within(dialog).getByRole("button", { name: "Save" }));
-  expect(vi.mocked(api.setOngoingCost)).toHaveBeenCalledWith("AAPL", 20);
+  expect(vi.mocked(api.setOngoingCost)).toHaveBeenCalledWith("VOO", 20);
+});
+
+test("D-099: an equity page shows no expense-ratio action or card", async () => {
+  renderAt(); // DETAIL is equity
+  await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL", level: 1 })).toBeInTheDocument());
+  expect(screen.queryByRole("button", { name: "Ongoing cost" })).toBeNull();
+  expect(screen.queryByText(/Ongoing cost \(expense ratio\)/)).toBeNull();
 });

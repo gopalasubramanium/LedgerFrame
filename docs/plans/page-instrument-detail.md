@@ -274,3 +274,19 @@ Token/component-layer polish; **verified rendered** at light/dark/high-contrast.
   headless element screenshots — overlay-scrollbar rendering; owner ratifies live.)
 
 Both are **PROPOSED pending the owner's visual ratify** at the next look.
+
+## Phase-3 acceptance walk — cross-ratify (owner, 2026-07-11)
+
+- **PriceChart amendment — RATIFIED** as implemented (toggle/hover/periods + honest
+  short-history verified live).
+- **D-100 RATIFIED w/ amendment — LAYERED cards.** The Holdings summary-card
+  treatment is the standard: a section with a headline nests its content in a
+  `.lf-card__body` panel (`--surface` + border) for depth, not a flat fill. Applied
+  to Instrument Detail's six sections (6 cards → 6 nested bodies, verified). Kitchen
+  sink specimen updated. **Verified rendered** both themes.
+- **D-101 RATIFIED w/ amendment — header-outside-scroll.** The News-block pattern is
+  the standard. `DataTable` moves the toolbar OUTSIDE an inner `.lf-table__scroll`;
+  only the table scrolls (sticky column header), `.lf-table-wrap` keeps the border
+  (`overflow: hidden`). **Verified rendered** (Holdings: `toolbarOutsideScroll: true`,
+  the filter bar sits outside the scroll on both themes). Kitchen sink specimen
+  updated. Both are the platform-wide primitives.

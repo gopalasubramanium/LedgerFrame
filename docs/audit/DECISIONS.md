@@ -654,20 +654,26 @@ clarifying notes recorded in the guide.
   bps are **surfaced for review** (a Review signal), **never silently deleted** — the
   owner clears or reclassifies. Recorded in MASTER-DATA §11. page-instrument-detail §I-4.
 
-- **D-100 — Card/section border primitive** (owner, 2026-07-10; Instrument Detail
-  walk; **PROPOSED, visual ratify at next look**). Cards/sections/panels get a soft
-  1px `--border` on `--surface-raised` (not shadow-heavy) so sections read as
-  distinct objects in both themes + high-contrast. Applied via a single `.lf-card`
-  primitive (component layer) so it lands everywhere at once; DataTable/Dialog keep
-  their own surfaces. DESIGN-SYSTEM §2.4 (PROPOSED).
-- **D-101 — Themed scrollbars** (owner, 2026-07-10; Instrument Detail walk;
-  **PROPOSED, visual ratify at next look**). All scrollbars (page, table internal,
-  dialog internal, news list, popovers) styled via tokens — thin; track transparent;
-  thumb `--border-strong` with a `--text-tertiary` hover — following both themes +
-  high-contrast. Standards `scrollbar-width`/`scrollbar-color` + WebKit; the thumb
-  is **inset** (transparent-border + content-box clip), and bordered scroll
-  containers use `scrollbar-gutter: stable` so the thumb never overlaps the border
-  (fixes the Holdings table defect). DESIGN-SYSTEM §2.4 (PROPOSED).
+- **D-100 — Card/section border primitive; LAYERED standard** (owner, 2026-07-10;
+  **ratified w/ amendment 2026-07-11**). `.lf-card` = soft `--border` on
+  `--surface-raised`. **Cross-ratify amendment:** the Holdings summary-card treatment
+  is the standard — a section with a headline block **nests its content in an inner
+  `.lf-card__body` panel** (`--surface` + border) for depth, not a single flat fill.
+  Applied to Instrument Detail's six sections; DataTable/Dialog keep their own
+  surfaces. Both themes + high-contrast. DESIGN-SYSTEM §2.4.
+- **D-101 — Themed scrollbars; header-outside-scroll standard** (owner, 2026-07-10;
+  **ratified w/ amendment 2026-07-11**). Scrollbars styled via tokens (thin; track
+  transparent; thumb `--border-strong`, hover `--text-tertiary`; inset), standards +
+  WebKit, both themes + high-contrast. **Cross-ratify amendment:** the Instrument
+  Detail News-block pattern is the standard — the scroll region is the **content
+  area only, below the section header** (header outside the scroll container). In
+  `DataTable` the **toolbar (filter/actions) moves outside** an inner
+  `.lf-table__scroll` (only the table scrolls; `scrollbar-gutter: stable`, sticky
+  column header); `.lf-table-wrap` keeps the border (`overflow: hidden`) so the thumb
+  never overlaps it. DESIGN-SYSTEM §2.4.
+- **PriceChart amendment — RATIFIED** (owner, 2026-07-11) as implemented: Simple/
+  Advanced toggle (Simple default), hover crosshair + tooltip, period selector with
+  honest short-history. DESIGN-SYSTEM §5.2 marker flips PROPOSED → ratified.
 
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.

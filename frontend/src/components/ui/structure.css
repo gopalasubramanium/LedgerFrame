@@ -7,6 +7,15 @@
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }
+/* D-100 AMENDED (2026-07-11) — LAYERED standard (the Holdings net-worth card
+   family): a section with a headline block nests its content in an inner panel on
+   `--surface` with its own border, giving depth (not a single flat fill). */
+.lf-card__body {
+  background: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
 
 /* PageHeader (DESIGN-SYSTEM §5.4) */
 .lf-pageheader {

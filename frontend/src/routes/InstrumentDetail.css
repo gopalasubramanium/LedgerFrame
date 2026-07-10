@@ -81,11 +81,12 @@
 .ins__cost { display: flex; align-items: center; gap: var(--space-4); margin: 0; font-variant-numeric: tabular-nums; }
 .ins__inline { padding-block: var(--space-1); }
 
-/* Item 4 — cap News at ~5 items visible; scroll the rest internally. */
+/* Item 4 / D-101 — News is the reference "header outside, content scrolls" pattern:
+   the section header sits outside; the list (a nested .lf-card__body) caps at ~5
+   items and scrolls internally, so the scrollbar starts below the header. */
 .ins__news {
   list-style: none;
   margin: 0;
-  padding: 0 var(--space-2) 0 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);

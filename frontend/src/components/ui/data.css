@@ -43,16 +43,20 @@
 /* DataTable (DESIGN-SYSTEM §5.2) — one implementation for every table */
 .lf-table-wrap {
   width: 100%;
-  /* Cap at a viewport-relative height and scroll INSIDE (both axes), so a long
-     table never grows the page unboundedly; the sticky header stays put within
-     this scroll container. Overridable via --table-max-h per table. */
-  max-height: var(--table-max-h, 60vh);
-  overflow: auto;
-  /* D-101 — reserve the scrollbar gutter so the thumb sits INSIDE the bordered
-     area, never on top of the right border/rounded corner. */
-  scrollbar-gutter: stable;
+  /* Border + rounded corners live on the OUTER wrap; the toolbar sits here, OUTSIDE
+     the scroll (D-101 — header/filter bar never scrolls away). Clip so the inner
+     scroll region's corners follow the wrap's radius. */
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+/* D-101 — ONLY the table scrolls (below the toolbar). Its sticky header row stays
+   at the top of THIS container; the scrollbar/thumb sits inside the border, below
+   the toolbar, with a reserved gutter so it never overlaps the border. */
+.lf-table__scroll {
+  max-height: var(--table-max-h, 60vh);
+  overflow: auto;
+  scrollbar-gutter: stable;
 }
 .lf-table {
   width: 100%;

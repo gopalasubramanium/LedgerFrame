@@ -152,32 +152,34 @@ export function InstrumentDetail() {
         <>
           {/* Quote — the canonical Markets reader, scoped. Unpriced → "—" + reason. */}
           <section className="ins__section lf-card ins__quote">
-            <div className="ins__price">
-              {quote?.price != null ? (
-                <span className="ins__pricenum">{quote.currency} {formatPrice(quote.price)}</span>
-              ) : (
-                <span className="ins__pricenum ins__muted">—</span>
-              )}
-              {quote?.change != null && (
-                <span className={`ins__change ${Number(quote.change) >= 0 ? "ins__up" : "ins__down"}`}>
-                  {formatSignedMoney(quote.change)}
-                  {quote.change_pct != null ? ` (${Number(quote.change_pct).toFixed(2)}%)` : ""}
-                </span>
-              )}
-            </div>
-            <div className="ins__prov">
-              {quote?.price == null && <span className="ins__reason">No live quote from the source — value withheld, never fabricated.</span>}
-              {quote?.source && <span className="ins__tag">Source: {quote.source}</span>}
-              {quote?.entitlement && <span className="ins__tag">{quote.entitlement}</span>}
-              {quote?.is_stale && <StalenessChip isStale asOf={quote.received_at ?? ""} />}
-              <Link className="ins__link" to="/markets">Markets ↗</Link>
+            <div className="lf-card__body">
+              <div className="ins__price">
+                {quote?.price != null ? (
+                  <span className="ins__pricenum">{quote.currency} {formatPrice(quote.price)}</span>
+                ) : (
+                  <span className="ins__pricenum ins__muted">—</span>
+                )}
+                {quote?.change != null && (
+                  <span className={`ins__change ${Number(quote.change) >= 0 ? "ins__up" : "ins__down"}`}>
+                    {formatSignedMoney(quote.change)}
+                    {quote.change_pct != null ? ` (${Number(quote.change_pct).toFixed(2)}%)` : ""}
+                  </span>
+                )}
+              </div>
+              <div className="ins__prov">
+                {quote?.price == null && <span className="ins__reason">No live quote from the source — value withheld, never fabricated.</span>}
+                {quote?.source && <span className="ins__tag">Source: {quote.source}</span>}
+                {quote?.entitlement && <span className="ins__tag">{quote.entitlement}</span>}
+                {quote?.is_stale && <StalenessChip isStale asOf={quote.received_at ?? ""} />}
+                <Link className="ins__link" to="/markets">Markets ↗</Link>
+              </div>
             </div>
           </section>
 
           {/* Identity / taxonomy. */}
           <section className="ins__section lf-card">
             <h2 className="ins__h2">Identity</h2>
-            <dl className="ins__facts">
+            <dl className="ins__facts lf-card__body">
               <Fact label="Class" value={meta?.asset_class ? labelFor("asset_class", meta.asset_class) : null} chip />
               <Fact label="Subclass" value={meta?.asset_subclass ? labelFor("asset_subclass", meta.asset_subclass) : null} chip />
               <Fact label="Exchange" value={meta?.exchange} />
@@ -192,7 +194,7 @@ export function InstrumentDetail() {
           {detailPanel && (
             <section className="ins__section lf-card">
               <h2 className="ins__h2">{detailPanel[0].replace(/_/g, " ")} detail</h2>
-              <dl className="ins__facts">
+              <dl className="ins__facts lf-card__body">
                 {Object.entries(detailPanel[1]).map(([k, v]) => (
                   <Fact key={k} label={k.replace(/_/g, " ")} value={v == null ? null : String(v)} />
                 ))}
@@ -205,23 +207,25 @@ export function InstrumentDetail() {
               history: shows only what exists, labelled, never stretched. */}
           <section className="ins__section lf-card">
             <h2 className="ins__h2">Price history</h2>
-            <PriceChart
-              series={series}
-              interval="1d"
-              controls
-              defaultView="simple"
-              periods={PERIODS}
-              activePeriod={period}
-              onPeriodChange={setPeriod}
-              coverageNote={series.length < 2 ? historyReason : coverageNote}
-            />
+            <div className="lf-card__body">
+              <PriceChart
+                series={series}
+                interval="1d"
+                controls
+                defaultView="simple"
+                periods={PERIODS}
+                activePeriod={period}
+                onPeriodChange={setPeriod}
+                coverageNote={series.length < 2 ? historyReason : coverageNote}
+              />
+            </div>
           </section>
 
           {/* Position if held — the canonical holdings reader, scoped (ND-1, P-3). */}
           <section className="ins__section lf-card">
             <h2 className="ins__h2">Your position</h2>
             {position ? (
-              <dl className="ins__facts">
+              <dl className="ins__facts lf-card__body">
                 <Fact label="Quantity" num value={position.quantity != null ? String(position.quantity) : "—"} />
                 <Fact label={`Value (${baseCcy})`} num value={position.market_value != null ? formatMoney(position.market_value) : "—"} />
                 <Fact label="Cost basis" num value={position.cost_basis != null ? formatMoney(position.cost_basis) : "—"} />
@@ -238,7 +242,7 @@ export function InstrumentDetail() {
           {isFundWrapped && (
             <section className="ins__section lf-card">
               <h2 className="ins__h2">Ongoing cost (expense ratio)</h2>
-              <p className="ins__cost">
+              <p className="ins__cost lf-card__body">
                 {meta?.annual_cost_bps != null ? `${meta.annual_cost_bps} bps / year` : "— (not set)"}
                 <button type="button" className="lf-btn ins__inline" onClick={() => setCostOpen(true)}>Set</button>
               </p>
@@ -249,7 +253,7 @@ export function InstrumentDetail() {
               intact. Item-4 layout: sits ABOVE News. */}
           <section className="ins__section lf-card ins__pending">
             <h2 className="ins__h2">Explain this instrument</h2>
-            <p className="ins__reason">
+            <p className="ins__reason lf-card__body">
               The AI explainer (grounded + validated, D-068/P-6) arrives with the
               AI-surfaces milestone (shared Ask panel). Deferred, not dropped.
             </p>
@@ -262,7 +266,7 @@ export function InstrumentDetail() {
               <Link className="ins__link" to="/news">News ↗</Link>
             </div>
             {news.length > 0 ? (
-              <ul className="ins__news">
+              <ul className="ins__news lf-card__body">
                 {news.map((n, i) => (
                   <li key={i} className="ins__newsitem">
                     <a href={n.url ?? "#"} target="_blank" rel="noreferrer" className="ins__newshead">{n.headline}</a>

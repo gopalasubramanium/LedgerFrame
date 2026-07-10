@@ -118,6 +118,10 @@ export function DataTable<R>({
         </div>
       )}
 
+      {/* D-101 — the toolbar (filter/actions) stays OUTSIDE the scroll; only the
+          table scrolls, its header row sticky at the top of this container, and the
+          scrollbar/gutter sits inside the border below the toolbar. */}
+      <div className="lf-table__scroll">
       <table className="lf-table">
         {caption && <caption className="lf-empty__reason">{caption}</caption>}
         <thead>
@@ -211,6 +215,7 @@ export function DataTable<R>({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -21,7 +21,12 @@
   border-bottom: var(--border-width) solid var(--border);
 }
 
-/* D-101 — scrollable panel specimen (themed scrollbar in both themes). */
+/* D-100/D-101 specimens — layered card head (outside any scroll) + scroll body. */
+.ks__cardhead {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-14);
+  font-weight: var(--weight-semibold);
+}
 .ks__scrollpanel {
   max-height: 8rem;
   overflow-y: auto;

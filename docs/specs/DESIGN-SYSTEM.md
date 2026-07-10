@@ -149,23 +149,27 @@ Minimal borders and shadows (principle 3). `--radius-sm` 4px · `--radius-md` 6p
 restrained: `--shadow-1` a single soft shadow for popovers/menus only; cards use
 a border, not a shadow.
 
-**D-100 — card/section primitive (PROPOSED 2026-07-10, ratify at next look).** The
-`.lf-card` primitive (`components/ui/structure.css`) gives every card/section/panel
-a soft `--border` on `--surface-raised` (not shadow-heavy) so sections read as
-distinct objects. Applied via the one class so it lands everywhere; the DataTable
-and Dialog keep their own bordered surfaces. Both themes + high-contrast follow
-automatically (border/surface are tokens). Instrument Detail sections + the Holdings
-Net-worth summary adopt it; kitchen-sink specimen added.
+**D-100 — card/section primitive (ratified w/ amendment 2026-07-11, LAYERED
+standard).** `.lf-card` (`components/ui/structure.css`) = a soft `--border` on
+`--surface-raised`. **Amendment:** a section with a headline block nests its content
+in `.lf-card__body` — an inner panel on `--surface` with its own border — giving
+**depth (layered), not a single flat fill** (the Holdings net-worth card family is
+the standard). Both themes + high-contrast follow automatically. Instrument Detail's
+six sections adopt it; kitchen-sink specimen shows the layered card.
 
-**D-101 — themed scrollbars (PROPOSED 2026-07-10, ratify at next look).** All
-scrollbars (page, table internal, dialog internal, news list, popovers) are styled
-in `index.css` via standards `scrollbar-width: thin` + `scrollbar-color` and the
-WebKit equivalents, using tokens (`--scrollbar-size`, `--scrollbar-thumb` =
-`--border-strong`, hover = `--text-tertiary`; track transparent) — so they follow
-both themes + high-contrast. The WebKit thumb uses a transparent border + content-
-box clip so it sits **inset**, and scroll containers with a border use
-`scrollbar-gutter: stable` (e.g. `.lf-table-wrap`) so the thumb never overlaps the
-border. Kitchen-sink scrollable-panel specimen added.
+**D-101 — themed scrollbars + header-outside-scroll (ratified w/ amendment
+2026-07-11).** All scrollbars are styled in `index.css` via standards
+`scrollbar-width: thin` + `scrollbar-color` and the WebKit equivalents, using tokens
+(`--scrollbar-size`, `--scrollbar-thumb` = `--border-strong`, hover =
+`--text-tertiary`; track transparent) — following both themes + high-contrast; the
+WebKit thumb is **inset** (transparent border + content-box clip). **Amendment
+(the News-block pattern is the standard):** a scroll region is the CONTENT area only,
+below the section/card header — the header stays OUTSIDE the scroll container. In
+`DataTable` the **toolbar (filter/actions) sits outside** an inner `.lf-table__scroll`
+(the only scrolling element; `scrollbar-gutter: stable`, sticky column header);
+`.lf-table-wrap` keeps the border + rounded corners (`overflow: hidden`) so the thumb
+never overlaps the border. Kitchen-sink scrollable-panel specimen shows
+header-outside-scroll.
 
 ### 2.5 Density modes (D-045 / D-078)
 
@@ -273,7 +277,7 @@ props are backend-computed `Decimal` strings (never client-computed).
 | **DataTable** | `columns` (`{key,label,align,format,sortable}`), `rows`, `sort`, `onSort`, `filter?`, `onExport?` (server-side), `stickyHeader`, `density`, `rowLink?` | **One implementation** for every table (Holdings, transactions, tax lots, drift, policy targets, insurance, estate, pricing health, accounts). Sticky header; `aria-sort` on sortable headers; numbers right-aligned + tabular + per-unit dp; **export is server-side** (P-5) — the client never generates the file. Respects density (§2.5). |
 | **TrendStat** | `label`, `value`, `delta?` (with gain/loss colour), `unit`, `sparkline?`, `provenance?` | KPI/stat tiles (Net worth KPI strip, Portfolio stat rail, Today's change). Delta uses `--gain`/`--loss` only. Optional ProvenanceBadge slot. |
 | **AllocationDonut** | `segments` (`{label,value}`), `legend`, `onSegmentClick?` | Allocation by class/sector/currency/tag (Portfolio, D-033); one summary donut on Home. **Not** used on Net worth (composition donut dropped, D-054). Slate+accent segments (§4). |
-| **PriceChart** *(amended — PROPOSED)* | `series`, `overlays?` (`MA`/`BB`/`RSI`), `mode` (`candles`\|`line`), `benchmark?`, `interval`, **`controls?`**, **`defaultView?`** (`simple`\|`advanced`), **`periods?`**, **`activePeriod?`**, **`onPeriodChange?`**, **`coverageNote?`** | House-SVG price/performance chart (D-035, no ECharts). **Amendment 2026-07-10 (Instrument Detail walk, mini-ratify at owner's next look):** a **Simple/Advanced view toggle** (Simple = line + price only, the Instrument-Detail default; Advanced = candles + volume + MA/BB/RSI), a **hover crosshair + tooltip** (date + close, OHLCV in Advanced), and a **period selector** (1D/5D/1M/3M/6M/YTD/1Y/5Y/Max) with **honest short-history** (shows only what exists, labels it via `coverageNote`, never stretches or fabricates). Back-compatible: without `controls` it behaves as before. Open-state case at `/kitchen-sink`. |
+| **PriceChart** *(amended — RATIFIED 2026-07-11)* | `series`, `overlays?` (`MA`/`BB`/`RSI`), `mode` (`candles`\|`line`), `benchmark?`, `interval`, **`controls?`**, **`defaultView?`** (`simple`\|`advanced`), **`periods?`**, **`activePeriod?`**, **`onPeriodChange?`**, **`coverageNote?`** | House-SVG price/performance chart (D-035, no ECharts). **Amendment RATIFIED 2026-07-11 (Instrument Detail walk):** a **Simple/Advanced view toggle** (Simple = line + price only, the Instrument-Detail default; Advanced = candles + volume + MA/BB/RSI), a **hover crosshair + tooltip** (date + close, OHLCV in Advanced), and a **period selector** (1D/5D/1M/3M/6M/YTD/1Y/5Y/Max) with **honest short-history** (shows only what exists, labels it via `coverageNote`, never stretches or fabricates). Back-compatible: without `controls` it behaves as before. Open-state case at `/kitchen-sink`. |
 | **Treemap** (D-053) | `nodes` (`{label,value,tone}`), `squarified` | Heatmap; house SVG squarified; ECharts escape hatch via ADR only (§4). |
 | **QuoteCardRow** (D-046) | `quotes`, `source` (select: markets/holdings/global/watchlist) | Home's single compact quote-card row with source select; replaces the three separate market rows. |
 | **TickerStrip** (D-047) | `quotes`, `source` | **Home Full layout only** — never Simple, never any other page (D-047). |

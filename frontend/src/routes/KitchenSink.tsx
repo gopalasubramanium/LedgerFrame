@@ -638,6 +638,38 @@ export function KitchenSink() {
               <span className="ks__label">Verify: NOTHING behind is legible (strong blur + heavy scrim). PIN 000000 shows the error; any other 6+ digits unlocks.</span>
             </Specimen>
           </div>
+
+          {/* Batch-2 PROPOSED specimens (page-chrome Phase 3 §11-5/11-11/11-13). */}
+          <div className="ks__row">
+            <Specimen label="PROPOSED · icon-button uniformity — all 7 bar glyphs share one square hit area">
+              <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                {["☾", "≣", "◧", "≈", "⊘", "╱", "☰"].map((g) => (
+                  <button key={g} type="button" className="lf-iconbtn" aria-label={`glyph ${g}`} title={g}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+              <span className="ks__label">theme · density · contrast · motion · rotation · Detail · menu — verify they read visually uniform</span>
+            </Specimen>
+            <Specimen label="PROPOSED · page-action icon buttons — Edit / Import / Export CSV (Add stays labeled)">
+              <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                <button type="button" className="lf-iconbtn" title="Edit" aria-label="Edit">✎</button>
+                <button type="button" className="lf-iconbtn" title="Import" aria-label="Import">↥</button>
+                <button type="button" className="lf-iconbtn" title="Export CSV" aria-label="Export CSV">↧</button>
+                <button type="button" className="lf-btn lf-btn--primary">Add</button>
+              </div>
+              <span className="ks__label">DESIGN-SYSTEM §5.5 amendment — hover for tooltips; Add remains discoverable</span>
+            </Specimen>
+            <Specimen label="PROPOSED · narrow TopBar overflow (D-102 ext.) — resize below the laptop width">
+              <span className="ks__label">Below the laptop breakpoint the display axes collapse into a single ⋯ popover; the App-shell specimen above shows it live when the window is narrowed.</span>
+            </Specimen>
+            <Specimen label="PROPOSED · Import dialog explainer copy (plain, no spec IDs)">
+              <span className="ks__label">
+                Nothing is written until you review. Fix or exclude flagged rows first.
+                Exported transaction files re-import cleanly.
+              </span>
+            </Specimen>
+          </div>
         </div>
       </Section>
 

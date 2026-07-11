@@ -210,9 +210,9 @@ redirects (D-042/D-022/D-056), and add the C-3 no-egress network-trace test.
 Owner-driven live walk; each finding a numbered §-entry, fixed, then re-verified live
 by the owner. Not self-certified.
 
-### Batch 1 (owner, 2026-07-11) — fixed, awaiting owner live re-verify
+### Batch 1 (owner, 2026-07-11) — **§11-1, §11-3 RE-VERIFIED live ✅; §11-4 RATIFIED (reopened → completed)**
 
-- **§11-1 — Nav toggle (☰) showed at laptop+ alongside the fixed sidebar.** Bug: the
+- **§11-1 — RE-VERIFIED ✅. Nav toggle (☰) showed at laptop+ alongside the fixed sidebar.** Bug: the
   hide rule `.lf-topbar__navtoggle { display:none }` (0,1,0) lost to `.lf-iconbtn {
   display:inline-flex }` (0,1,0) by stylesheet import order (TopBar imports chrome.css
   then structure.css), so the toggle rendered at every width. Fix: raised the selector
@@ -226,19 +226,63 @@ by the owner. Not self-certified.
   Sidebar (active only while open). NavLink click still closes on navigation. Added a
   render test: open shows panel+scrim `is-open`; Esc and backdrop each call `onClose`;
   closed = no Esc handler. `Sidebar.tsx`, `chrome.test.tsx`.
-- **§11-3 — Removed the page-level "← Home" link from Holdings.** D-066: navigation is
+- **§11-3 — RE-VERIFIED ✅ + ADDENDUM done. Removed the page-level "← Home" link from Holdings.** D-066: navigation is
   chrome, composed once; the link predated the shell and now duplicated the Sidebar.
   Checked `TEMPLATE-page-build.md` and DESIGN-SYSTEM §3 (worklist + entity-detail
   templates) — **neither mandates a back affordance**, so removed it (and its now-empty
-  `hold__bar`). *Note for owner:* Instrument Detail carries a contextual **"← Holdings"**
-  (entity→parent, not a "← Home" nav duplicate) — left as-is per "no other visual
-  changes"; flag if you want it removed too. `Holdings.tsx`.
-- **§11-4 — Renamed "Export (server-side)" → "Export CSV" (PROPOSED).** User copy must
-  not carry implementation notes. Checked API-CONTRACT / PRODUCT-SPEC / GLOSSARY — **no
-  canonical D-050 export label is specified**, so per the finding used **"Export CSV"**,
-  recorded here as **PROPOSED for owner ratification**. The DataTable toolbar button
-  (used by both the holdings snapshot and the transactions ledger). `DataTable.tsx`;
-  test selector updated.
+  `hold__bar`). **Addendum (owner):** also removed Instrument Detail's contextual
+  **"← Holdings"** link (and its `ins__bar`) — the Sidebar is the nav (D-066);
+  entity→parent duplication isn't needed. `Holdings.tsx`, `InstrumentDetail.tsx`.
+- **§11-4 — "Export CSV" RATIFIED; reopened → COMPLETED.** The label is ratified. The
+  batch-1 fix was incomplete (only the DataTable toolbar button); audited **all**
+  export/import buttons app-wide and applied it: the Holdings **page-header** Export still
+  read "Export (server-side)" → now the ratified label (and, per §11-13, an icon button
+  with `aria-label="Export CSV"`). No "Export (server-side)" literal remains in any button.
+  `DataTable.tsx`, `Holdings.tsx`.
 
-**Checks:** frontend 80 tests · backend 479 · drift/typecheck/lint/contract green.
-**STOP — owner re-verifies live before the polish batch.**
+### Batch 2 (owner, 2026-07-11) — fixed, awaiting owner live re-verify + PROPOSED ratifications
+
+- **§11-5 — Icon-button uniformity.** `.lf-iconbtn` now a fixed **`--iconbtn-size`**
+  square (tokenized) with a single glyph size, glyph flex-centered, so the 7 bar controls
+  render visually uniform (`⊘ ╱ ╪ ☾ …`). Kitchen-sink row shows all bar glyphs side by
+  side. `tokens.css`, `structure.css`, `KitchenSink.tsx`.
+- **§11-6 — Tooltip copy.** Stateful toggles now read **"Function: state"** only
+  (stripped "— click to change"); `aria-label` matches the tooltip. `DisplayControls.tsx`,
+  `TopBar.tsx` (+ `App.test.tsx` selectors).
+- **§11-7 — DEMO audit (no hardcodes found).** All demo/mock signals derive from data,
+  not literals: **DemoBadge** renders only when the demo-data flag is on (its "Demo data"
+  text is the badge's label, not a state literal); **"Source: mock"** on Instrument Detail
+  comes from `quote.source` provider provenance (`{quote.source}`), not a hardcode; the
+  only `mock`/`Mock` strings are the **kitchen-sink gallery caption** and **test fixtures**
+  (both legitimately mock). **No fix needed** — reported per-instance as data (fine).
+- **§11-8 — Spec-ID leak.** Removed decision IDs from user-facing copy: Instrument Detail
+  subtitle `(P-3)` and Holdings summary `(D-023)`. The Import dialog dry-run explainer
+  (which carried `(D-012)` + an impl tip) is rewritten plain **(PROPOSED)**: *"Nothing is
+  written until you review. Fix or exclude flagged rows first. Exported transaction files
+  re-import cleanly."* (Remaining `D-`/`P-`/`§` occurrences are code comments only.)
+  `InstrumentDetail.tsx`, `Holdings.tsx`.
+- **§11-9 — Page subtitle clamp.** Template-level: below the 900px breakpoint the
+  `PageHeader` purpose line clamps to **one line with ellipsis** — applies to all four
+  templates (every page uses `PageHeader`). `structure.css`.
+- **§11-11 — TopBar narrow overflow (PROPOSED, D-102 ext.).** Below 900px the display axes
+  + rotation + Detail collapse into a single **`⋯` overflow popover** (`aria-label="Display
+  settings"`, reuses surface tokens, outside-click/Esc close); the bar shows ☰ + brand +
+  overflow + Clock + DemoBadge and **never wraps ≥320px** (`flex-wrap:nowrap`). New pattern
+  → DESIGN-SYSTEM §5.5 amendment (PROPOSED); kitchen-sink note + live in the App-shell
+  specimen when narrowed. `TopBar.tsx`, `chrome.css`.
+- **§11-12 — Clock + DemoBadge placement (PROPOSED).** **Clock:** time-only in the bar at
+  all widths; full date + IANA timezone in the tooltip/`aria-label`. **DemoBadge:** at
+  laptop+ renders in the **sidebar footer** (bottom-left); at narrow it stays in the bar;
+  never hidden while demo is active. `Clock.tsx`, `Sidebar.tsx` (footer slot), `TopBar.tsx`,
+  `AppShell.tsx`, `chrome.css`.
+- **§11-13 — Page-action icon buttons (PROPOSED, §5.5 amendment).** Page-level actions are
+  icon-only `.lf-iconbtn` with tooltip + matching `aria-label`: Instrument Detail **Edit**
+  `✎`; Holdings **Import** `↥` / **Export CSV** `↧`. **Exception:** primary **Add** stays a
+  labeled primary button. Kitchen-sink specimen row. `InstrumentDetail.tsx`, `Holdings.tsx`.
+
+**PROPOSED items needing owner ratification at the kitchen sink:** §11-8 import copy,
+§11-11 overflow popover, §11-12 Clock/DemoBadge, §11-13 page-action icon buttons
+(+ the §11-4 "Export CSV" label, now ratified). Specimens staged under the chrome section.
+
+**Checks:** frontend 80 tests · drift/typecheck/lint/build green; backend untouched.
+**STOP — owner re-verifies live + ratifies the PROPOSED items at the kitchen sink.**

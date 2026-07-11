@@ -13,27 +13,31 @@ export interface ClockProps {
   now?: Date;
 }
 
-function format(date: Date, timezone: string): string {
+function formatTime(date: Date, timezone: string): string {
+  const opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", hour12: false };
   try {
-    return new Intl.DateTimeFormat(undefined, {
-      timeZone: timezone,
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(date);
+    return new Intl.DateTimeFormat(undefined, { timeZone: timezone, ...opts }).format(date);
   } catch {
     // Bad/unknown tz — fall back to the local zone rather than crash the chrome.
-    return new Intl.DateTimeFormat(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(date);
+    return new Intl.DateTimeFormat(undefined, opts).format(date);
   }
 }
 
-function shortZone(timezone: string): string {
-  const city = timezone.split("/").pop() ?? timezone;
-  return city.replace(/_/g, " ");
+// Full date + the IANA timezone name for the tooltip, e.g.
+// "Friday, 11 July 2026 · Asia/Singapore".
+function fullLabel(date: Date, timezone: string): string {
+  try {
+    const d = new Intl.DateTimeFormat(undefined, {
+      timeZone: timezone,
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+    return `${d} · ${timezone}`;
+  } catch {
+    return timezone;
+  }
 }
 
 export function Clock({ timezone, now }: ClockProps) {
@@ -46,10 +50,12 @@ export function Clock({ timezone, now }: ClockProps) {
   }, [now]);
 
   const shown = now ?? tick;
+  const full = fullLabel(shown, timezone);
+  // Time-only in the bar at all widths (page-chrome batch 2, §11-12); the full date
+  // and IANA timezone live in the tooltip / accessible name.
   return (
-    <span className="lf-clock" aria-label={`Current time, ${shortZone(timezone)}`}>
-      <span>{format(shown, timezone)}</span>
-      <span className="lf-clock__tz">{shortZone(timezone)}</span>
+    <span className="lf-clock" title={full} aria-label={full}>
+      {formatTime(shown, timezone)}
     </span>
   );
 }

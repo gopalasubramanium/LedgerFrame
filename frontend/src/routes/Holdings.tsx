@@ -356,7 +356,7 @@ export function Holdings() {
         />
         <span className="hold__sub">
           A linked summary — Net worth is canonical on <Link to="/net-worth">Net worth</Link>;
-          analytics on <Link to="/portfolio">Portfolio</Link> (D-023).
+          analytics on <Link to="/portfolio">Portfolio</Link>.
         </span>
       </div>
 
@@ -562,11 +562,25 @@ function PageHeaderHoldings({
       subtitle="Management surface — add/edit holdings, transactions, and manual assets; import; export."
       actions={
         <>
-          <button type="button" className="lf-btn" onClick={onImport}>
-            Import
+          {/* Page-action icon buttons (§11-13): icon-only + tooltip/aria-label. Add
+              stays a labeled primary button so the primary action is discoverable. */}
+          <button
+            type="button"
+            className="lf-iconbtn"
+            onClick={onImport}
+            title="Import"
+            aria-label="Import"
+          >
+            ↥
           </button>
-          <button type="button" className="lf-btn" onClick={onExport}>
-            Export (server-side)
+          <button
+            type="button"
+            className="lf-iconbtn"
+            onClick={onExport}
+            title="Export CSV"
+            aria-label="Export CSV"
+          >
+            ↧
           </button>
           <button type="button" className="lf-btn lf-btn--primary" onClick={onAdd}>
             Add
@@ -1268,9 +1282,8 @@ function ImportDialog({
             <EmptyState message="That file isn’t a transactions ledger" reason={formatError} />
           ) : (
             <span className="hold__sub">
-              A dry run — every row is reviewed before anything is written. Fix flagged
-              cells inline or exclude the row; imports never silently create bad data (D-012).
-              Tip: the Transactions <strong>Export</strong> produces a file that re-imports cleanly.
+              Nothing is written until you review. Fix or exclude flagged rows first.
+              Exported transaction files re-import cleanly.
             </span>
           )}
         </div>

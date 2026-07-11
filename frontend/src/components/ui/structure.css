@@ -39,6 +39,16 @@
   font-size: var(--font-size-14);
   line-height: var(--line-14);
 }
+/* Template-level (all four templates): below the laptop breakpoint the purpose line
+   clamps to a single line with ellipsis so it never dominates a narrow screen
+   (page-chrome Phase 3 batch 2, §11-9). */
+@media (max-width: 900px) {
+  .lf-pageheader__subtitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 .lf-pageheader__actions {
   display: flex;
   gap: var(--space-3);
@@ -185,8 +195,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-height);
-  height: var(--control-height);
+  /* Fixed square hit area + single glyph size so every icon button reads uniform,
+     whatever the glyph's own metrics (page-chrome Phase 3 batch 2, §11-5). */
+  flex-shrink: 0;
+  width: var(--iconbtn-size);
+  height: var(--iconbtn-size);
   padding: 0;
   color: var(--text-secondary);
   background: transparent;

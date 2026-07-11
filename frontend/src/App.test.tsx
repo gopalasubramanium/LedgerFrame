@@ -74,7 +74,7 @@ test("theme cycle advances light → dark → system and stamps data-theme", asy
   renderControls();
 
   // Icon-only button (recomposed 2026-07-11): state lives in the tooltip/aria-label.
-  const btn = screen.getByRole("button", { name: /change theme/i });
+  const btn = screen.getByRole("button", { name: /^Theme:/i });
   // Default choice is system.
   expect(btn.getAttribute("title")).toMatch(/System/);
 
@@ -99,7 +99,7 @@ test("density toggle stamps data-density and persists per-device", async () => {
     "data-density",
     "comfortable",
   );
-  await user.click(screen.getByRole("button", { name: /change density/i }));
+  await user.click(screen.getByRole("button", { name: /^Density:/i }));
   expect(document.documentElement).toHaveAttribute("data-density", "compact");
   expect(localStorage.getItem("lf.density")).toBe("compact");
 });

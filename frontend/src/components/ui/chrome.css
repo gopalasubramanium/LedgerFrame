@@ -32,6 +32,18 @@
   gap: var(--space-5);
   padding: var(--space-2) var(--space-3) var(--space-5);
 }
+/* Bottom-left footer (DemoBadge at laptop+ — §11-12). `margin-top:auto` pins it to
+   the bottom; hidden below the laptop breakpoint where the sidebar is off-canvas. */
+.lf-sidebar__foot {
+  margin-top: auto;
+  padding: var(--space-4) var(--space-5);
+  border-top: var(--border-width) solid var(--border);
+}
+@media (max-width: 900px) {
+  .lf-sidebar__foot {
+    display: none;
+  }
+}
 .lf-sidebar__group {
   display: flex;
   flex-direction: column;
@@ -120,17 +132,59 @@
 }
 .lf-topbar__right {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* the bar never wraps at any width ≥320px (§11-11) */
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
   margin-left: auto;
+  min-width: 0;
+}
+/* Inline display axes: shown at laptop+, collapsed into the overflow popover below. */
+.lf-topbar__axes {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* Overflow trigger + popover: hidden at laptop+, shown below the laptop breakpoint. */
+.lf-topbar__overflow {
+  position: relative;
+  display: none;
+}
+.lf-topbar__popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  z-index: 45;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 80vw;
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+}
+/* DemoBadge slot in the bar: shown only at narrow widths (sidebar footer carries it
+   at laptop+ — §11-12). Empty when demo is off. */
+.lf-topbar__demo {
+  display: none;
 }
 @media (max-width: 900px) {
   .lf-topbar .lf-topbar__navtoggle {
     display: inline-flex;
   }
   .lf-topbar__brand {
+    display: inline-flex;
+  }
+  .lf-topbar__axes {
+    display: none;
+  }
+  .lf-topbar__overflow {
+    display: inline-flex;
+  }
+  .lf-topbar__demo {
     display: inline-flex;
   }
 }
@@ -191,20 +245,15 @@
   color: var(--accent);
 }
 
-/* ---- Clock ----------------------------------------------------------------- */
+/* ---- Clock (time-only in the bar; full date + IANA tz in the tooltip) ------- */
 .lf-clock {
   display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-2);
+  align-items: center;
   font-size: var(--font-size-13);
   line-height: var(--line-13);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-.lf-clock__tz {
-  font-size: var(--font-size-12);
-  color: var(--text-tertiary);
 }
 
 /* ---- LockScreen (D-002 access lock) ----------------------------------------

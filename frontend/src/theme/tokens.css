@@ -156,6 +156,9 @@
   /* Active nav-item rail (Sidebar is-active) — bolder than a hairline border so the
      active page reads at a glance (page-chrome Phase 0a re-ratify, 2026-07-11). */
   --nav-rail-width: 3px;
+  /* Icon-button (.lf-iconbtn) fixed square hit area — uniform across all bar controls
+     and page-action buttons regardless of density (page-chrome Phase 3 batch 2). */
+  --iconbtn-size: 2rem;
   /* LockScreen backdrop blur radius (D-002). Strong enough to smear all text/figures
      to illegibility; paired with a heavy --lock-scrim so content stays unreadable
      even where backdrop-filter is unsupported (see LockScreen.tsx @supports fallback).

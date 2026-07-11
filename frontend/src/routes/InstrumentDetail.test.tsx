@@ -46,7 +46,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 test("renders the scoped-view header, quote and sections", async () => {
   renderAt();
   await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL", level: 1 })).toBeInTheDocument());
-  expect(screen.getByText(/scoped view \(P-3\)/)).toBeInTheDocument();
+  expect(screen.getByText(/scoped view/)).toBeInTheDocument();
   expect(screen.getByText(/USD 190\.5/)).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Your position" })).toBeInTheDocument();
   // AI explainer is present but deferred (D-068 intact), never a fabricated answer.

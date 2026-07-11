@@ -366,6 +366,34 @@ a heavy `--lock-scrim` dims on top, and an `@supports` fallback swaps to a near-
 unreadable on every browser regardless of blur. `--lock-blur` is a token; verify the
 illegibility at the kitchen sink.
 
+**Icon-button & tooltip rules (batch 2, 2026-07-11).**
+- **Uniform hit area.** Every `.lf-iconbtn` (bar controls + page-action buttons) is a
+  fixed **`--iconbtn-size`** square with a single glyph size, glyph flex-centered — they
+  read uniform whatever the glyph's own metrics. `☰` stays reserved for the menu toggle.
+- **Tooltip = "Function: state" only.** A stateful toggle's `title` is exactly
+  `Function: state` (e.g. `Theme: dark`) — no "click to change" trailer — and its
+  `aria-label` matches the tooltip.
+
+**TopBar narrow composition (PROPOSED — D-102 extension, batch 2).** Below the 900px
+laptop breakpoint the display axes + rotation + Detail **collapse into a single overflow
+popover** (`⋯`, `aria-label="Display settings"`); the bar then shows only ☰ + brand +
+overflow + Clock + DemoBadge and **never wraps at any width ≥320px**. The popover reuses
+`--surface-raised`/`--border`/`--shadow-1`, closes on outside-click/Esc. New pattern →
+ratify at the kitchen sink.
+
+**Clock (PROPOSED, batch 2).** Time-only in the bar at **all** widths; the full date +
+IANA timezone name live in the tooltip/`aria-label`.
+
+**DemoBadge placement (PROPOSED, batch 2).** At laptop+ it renders in the **sidebar
+footer** (bottom-left); below the breakpoint it moves into the **top bar**. Never hidden
+while demo data is active.
+
+**Page-action icon buttons (PROPOSED — DESIGN-SYSTEM §5.5 amendment, batch 2).**
+Page-level actions render as **icon-only `.lf-iconbtn`** with tooltip + matching
+`aria-label` (Instrument Detail **Edit** `✎`; Holdings **Import** `↥` / **Export CSV**
+`↧`). **Exception:** the primary **Add** stays a **labeled** primary button so the
+primary action is discoverable. Ratify at the kitchen sink.
+
 **Toast / Snackbar** *(amended 2026-07-10 — Holdings page-build §9-4).* A
 transient, timed, dismissible notification with an optional action slot, provided
 via a `ToastProvider` + `useToast()` `show(spec)`. Auto-dismisses after

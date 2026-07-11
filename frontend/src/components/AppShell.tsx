@@ -63,15 +63,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     else setLockError(r.error || "Incorrect PIN");
   };
 
+  // DemoBadge lives in the sidebar footer at laptop+ and in the top bar at narrow
+  // widths (CSS shows the right one per breakpoint) — never hidden when demo is on.
+  const demoBadge = demo ? <DemoBadge /> : undefined;
+
   return (
     <div className="lf-shell">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} footer={demoBadge} />
       <div className="lf-shell__main">
         <TopBar
           onToggleNav={() => setNavOpen((v) => !v)}
           controls={<DisplayControls />}
           clock={<Clock timezone={timezone} />}
-          demoBadge={demo ? <DemoBadge /> : undefined}
+          demoBadge={demoBadge}
           rotationOn={rotationOn}
           onToggleRotation={() => setRotationOn((v) => !v)}
           detailLevel={detailLevel}

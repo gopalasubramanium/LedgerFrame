@@ -97,7 +97,7 @@ test("TopBar rotation and Detail toggles render a distinct glyph per state", () 
     />,
   );
   expect(screen.getByRole("button", { name: /Rotation: Off/ }).textContent).toBe("⊘");
-  expect(screen.getByRole("button", { name: /Detail level: Simple/ }).textContent).toBe("╱");
+  expect(screen.getByRole("button", { name: /Detail: Simple/ }).textContent).toBe("╱");
 
   rerender(
     <TopBar
@@ -108,7 +108,7 @@ test("TopBar rotation and Detail toggles render a distinct glyph per state", () 
     />,
   );
   expect(screen.getByRole("button", { name: /Rotation: On/ }).textContent).toBe("↻");
-  expect(screen.getByRole("button", { name: /Detail level: Full/ }).textContent).toBe("╪");
+  expect(screen.getByRole("button", { name: /Detail: Full/ }).textContent).toBe("╪");
 });
 
 // --- StaleBanner (honest: hidden at 0) --------------------------------------
@@ -156,11 +156,16 @@ test("DemoBadge shows when active and renders nothing when inactive", () => {
 });
 
 // --- Clock (frozen, timezone-aware) -----------------------------------------
-test("Clock renders a frozen time in the given timezone", () => {
+test("Clock shows time-only in the bar; full date + IANA tz live in the tooltip", () => {
   // 2026-07-11T04:30:00Z is 12:30 in Asia/Singapore (UTC+8).
-  render(<Clock timezone="Asia/Singapore" now={new Date("2026-07-11T04:30:00Z")} />);
-  expect(screen.getByText("12:30")).toBeTruthy();
-  expect(screen.getByText("Singapore")).toBeTruthy();
+  const { container } = render(
+    <Clock timezone="Asia/Singapore" now={new Date("2026-07-11T04:30:00Z")} />,
+  );
+  const el = container.querySelector(".lf-clock") as HTMLElement;
+  expect(el.textContent).toBe("12:30");
+  // Time zone name is NOT in the visible text — it's in the tooltip/aria-label.
+  expect(el.getAttribute("title")).toContain("Asia/Singapore");
+  expect(el.getAttribute("title")).toContain("2026");
 });
 
 // --- LockScreen (D-002 access lock; min 6 digits) ---------------------------

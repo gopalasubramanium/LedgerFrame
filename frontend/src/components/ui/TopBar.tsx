@@ -1,24 +1,21 @@
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import "./chrome.css";
 import "./structure.css";
 
 // Stateful-glyph rule (DESIGN-SYSTEM §5.5): each toggle shows a state-distinct glyph;
-// the tooltip names the state. Rotation = arrows(on)/slashed(off); Detail = line(simple)
-// vs candlestick(full). No collision with ☰ (sidebar/menu toggle).
+// the tooltip names the state ("Function: state"), and the aria-label matches. Rotation
+// = arrows(on)/slashed(off); Detail = line(simple) vs candlestick(full). No collision
+// with ☰ (sidebar/menu toggle).
 const ROTATION_ICON = { on: "↻", off: "⊘" } as const;
 const DETAIL_ICON = { simple: "╱", full: "╪" } as const;
 
-// Global chrome (DESIGN-SYSTEM §5.5, D-066) — recomposed 2026-07-11 (page-chrome
-// Phase 0a re-ratify). The ONE top bar, composed once above every page. A slim
-// (~48px) calm register: NO banners live here (StaleBanner/UpdateBanner render as
-// full-width status strips BELOW the bar). Brand "LedgerFrame" sits top-LEFT but
-// only at narrow widths — at laptop+ the sidebar header carries it, so exactly one
-// brand is ever visible (never two, D-066).
-//
-// Right cluster, right-aligned and icon-only: the relocated display axes
-// (theme/density/contrast/motion via `controls`), then the two toggles this bar
-// owns — rotation (D-044) and Detail level (D-040, only Home branches) — then the
-// Clock and the DemoBadge. At narrow widths the sidebar nav toggle appears (D-102).
+// Global chrome (DESIGN-SYSTEM §5.5, D-066). The ONE slim top bar. At laptop+ the
+// display axes + rotation + Detail render inline, right-aligned. Below the laptop
+// breakpoint (D-102 extension, batch 2 §11-11) they collapse into a single overflow
+// popover so the bar never wraps at any width ≥320px: ☰ + brand + overflow + Clock +
+// DemoBadge. The DemoBadge shows in the bar only at narrow widths (at laptop+ it lives
+// in the sidebar footer — §11-12).
 export interface TopBarProps {
   /** Open the off-canvas sidebar at narrow widths (D-102). */
   onToggleNav?: () => void;
@@ -26,7 +23,7 @@ export interface TopBarProps {
   controls?: ReactNode;
   /** Timezone Clock (D-013). */
   clock?: ReactNode;
-  /** DemoBadge when demo data is loaded. */
+  /** DemoBadge (narrow widths only; at laptop+ it renders in the sidebar footer). */
   demoBadge?: ReactNode;
   /** Rotation toggle state + handler (D-044); rendered only when a handler is given. */
   rotationOn?: boolean;
@@ -34,8 +31,7 @@ export interface TopBarProps {
   /** App-wide Detail level (D-040); rendered only when a handler is given. */
   detailLevel?: "simple" | "full";
   onToggleDetail?: () => void;
-  /** Reserved slot for the Ask panel (D-067) — DEFERRED to the AI-surfaces
-      milestone (C-2). The shell leaves this empty for now; D-067 is not dropped. */
+  /** Reserved slot for the Ask panel (D-067) — DEFERRED (C-2). */
   askSlot?: ReactNode;
 }
 
@@ -50,6 +46,58 @@ export function TopBar({
   onToggleDetail,
   askSlot,
 }: TopBarProps) {
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowRef = useRef<HTMLDivElement>(null);
+
+  // Close the overflow popover on outside-click / Esc.
+  useEffect(() => {
+    if (!overflowOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+        setOverflowOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOverflowOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [overflowOpen]);
+
+  // The display axes + rotation + Detail — rendered inline (laptop+) AND inside the
+  // overflow popover (narrow). DisplayControls is context-driven, so two instances
+  // stay in sync.
+  const axes = (
+    <>
+      {controls}
+      {onToggleRotation && (
+        <button
+          type="button"
+          className="lf-iconbtn"
+          aria-pressed={rotationOn}
+          aria-label={`Rotation: ${rotationOn ? "On" : "Off"}`}
+          title={`Rotation: ${rotationOn ? "On" : "Off"}`}
+          onClick={onToggleRotation}
+        >
+          {rotationOn ? ROTATION_ICON.on : ROTATION_ICON.off}
+        </button>
+      )}
+      {onToggleDetail && (
+        <button
+          type="button"
+          className="lf-iconbtn"
+          aria-label={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
+          title={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
+          onClick={onToggleDetail}
+        >
+          {detailLevel === "full" ? DETAIL_ICON.full : DETAIL_ICON.simple}
+        </button>
+      )}
+    </>
+  );
+
   return (
     <header className="lf-topbar">
       {onToggleNav && (
@@ -66,32 +114,31 @@ export function TopBar({
       <div className="lf-topbar__brand">LedgerFrame</div>
 
       <div className="lf-topbar__right">
-        {controls}
-        {onToggleRotation && (
+        {/* Inline at laptop+ */}
+        <div className="lf-topbar__axes">{axes}</div>
+
+        {/* Overflow popover below the laptop breakpoint */}
+        <div className="lf-topbar__overflow" ref={overflowRef}>
           <button
             type="button"
             className="lf-iconbtn"
-            aria-pressed={rotationOn}
-            aria-label={`Rotation: ${rotationOn ? "On" : "Off"}. Click to toggle.`}
-            title={`Rotation: ${rotationOn ? "On" : "Off"}`}
-            onClick={onToggleRotation}
+            aria-haspopup="menu"
+            aria-expanded={overflowOpen}
+            aria-label="Display settings"
+            title="Display settings"
+            onClick={() => setOverflowOpen((v) => !v)}
           >
-            {rotationOn ? ROTATION_ICON.on : ROTATION_ICON.off}
+            ⋯
           </button>
-        )}
-        {onToggleDetail && (
-          <button
-            type="button"
-            className="lf-iconbtn"
-            aria-label={`Detail level: ${detailLevel === "full" ? "Full" : "Simple"}. Click to toggle.`}
-            title={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
-            onClick={onToggleDetail}
-          >
-            {detailLevel === "full" ? DETAIL_ICON.full : DETAIL_ICON.simple}
-          </button>
-        )}
+          {overflowOpen && (
+            <div className="lf-topbar__popover" role="menu">
+              {axes}
+            </div>
+          )}
+        </div>
+
         {clock}
-        {demoBadge}
+        <span className="lf-topbar__demo">{demoBadge}</span>
         {askSlot}
       </div>
     </header>

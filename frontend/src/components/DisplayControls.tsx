@@ -45,8 +45,8 @@ export function DisplayControls() {
         type="button"
         className="lf-iconbtn"
         onClick={cycle}
-        title={`${themeTip} — click to change`}
-        aria-label={`${themeTip}. Click to change theme.`}
+        title={themeTip}
+        aria-label={themeTip}
       >
         {THEME_ICON[choice]}
       </button>
@@ -54,16 +54,16 @@ export function DisplayControls() {
         type="button"
         className="lf-iconbtn"
         onClick={toggleDensity}
-        title={`Density: ${density} — click to change`}
-        aria-label={`Density: ${density}. Click to change density.`}
+        title={`Density: ${density}`}
+        aria-label={`Density: ${density}`}
       >
         {DENSITY_ICON[density]}
       </button>
       <button
         type="button"
         className="lf-iconbtn"
-        title={`${contrastTip} — click to change`}
-        aria-label={`${contrastTip}. Click to change contrast.`}
+        title={contrastTip}
+        aria-label={contrastTip}
         onClick={() =>
           setContrastPref(
             contrastPref === "system" ? "high" : contrastPref === "high" ? "normal" : "system",
@@ -75,8 +75,8 @@ export function DisplayControls() {
       <button
         type="button"
         className="lf-iconbtn"
-        title={`${motionTip} — click to change`}
-        aria-label={`${motionTip}. Click to change motion.`}
+        title={motionTip}
+        aria-label={motionTip}
         onClick={() =>
           setMotionPref(
             motionPref === "system" ? "reduced" : motionPref === "reduced" ? "full" : "system",

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import "./chrome.css";
 import { NAV_GROUPS } from "./nav";
@@ -29,6 +30,9 @@ export interface SidebarProps {
       shell this stays false: only built pages (`item.built`) appear; every group
       header shows regardless (progressive reveal of the fixed D-043 skeleton). */
   showAll?: boolean;
+  /** Bottom-left footer slot (e.g. DemoBadge at laptop+ — §11-12). Hidden below the
+      laptop breakpoint, where the sidebar is off-canvas. */
+  footer?: ReactNode;
 }
 
 export function Sidebar({
@@ -37,6 +41,7 @@ export function Sidebar({
   groups = NAV_GROUPS,
   activePath,
   showAll = false,
+  footer,
 }: SidebarProps) {
   // Off-canvas (D-102): Esc dismisses it, matching the backdrop click. No-op at
   // laptop+ where the panel is fixed (open stays false there).
@@ -88,6 +93,7 @@ export function Sidebar({
             );
           })}
         </div>
+        {footer && <div className="lf-sidebar__foot">{footer}</div>}
       </nav>
     </>
   );

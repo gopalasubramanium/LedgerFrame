@@ -121,24 +121,29 @@ export function InstrumentDetail() {
 
   return (
     <div className="ins">
-      <div className="ins__bar">
-        <Link className="lf-btn" to="/holdings">← Holdings</Link>
-      </div>
-
       <PageHeader
         title={sym}
         subtitle={
           meta?.name
-            ? `${meta.name} — a scoped view (P-3); canonical on Markets & Portfolio`
-            : "A scoped view (P-3) — this page owns nothing; canonical on Markets & Portfolio"
+            ? `${meta.name} — a scoped view; canonical on Markets & Portfolio`
+            : "A scoped view; canonical on Markets & Portfolio"
         }
         actions={
           <>
-            {/* D-099: expense ratio is fund-only — the action appears only there. */}
+            {/* Expense ratio is fund-only — the action appears only there. */}
             {isFundWrapped && (
               <button type="button" className="lf-btn" onClick={() => setCostOpen(true)}>Ongoing cost</button>
             )}
-            <button type="button" className="lf-btn lf-btn--primary" onClick={() => setEditOpen(true)}>Edit</button>
+            {/* Page-action icon button (§11-13): icon-only + tooltip/aria-label. */}
+            <button
+              type="button"
+              className="lf-iconbtn"
+              onClick={() => setEditOpen(true)}
+              title="Edit"
+              aria-label="Edit"
+            >
+              ✎
+            </button>
           </>
         }
       />

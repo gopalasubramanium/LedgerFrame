@@ -75,6 +75,12 @@ function windowToDays(w: string): number {
 function metric(stats: PortfolioStats | null | undefined, label: string): StatMetric | undefined {
   return stats?.metrics.find((m) => m.label === label);
 }
+// §12b4-4: colour a signed risk/return metric gain/loss (reuse the TrendStat tone mechanism).
+// Sign comes from the SERVED value — no client math. Volatility is a MAGNITUDE (no direction)
+// and is deliberately NOT passed through this (stays neutral).
+function metricTone(m: StatMetric | undefined): "up" | "down" | "flat" | undefined {
+  return m && m.value != null ? signOf(m.value) : undefined;
+}
 function metricDisplay(m: StatMetric | undefined): string {
   if (!m || m.value == null) return "—";
   // Round served values for display (the backend may serve raw floats); never a long
@@ -336,17 +342,24 @@ export function Portfolio() {
         <h2 className="pf__h2">Risk &amp; return</h2>
         <div className="lf-card__body">
           <CardBody data={stats} onRetry={reload}>
-            {(st) => (
+            {(st) => {
+              // §12b4-4: signed metrics take gain/loss tone; volatility is a magnitude → neutral.
+              const ret1y = metric(st, "1Y return");
+              const vol1y = metric(st, "1Y volatility");
+              const retVol = metric(st, "Return / volatility");
+              const maxDd = metric(st, "Max drawdown (1Y)");
+              return (
               <>
                 <div className="pf__rail pf__rail--tight">
-                  <TrendStat label="1Y return" value={metricDisplay(metric(st, "1Y return"))} />
-                  <TrendStat label="1Y volatility" value={metricDisplay(metric(st, "1Y volatility"))} />
-                  <TrendStat label="Return / volatility" value={metricDisplay(metric(st, "Return / volatility"))} />
-                  <TrendStat label="Max drawdown (1Y)" value={metricDisplay(metric(st, "Max drawdown (1Y)"))} />
+                  <TrendStat label="1Y return" value={metricDisplay(ret1y)} tone={metricTone(ret1y)} />
+                  <TrendStat label="1Y volatility" value={metricDisplay(vol1y)} />
+                  <TrendStat label="Return / volatility" value={metricDisplay(retVol)} tone={metricTone(retVol)} />
+                  <TrendStat label="Max drawdown (1Y)" value={metricDisplay(maxDd)} tone={metricTone(maxDd)} />
                 </div>
                 <p className="pf__note">{NOT_A_SHARPE}</p>
               </>
-            )}
+              );
+            }}
           </CardBody>
         </div>
       </section>

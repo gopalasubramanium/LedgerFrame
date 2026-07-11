@@ -177,7 +177,7 @@ Home shows one summary of each, linked to its canonical page.
 | **Ongoing cost (expense ratio)** | Forward estimate = expense ratio (`annual_cost_bps`) × current value. Kept **separate** from recorded fees, never blended. A card may be titled "Costs" (D-029). **[Help]** |
 | **Statements** | Income, fees, cash flow, realised-vs-unrealised from recorded transactions — for review / your accountant. |
 | **Review** | The page/concept: a live "what needs a look" feed from existing signals; a recorded review snapshots state to `ReviewLog`. "what needs a look" may survive as body copy but not as a label (D-030). Canonical on the **Review** page. |
-| **Tag** | A user-extensible, case-insensitively-unique label on a holding (cap 16/holding). |
+| **Tag** | A user-extensible, case-insensitively-unique label on a holding (cap 16/holding). Normalised on write (lowercase/underscore/truncate, D-104) but **rendered verbatim** (no UI casing transform); demo-seed tags carry display casing as a sanctioned exception. |
 
 ---
 

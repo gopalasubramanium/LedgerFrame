@@ -1,12 +1,13 @@
 # page-portfolio.md — Portfolio (analytics) page build plan
 
-**Status: Phase-0a RATIFIED · Phase 1+2 built · Phase-3a scripted pre-pass GREEN (2026-07-11) —
-STOPPED for the owner's Phase-3b acceptance walk.** Batch-13 NDs ratified (§9/§11); Phase-0
-verification (§10); ND-4 backend delta shipped; Phase-0a amendments (PriceChart comparison mode +
-AllocationDonut footnote) ratified. `/portfolio` assembled + wired + nav-built; tests + overflow
-suite extended; the pre-pass caught + fixed 3 real layout defects (grid min-width, unrounded
-values, rail column width) and now runs 0-overflow at 320/375/900/1366 × both themes, 0 console
-errors. Commits `751f9bf`→`3cb619e`. **Next: the owner's live Phase-3b walk (judgment items).**
+**Status: DONE ✅ — page owner-accepted 2026-07-12 (see §13 retrospective).** Phases 0/0a/1/2 +
+Phase-3a scripted pre-pass + Phase-3b owner walk (batches 1–4, all ratified). Batch-13 NDs ratified
+(§9/§11); Phase-0 verification (§10); ND-4 backend delta shipped; Phase-0a amendments (PriceChart
+comparison mode + AllocationDonut footnote) ratified. Pre-pass runs full green (data + controls +
+donut/chart hover + equal rail geometry + 0 overflow at 320/375/900/1366 × both themes, 0 console
+errors). Platform legacy: categorical palette, progressive per-card loading, hover readouts,
+DataTable-everywhere, PriceChart comparison mode, equal-geometry-from-the-grid rule. Commits
+`751f9bf`→ batch-4 close-out. **No open blockers.**
 
 Portfolio is the second **overview-template** page (Net worth/Home are the others) and the
 **analytics** half of the Holdings↔Portfolio split (D-023). Holdings is DONE; this page is its
@@ -567,3 +568,103 @@ Recorded, fixed, pre-pass re-run green, awaiting owner re-verify. (Page NOT clos
 **Checks after batch 3:** frontend **113 vitest** (+ mover-price) **+ 41 Playwright** + drift +
 build; backend suite green + contract current. Live pre-pass green (comma-formatted rail values,
 By-tag donut populated, mover price, donut hover, no residual skeletons, 0 overflow, 0 console errors).
+
+**Batch 3 — RATIFIED (owner, 2026-07-11):** sidebar page-entry indentation (§12b3-5), skeleton
+pulse/fade (§12b3-4), and the categorical palette (§12-6) confirmed live across theme +
+high-contrast.
+
+## PHASE-3B WALK — batch 4 (owner, 2026-07-11)
+
+Recorded, fixed, pre-pass re-run, awaiting owner re-verify. (Page NOT closed.)
+
+1. **§12b4-1 — Stat-rail tiles: EQUAL geometry from the grid (repeat of §12b3-1, now fixed at the
+   root).** The Realised P/L (· 2024) tile still read shorter than its siblings. Root cause: the
+   Realised tile wraps its `TrendStat` in `.pf__railtile` (for the corner Report link); the wrapper
+   is the grid item and stretches to the row height, but the inner `.lf-stat` — the element that
+   PAINTS the tile (bg/border) — was content-height, so it under-filled the cell. Fix is
+   grid-driven, not content-driven: `.pf__railtile > .lf-stat { flex: 1 1 auto }` so the painted box
+   fills the stretched cell; equal columns already come from `repeat(6,1fr)` → `3` → `2`. **Content
+   can no longer resize a tile.** **New pre-pass assertion added** (portfolio-smoke §PART 1): every
+   painted `.pf__rail[data-card="rail"] .lf-stat`, grouped by rendered row, must be equal width AND
+   height (≤1px) at 320/375/900/1366. **Verified live GREEN:** wSpread 0 / hSpread 0 on all rows at
+   all four breakpoints (2×3 at 320/375, 3×2 at 900, 6×1 at 1366).
+2. **§12b4-2 — Demo-seed tags re-authored with display casing** → `Core`, `Dividend`,
+   `Speculative` (`app/seed/demo.py`). **RULE RECORDED: tags are user-authored strings rendered
+   VERBATIM — no UI casing transform anywhere.** Verified: the By-tag donut renders `t.tag`
+   directly and no `.lf-donut__label`/legend CSS applies `text-transform` (the only `uppercase` is
+   the unrelated sidebar group header). The seed writes `HoldingTag` rows directly (bypassing the
+   write-path cleaner) and `tag_allocation` serves them unmodified, so seeded casing is preserved.
+   **⚠ OWNER DECISION (contradiction to surface):** the USER write path
+   `set_holding_tags` → `_clean_tags` (`app/services/tags.py:29`) **lowercases + underscores +
+   truncates(24)** every user-entered tag (`"Core"→"core"`, `"High Conviction"→"high_conviction"`;
+   asserted by `test_tags_contributions.py`). So "rendered verbatim" holds for the SEED but **not for
+   user-entered tags** — a real install would show mixed casing (seeded `Core` vs user `core`).
+   Left unchanged per F6 (not in the batch; behavioural + test change). Owner: (a) accept
+   seed-only display casing (demo cosmetic), or (b) relax `_clean_tags` to preserve author casing
+   (behavioural change + update the normalisation test + a DECISIONS entry). **Live tag-render not
+   yet confirmed on the running instance** — the seeded DB predates this change; needs a demo
+   re-seed (owner-authorised DB reset) to show `Core`/`Dividend`/`Speculative`.
+3. **§12b4-3 — Movers currency: KEEP ISO codes (owner rec; no change).** Verified the mover rows
+   already render the SERVED ISO code (`{r.currency} {price}`, e.g. `USD`/`SGD`/`INR`), sourced from
+   `currency_for_symbol`/instrument/txn currency (`portfolio.py`). Symbols were rejected as
+   ambiguous (SGD/USD both render `$`). Switching to distinct served symbols (`S$`/`US$`/`₹`) would
+   require a symbol field on the currency master + backend formatting (no client mapping) — **not
+   done** (owner recommended ISO). Decision recorded; no code change.
+4. **§12b4-4 — Risk & return tone: gain/loss colour on signed metrics.** Reused the TrendStat
+   `tone` mechanism: **1Y return**, **Return / volatility**, and **Max drawdown (1Y)** now take
+   `tone` from the SERVED value's sign (`metricTone` → `signOf(m.value)`, no client math). **1Y
+   volatility stays NEUTRAL** (a magnitude, not a direction) — deliberately not toned. Max drawdown
+   is engine-computed ≤ 0, so it reads loss-red when non-zero; flat at 0.
+
+**Checks after batch 4:** frontend **113 vitest + 41 overflow Playwright + drift + typecheck +
+lint + build** green; backend `test_tags_contributions.py` green (seed casing doesn't affect the
+write-path normalisation test). **Live pre-pass FULL GREEN** (re-run ×3 after an owner-authorised
+demo re-seed): tile-geometry assertion equal width+height per row at all four breakpoints incl. the
+Realised tile; cased By-tag donut (`Core`/`Speculative`/`Dividend`); mover price; donut hover;
+attribution residual/HHI; 0 overflow 320/375/900/1366 × both themes; 0 console errors. Pre-pass
+hardened to **wait each progressive card out of skeleton before asserting** (fixed a PART-5 race).
+
+**Batch 4 — RATIFIED (owner, 2026-07-12):** §12b4-1 (equal-geometry rail), §12b4-3 (ISO-code mover
+currency), §12b4-4 (signed risk/return tone) verified live. §12b4-2 resolved by **D-104**
+(normalise-on-write + render-verbatim + sanctioned demo-seed casing; `_clean_tags` kept as-is).
+
+---
+
+## 13. MILESTONE RETROSPECTIVE — Portfolio DONE ✅ (owner sign-off, 2026-07-12)
+
+**`/portfolio` is complete and owner-accepted.** The second overview-template page (after the Home/
+Net-worth family), the analytics half of the Holdings↔Portfolio split (D-023). Phases 0/0a/1/2 +
+Phase-3a scripted pre-pass + Phase-3b owner walk (batches 1–4, all ratified). Commits `751f9bf`→
+(batch-4 close-out). No open blockers.
+
+**What the build produced (platform legacy — reusable beyond this page):**
+- **Categorical data-viz palette** (DESIGN-SYSTEM §4): `--cat-1..8`, colour-blind-validated, light +
+  dark + high-contrast; semantic gain/loss/attention stay reserved for meaning (§12-6).
+- **Progressive per-card loading** (TEMPLATE overview standard): each card resolves on its own reader
+  — Skeleton → data / EmptyState / honest error; no full-page block on the slowest reader (§12-8).
+- **Hover/focus readouts** on donut segments + the comparison chart (label · value · pct · note;
+  keyboard-reachable via the focusable legend) (§12-7).
+- **DataTable-everywhere for tabular cards** (attribution as a sort/filter/CSV DataTable, like
+  Holdings) (§12-6).
+- **PriceChart comparison mode** (shared value axis, second same-unit series + legend + provenance
+  sublabel) — the §5 amendment ratified at Phase-0a.
+- **Equal-geometry-from-the-grid rule** for stat rails (§12b4-1) + its pre-pass assertion.
+
+**Process lessons (folded into `TEMPLATE-page-build.md` this commit):**
+1. **A repeat finding is the signature of a fix with no assertion.** §12b3-1 (rail tiles) recurred as
+   §12b4-1 because the first fix shipped without a measuring guard. **Rule encoded (TEMPLATE §7/§8):
+   every visual/geometry fix ships a rendered-measurement pre-pass assertion, in the SAME batch, at
+   all breakpoints.** jsdom can't measure — it lives in Playwright.
+2. **Verify-first ND resolutions caught two would-be fabrications.** Reading the engine before writing
+   the resolution overturned two premises: the "TWR not implemented / register R-26" call (flow-aware
+   TWR **is** implemented + served — §11 ND-3a) and the "HHI not served / add a delta" call (HHI **is**
+   computed + served at `/portfolio/attribution.risk` — §11 ND-5; Phase-0 had checked the wrong
+   endpoint). **Keep verify-first phrasing in every future ND resolution** (D-019 read-first).
+3. **Progressive loading races the pre-pass** — assert card content only after waiting it out of
+   skeleton (fixed a PART-5 flake; rule added to TEMPLATE §8).
+
+**Judgment-flagged (owner calls this milestone, not derivable from specs):** D-104 tag
+normalise-vs-verbatim posture (kept `_clean_tags`; demo casing a sanctioned exception); ISO currency
+codes over ambiguous symbols in movers (§12b4-3); D-082 bucket label wording "Unclassified sector"
+(§12-4 → batch-2 #1); performance return honest label "Current holdings — price return" over "TWR"
+(§11 ND-3a). Each is recorded with its rationale so a later reader doesn't re-litigate it.

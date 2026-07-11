@@ -708,12 +708,28 @@ clarifying notes recorded in the guide.
   longer duplicates it. Recorded in IA §4, DESIGN-SYSTEM §5.2. Future: per-device speed
   setting (ROADMAP R-16); indices→Markets link when Markets ships (ROADMAP R-17).
 
+- **D-104 — Tag normalisation vs verbatim rendering** (owner, 2026-07-12;
+  page-portfolio §12b4-2). Two layers, deliberately different:
+  - **Write path normalises.** User-entered tags are lowercased, spaces →
+    underscores, truncated to 24 chars, de-duped (`_clean_tags`,
+    `app/services/tags.py`) — sanctioned **data hygiene** so `Core`, `core`, and
+    `Core ` collapse to one tag and totals don't fragment. Kept as-is.
+  - **Render is verbatim.** The UI applies **no casing transform** anywhere — a
+    tag renders exactly as stored (the By-tag donut prints `t.tag` directly; no
+    `text-transform` on donut/legend labels). This is a hard rule for tag display.
+  - **Demo-seed casing is a sanctioned cosmetic exception.** The demo seed writes
+    `HoldingTag` rows directly (`Core`/`Dividend`/`Speculative`), **bypassing the
+    cleaner**, so demo reads like real curated data. This is the ONE place stored
+    casing diverges from what the write path would produce; it is intentional and
+    demo-only. Recorded in MASTER-DATA (tags) + GLOSSARY where tags are defined.
+
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.
 **D-090 and D-091 were ratified 2026-07-10** (D-090 with the ETF-Bonus amendment);
 **D-094** records the table dataset-size posture; **D-095** the CSV round-trip
 contract; **D-096** the generated import template; **D-097** the class-aware
-instrument picker. None changes an earlier decision.
+instrument picker; **D-104** the tag normalise-vs-verbatim posture. None changes an
+earlier decision.
 
 ---
 

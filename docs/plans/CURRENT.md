@@ -628,14 +628,31 @@ Owner DECLINED for this milestone (recorded §12a): personal-profile fields, dis
 onboarding steps, per-lane provider config. Checks at close: **95 frontend + 32 Playwright +
 487 backend**, contract current.
 
+## PORTFOLIO — DONE ✅ (page ACCEPTED, Phase-3b walk complete, 2026-07-12)
+
+**`/portfolio` is complete and owner-accepted** — the analytics half of the Holdings↔Portfolio
+split (D-023), second overview-template page. Phases 0/0a/1/2 + Phase-3a scripted pre-pass +
+Phase-3b owner walk (batches 1–4, all ratified). Full record: **`page-portfolio.md` §9–§13**
+(§13 = milestone retrospective). New decision this milestone: **D-104** (tag normalise-on-write vs
+render-verbatim; demo-seed casing a sanctioned exception; `_clean_tags` kept as-is). Platform
+legacy shipped: **categorical data-viz palette** (DESIGN-SYSTEM §4), **progressive per-card
+loading** (TEMPLATE overview standard), **donut/chart hover readouts**, **DataTable-everywhere for
+tabular cards**, **PriceChart comparison mode** (§5 amendment), **equal-geometry-from-the-grid rule**
+for stat rails + its pre-pass assertion. Pre-pass full green (data + controls + equal rail geometry +
+0 overflow 320/375/900/1366 × both themes, 0 console errors). `TEMPLATE-page-build.md` amended §7/§8
+(every visual/geometry fix ships a pre-pass assertion; wait cards out of skeleton before asserting).
+No open Portfolio blockers.
+
 ## NEXT
 
-1. **Portfolio page build (D-023) — via the template loop.** `docs/plans/page-portfolio.md`
-   drafted; **Batch 13 NDs ratified + Phase-0 verification DONE (2026-07-11)** — **STOPPED for
-   owner sign-off** on §10 (5 open items: performance-return label, chart value-axis vs
-   rebased-to-0%, D-082 null bucket frontend-vs-backend, HHI drop-vs-delta, realised rail label).
-   No backend delta needed. Phase-0a scope = a **PriceChart §5 comparison-mode amendment** (the
-   current benchmark prop normalises each series independently — can't show out/under-performance).
+1. **Net worth page build — via the template loop.** Draft `docs/plans/page-net-worth.md` **PLAN
+   ONLY first** (owner reviews before any code), instantiating `TEMPLATE-page-build.md`: IDENTITY ·
+   OWNERSHIP (D-032 owns Net worth / Gross assets / Liabilities; summarises Portfolio's analytics
+   headline with a link — the mirror of Portfolio's ND-2 handoff) · API SURFACE (readers already
+   frozen; a *contract delta* list only if needed) · COMPONENTS (ratified only) · VOCABULARIES ·
+   DECISIONS IN FORCE (D-032/D-039/D-054/D-081 valued-insurance line/D-023) · ACCEPTANCE · BUILD
+   PHASES. Then the standard loop: Phase-0 verify-first (D-019), Phase-3a **scripted pre-pass GREEN
+   before** the owner's Phase-3b walk.
 2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
    across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
    defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector

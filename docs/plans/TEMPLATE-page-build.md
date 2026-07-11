@@ -313,6 +313,13 @@ the theme/density matrix. Written as checkable statements.*
       `e2e/overflow.spec.ts`) to cover this page** — it asserts zero horizontal overflow at
       **320/375/900/1366px × both themes** on the document + `.lf-shell__content`, and is
       wired into `npm run check`.
+- [ ] **Every visual/geometry fix ships with a pre-pass assertion (page-portfolio §12b4-1):**
+      a layout/geometry finding is NOT closed by the edit alone — a **repeat finding is the
+      signature of a fix with no assertion guarding it**. When a fix asserts equal/aligned/
+      non-overflowing geometry (equal tile width+height, shared inset, capped scroll), add a
+      **measuring assertion to the scripted pre-pass** (rendered `getBoundingClientRect`, grouped
+      as the eye groups it — e.g. per row), at **all breakpoints**, so a regression re-trips it.
+      jsdom cannot measure — the assertion lives in the Playwright pre-pass / overflow suite.
 - [ ] **Copy hygiene (page-chrome §11-8):** no decision ID (`D-0…`/`P-…`/`§…`) or
       implementation note (`server-side`, enum/endpoint names) in any user-facing string
       — grep the rendered copy. A changed label is updated **app-wide** (§11-4), not only
@@ -348,7 +355,11 @@ tests. Never assemble the page against an endpoint that does not exist.*
   isolation). The pre-pass tooling must be **deterministic** (reset the DB via a scripted
   reset that snapshots/restores `.env`, reads the active data dir) so it never drifts config
   across runs. **Do not start the owner walk until the pre-pass returns green (0 console
-  errors, correct fresh state).**
+  errors, correct fresh state).** **A geometry/visual fix during the walk must add its own
+  measuring assertion to this pre-pass in the SAME batch (page-portfolio §12b4-1)** — a repeat
+  finding across batches means the earlier fix shipped without an assertion. Also **wait each
+  progressive-loaded card out of skeleton before asserting its content** (§12-8) so the pre-pass
+  never races a per-card reload.
 - **Phase 3b — Owner acceptance walk (LIVE, Holdings retrospective) — JUDGMENT ITEMS ONLY:**
   the owner drives the **real rendered app**, because the biggest Holdings defects surfaced
   only there (silent 500-cap, snapshot-vs-ledger round-trip, 1366px overflow, mock-backed

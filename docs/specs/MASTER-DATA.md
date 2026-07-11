@@ -279,7 +279,12 @@ rows from a sector chart.
 
 **Tag (D-011).** Uniqueness is **case-insensitive**; rename **cascades to all
 tagged holdings**; the 16-tags-per-holding cap is retained. `holding_key` is the
-instrument symbol or manual-asset label.
+instrument symbol or manual-asset label. **Normalise-on-write vs render-verbatim
+(D-104):** user-entered tags are normalised on write (lowercase, spaces →
+underscores, truncate 24, de-dupe — data hygiene), but the **UI renders every tag
+verbatim with no casing transform**. The **demo seed** writes display-cased tags
+(`Core`/`Dividend`/`Speculative`) directly, **bypassing the cleaner** — a
+sanctioned demo-only cosmetic exception.
 
 **Currency (§3)** is a reference master too, but seed-managed under the
 FX-translatability rule rather than freely user-added in v2 (user-requestable

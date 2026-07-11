@@ -36,6 +36,37 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     console.log("PART 1 — cost basis value:", JSON.stringify(costVal.trim()));
     expect(costVal, "money value is comma-grouped, not a raw number").toMatch(/\d,\d{3}/);
 
+    // §12b4-1: equal tile GEOMETRY comes from the grid — the painted tiles (incl. the Realised
+    // tile with its longer "· 2024" label) must be equal width AND height within each rendered
+    // row, at every breakpoint. Content must NOT resize a tile. Measure the painted .lf-stat
+    // boxes (the Realised one is nested in .pf__railtile), group by row (rounded top).
+    for (const w of WIDTHS) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await page.waitForTimeout(150);
+      const rows = await page.evaluate(() => {
+        const tiles = Array.from(document.querySelectorAll('.pf__rail[data-card="rail"] .lf-stat'));
+        const byRow = new Map<number, { w: number; h: number }[]>();
+        for (const t of tiles) {
+          const r = (t as HTMLElement).getBoundingClientRect();
+          const top = Math.round(r.top);
+          const arr = byRow.get(top) ?? [];
+          arr.push({ w: Math.round(r.width), h: Math.round(r.height) });
+          byRow.set(top, arr);
+        }
+        return Array.from(byRow.values()).map((cells) => ({
+          count: cells.length,
+          wSpread: Math.max(...cells.map((c) => c.w)) - Math.min(...cells.map((c) => c.w)),
+          hSpread: Math.max(...cells.map((c) => c.h)) - Math.min(...cells.map((c) => c.h)),
+        }));
+      });
+      console.log(`PART 1 — rail tile geometry @${w}px:`, JSON.stringify(rows));
+      for (const row of rows) {
+        expect(row.wSpread, `rail tiles equal width per row @${w}px`).toBeLessThanOrEqual(1);
+        expect(row.hSpread, `rail tiles equal height per row @${w}px`).toBeLessThanOrEqual(1);
+      }
+    }
+    await page.setViewportSize({ width: 1366, height: 900 });
+
     // --- PART 2: allocation donuts + D-082 bucket + excluded-liabilities footnote ----------
     const donutSegs = await page.locator(".lf-donut__legend .lf-donut__row").count();
     console.log("PART 2 — donut legend rows (all donuts):", donutSegs);
@@ -48,8 +79,9 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     expect(await page.locator(".lf-donut__footnote").count(), "footnote is section-level, not per-donut").toBe(0);
     expect(await page.locator(".pf__marker").count(), "affected donuts carry the * marker").toBeGreaterThanOrEqual(3);
 
-    // §12b-6: the By-tag donut renders populated (demo seed tags) — not the empty state.
-    for (const tag of ["core", "dividend", "speculative"]) {
+    // §12b-6 + §12b4-2: the By-tag donut renders populated (demo seed tags) — not the empty
+    // state. Tags are user-authored strings rendered VERBATIM (display casing, no UI transform).
+    for (const tag of ["Core", "Dividend", "Speculative"]) {
       await expect(page.getByText(tag, { exact: true }).first()).toBeVisible();
     }
 
@@ -84,6 +116,11 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     expect(chartOk, "chart degrades honestly on a no-history benchmark").toBeGreaterThan(0);
 
     // --- PART 5: attribution residual + concentration HHI ----------------------------------
+    // Progressive loading (§12-8): the benchmark switch in PART 4 re-skeletons the attribution
+    // card — wait for it to resolve OUT of skeleton before asserting its content (same pattern
+    // PART 4 uses for the perf card), so the assertion never races the reload.
+    const attrCard = page.locator(".pf__card").filter({ hasText: "Return attribution" });
+    await expect(attrCard.locator(".lf-skeleton")).toHaveCount(0, { timeout: 15_000 });
     await expect(page.getByText(/Residual \(income, realised, closed\)/)).toBeVisible();
     await expect(page.getByText("Headline return")).toBeVisible();
     await expect(page.getByText("HHI")).toBeVisible();

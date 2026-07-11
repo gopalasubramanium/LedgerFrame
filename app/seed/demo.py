@@ -135,12 +135,14 @@ async def seed_demo_data(session: AsyncSession) -> bool:
     import json as _json
 
     from app.models import HoldingTag
+    # §12b4-2: tags are USER-AUTHORED display strings, stored + rendered VERBATIM (no UI casing
+    # transform anywhere). The seed authors them with display casing so demo reads like real data.
     _seed_tags = {
-        "AAPL": ["core", "dividend"],
-        "MSFT": ["core", "dividend"],
-        "NVDA": ["core", "speculative"],
-        "VOO": ["core"],
-        "BTC": ["speculative"],
+        "AAPL": ["Core", "Dividend"],
+        "MSFT": ["Core", "Dividend"],
+        "NVDA": ["Core", "Speculative"],
+        "VOO": ["Core"],
+        "BTC": ["Speculative"],
     }
     for h in (await session.execute(select(Holding).where(Holding.deleted_at.is_(None)))).scalars().all():
         instr = await session.get(Instrument, h.instrument_id) if h.instrument_id else None

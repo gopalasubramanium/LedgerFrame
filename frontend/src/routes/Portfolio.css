@@ -60,10 +60,18 @@
   font-size: var(--font-size-20);
   line-height: var(--line-20);
 }
+/* §12b4-1: equal tile geometry comes from the GRID (equal 1fr columns, stretched rows) —
+   content never resizes a tile. The Realised tile wraps its stat in .pf__railtile for the
+   corner link; the wrapper stretches to the grid-cell height, and the inner .lf-stat must
+   FILL it so the painted box matches every sibling tile (was: content-height, so it read
+   shorter when the "· 2024" label made a taller row). */
 .pf__railtile {
   position: relative;
   display: flex;
   flex-direction: column;
+}
+.pf__railtile > .lf-stat {
+  flex: 1 1 auto;
 }
 /* Realised tile: the Report link is the D-100 header-arrow, INSIDE the tile, top-right. */
 .pf__railtile .pf__tilelink {

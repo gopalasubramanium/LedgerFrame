@@ -1,0 +1,147 @@
+/* Net worth (overview) — token-only; composes .lf-card sections. Root padding is owned by the
+   shell (.lf-shell__content, page-portfolio §12-1) — this page sets none. */
+.nw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+/* Every top-level section may shrink below its content's min-width so a wide child (a table)
+   scrolls inside its own wrapper instead of stretching the page (overflow discipline). */
+.nw > * {
+  min-width: 0;
+}
+
+/* KPI strip (D-054): equal-geometry tiles straight from the grid — no wrapper resizes a tile
+   (page-portfolio §12b4-1). 4×1 → 2×2 → 1×4. */
+.nw__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+@media (max-width: 60rem) {
+  .nw__kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 30rem) {
+  .nw__kpis {
+    grid-template-columns: 1fr;
+  }
+}
+.nw__kpis > * {
+  min-width: 0;
+}
+.nw__kpis .lf-stat {
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.nw__card {
+  padding: var(--space-5);
+}
+.nw__cardhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.nw__h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.nw__cardhead .nw__h2 {
+  margin-bottom: 0;
+}
+.nw__note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+.nw__note a,
+.nw__link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.nw__note a:hover,
+.nw__link:hover {
+  text-decoration: underline;
+}
+.nw__link {
+  font-size: var(--font-size-13);
+}
+
+/* Statement + runway totals: right-aligned tabular figures, a ruled net row. */
+.nw__totals {
+  margin: var(--space-3) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.nw__totrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-14);
+  color: var(--text-secondary);
+}
+.nw__totrow--net {
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+  border-top: var(--border-width) solid var(--border-strong);
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+.nw__num {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.nw__runway {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Insurance valued exclusion line (D-039/D-081) — a labelled line, not a card. */
+.nw__exclusion {
+  margin: 0;
+  font-size: var(--font-size-14);
+  color: var(--text-secondary);
+}
+.nw__exclusion strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.nw__exclusion a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.nw__exclusion a:hover {
+  text-decoration: underline;
+}
+
+/* Summaries row: Portfolio headline + ReviewCard, side by side on wide screens. */
+.nw__summaries {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.nw__summaries > * {
+  min-width: 0;
+}
+.nw__prow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+}
+.nw__prow > * {
+  min-width: 0;
+}

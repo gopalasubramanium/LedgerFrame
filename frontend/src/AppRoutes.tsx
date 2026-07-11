@@ -4,6 +4,7 @@ import App from "./App";
 import { KitchenSink } from "./routes/KitchenSink";
 import { Holdings } from "./routes/Holdings";
 import { Portfolio } from "./routes/Portfolio";
+import { NetWorth } from "./routes/NetWorth";
 import { InstrumentDetail } from "./routes/InstrumentDetail";
 import { NotBuilt } from "./routes/NotBuilt";
 
@@ -22,6 +23,7 @@ export function AppRoutes() {
           <AppShell>
             <Routes>
               <Route path="/" element={<App />} />
+              <Route path="/net-worth" element={<NetWorth />} />
               <Route path="/holdings" element={<Holdings />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/instrument/:symbol" element={<InstrumentDetail />} />

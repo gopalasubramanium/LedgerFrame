@@ -150,6 +150,33 @@ async def seed_demo_data(session: AsyncSession) -> bool:
         if key in _seed_tags and h.account_id is not None:
             session.add(HoldingTag(account_id=h.account_id, holding_key=key, tags=_json.dumps(_seed_tags[key])))
 
+    # Synthetic net-worth snapshots (page-net-worth ND-1) so the demo trend renders POPULATED.
+    # Demo-only, seed-flag convention — a REAL appliance accumulates these from the 6-hour worker
+    # (app/worker.generate_snapshots); no history is ever fabricated on a real install. The series
+    # ends at today's real seeded net worth and eases up to it (no claim of a specific past).
+    from datetime import timedelta
+
+    from app.core.config import get_settings
+    from app.models import NetWorthSnapshot
+    from app.services.portfolio import value_portfolio
+
+    base_ccy = get_settings().base_currency
+    val = await value_portfolio(session, base_ccy)
+    assets_now = sum((h.market_value_base for h in val.holdings if h.market_value_base > 0), D("0"))
+    liab_now = -sum((h.market_value_base for h in val.holdings if h.market_value_base < 0), D("0"))  # stored positive (worker convention)
+    net_now = val.total_value
+    _POINTS = 26  # ~6 months of weekly snapshots
+    _now = datetime.now(UTC)
+    for i in range(_POINTS):
+        frac = D("0.80") + D("0.20") * (D(i) / D(_POINTS - 1))  # 80% → 100%, ending at today's real value
+        ts = _now - timedelta(weeks=(_POINTS - 1 - i))
+        session.add(NetWorthSnapshot(
+            ts=ts, base_currency=base_ccy,
+            assets=(assets_now * frac).quantize(D("1")),
+            liabilities=(liab_now * frac).quantize(D("1")),
+            net_worth=(net_now * frac).quantize(D("1")),
+        ))
+
     session.add(Setting(key=SEED_FLAG_KEY, value="1"))
     await session.flush()
     return True

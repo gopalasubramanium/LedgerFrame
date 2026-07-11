@@ -19,6 +19,7 @@ export interface PortfolioSummary {
   total_value: number;
   gross_assets: number;
   liabilities: number;
+  cash_and_deposits: number;
   cost_basis: number;
   unrealised_pl: number;
   day_change: number;

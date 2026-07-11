@@ -594,21 +594,28 @@ are now platform-wide primitives.
   acceptance test; summary gained `stale_count`. Commits `93b717c` (Phase 1) + Phase 2
   tests. **Frontend 79 · backend 479 · drift/typecheck/lint/contract green.**
 
+## PAGE-CHROME — DONE ✅ (milestone SIGNED OFF, owner, 2026-07-11)
+
+**The global chrome (app shell) milestone is complete and owner-signed-off.** C-1..C-6
+resolved; Phase 0a (7 components ratified) → Phase 1 (shell assembly + C-3 no-egress
+guard) → Phase 2 (tests) → Phase 3 (4 live-verify batches, all PROPOSED items ratified).
+Full record: **`page-chrome.md` §10 (build), §11 (Phase-3 walk §11-1..§11-21), §12
+(retrospective)**. Ratified: lucide icon set (ADR-0003), page-action icon-button pattern
+(DESIGN-SYSTEM §5.5), TickerStrip global footer (D-047 amendment — DECISIONS + DESIGN-
+SYSTEM §5.2), narrow TopBar overflow popover / time-only Clock / DemoBadge sidebar-footer,
+ticker speed 30s. Lock no-leak **owner-verified live (D-002)**. **Playwright breakpoint
+overflow suite (ADR-0004)** wired into `npm run check`. `TEMPLATE-page-build.md` amended
+from the retrospective (copy-hygiene + app-wide-label rules, Playwright/overflow line,
+shell-plan note). Parked: D-101 scrollbar-thumb (R-18), ticker speed setting (R-16),
+indices→Markets (R-17). Deferred by prior decision: Ask panel (D-067, C-2), first-run
+checklist (D-045, C-4). Commits: backend `93b717c`; frontend `1c77f58`→ close-out.
+
 ## NEXT
 
-1. **Page-chrome Phase 3 — acceptance walk COMPLETE (batches 1–4), READY FOR CLOSE-OUT on
-   owner sign-off.** Four live-verify batches resolved (`page-chrome.md` §11-1..§11-21) and
-   **all PROPOSED items ratified** (2026-07-11): lucide icon set (ADR-0003), page-action
-   icon-button pattern, TickerStrip global footer (D-047 amendment — DECISIONS + DESIGN-
-   SYSTEM §5.2), narrow TopBar overflow popover / time-only Clock / DemoBadge sidebar-footer,
-   ticker speed 30s. **Lock no-leak owner-verified live (D-002).** **Playwright breakpoint
-   overflow suite (ADR-0004)** added + wired into `npm run check` (24 checks green, 320–1366px
-   × both themes × shell + built pages). **Open before close-out:** D-101 scrollbar-thumb
-   polish parked as **ROADMAP R-18** (not addressed in these batches; a real browser is now
-   available to verify). Deferred by prior decision: Ask panel (D-067, C-2), first-run
-   checklist (D-045, C-4). Parked future links: ticker speed setting (R-16), indices→Markets
-   (R-17). See `page-chrome.md` §11 close-out. Backend commits `93b717c`+; frontend batches
-   `1c77f58`→`839c5bd` + this close-out commit.
+1. **First-run checklist plan (D-045, C-4) — via the template loop.** Its own small plan
+   (`docs/plans/page-<name>.md` from `TEMPLATE-page-build.md`): base ccy · timezone · PIN ·
+   provider · no-egress (replaces PersonaOnboarding). The chrome reserves the first-run
+   gate slot; this builds the flow. Surface any NEEDS DECISION before build.
 2. **Help copy task** (for the Help page plan, or a Holdings help section) —
    surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
    **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price

@@ -28,6 +28,14 @@ mid-build.
 - **Honesty (Product Guarantee 3):** every empty / "—" region shows a **reason**;
   stale values are flagged (never hidden or faked); insufficient inputs render
   "—", never a fabricated number.
+- **Copy hygiene (page-chrome §11-8).** A **decision ID** (`D-0…`, `P-…`, `§…`) or an
+  **implementation note** (`server-side`, an internal enum, an endpoint/table name)
+  **never** appears in a **user-facing string** — only in code comments / plan docs.
+  User copy is plain language; every shown term matches GLOSSARY.
+- **Label/copy changes are app-wide (page-chrome §11-4).** When a user-facing label or
+  copy string changes, **grep the whole frontend** and update **every** instance in the
+  same change — never fix only the one you found (§11-4 recurred because the first fix
+  touched one of two Export buttons).
 - **Wired ≠ rendered ≠ accepted (Holdings retrospective).** The highest-impact
   Holdings defects all passed the test suite: a 500-row silent cap, a
   snapshot-vs-ledger CSV mismatch, a table overflowing 1366px, and a mock-backed
@@ -36,6 +44,15 @@ mid-build.
   overflow / popover** claims are unprovable by unit tests (verify by rendering —
   §7); the acceptance bar is **driving the real rendered app** (owner walk — §8
   Phase 3), never green suites alone.
+
+**Shell / global-chrome plans adapt this template (page-chrome retrospective §12).** A
+plan for the app shell / global chrome (not a content page) has **no single route and no
+figure ownership**: §1/§2 describe **UI-state** ownership (nav, display axes, lock) and
+**status summaries** instead; acceptance criteria are **cross-page** (a page from each of
+the four templates renders inside the shell); and the regression surface is
+**layout/overflow across every page** — extend the Playwright suite (ADR-0004), not just
+one page's tests. New chrome components ratify as a **set** at `/kitchen-sink` before
+assembly (a Phase-0a step). See `page-chrome.md`.
 
 ---
 
@@ -263,12 +280,19 @@ the theme/density matrix. Written as checkable statements.*
       UI state (row selections, include/exclude, filters), a test asserts the
       **actual request body** equals the intended data — not merely that a handler
       was called. (The import "committed exactly the included rows" guard.)
-- [ ] **Rendered layout verification (Holdings §9-30/36/39):** every fit / overflow
-      / popover-overlay claim is verified by **rendering at 1366 AND 1920 in both
-      themes** (screenshot or measured `scrollWidth > clientWidth`), NOT by unit
-      tests — *"tests green is not acceptance for layout."* Row-action column fully
-      visible; no horizontal scroll for core columns; open popovers overlay without
-      expanding the dialog.
+- [ ] **Rendered layout verification (Holdings §9-30/36/39; page-chrome §11-14):** every
+      fit / overflow / popover-overlay claim is verified by **rendering** in both themes,
+      NOT by unit tests — *"tests green is not acceptance for layout"* (**jsdom has no
+      layout engine** — `scrollWidth`/`clientWidth` are always 0 there). Row-action column
+      fully visible; no horizontal scroll for core columns; open popovers overlay without
+      expanding the dialog. **Extend the Playwright overflow suite (ADR-0004,
+      `e2e/overflow.spec.ts`) to cover this page** — it asserts zero horizontal overflow at
+      **320/375/900/1366px × both themes** on the document + `.lf-shell__content`, and is
+      wired into `npm run check`.
+- [ ] **Copy hygiene (page-chrome §11-8):** no decision ID (`D-0…`/`P-…`/`§…`) or
+      implementation note (`server-side`, enum/endpoint names) in any user-facing string
+      — grep the rendered copy. A changed label is updated **app-wide** (§11-4), not only
+      where found.
 - [ ] **Context-scoped picker (D-097):** verified **live** that a class/entity
       picker never offers a wrong-context option; cross-context matches appear only
       as navigate links.
@@ -286,7 +310,9 @@ tests. Never assemble the page against an endpoint that does not exist.*
 - **Phase 1 — Page assembly:** compose ratified components; wire to the endpoints;
   honest empty/error/stale states.
 - **Phase 2 — Tests:** component/render tests, the acceptance criteria (§7),
-  drift + typecheck + lint green; visual check both themes/densities.
+  drift + typecheck + lint green; visual check both themes/densities. **For any
+  layout-affecting change, extend the Playwright overflow suite (ADR-0004)** — jsdom
+  cannot catch overflow (page-chrome §11-14); `npm run check` runs it.
 - **Phase 3 — Owner acceptance walk (LIVE, Holdings retrospective):** the owner
   drives the **real rendered app**, because the biggest Holdings defects surfaced
   only there (silent 500-cap, snapshot-vs-ledger round-trip, 1366px overflow,

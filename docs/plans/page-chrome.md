@@ -428,3 +428,66 @@ DemoBadge placement ratified. The Phase-0a chrome inventory marker is flipped to
 
 Nothing else is open. With the ratifications flipped and the overflow suite green, the
 chrome build is ready for **Phase-3 close-out** on owner sign-off.
+
+---
+
+## 12. RETROSPECTIVE — first non-page (shell) plan through the loop
+
+Page-chrome is the **first plan that is not a content page** — the app shell that
+wraps every route. Recorded so the template absorbs the differences.
+
+### 12a. What the shell needed that `TEMPLATE-page-build.md` didn't anticipate
+
+- **No single route / no figure ownership.** §1 (IDENTITY) assumes one route + one H1;
+  the shell has neither. §2 (OWNERSHIP) assumes *figures* owned/summarised; the chrome
+  owns **UI STATE** (nav, display axes, rotation, lock) and only **summarises status**
+  (stale count, version, demo, clock) via canonical readers. The template's ownership
+  frame had to be re-read as "UI-state ownership."
+- **Cross-page acceptance, not single-page.** "Done" for the shell meant **a page from
+  each of the four templates renders inside it** + redirects + lock gate — acceptance
+  criteria that span the app, not one page's happy path.
+- **A regression class the template never named: layout/overflow ACROSS every page.**
+  A narrow-width fix on a shared primitive (`PageHeader` subtitle, §11-9) silently broke
+  horizontal layout **on every page** (§11-14). Unit tests were green — jsdom has no
+  layout engine. This forced a **real-browser breakpoint suite** (ADR-0004).
+- **"New component = amendment" scaled to a whole inventory.** The template's one-
+  component amendment rule became a **Phase 0a** step: author seven chrome components as
+  PROPOSED, ratify the *set* at `/kitchen-sink` before assembly. Worked well; the shell
+  reused it verbatim.
+- **Composed once, not per-page (D-066).** The opposite of a page plan — the deliverable
+  is that pages **stop** re-implementing chrome (back-links, DisplayControls removed).
+
+### 12b. Concrete lessons (encoded — see 12c)
+
+- **(a) jsdom cannot catch layout/overflow.** Any visual-affecting change needs the
+  **Playwright overflow suite (ADR-0004)** extended alongside — green Vitest is not
+  acceptance for layout. (§11-14.)
+- **(b) Copy hygiene.** Decision IDs (`D-0…`/`P-…`/`§…`) and implementation notes
+  (`server-side`, endpoint/enum names) must **never** reach a user-facing string — only
+  code comments/plan docs. (§11-8: the `(D-012)` + `"server-side"` leaks.)
+- **(c) Label/copy changes are app-wide.** A changed label is grepped and fixed at
+  **every** instance in the same change, not just where found. (§11-4 recurred because the
+  first fix hit only one of two Export buttons.)
+
+### 12c. Template / REVIEW-GUIDE amendments (applied this commit)
+
+Applied to `TEMPLATE-page-build.md`:
+- **Governing rules:** added **Copy hygiene** + **Label/copy changes are app-wide**.
+- **§7 acceptance:** the layout-verification line now also requires **extending the
+  Playwright overflow suite (ADR-0004)** for the page; added a **copy-hygiene** checkbox.
+- **§8 Phase 2:** extend the Playwright overflow suite for any layout-affecting change.
+- **New "Shell / global-chrome plans" note** (top): such a plan adapts the template —
+  UI-state (not figure) ownership, cross-page acceptance, layout/overflow as the
+  regression surface.
+
+**Flagged for owner (judgment-y, NOT applied):** whether `REVIEW-GUIDE.md` (the plain-
+language owner companion) should also carry a one-line owner-facing quality bar — *"you
+should never see an internal code (like D-012) or jargon on screen."* It's owner-facing
+and fits, but REVIEW-GUIDE has so far avoided dev-process notes — owner's call.
+
+### 12d. Patterns extracted to the platform (reusable beyond chrome)
+
+`.lf-iconbtn` (+ `--framed`/`--primary`) icon-button system · the **stateful-icon rule**
+· the lucide icon set (`src/icons.ts`, ADR-0003) · the **page-action icon-button
+pattern** (DESIGN-SYSTEM §5.5) · the TickerStrip global footer · the Playwright overflow
+suite (ADR-0004) — all now platform-wide, available to every future page.

@@ -1,14 +1,13 @@
 # page-net-worth.md — Net worth (overview) page build plan
 
-**Status: §9 RESOLVED (owner 2026-07-12) · Phase 0 BUILT (two approved deltas) — STOPPED for owner
-review of the §11 verification report + Phase-0a scope before Phase-0a/1.** Drafted from
-`TEMPLATE-page-build.md` (incl. the §7/§8 repeat-finding amendments, Phase-3a scripted-pre-pass
-standard, and the progressive-per-card-loading overview standard). Verify-first pass done (§10);
-all 14 §9 items resolved (each matched a drafted option). Phase 0 shipped the ND-3 (Cash & deposits)
-+ ND-4 (signed statement reader) backend deltas, contract regenerated, backend tests incl.
-statement-reconciles-to-headline (§11). This page is the reciprocal of Portfolio: it **owns** the Net
-worth headline that Portfolio/Holdings summarise (D-032). **No page assembly yet** — Phase-0a/1 after
-owner sign-off.
+**Status: Phases 0/0a/1/2 + Phase-3a scripted pre-pass GREEN (2026-07-12) — STOPPED for the owner's
+Phase-3b acceptance walk.** §9 all-resolved (§9); Phase 0 shipped the ND-3/ND-4 backend deltas
+(§11); Phase-0a confirmed existing components suffice (no §5 amendment); `/net-worth` assembled +
+routed + nav-built; tests + overflow suite extended; ND-1 demo snapshots seeded. The pre-pass drives
+the live page on seeded demo and runs GREEN ×3 — populated trend, **on-page statement reconciliation
+to the KPI headline** (795,980.93 == 795,980.93), KPI equal-geometry at 320/375/900/1366, 0 overflow
+× both themes, 0 console errors, no residual skeletons. Build record: §12. **Next: the owner's live
+Phase-3b walk (judgment items).**
 
 Net worth is the third **overview-template** page (Portfolio + Home are the others) and the canonical
 home for the net-worth headline, its trend, the liquidity ladder, and cash runway (IA §2/§5).
@@ -444,3 +443,40 @@ liquidity, or cash only), that's a one-line change — **confirm before Phase 1*
 
 **Sign-off to start Phase-0a/1:** confirm the ND-3 interpretation · confirm no §5 amendment is wanted
 (existing components suffice) · then Phase-0a (kitchen-sink confirm) → Phase 1 assembly.
+
+**→ Owner confirmed both (2026-07-12):** ND-3 = cash + fixed_deposit ("deposits" = fixed deposits,
+not short-liquidity funds) — the KPI's scope is on record here; no §5 amendment (existing components
+cover it). Phases 0a/1/2/3a executed below (§12).
+
+---
+
+## 12. PHASES 0a / 1 / 2 / 3a — BUILT + PRE-PASS GREEN (2026-07-12) — STOP for the owner's walk
+
+- **Phase 0a — CONFIRM ONLY (no specimens).** Owner confirmed `PriceChart`(line) + `DataTable` +
+  `TrendStat` cover the page; **no DESIGN-SYSTEM §5 amendment**, no kitchen-sink specimen to ratify.
+- **Phase 1 — assembly** (`frontend/src/routes/NetWorth.tsx` + `.css`, `api/net-worth.ts`;
+  `/net-worth` routed, nav entry `built`). Composes the OWNED content over the verified readers with
+  **progressive per-card loading**: KPI strip (Net worth / Gross assets / Liabilities / **Cash &
+  deposits = cash + fixed_deposit**, ND-3) with **equal geometry straight from the grid** (§12b4-1,
+  no wrapper); net-worth trend (`PriceChart` line, single series, **client-sliced windows**, default
+  Max, honest EmptyState + coverageNote when thin, ND-1/ND-2); composition **statement** (`DataTable`,
+  signed, negative liability row, net total that reconciles to the headline, ND-4 — "statement ≠
+  allocation" stated on-page); liquidity ladder (`DataTable`, ND-8); cash runway (honest no_data/
+  positive/finite + **basis label**, ND-9); insurance valued exclusion line (verbatim D-039/D-081,
+  **shown only when ≥1 policy**, ND-5); Portfolio-headline + sparkline + `ReviewCard` summaries (P-1,
+  ND-6/7). **ND-1 demo snapshots:** 26 synthetic weekly `NetWorthSnapshot` rows (demo-only, seed-flag)
+  ending at today's real seeded net worth — no history fabricated on a real install.
+- **Phase 2 — tests.** `NetWorth.test.tsx` (7, incl. the **fresh-instance empty-history EmptyState**
+  render test); overflow suite extended to `/net-worth` (320/375/900/1366 × both themes) + the
+  shared-inset check. Hardening: `DataTable` defaults `rows=[]`; a partial liquidity payload degrades
+  to an EmptyState (never crashes). Two shell tests updated (Net worth now built; unbuilt-route
+  example → `/accounts`). **Frontend check: 120 vitest + 49 overflow + lint/typecheck/tokens/build.**
+- **Phase 3a — scripted pre-pass GREEN ×3** (`e2e/smoke/net-worth-smoke.spec.ts`, dev-only). On the
+  seeded demo (post ND-1 re-seed): **populated trend line**; **on-page statement reconciliation to the
+  KPI headline** (795,980.93 == 795,980.93); **KPI equal width+height per row** at all four
+  breakpoints; liquidity ladder + Liquid line; runway basis label; insurance line omitted (0 demo
+  policies); **no residual skeletons**; **0 overflow** at 320/375/900/1366 × both themes; **0 console
+  errors**. Backend: statement/cash-deposits reconciliation verified live + by tests (§11).
+
+**Commits:** `2282926` (draft) · `a2c3c1e` (§9 + Phase 0 deltas) · `b2af0fb` (Phase 1) · `0db1475`
+(Phase 2) · Phase-3a close-out. **STOP — the Phase-3b acceptance walk is the owner's.**

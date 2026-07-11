@@ -643,17 +643,21 @@ for stat rails + its pre-pass assertion. Pre-pass full green (data + controls + 
 (every visual/geometry fix ships a pre-pass assertion; wait cards out of skeleton before asserting).
 No open Portfolio blockers.
 
+## NET WORTH — Phases 0/0a/1/2 + Phase-3a pre-pass GREEN (2026-07-12) — awaiting owner walk
+
+**`/net-worth` is built and pre-pass-green; STOPPED for the owner's Phase-3b acceptance walk.** Third
+overview-template page, the reciprocal of Portfolio (owns the headline Portfolio/Holdings summarise,
+D-032). §9 all-resolved; **D-104 not needed here**; two backend deltas shipped in Phase 0 — **ND-3
+`cash_and_deposits`** on `/portfolio/summary` (= cash + fixed_deposit) and **ND-4 `GET
+/net-worth/statement`** (signed per-class balance, reconciles to the headline; statement ≠
+allocation). Phase 1 assembled the page (KPI strip, trend, statement, liquidity ladder, runway,
+insurance exclusion line, Portfolio/Review summaries), **ND-1 demo snapshots seeded** (26 synthetic,
+demo-only). Full record: **`page-net-worth.md` §9–§12**. Commits `2282926`→ Phase-3a close-out.
+Trunk-only workflow (memory: no branches). **Next: the owner's live Phase-3b walk.**
+
 ## NEXT
 
-1. **Net worth page build — via the template loop.** Draft `docs/plans/page-net-worth.md` **PLAN
-   ONLY first** (owner reviews before any code), instantiating `TEMPLATE-page-build.md`: IDENTITY ·
-   OWNERSHIP (D-032 owns Net worth / Gross assets / Liabilities; summarises Portfolio's analytics
-   headline with a link — the mirror of Portfolio's ND-2 handoff) · API SURFACE (readers already
-   frozen; a *contract delta* list only if needed) · COMPONENTS (ratified only) · VOCABULARIES ·
-   DECISIONS IN FORCE (D-032/D-039/D-054/D-081 valued-insurance line/D-023) · ACCEPTANCE · BUILD
-   PHASES. Then the standard loop: Phase-0 verify-first (D-019), Phase-3a **scripted pre-pass GREEN
-   before** the owner's Phase-3b walk.
-2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
+1. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
    across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
    defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector
    live here, not on Portfolio.

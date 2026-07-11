@@ -177,6 +177,42 @@ test("first-run checklist stays HIDDEN behind the lock gate, then RESUMES after 
   expect(await screen.findByRole("dialog", { name: "Set up LedgerFrame" })).toBeTruthy();
 });
 
+test("first-run provider list re-fetches after unlock: empty while locked → populated (post-close regression §11-4)", async () => {
+  // The provider list (/system/data-source) is lock-gated: the pre-unlock mount fetch gets
+  // 401 → []. Simulate that here (empty until unlocked), and assert the provider dropdown
+  // has options AFTER unlock — i.e. AppShell re-reads the state once a session exists.
+  const json = (obj: unknown) =>
+    new Response(JSON.stringify(obj), { status: 200, headers: { "Content-Type": "application/json" } });
+  let unlocked = false;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/state")) return json({ pin_set: true });
+      if (url.includes("/auth/unlock")) {
+        unlocked = true;
+        return json({ ok: true });
+      }
+      if (url.includes("/system/data-source"))
+        return json({ providers: unlocked ? ["mock", "csv", "yahoo"] : [] }); // locked → empty
+      if (url.includes("/settings"))
+        return json({ stored: {}, defaults: { base_currency: "SGD", timezone: "Asia/Singapore", market_provider: "" } });
+      return json({});
+    }),
+  );
+  const user = userEvent.setup();
+  renderShell(<div>page</div>);
+
+  await screen.findByRole("heading", { name: "Locked" });
+  await user.type(screen.getByLabelText("PIN"), "123456");
+  await user.click(screen.getByRole("button", { name: "Unlock" }));
+
+  const dialog = await screen.findByRole("dialog", { name: "Set up LedgerFrame" });
+  // Open the provider commit-menu; its options portal to document.body.
+  await user.click(within(dialog).getByRole("button", { name: "Data provider" }));
+  await waitFor(() => expect(screen.getAllByRole("option").length).toBeGreaterThan(0));
+});
+
 // Redirects (D-042/D-022/D-056) via the real route tree.
 function LocationProbe() {
   return <div data-testid="loc">{useLocation().pathname}</div>;

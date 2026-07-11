@@ -306,6 +306,31 @@ by the owner before the walk continues.
   consecutive 429s**, **honest-stale FX on failure instead of mock-FX substitution** — landed in
   the Yahoo provider only (no worker-loop rework); contract untouched; backend tests for all three.
 
+**Post-close finding (owner, 2026-07-11) — milestone stays CLOSED; fix is a follow-up.**
+
+- **§11-4 — Data-provider dropdown renders EMPTY after unlock (FIXED; root cause = data path,
+  NOT CommitMenu).**
+  *Investigation → root cause (reported before fixing):* the provider list comes from
+  `GET /system/data-source`, which is **lock-gated** (`require_read_auth`). Proven at the API:
+  fresh/no-PIN serves all 6 providers, but **PIN-set + no session → 401 "Locked"** (as do
+  `/settings` and `/refdata`; only `/auth/state` stays open). `fetchFirstRunState` runs **once at
+  `AppShell` mount**; on a PIN-set instance that fetch happens **before** unlock (no session) →
+  `providers: []`, and **`onUnlock` never re-fetched**, so the first-run overlay that appears
+  after unlock (F-7 restored-DB-with-PIN path) showed an empty provider dropdown.
+  *Blast radius = provider only:* provider options have **no client fallback**; currency survives
+  (MasterSelect falls back to the static `/refdata` registry) and timezone is client-side IANA —
+  which is exactly why only provider went empty. **CommitMenu is exonerated** (fresh serves the
+  list; the smoke opened it and picked `csv`; it renders whatever options it is handed).
+  *"Populated before batch 2"* = earlier walks were fresh/no-PIN (endpoint open); batch-2 walking
+  set a PIN, exposing this **pre-existing auth-timing gap** — not a batch-2 code regression.
+  *Fix:* `AppShell.onUnlock` now **re-reads `fetchFirstRunState` after a successful unlock**, so
+  the overlay gets the authenticated provider list + values. `AppShell.tsx`.
+  *Tests:* **AppShell regression test** (provider list empty while locked → populated after
+  unlock — the precise guard); **CommitMenu component test** (open renders exactly the options it
+  was given, non-zero for a populated field — proves it is not the cause); **smoke hardening** —
+  every dropdown (currency/timezone/provider) now **opens and asserts option count > 0 before
+  selecting**, so an empty listbox can never pass the pre-pass again.
+
 ## 12. PHASE-3 PRE-PASS FINDINGS (F1–F11) — triaged + fixed (owner, 2026-07-11)
 
 Live Playwright smoke pre-pass (dev-only, `frontend/e2e/smoke/`) surfaced these; owner

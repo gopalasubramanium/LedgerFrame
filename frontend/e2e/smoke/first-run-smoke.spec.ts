@@ -68,6 +68,10 @@ test.describe.serial("first-run pre-pass (post-fix)", () => {
     const tzInput = page.getByRole("combobox", { name: "Timezone" });
     await tzInput.click();
     await tzInput.fill("London");
+    // Guard (§11-4): the open listbox must have options — an empty dropdown can't pass.
+    const tzOpts = await page.getByRole("option").count();
+    console.log("PART 2 — timezone option count:", tzOpts);
+    expect(tzOpts, "timezone dropdown must have options").toBeGreaterThan(0);
     await page.getByRole("option", { name: "Europe/London" }).first().click();
     const tzConfirmed = await page.locator(".lf-firstrun__step").filter({ hasText: "Timezone" }).locator(".lf-firstrun__badge.is-confirmed").count();
     console.log("PART 2 — F1 timezone pick worked; step confirmed:", tzConfirmed === 1);
@@ -75,11 +79,18 @@ test.describe.serial("first-run pre-pass (post-fix)", () => {
     // F3: choosing the PRE-FILLED suggestion (SGD when SGD is suggested) must confirm + write
     // — a native <select> no-ops on a same-value pick; the commit-menu does not.
     await page.getByRole("button", { name: "Base currency" }).click();
+    const ccyOpts = await page.getByRole("option").count();
+    console.log("PART 2 — base-currency option count:", ccyOpts);
+    expect(ccyOpts, "base-currency dropdown must have options").toBeGreaterThan(0);
     await page.getByRole("option", { name: "SGD" }).click();
     const ccyConfirmed = await page.locator(".lf-firstrun__step").filter({ hasText: "Base currency" }).locator(".lf-firstrun__badge.is-confirmed").count();
     console.log("PART 2 — F3 base-currency SAME-VALUE (SGD) confirm worked:", ccyConfirmed === 1);
-    // Provider: pick csv via the commit-menu.
+    // Provider: open + guard the option count (§11-4 — an empty provider listbox must FAIL),
+    // then pick csv via the commit-menu.
     await page.getByRole("button", { name: "Data provider" }).click();
+    const provOpts = await page.getByRole("option").count();
+    console.log("PART 2 — data-provider option count:", provOpts);
+    expect(provOpts, "data-provider dropdown must have options (post-close §11-4 guard)").toBeGreaterThan(0);
     await page.getByRole("option", { name: /csv/i }).click();
     const countAfter = await page.locator(".lf-firstrun__count").innerText();
     console.log("PART 2 — confirmed count after 3 confirms + no-egress:", JSON.stringify(countAfter));

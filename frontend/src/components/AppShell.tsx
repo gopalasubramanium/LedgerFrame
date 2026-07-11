@@ -100,13 +100,34 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Re-read the settings-derived state now that we hold a session. The initial mount fetch
+  // can run PRE-unlock (restored DB with a PIN, F-7): /system/data-source, /settings and
+  // /refdata all 401 while locked, so the served provider list comes back EMPTY. Without this
+  // refetch the first-run overlay that appears right after unlock shows an empty data-provider
+  // dropdown (post-close regression, §11-4). Currency/timezone survive (static /refdata
+  // fallback + client-side IANA); the provider list has no fallback, so it must be refetched.
+  const refreshFirstRunState = () => {
+    void fetchFirstRunState().then((s) => {
+      setPinSet(s.pinSet);
+      setTimezone(s.timezone);
+      setDemo(s.demo);
+      setNoEgress(s.noEgress);
+      setBaseCurrency(s.baseCurrency);
+      setProvider(s.provider);
+      setProviders(s.providers);
+      setFirstRunComplete(s.complete);
+    });
+  };
+
   const onUnlock = async (pin: string) => {
     setLockBusy(true);
     setLockError(null);
     const r = await apiUnlock(pin);
     setLockBusy(false);
-    if (r.ok) setLocked(false);
-    else setLockError(r.error || "Incorrect PIN");
+    if (r.ok) {
+      setLocked(false);
+      refreshFirstRunState(); // pull the authenticated values (incl. the provider list)
+    } else setLockError(r.error || "Incorrect PIN");
   };
 
   // First-run step handlers — inline-minimal writes to the canonical endpoints (F-2).

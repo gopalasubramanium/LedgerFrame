@@ -7,6 +7,9 @@ import { defineConfig } from "@playwright/test";
 // CI must run `npx playwright install chromium` (browser binary) before this suite.
 export default defineConfig({
   testDir: "./e2e",
+  // e2e/smoke/ is a DEV-ONLY manual harness (live backend + destructive reset) — never
+  // part of `npm run check` / CI. It has its own config (playwright.smoke.config.ts).
+  testIgnore: "**/smoke/**",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   reporter: [["list"]],

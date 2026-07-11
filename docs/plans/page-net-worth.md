@@ -6,8 +6,8 @@ Phase-3b acceptance walk.** §9 all-resolved (§9); Phase 0 shipped the ND-3/ND-
 routed + nav-built; tests + overflow suite extended; ND-1 demo snapshots seeded. The pre-pass drives
 the live page on seeded demo and runs GREEN ×3 — populated trend, **on-page statement reconciliation
 to the KPI headline** (795,980.93 == 795,980.93), KPI equal-geometry at 320/375/900/1366, 0 overflow
-× both themes, 0 console errors, no residual skeletons. Build record: §12; Phase-3b walk batches 1–2
-in §13. **Next: the owner's re-verify of batch 2.**
+× both themes, 0 console errors, no residual skeletons. Build record: §12; Phase-3b walk batches 1–3
+in §13. **Next: the owner's re-verify of batch 3.**
 
 Net worth is the third **overview-template** page (Portfolio + Home are the others) and the canonical
 home for the net-worth headline, its trend, the liquidity ladder, and cash runway (IA §2/§5).
@@ -559,3 +559,46 @@ MetaStrip lines describe only present controls) is recorded for future pages.
 **Checks after batch 2:** frontend **120 vitest + 49 overflow + lint/typecheck/tokens/build** green.
 Live pre-pass GREEN ×3 (totals separator both themes, no sparkline overlap + in-bounds all
 breakpoints, View line gone, plus all batch-1 + Phase-3a assertions).
+
+## PHASE-3B WALK — batch 3 (owner, 2026-07-12)
+
+Recorded, fixed, pre-pass re-run green, awaiting owner re-verify. (Page NOT closed.)
+
+1. **§12b3-1 — Portfolio summary card: assertion rewritten (measures the right elements) + fail-first
+   evidence.** Per the required order: **(a)** rewrote the assertion to measure the **actual sparkline
+   box (the `.lf-spark` svg AND its `<path>`) vs EACH `.lf-stat` tile** (not container-vs-container as
+   in batch 2) **plus** a **card-fill (no dead-space)** check, and ran it against the current build.
+   **Fail-first result (reported honestly):** the sparkline-vs-tile **overlap measured 0** at every
+   breakpoint × both densities (screenshots confirm the batch-2 fix WAS live — the sparkline sat
+   cleanly below the tiles). The defect that "did not land visually" was **dead space**, not overlap:
+   after the batch-1 equal-height stretch the card grew to 443px but `.lf-card__body` didn't fill it —
+   **the corrected assertion FAILED first on the card-fill check** (dead space **242px** at wide,
+   **17px** at narrow vs a ≤2px budget above the card's own padding). **(b)** Fixed the layout
+   (§12b3-2). **(c)** Assertion green (overlap 0, dead space 1px at all four breakpoints).
+2. **§12b3-2 — Portfolio summary card REDESIGN (composition of ratified parts, ratify live).** A
+   **2×2 tile grid** — **Today's change · Total return · Unrealised P/L · Time-weighted return (TWR)**
+   — every figure a **served display string via the Portfolio reader** (`/portfolio/summary` +
+   `/portfolio/stats`; **P-1: each figure exists on the Portfolio page**), **gain/loss tone via the
+   ratified `metricTone`** (TWR renders red when negative). The **sparkline is a full-width block
+   below the grid that grows to fill the remaining card height** (card flex-column → body `flex:1` →
+   sparkline `flex:1`), so the card **fills its row height with no dead space**. Same **Portfolio ↗**
+   header link. Kitchen-sink specimen not needed (composition of ratified parts). **Refactor:** the
+   `metric` / `metricTone` / `metricDisplay` helpers — now used on **two** pages — were extracted to
+   **`src/format/metrics.ts`** (Portfolio imports them; no behaviour change), per the "a recurring
+   pattern extracts to the shared layer" rule. Also hardened `metric` to `stats?.metrics?.` (a partial
+   payload degrades, never crashes).
+3. **§12b3-3 — ASSERTION LESSON (recorded for the retrospective).** **A geometry assertion must
+   fail-first against the very defect it claims to catch.** The batch-2 assertion checked
+   `prow.bottom − spark.top` (container vs container) — it correctly found no overlap, but it **never
+   exercised the actual defect** (the card not filling → dead space), so it passed while the page
+   looked wrong. Rule: when a walk finding is "X looks wrong", **write the assertion to measure X's
+   real geometry, confirm it goes RED on the current build, and only then fix** — an assertion that
+   was never seen to fail is not a guard. Encoded alongside the §7/§8 pre-pass-assertion rule at the
+   milestone retrospective.
+
+**Reusable outcome:** `src/format/metrics.ts` (served-metric display + tone) is now shared by Portfolio
+and Net worth.
+
+**Checks after batch 3:** frontend **120 vitest + 49 overflow + lint/typecheck/tokens/build** green.
+Live pre-pass GREEN ×3 (2×2 summary grid, sparkline fills — dead space 242px→1px, overlap 0 per tile
+at all breakpoints, plus all batch-1/2 + Phase-3a assertions).

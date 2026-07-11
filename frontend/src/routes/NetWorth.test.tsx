@@ -25,6 +25,12 @@ vi.mock("../api/portfolio", () => ({
       benchmark: [], stats: null,
     },
   })),
+  getPortfolioStats: vi.fn(async () => ({
+    ok: true,
+    data: { base_currency: "SGD", metrics: [
+      { label: "Time-weighted return (TWR)", value: 8.4, kind: "pct", term_id: "term-xirr-twr" },
+    ] },
+  })),
 }));
 
 vi.mock("../api/net-worth", () => ({

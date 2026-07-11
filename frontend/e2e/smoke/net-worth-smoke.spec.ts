@@ -111,25 +111,35 @@ test.describe.serial("net worth pre-pass (live)", () => {
     console.log("PART 4b — summary card heights:", JSON.stringify(summaryHeights));
     expect(Math.max(...summaryHeights) - Math.min(...summaryHeights), "summary cards equal height per row").toBeLessThanOrEqual(1);
 
-    // §12b2-2: Portfolio summary card — the sparkline must NOT overlap the stat tiles, and all
-    // content stays within the card bounds, at every breakpoint (responsive, collision-free).
+    // §12b3-1: Portfolio summary card. Measure the ACTUAL sparkline bounding box (svg AND its
+    // <path>) against EACH .lf-stat tile — a real per-tile overlap, not container-vs-container (the
+    // batch-2 assertion measured the wrong elements). ALSO assert the card content FILLS its height
+    // (no dead space) — the real defect after the batch-1 equal-height stretch.
     for (const w of WIDTHS) {
       await page.setViewportSize({ width: w, height: 900 });
       await page.waitForTimeout(120);
       const res = await page.evaluate(() => {
         const card = document.querySelector('[data-card="portfolio-summary"]') as HTMLElement;
         const cr = card.getBoundingClientRect();
-        const prow = card.querySelector(".nw__prow")?.getBoundingClientRect();
-        const spark = card.querySelector(".lf-spark")?.getBoundingClientRect();
-        const overlap = prow && spark ? Math.round(prow.bottom - spark.top) : 0;
-        const within = !spark
-          ? true
-          : spark.right <= cr.right + 1 && spark.bottom <= cr.bottom + 1 && (prow ? prow.right <= cr.right + 1 : true);
-        return { overlap, within, hasSpark: !!spark };
+        const spark = card.querySelector(".lf-spark");
+        const boxes = [spark?.getBoundingClientRect(), spark?.querySelector("path")?.getBoundingClientRect()].filter(Boolean) as DOMRect[];
+        const tiles = Array.from(card.querySelectorAll(".lf-stat")).map((t) => t.getBoundingClientRect());
+        let overlap = 0;
+        for (const b of boxes) for (const t of tiles) {
+          const ox = Math.min(b.right, t.right) - Math.max(b.left, t.left);
+          const oy = Math.min(b.bottom, t.bottom) - Math.max(b.top, t.top);
+          if (ox > 0 && oy > 0) overlap = Math.max(overlap, Math.round(oy));
+        }
+        // Dead space = gap between the card's content-bottom (below the legit bottom padding) and
+        // the body's bottom. The card's own padding is NOT dead space; a stretch gap is.
+        const body = card.querySelector(".lf-card__body");
+        const padB = parseFloat(getComputedStyle(card).paddingBottom);
+        const deadspace = body ? Math.round(cr.bottom - padB - body.getBoundingClientRect().bottom) : 0;
+        return { overlap, deadspace, tiles: tiles.length };
       });
       console.log(`PART 4c — portfolio-summary @${w}px:`, JSON.stringify(res));
-      expect(res.overlap, `sparkline does not overlap the stat tiles @${w}px`).toBeLessThanOrEqual(1);
-      expect(res.within, `summary content stays within card bounds @${w}px`).toBe(true);
+      expect(res.overlap, `sparkline vs each tile — no overlap @${w}px`).toBeLessThanOrEqual(1);
+      expect(res.deadspace, `card content fills its height, no dead space @${w}px`).toBeLessThanOrEqual(2);
     }
     await page.setViewportSize({ width: 1366, height: 900 });
 

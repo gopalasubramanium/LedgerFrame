@@ -150,23 +150,43 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-/* Portfolio summary body: flow the stat row + sparkline vertically with a gap so they never
-   collide, and the sparkline fills the card width (§12b2-2). */
+/* §12b3-2: the Portfolio summary card FILLS its (equal-height) row — the body + content flex to
+   the bottom and the sparkline grows to take the remaining height, so there is NO dead space. */
+.nw__card[data-card="portfolio-summary"] {
+  display: flex;
+  flex-direction: column;
+}
+.nw__card[data-card="portfolio-summary"] > .lf-card__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
 .nw__psummary {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
+/* 2×2 tile grid — Today's change · Total return · Unrealised P/L · TWR (all served, P-1). */
 .nw__prow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-3);
 }
 .nw__prow > * {
   min-width: 0;
 }
-/* Sparkline in its own full-width block with a fixed height — never overlaps the tiles above. */
-.nw__spark {
-  width: 100%;
+.nw__prow .lf-stat {
   min-width: 0;
+  padding: var(--space-4);
+}
+/* Sparkline: a full-width block BELOW the grid that grows to fill the remaining card height. */
+.nw__spark {
+  flex: 1 1 auto;
+  min-height: var(--space-8);
+  min-width: 0;
+  display: flex;
+}
+.nw__spark .lf-spark {
+  height: 100%;
 }

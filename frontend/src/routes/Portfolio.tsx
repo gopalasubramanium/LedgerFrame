@@ -27,6 +27,7 @@ import {
   formatSignedPercent,
   signOf,
 } from "../format/number";
+import { metric, metricDisplay, metricTone } from "../format/metrics";
 import {
   getAttribution,
   getBenchmarks,
@@ -47,7 +48,6 @@ import type {
   PortfolioStats,
   PortfolioSummary,
   RealisedResp,
-  StatMetric,
   TagsResp,
 } from "../api/portfolio";
 
@@ -71,26 +71,6 @@ function windowToDays(w: string): number {
   return base[w] ?? 365;
 }
 
-// Find a served metric by its exact served label (D-005 — never invent a label).
-function metric(stats: PortfolioStats | null | undefined, label: string): StatMetric | undefined {
-  return stats?.metrics.find((m) => m.label === label);
-}
-// §12b4-4: colour a signed risk/return metric gain/loss (reuse the TrendStat tone mechanism).
-// Sign comes from the SERVED value — no client math. Volatility is a MAGNITUDE (no direction)
-// and is deliberately NOT passed through this (stays neutral).
-function metricTone(m: StatMetric | undefined): "up" | "down" | "flat" | undefined {
-  return m && m.value != null ? signOf(m.value) : undefined;
-}
-function metricDisplay(m: StatMetric | undefined): string {
-  if (!m || m.value == null) return "—";
-  // Round served values for display (the backend may serve raw floats); never a long
-  // unbreakable number that overflows a stat tile. No money math — display rounding only.
-  if (m.kind === "money") return m.signed ? formatSignedMoney(m.value) : formatMoney(m.value);
-  if (m.kind === "pct") return `${Number(m.value).toFixed(2)}%`;
-  if (m.kind === "ratio") return Number(m.value).toFixed(2);
-  if (m.kind === "count") return String(m.value);
-  return String(m.value);
-}
 function segmentsOf(map: Record<string, number> | undefined): Segment[] {
   return Object.entries(map ?? {}).map(([label, value]) => ({ label, value: String(value) }));
 }

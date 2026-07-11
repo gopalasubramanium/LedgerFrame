@@ -19,8 +19,9 @@ import type { PricePoint } from "../mocks/types";
 import { useLabelFor } from "../refdata/refdata-context";
 import { LineChart } from "../icons";
 import { formatMoney, formatSignedMoney, formatSignedPercent, signOf } from "../format/number";
-import { getPerformance, getPortfolioSummary } from "../api/portfolio";
-import type { PortfolioSummary, PerformanceResp } from "../api/portfolio";
+import { metric, metricDisplay, metricTone } from "../format/metrics";
+import { getPerformance, getPortfolioStats, getPortfolioSummary } from "../api/portfolio";
+import type { PortfolioStats, PortfolioSummary, PerformanceResp } from "../api/portfolio";
 import {
   getInsurance,
   getLiquidity,
@@ -76,6 +77,7 @@ export function NetWorth() {
   const [insurance, setInsurance] = useState<InsuranceResp | null>();
   const [review, setReview] = useState<ReviewResp | null>();
   const [perf, setPerf] = useState<PerformanceResp | null>();
+  const [stats, setStats] = useState<PortfolioStats | null>();
 
   const [window, setWindow] = useState("Max");
 
@@ -95,6 +97,7 @@ export function NetWorth() {
     getInsurance().then((r) => setInsurance(r.ok ? r.data : null));
     getReview().then((r) => setReview(r.ok ? r.data : null));
     getPerformance(365, "SPY", false).then((r) => setPerf(r.ok ? r.data : null));
+    getPortfolioStats().then((r) => setStats(r.ok ? r.data : null));
   }, []);
 
   useEffect(() => {
@@ -276,19 +279,26 @@ export function NetWorth() {
           </div>
           <div className="lf-card__body">
             <CardBody data={summary} onRetry={reload}>
-              {(s) => (
-                <div className="nw__psummary">
-                  <div className="nw__prow">
-                    <TrendStat label="Today's change" value={formatSignedMoney(s.day_change)} tone={signOf(s.day_change)} />
-                    <TrendStat label="Total return" value={formatSignedPercent(s.total_return_pct)} tone={signOf(s.total_return_pct)} />
-                  </div>
-                  {sparkPoints.length >= 2 && (
-                    <div className="nw__spark">
-                      <Sparkline points={sparkPoints} tone={signOf(s.total_return_pct)} aria-label="Portfolio performance" />
+              {(s) => {
+                // §12b3-2: 2×2 tile grid — all SERVED display strings from the Portfolio reader
+                // (P-1: every figure exists on the Portfolio page); gain/loss tone via metricTone.
+                const twr = metric(stats, "Time-weighted return (TWR)");
+                return (
+                  <div className="nw__psummary">
+                    <div className="nw__prow">
+                      <TrendStat label="Today's change" value={formatSignedMoney(s.day_change)} tone={signOf(s.day_change)} />
+                      <TrendStat label="Total return" value={formatSignedPercent(s.total_return_pct)} tone={signOf(s.total_return_pct)} />
+                      <TrendStat label="Unrealised P/L" value={formatSignedMoney(s.unrealised_pl)} tone={signOf(s.unrealised_pl)} />
+                      <TrendStat label="Time-weighted return (TWR)" value={metricDisplay(twr)} tone={metricTone(twr)} />
                     </div>
-                  )}
-                </div>
-              )}
+                    {sparkPoints.length >= 2 && (
+                      <div className="nw__spark">
+                        <Sparkline points={sparkPoints} tone={signOf(s.total_return_pct)} aria-label="Portfolio performance" />
+                      </div>
+                    )}
+                  </div>
+                );
+              }}
             </CardBody>
           </div>
         </section>

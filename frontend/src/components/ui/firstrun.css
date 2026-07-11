@@ -1,0 +1,189 @@
+/* First-run checklist components (D-045, page-first-run-checklist Phase 0a) — PROPOSED
+   2026-07-11, ratify at /kitchen-sink. Token-only. Three PROPOSED pieces: Switch,
+   Combobox (searchable picker), FirstRunChecklist (the dismissible overlay). */
+
+/* ---- Switch (no-egress toggle) --------------------------------------------- */
+.lf-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font: inherit;
+  font-size: var(--font-size-14);
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.lf-switch__track {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border-strong);
+  transition: background var(--motion-fast), border-color var(--motion-fast);
+}
+.lf-switch__thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.15rem;
+  transform: translateY(-50%);
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: left var(--motion-fast), background var(--motion-fast);
+}
+.lf-switch.is-on .lf-switch__track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.lf-switch.is-on .lf-switch__thumb {
+  left: calc(100% - 1rem);
+  background: var(--accent-contrast);
+}
+.lf-switch:focus-visible .lf-switch__track {
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.lf-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Combobox (searchable picker; portaled menu per §6) -------------------- */
+.lf-combo {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+.lf-combo__menu {
+  z-index: 50;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-1);
+}
+.lf-combo__opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: var(--font-size-14);
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+.lf-combo__opt:hover,
+.lf-combo__opt.is-active {
+  background: var(--surface);
+}
+.lf-combo__empty {
+  padding: var(--space-3);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-13);
+}
+
+/* ---- FirstRunChecklist (dismissible overlay card) ------------------------- */
+.lf-firstrun {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-8) var(--space-5);
+  overflow-y: auto;
+  background: var(--scrim);
+}
+.lf-firstrun__card {
+  width: 34rem;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+.lf-firstrun__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.lf-firstrun__title {
+  margin: 0;
+  font-size: var(--font-size-20);
+  line-height: var(--line-20);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.lf-firstrun__sub {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.lf-firstrun__step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  border-top: var(--border-width) solid var(--border);
+}
+.lf-firstrun__step-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.lf-firstrun__step-label {
+  font-size: var(--font-size-14);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.lf-firstrun__step-label.is-done {
+  color: var(--gain);
+}
+.lf-firstrun__step-label.is-skipped {
+  color: var(--text-tertiary);
+}
+.lf-firstrun__step-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.lf-firstrun__step-note {
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+.lf-firstrun__link {
+  color: var(--accent);
+  font-size: var(--font-size-13);
+  text-decoration: none;
+}
+.lf-firstrun__link:hover {
+  text-decoration: underline;
+}
+.lf-firstrun__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--border);
+  flex-wrap: wrap;
+}

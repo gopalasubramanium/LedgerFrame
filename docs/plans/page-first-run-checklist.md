@@ -1,11 +1,11 @@
 # page-first-run-checklist.md — First-run checklist (D-045) build plan
 
-**Status: SIGNED OFF (owner 2026-07-11). Phase 0 DONE; Phase 0a IN PROGRESS → PAUSE for
-ratification before Phase 1.** §9 fully resolved (F-1..F-12); F-4 timezone source =
-`Intl.supportedValuesOf` client-side + backend-validated (F-3), searchable picker scoped
-into the Phase-0a amendment; F-10 `PUT /settings` canonical (assert side effects in
-Phase 2); F-12 EXCLUDE demo data. Derived from PRODUCT-SPEC §7, D-045, SECURITY-BASELINE
-§3, D-069, chrome C-4.
+**Status: SIGNED OFF (owner 2026-07-11). Phase 0 DONE · Phase 0a BUILT — AWAITING OWNER
+RATIFICATION before Phase 1 assembly.** §9 fully resolved (F-1..F-12). Phase 0a authored
+three PROPOSED §5.5 components (Switch · Combobox · FirstRunChecklist) + kitchen-sink
+specimens; checks green (88 frontend tests + 24 Playwright overflow + drift/typecheck/
+lint/build). **PAUSED for ratification** (see §10). Derived from PRODUCT-SPEC §7, D-045,
+SECURITY-BASELINE §3, D-069, chrome C-4.
 
 **This is a gate/overlay, not a content page — it adapts the template** (per the
 `TEMPLATE-page-build.md` shell-adaptation note). Like the chrome, it deviates from the
@@ -185,7 +185,27 @@ vocabulary source pinned** — §9.
 *One commit per phase. Backend deltas FIRST. Nothing built until §9 clears.*
 
 - **Phase 0 — Contract deltas (§3b): ✅ DONE.** `timezone` + `first_run_complete` settable via `PUT /settings` (timezone backend-validated); no OpenAPI change (allow-list), contract current; `test_first_run_settings.py` green.
-- **Phase 0a — §5.5 component amendment (IN PROGRESS → PAUSE):** author the checklist/stepper overlay + no-egress toggle + searchable timezone picker + the F-9 interplay copy as **PROPOSED**, with `/kitchen-sink` specimens; **PAUSE for owner ratification before Phase 1** (new components forbidden without an amendment).
+- **Phase 0a — §5.5 component amendment: ✅ BUILT (PROPOSED), AWAITING RATIFICATION.** Authored `Switch`, `Combobox` (searchable, portaled per §6), and `FirstRunChecklist` (dismissible 5-step overlay with inline controls + Settings links + F-9 interplay copy + PIN disk-encryption note); `--radius-pill` token; DESIGN-SYSTEM §5.5 amendment table; `/kitchen-sink` specimens; `firstrun.test.tsx` (5). **PAUSE for owner ratification before Phase 1.**
+
+---
+
+## 10. PHASE 0a — BUILT, AWAITING RATIFICATION (2026-07-11)
+
+Three PROPOSED §5.5 components in `frontend/src/components/ui/`, staged at `/kitchen-sink`
+under **"First-run checklist (D-045) — PROPOSED"**. No shell wiring, no backend change
+beyond Phase 0. **Ratify at `/kitchen-sink` (both themes · both densities · a narrow width),
+then tell me to start Phase 1:**
+
+- [ ] **Switch** — the no-egress toggle reads clearly on/off; keyboard-focusable.
+- [ ] **Combobox** — searchable timezone picker; type filters ~400 zones; menu overlays (portaled), scrolls internally; selection sticks.
+- [ ] **FirstRunChecklist** — dismissible 5-step card; each step's inline control + Skip + "more options" link; PIN gated at 6 digits + disk-encryption note; F-9 interplay copy (no-egress → prices won't refresh; provider note when no-egress on); Done/dismiss closes it.
+
+**Checks:** 88 frontend tests (5 new) · 24 Playwright overflow · drift/typecheck/lint/build green.
+
+**On ratify → Phase 1:** mount `FirstRunChecklist` in `AppShell` **after the lock gate** (F-7);
+wire the five steps to `PUT /settings` (currency/timezone/no-egress/first_run_complete),
+`POST /auth/set-pin`, `PUT /system/data-source` (provider); first-run trigger reads
+`first_run_complete`; dismiss/skip-all set it (F-1/F-11); provider links out for keys (F-8).
 - **Phase 1 — Overlay assembly:** mount the ratified dismissible overlay into `AppShell` **after the lock gate** (F-7); wire the five steps to their endpoints with **inline-minimal controls** (F-2), each also **linking to its Settings home**; provider = selection-only + link-out for keys (F-8); honest interplay copy (F-9); skip/skip-all set the first-run flag = completion (F-1/F-11); no-egress respected.
 - **Phase 2 — Tests:** render/behaviour tests (skippable steps, first-run detection, PIN min-6 + loopback case, no-egress zero-call); **extend the Playwright overflow suite** for the overlay; drift/typecheck/lint green.
 - **Phase 3 — Owner acceptance walk (LIVE):** drive the real app on a **fresh no-PIN, no-settings instance** (both themes + a narrow width): the overlay appears, each step sets/skips, links behave, PIN + no-egress work, it does not reappear after completion. Each finding → numbered §-entry, re-verified live. Done only after this walk.

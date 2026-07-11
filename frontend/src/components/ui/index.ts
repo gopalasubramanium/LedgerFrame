@@ -76,6 +76,15 @@ export type { ClockProps } from "./Clock";
 export { LockScreen } from "./LockScreen";
 export type { LockScreenProps } from "./LockScreen";
 
+// First-run checklist (D-045) — PROPOSED 2026-07-11 (page-first-run-checklist Phase 0a),
+// ratify at /kitchen-sink before shell assembly.
+export { Switch } from "./Switch";
+export type { SwitchProps } from "./Switch";
+export { Combobox } from "./Combobox";
+export type { ComboboxProps, ComboboxOption } from "./Combobox";
+export { FirstRunChecklist } from "./FirstRunChecklist";
+export type { FirstRunChecklistProps, FirstRunStepId, FirstRunLinks } from "./FirstRunChecklist";
+
 // §5.4 / §5.5 amendments (2026-07-10 — Holdings page-build). Ratified at the
 // kitchen-sink look (2026-07-10).
 export { Dialog } from "./Dialog";

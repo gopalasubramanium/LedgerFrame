@@ -7,11 +7,14 @@ import { TokenBoard } from "./TokenBoard";
 import {
   AllocationDonut,
   Clock,
+  Combobox,
   ConfirmDialog,
   DataTable,
   DateInput,
   DemoBadge,
   Dialog,
+  FirstRunChecklist,
+  Switch,
   EmptyState,
   FileInput,
   GlossaryTerm,
@@ -65,6 +68,23 @@ import {
   Sun, Moon, Monitor, Rows2, Rows4, Contrast, Circle, Disc, Waves, Minus, Wind,
   RotateCw, Ban, LineChart, CandlestickChart, Menu, MoreHorizontal, Pencil, Upload, Download, Plus,
 } from "../icons";
+
+// First-run checklist demo options (Phase 0a specimens).
+const TZ_OPTIONS = (
+  (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.(
+    "timeZone",
+  ) ?? ["UTC", "Asia/Singapore", "America/New_York", "Europe/London"]
+).map((z) => ({ label: z, value: z }));
+const PROVIDER_OPTIONS = ["mock", "csv", "alphavantage", "yahoo", "eodhd", "kite"].map((p) => ({
+  label: p,
+  value: p,
+}));
+const FIRST_RUN_LINKS = {
+  general: "/settings",
+  security: "/settings",
+  prices: "/settings",
+  privacy: "/settings",
+};
 
 // Ticker demo: holdings LINK to instrument detail (D-098); the two indices are unlinked.
 const TICKER_DEMO = [
@@ -172,6 +192,16 @@ export function KitchenSink() {
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [lockError, setLockError] = useState<string | null>(null);
+
+  // First-run checklist demos (PROPOSED 2026-07-11 — page-first-run-checklist Phase 0a)
+  const [switchOn, setSwitchOn] = useState(false);
+  const [comboTz, setComboTz] = useState<string | null>("Asia/Singapore");
+  const [frOpen, setFrOpen] = useState(false);
+  const [frCurrency, setFrCurrency] = useState("SGD");
+  const [frTz, setFrTz] = useState<string | null>(null);
+  const [frPinSet, setFrPinSet] = useState(false);
+  const [frProvider, setFrProvider] = useState("mock");
+  const [frNoEgress, setFrNoEgress] = useState(false);
 
   const columns: Column<Holding>[] = useMemo(
     () => [
@@ -722,6 +752,46 @@ export function KitchenSink() {
           </div>
         </div>
       </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        title="First-run checklist (D-045) — PROPOSED 2026-07-11 (Phase 0a)"
+        note="page-first-run-checklist Phase 0a: three PROPOSED §5.5 amendments — Switch (no-egress toggle), Combobox (searchable picker for the ~400 timezone options, F-4), and FirstRunChecklist (the dismissible five-step overlay: base currency · timezone · PIN · data provider · no-egress; each skippable, each links to its Settings home; F-9 interplay copy shown). Ratify look in both themes, then Phase 1 wires it into the shell after the lock gate."
+      >
+        <div className="ks__row">
+          <Specimen label="Switch · no-egress toggle (PROPOSED)">
+            <Switch checked={switchOn} onChange={setSwitchOn} label="Make no network calls" aria-label="No egress" />
+          </Specimen>
+          <Specimen label="Combobox · searchable timezone picker (PROPOSED — type to filter ~400 IANA zones)">
+            <div style={{ width: "16rem" }}>
+              <Combobox options={TZ_OPTIONS} value={comboTz} onChange={setComboTz} placeholder="Search timezones…" aria-label="Timezone" />
+            </div>
+            <span className="ks__label">selected: {comboTz ?? "—"}</span>
+          </Specimen>
+          <Specimen label="FirstRunChecklist · dismissible 5-step overlay (PROPOSED)">
+            <button type="button" className="lf-btn" onClick={() => setFrOpen(true)}>Show first-run checklist</button>
+            <span className="ks__label">skippable steps + Settings links; dismiss/Done closes it</span>
+          </Specimen>
+        </div>
+      </Section>
+
+      <FirstRunChecklist
+        open={frOpen}
+        baseCurrency={frCurrency}
+        timezone={frTz}
+        pinSet={frPinSet}
+        provider={frProvider}
+        noEgress={frNoEgress}
+        timezoneOptions={TZ_OPTIONS}
+        providerOptions={PROVIDER_OPTIONS}
+        links={FIRST_RUN_LINKS}
+        onBaseCurrency={setFrCurrency}
+        onTimezone={setFrTz}
+        onSetPin={() => { setFrPinSet(true); toast.show({ message: "PIN set (demo)." }); }}
+        onProvider={setFrProvider}
+        onNoEgress={setFrNoEgress}
+        onDismiss={() => setFrOpen(false)}
+      />
 
       <Dialog
         open={dialogOpen}

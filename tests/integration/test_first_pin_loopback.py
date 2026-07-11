@@ -16,10 +16,10 @@ async def test_first_pin_refused_from_non_loopback_when_lan_exposed(app_client):
             transport=ASGITransport(app=app, client=("203.0.113.9", 5555)),
             base_url="http://test",
         ) as remote:
-            r = await remote.post("/api/v1/auth/set-pin", json={"pin": "4321"})
+            r = await remote.post("/api/v1/auth/set-pin", json={"pin": "004321"})
             assert r.status_code == 403, r.text
         # A loopback client (the fixture) CAN still set the first PIN even with LAN on.
-        ok = await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})
+        ok = await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})
         assert ok.status_code == 200
     finally:
         get_settings().allow_lan = False
@@ -33,5 +33,5 @@ async def test_first_pin_allowed_from_non_loopback_when_not_lan_exposed(app_clie
         transport=ASGITransport(app=app, client=("203.0.113.9", 5555)),
         base_url="http://test",
     ) as remote:
-        r = await remote.post("/api/v1/auth/set-pin", json={"pin": "4321"})
+        r = await remote.post("/api/v1/auth/set-pin", json={"pin": "004321"})
         assert r.status_code == 200, r.text

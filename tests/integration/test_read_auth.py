@@ -11,7 +11,7 @@ async def test_reads_open_without_pin(app_client):
 
 async def test_reads_gated_when_pin_set(app_client):
     # Set a PIN (returns a session cookie), then lock + drop the cookie.
-    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})).status_code == 200
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})).status_code == 200
     await app_client.post("/api/v1/auth/lock")
     app_client.cookies.clear()
 
@@ -24,5 +24,5 @@ async def test_reads_gated_when_pin_set(app_client):
     assert (await app_client.get("/health")).status_code == 200
 
     # Unlock restores read access.
-    assert (await app_client.post("/api/v1/auth/unlock", json={"pin": "4321"})).status_code == 200
+    assert (await app_client.post("/api/v1/auth/unlock", json={"pin": "004321"})).status_code == 200
     assert (await app_client.get("/api/v1/portfolio/summary")).status_code == 200

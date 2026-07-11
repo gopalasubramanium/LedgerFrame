@@ -162,6 +162,10 @@
   --iconbtn-size: 2rem;
   /* Rendered size of an SVG icon (lucide, ADR-0003) inside a button. */
   --icon-size: 1.125rem;
+  /* Portaled menu/popover layer (Combobox, InstrumentPicker) — ABOVE every overlay,
+     dialog, and the lock/first-run scrims, so a dropdown opened from inside an overlay
+     is never occluded by the overlay that spawned it (page-first-run-checklist §F-1). */
+  --z-portal: 1100;
   /* Global ticker footer (D-047 amendment, §11-17/§11-18). Height + item spacing
      (density) + marquee scroll duration are tokens; owner ratifies final values at the
      kitchen sink. Shorter duration = faster scroll (default set noticeably faster). */

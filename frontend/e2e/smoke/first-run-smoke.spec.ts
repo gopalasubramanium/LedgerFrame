@@ -1,128 +1,105 @@
 import { test, expect } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
-// ⚠ DEV-ONLY smoke (see playwright.smoke.config.ts). Telemetry/observation only — this is
-// NOT the acceptance walk. Assumes the dev DB was reset (settings cleared, pin_hash NULL)
-// and both dev servers are live. Captures console errors across the whole run.
+// ⚠ DEV-ONLY smoke (see playwright.smoke.config.ts). Telemetry/observation + fix-confirmation
+// for the Phase-3 pre-pass. NOT the acceptance walk. Assumes the dev DB was reset via
+// `python frontend/e2e/smoke/reset.py` (settings cleared, pin NULL, .env restored to the
+// pristine snapshot) and both dev servers are live. Captures console errors across the run.
 
 const ART = "e2e/smoke/artifacts";
 mkdirSync(ART, { recursive: true });
-
 const consoleErrors: string[] = [];
 
-test.describe.serial("first-run pre-pass", () => {
-  test("drive the overlay + capture telemetry", async ({ page }) => {
-    page.on("console", (m) => {
-      if (m.type() === "error") consoleErrors.push(`[console] ${m.text()}`);
-    });
+test.describe.serial("first-run pre-pass (post-fix)", () => {
+  test("drive the overlay + confirm fixes + capture telemetry", async ({ page }) => {
+    page.on("console", (m) => m.type() === "error" && consoleErrors.push(`[console] ${m.text()}`));
     page.on("pageerror", (e) => consoleErrors.push(`[pageerror] ${e.message}`));
 
-    // --- PART 1: FRESH STATE — overlay auto-opens on cold load -------------------
+    // --- PART 1: FRESH STATE — overlay auto-opens; 0/5; three-state = all pending -------
     await page.goto("/");
     const card = page.locator(".lf-firstrun__card");
     await expect(card, "overlay auto-opens on fresh cold load").toBeVisible({ timeout: 15_000 });
-    // Not locked (no PIN) — the LockScreen must not be present.
-    expect(await page.locator(".lf-lock").count(), "no lock gate on a no-PIN instance").toBe(0);
+    expect(await page.locator(".lf-lock").count(), "no lock on a no-PIN instance").toBe(0);
 
-    // Verbatim rendered copy (whole card).
+    const count0 = await page.locator(".lf-firstrun__count").innerText();
+    const pending = await page.locator(".lf-firstrun__badge.is-pending").count();
+    const confirmed0 = await page.locator(".lf-firstrun__badge.is-confirmed").count();
+    console.log("PART 1 — fresh state:", JSON.stringify({ count: count0, pendingBadges: pending, confirmedBadges: confirmed0 }));
+    expect(count0, "fresh = 0 of 5 confirmed (§F-3/§F-4)").toBe("0 of 5 confirmed");
+    expect(pending, "all five steps pending on fresh").toBe(5);
+
     const verbatim = (await card.innerText()).trim();
     console.log("\n===== PART 1: VERBATIM OVERLAY COPY =====\n" + verbatim + "\n===== END =====\n");
-
-    // Exact pre-filled default values, as displayed.
     const baseCcy = await page.getByRole("combobox", { name: "Base currency" }).inputValue();
     const tz = await page.getByRole("combobox", { name: "Timezone" }).inputValue();
     const provider = await page.getByRole("combobox", { name: "Data provider" }).inputValue();
-    const noEgress = await page.getByRole("switch", { name: "No egress" }).getAttribute("aria-checked");
-    console.log("PRE-FILLED DEFAULTS:", JSON.stringify({ baseCcy, tz, provider, noEgress }));
+    console.log("PRE-FILLED DEFAULTS (suggestions, not confirmed):", JSON.stringify({ baseCcy, tz, provider }));
 
-    // --- PART 4: BOUNDARY — 4-digit PIN --------------------------------------------
-    const pinField = page.getByLabel("PIN");
-    await pinField.fill("1234");
-    const setPin = page.getByRole("button", { name: "Set PIN" });
-    const disabledAt4 = await setPin.isDisabled();
-    const errorTextAt4 = await page.locator(".lf-firstrun__step .lf-lock__error, [role='alert']").count();
-    console.log("PART 4 — 4-digit PIN:", JSON.stringify({ setPinDisabled: disabledAt4, explicitErrorElements: errorTextAt4 }));
-    await expect(card, "overlay state intact after a short PIN").toBeVisible();
-    await pinField.fill("");
+    // --- PART 4: BOUNDARY — 4-digit PIN --------------------------------------------------
+    await page.getByLabel("PIN").fill("1234");
+    const disabledAt4 = await page.getByRole("button", { name: "Set PIN" }).isDisabled();
+    console.log("PART 4 — 4-digit PIN Set-disabled:", disabledAt4, "(backend now also enforces 6, §F-8)");
+    await page.getByLabel("PIN").fill("");
 
-    // --- PART 3 (interplay): enable no-egress, read the provider step's note --------
+    // --- PART 3: interplay copy + screenshots (three-state visible) ----------------------
     await page.getByRole("switch", { name: "No egress" }).click();
     const providerNote = (await page.locator(".lf-firstrun__step").filter({ hasText: "Data provider" }).locator(".lf-firstrun__step-note").innerText()).trim();
     console.log("PART 3 — provider interplay copy (no-egress ON):", JSON.stringify(providerNote));
-
-    // --- PART 3 (captures): four screenshots ---------------------------------------
     const shots: string[] = [];
     for (const [w, theme] of [[320, "light"], [320, "dark"], [1440, "light"], [1440, "dark"]] as const) {
       await page.emulateMedia({ colorScheme: theme });
-      await page.setViewportSize({ width: w, height: 900 });
+      await page.setViewportSize({ width: w, height: 1000 });
       await page.reload();
       await expect(page.locator(".lf-firstrun__card")).toBeVisible({ timeout: 15_000 });
       const path = `${ART}/first-run-${w}-${theme}.png`;
-      await page.screenshot({ path, fullPage: false });
+      await page.screenshot({ path });
       shots.push(path);
     }
-    console.log("SCREENSHOTS:", JSON.stringify(shots));
+    console.log("SCREENSHOTS (three-state 'not set' badges visible):", JSON.stringify(shots));
 
-    // --- PART 2: STATE & LINKS -----------------------------------------------------
-    await page.setViewportSize({ width: 1440, height: 900 });
+    // --- PART 2: F1 (combobox now clickable in overlay) + confirm + persist + F2 link ----
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.emulateMedia({ colorScheme: "light" });
     await page.reload();
     await expect(page.locator(".lf-firstrun__card")).toBeVisible();
 
-    // Valid writes.
-    await page.getByRole("combobox", { name: "Base currency" }).selectOption({ index: 1 });
-    const ccyWritten = await page.getByRole("combobox", { name: "Base currency" }).inputValue();
-
-    // FINDING: the Timezone Combobox menu is portaled to <body> at z-index 50, BELOW the
-    // overlay (z-index 55) — so inside the overlay the dropdown renders behind the scrim
-    // and its options are un-clickable. Observe + record; do NOT drive the tz write here.
+    // F1: the Timezone Combobox menu now layers ABOVE the overlay → the option is clickable.
     const tzInput = page.getByRole("combobox", { name: "Timezone" });
     await tzInput.click();
     await tzInput.fill("London");
-    const opt = page.getByRole("option", { name: "Europe/London" }).first();
-    const optBox = await opt.boundingBox();
-    const occluded =
-      optBox === null
-        ? "no-menu"
-        : await page.evaluate(
-            ({ x, y }) => {
-              const el = document.elementFromPoint(x, y);
-              return el ? `${el.className || el.tagName}` : "none";
-            },
-            { x: optBox.x + optBox.width / 2, y: optBox.y + optBox.height / 2 },
-          );
-    console.log("PART 2 — timezone combobox option top element at its centre:", JSON.stringify(occluded));
-    await page.keyboard.press("Escape"); // close the (occluded) menu
+    await page.getByRole("option", { name: "Europe/London" }).first().click();
+    const tzConfirmed = await page.locator(".lf-firstrun__step").filter({ hasText: "Timezone" }).locator(".lf-firstrun__badge.is-confirmed").count();
+    console.log("PART 2 — F1 timezone pick worked; step confirmed:", tzConfirmed === 1);
 
-    await page.getByRole("combobox", { name: "Data provider" }).selectOption("yahoo");
-    // no-egress is already ON from Part 3; leave it ON. (PIN set later — a mid-checklist
-    // PIN triggers the lock on reload, F-7, so persist is checked BEFORE it.)
-    await page.keyboard.press("Escape");
+    await page.getByRole("combobox", { name: "Base currency" }).selectOption({ index: 1 });
+    await page.getByRole("combobox", { name: "Data provider" }).selectOption("csv");
+    const countAfter = await page.locator(".lf-firstrun__count").innerText();
+    console.log("PART 2 — confirmed count after 3 confirms + no-egress:", JSON.stringify(countAfter));
 
-    // Persist check (no PIN yet → no lock): reload → overlay reopens with written values.
+    // Persist across reload (no PIN → no lock).
     await page.reload();
-    await expect(page.locator(".lf-firstrun__card")).toBeVisible({ timeout: 15_000 });
-    const ccyAfterReload = await page.getByRole("combobox", { name: "Base currency" }).inputValue();
-    const providerAfterReload = await page.getByRole("combobox", { name: "Data provider" }).inputValue();
-    const noEgressAfterReload = await page.getByRole("switch", { name: "No egress" }).getAttribute("aria-checked");
-    console.log("PART 2 — persisted after reload:", JSON.stringify({ ccyWritten, ccyAfterReload, providerAfterReload, noEgressAfterReload }));
+    await expect(page.locator(".lf-firstrun__card")).toBeVisible();
+    const persisted = {
+      ccy: await page.getByRole("combobox", { name: "Base currency" }).inputValue(),
+      provider: await page.getByRole("combobox", { name: "Data provider" }).inputValue(),
+      noEgress: await page.getByRole("switch", { name: "No egress" }).getAttribute("aria-checked"),
+    };
+    console.log("PART 2 — persisted after reload:", JSON.stringify(persisted));
 
-    // Skip one step (timezone) — internal UI state, no write.
-    await page.locator(".lf-firstrun__step").filter({ hasText: "Timezone" }).getByRole("button", { name: "Skip" }).click();
-    const tzSkippedText = await page.locator(".lf-firstrun__step").filter({ hasText: "Timezone" }).innerText();
-    console.log("PART 2 — timezone step after Skip contains 'skipped'?:", /skipped/.test(tzSkippedText));
-
-    // "More options" links → NotBuilt fallback (observe overlay behaviour on nav).
+    // F2: a "more options" link CLOSES the overlay and navigates (does NOT complete).
     await page.getByRole("link", { name: "More options →" }).first().click();
     await page.waitForTimeout(400);
-    const notBuiltPresent = await page.getByText(/isn't built yet/).count();
-    const overlayStillUp = await page.locator(".lf-firstrun__card").count();
-    console.log("PART 2 — link → NotBuilt:", JSON.stringify({ notBuiltPresent, overlayStillCoveringScreen: overlayStillUp }));
-
-    // Complete (no PIN set, so no lock interferes) → reload → overlay absent.
-    // Navigate back to Home first (the link above moved us to /#/settings).
+    const afterLink = {
+      overlayStillCovering: await page.locator(".lf-firstrun__card").count(),
+      notBuilt: await page.getByText(/isn't built yet/).count(),
+    };
+    console.log("PART 2 — F2 link → overlay closed + NotBuilt visible:", JSON.stringify(afterLink));
+    // Reload → still incomplete → overlay reappears (§F-2).
     await page.goto("/");
-    await expect(page.locator(".lf-firstrun__card")).toBeVisible({ timeout: 15_000 });
+    const overlayReappears = await page.locator(".lf-firstrun__card").count();
+    console.log("PART 2 — overlay reappears on reload (still incomplete):", overlayReappears);
+
+    // Complete → reload → absent.
     await page.getByRole("button", { name: "Done — skip the rest" }).click();
     await page.waitForTimeout(500);
     await page.reload();
@@ -131,7 +108,6 @@ test.describe.serial("first-run pre-pass", () => {
     console.log("PART 2 — after complete + reload, overlay present?:", overlayAfterComplete);
     expect(overlayAfterComplete, "overlay must not reappear after completion").toBe(0);
 
-    // --- console errors across the whole run ---------------------------------------
     console.log("\n===== CONSOLE ERRORS (" + consoleErrors.length + ") =====\n" + (consoleErrors.join("\n") || "(none)") + "\n===== END =====\n");
   });
 });

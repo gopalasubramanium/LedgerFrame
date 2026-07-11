@@ -60,7 +60,7 @@
   width: 100%;
 }
 .lf-combo__menu {
-  z-index: 50;
+  z-index: var(--z-portal);
   max-height: 16rem;
   overflow-y: auto;
   background: var(--surface-raised);
@@ -153,10 +153,29 @@
   font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
-.lf-firstrun__step-label.is-done {
-  color: var(--gain);
+.lf-firstrun__count {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
-.lf-firstrun__step-label.is-skipped {
+/* Three-state step badge (§F-3/§F-4): pending · confirmed · skipped, visually distinct. */
+.lf-firstrun__badge {
+  font-size: var(--font-size-12);
+  font-weight: var(--weight-semibold);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid transparent;
+}
+.lf-firstrun__badge.is-pending {
+  color: var(--text-tertiary);
+  border-color: var(--border-strong);
+}
+.lf-firstrun__badge.is-confirmed {
+  color: var(--gain);
+  border-color: var(--gain);
+}
+.lf-firstrun__badge.is-skipped {
   color: var(--text-tertiary);
 }
 .lf-firstrun__step-control {

@@ -5,10 +5,10 @@ from __future__ import annotations
 
 
 async def test_locked_token_cannot_be_replayed(app_client):
-    await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})
+    await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})
     await app_client.post("/api/v1/auth/lock")
     app_client.cookies.clear()
-    tok = (await app_client.post("/api/v1/auth/unlock", json={"pin": "4321"})).json()["token"]
+    tok = (await app_client.post("/api/v1/auth/unlock", json={"pin": "004321"})).json()["token"]
     hdr = {"Authorization": f"Bearer {tok}"}
 
     # The freshly-issued token works …
@@ -22,12 +22,12 @@ async def test_locked_token_cannot_be_replayed(app_client):
 
 
 async def test_pin_change_revokes_all_existing_tokens(app_client):
-    old = (await app_client.post("/api/v1/auth/set-pin", json={"pin": "1111"})).json()["token"]
+    old = (await app_client.post("/api/v1/auth/set-pin", json={"pin": "001111"})).json()["token"]
     hdr_old = {"Authorization": f"Bearer {old}"}
     assert (await app_client.get("/api/v1/portfolio/summary", headers=hdr_old)).status_code == 200
 
     # Change the PIN (authenticated via the cookie from set-pin) → revoke-all.
-    changed = await app_client.post("/api/v1/auth/set-pin", json={"pin": "2222"})
+    changed = await app_client.post("/api/v1/auth/set-pin", json={"pin": "002222"})
     assert changed.status_code == 200
     app_client.cookies.clear()
 

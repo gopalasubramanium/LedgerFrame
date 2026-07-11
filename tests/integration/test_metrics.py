@@ -26,7 +26,7 @@ async def test_metrics_denied_from_non_loopback_without_auth(app_client):
 
 
 async def test_metrics_allowed_from_non_loopback_with_valid_session(app_client):
-    tok = (await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})).json()["token"]
+    tok = (await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})).json()["token"]
     app = app_client._transport.app
     async with AsyncClient(transport=ASGITransport(app=app, client=("203.0.113.9", 5000)),
                            base_url="http://test") as remote:

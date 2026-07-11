@@ -22,7 +22,9 @@ router = APIRouter()
 
 
 class PinPayload(BaseModel):
-    pin: str = Field(min_length=4, max_length=32)
+    # Minimum 6 digits — the SECURITY-BASELINE §3 / D-002 policy, enforced at the API
+    # boundary (not only in the frontend). page-first-run-checklist §F-8.
+    pin: str = Field(min_length=6, max_length=32)
 
 
 _LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1"})

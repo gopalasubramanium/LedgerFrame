@@ -6,7 +6,7 @@
 /* Portaled overlay (position:fixed is set inline from the input's rect). Overlays
    within the viewport — never expands the dialog or creates dialog-level scroll. */
 .lf-picker__menu {
-  z-index: 1000;
+  z-index: var(--z-portal); /* portal layer, above overlays/dialogs (§F-1) */
   margin-top: var(--space-1);
   padding: var(--space-2);
   list-style: none;

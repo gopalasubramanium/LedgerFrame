@@ -1324,7 +1324,7 @@
         "properties": {
           "pin": {
             "maxLength": 32,
-            "minLength": 4,
+            "minLength": 6,
             "title": "Pin",
             "type": "string"
           }

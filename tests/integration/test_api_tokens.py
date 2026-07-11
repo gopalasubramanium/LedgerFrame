@@ -25,7 +25,7 @@ async def test_token_authenticates_get_via_token_scheme(app_client):
     r = await app_client.get("/api/v1/portfolio/summary", headers={"Authorization": f"Token {raw}"})
     assert r.status_code == 200
     # A Bearer with the same value is NOT accepted as an API token (wrong scheme → not a session).
-    await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})  # set a PIN so reads are gated
+    await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})  # set a PIN so reads are gated
     await app_client.post("/api/v1/auth/lock")
     app_client.cookies.clear()
     bad = await app_client.get("/api/v1/portfolio/summary", headers={"Authorization": f"Bearer {raw}"})
@@ -49,11 +49,11 @@ async def test_token_is_read_only(app_client, method, path, body):
 
 # (2) creation is PIN-gated — no minting without a session, and a token can't mint
 async def test_token_creation_is_pin_gated(app_client):
-    await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})
+    await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})
     await app_client.post("/api/v1/auth/lock")
     app_client.cookies.clear()
     assert (await app_client.post("/api/v1/tokens", json={"name": "x"})).status_code == 401
-    await app_client.post("/api/v1/auth/unlock", json={"pin": "4321"})
+    await app_client.post("/api/v1/auth/unlock", json={"pin": "004321"})
     assert (await app_client.post("/api/v1/tokens", json={"name": "x"})).status_code == 200
 
 

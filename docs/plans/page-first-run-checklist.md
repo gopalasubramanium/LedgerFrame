@@ -1,12 +1,15 @@
 # page-first-run-checklist.md — First-run checklist (D-045) build plan
 
-**Status: Phase 0a RATIFIED · Phase 1 + Phase 2 DONE (2026-07-11). STOP — Phase 3 is the
-owner's live walk.** §9 fully resolved (F-1..F-12); the three §5.5 components ratified.
-The FirstRunChecklist is wired into `AppShell` after the lock gate; the five steps write
-their real endpoints; dismiss/skip-all set `first_run_complete`. Checks: **90 frontend
-tests + 32 Playwright overflow** (incl. the first-run overlay at 320–1366px, both themes)
-+ 4 backend + drift/typecheck/lint/build — all green. Derived from PRODUCT-SPEC §7, D-045,
-SECURITY-BASELINE §3, D-069, chrome C-4.
+**Status: Phase 0a RATIFIED · Phase 1 + Phase 2 DONE · Phase-3 PRE-PASS findings F1–F11
+triaged + fixed (2026-07-11). STOP — Phase 3 live walk is the owner's.** §9 resolved
+(F-1..F-12); three §5.5 components ratified; wired into `AppShell` after the lock gate.
+Pre-pass fixes (§12): F1 portal z-index token, F2 links close overlay, F3/F4 three-state
+(0/5 fresh), F5/F9/F10 deterministic smoke tooling, F7 resume, **F8 6-digit PIN enforced
+API-side**, F11 test `.env` isolation; **F6 = investigation + PROPOSAL only (awaiting
+approval, NOT built).** Checks: **93 frontend tests + 32 Playwright overflow + 484 backend**
++ contract current + drift/typecheck/lint/build green; fix-confirmation smoke passed
+(0 console errors, fresh 0/5). Derived from PRODUCT-SPEC §7, D-045, SECURITY-BASELINE §3,
+D-069, chrome C-4.
 
 **This is a gate/overlay, not a content page — it adapts the template** (per the
 `TEMPLATE-page-build.md` shell-adaptation note). Like the chrome, it deviates from the
@@ -252,3 +255,63 @@ approved; the Phase-0a component amendment is scoped.
 **Sign-off to start build:** F-1..F-3, F-5..F-11 resolved · **F-4 stated** · F-10/F-12
 confirmed · §3b deltas approved with pinned shapes · Phase-0a component amendment scoped.
 **No build until the owner signs off the resolved plan.**
+
+---
+
+## 12. PHASE-3 PRE-PASS FINDINGS (F1–F11) — triaged + fixed (owner, 2026-07-11)
+
+Live Playwright smoke pre-pass (dev-only, `frontend/e2e/smoke/`) surfaced these; owner
+triaged; all fixed except **F6** (investigate + propose only). A fix-confirmation smoke
+re-run passed with **0 console errors**; fresh state shows **0/5** with three-state badges.
+
+- **F1 — Combobox occluded by the overlay (FIXED).** The portaled menu (`z-index:50`) sat
+  below the overlay (`55`) and Dialog (`100`), so the timezone dropdown was un-clickable
+  inside the overlay. Fixed **at the portal layer** with a token: `--z-portal: 1100`,
+  applied to `.lf-combo__menu` **and** `.lf-picker__menu` (InstrumentPicker) — portaled
+  menus now layer above any overlay/dialog. Kitchen-sink FirstRunChecklist specimen is
+  the Combobox-inside-overlay ratification surface. Confirmed live: timezone pick works.
+- **F2 — "More options" links CLOSE the overlay (FIXED).** Links now call `onNavigateAway`
+  → AppShell hides the overlay for the session (does **not** set `first_run_complete`); on
+  the next full load, if still incomplete, it reappears. Confirmed: link → overlay closed
+  + NotBuilt visible. `FirstRunChecklist.tsx`, `AppShell.tsx`, render test.
+- **F3 + F4 — three-state step model (FIXED).** Steps are **pending · confirmed · skipped**
+  (distinct badges). A **fresh instance is 0/5**; defaults are **suggestions** pre-filled in
+  the controls (not "done"); **interacting confirms** (writes) the value; Skip → skipped.
+  Header shows "N of 5 confirmed". Copy updated ("Confirm or skip each…") — PROPOSED, owner
+  ratifies at the walk. *Observation (owner call):* the confirmed badge is session-only —
+  a reload resets badges to pending while the written values persist. `FirstRunChecklist.tsx`,
+  `firstrun.css`, tests.
+- **F5 / F9 / F10 — smoke tooling deterministic (FIXED).** New `frontend/e2e/smoke/reset.py`:
+  reads the **active `.env`** `LEDGERFRAME_DATA_DIR` for the real DB path (F9); **snapshots +
+  restores** the `LEDGERFRAME_*` lines each reset so overlay writes (provider/currency/tz)
+  don't drift the `.env` across runs (F5) — provider stays `mock`, never `yahoo`; resets the
+  DB via the **Python `sqlite3` module** (no CLI needed — F10). Snapshot gitignored.
+- **F7 — deterministic resume (FIXED).** Overlay shows when `!locked && !firstRunComplete
+  && !firstRunHidden`; after unlock, an incomplete first-run reappears. AppShell render test
+  (lock → unlock → overlay resumes). The earlier smoke inconsistency was the F6 degraded
+  backend, not a logic bug.
+- **F8 — 6-digit PIN enforced at the API (FIXED, security-first).** `PinPayload.min_length`
+  4 → 6 (SECURITY-BASELINE §3); a 4-digit PIN → **422** at the boundary, not just the
+  frontend gate. Contract regenerated same commit (`minLength` 4→6). New rejection test; all
+  pre-existing short test PINs padded to 6 digits.
+- **F11 — tests never touch the real `.env` (FIXED).** Autouse conftest fixture points
+  `envfile.ENV_PATH` at a per-test temp file, so `apply_env` (base_currency/timezone/provider)
+  writes to a throwaway `.env`. Verified: the real `.env` is byte-unchanged after the
+  env-mutating tests.
+- **F6 — provider-429 backoff (INVESTIGATED; PROPOSAL for owner approval — NOT built).**
+  *Current behaviour:* the worker (`app/worker.py`) runs `refresh_market_data` on a **5-minute
+  interval**, iterating **every** symbol serially. The Yahoo provider (`_paced_get`) serializes
+  requests and, on `429`, retries **twice** with a fixed linear backoff (1.5s, 3s) then raises;
+  `get_fx_rate` catches it and **falls back to a mock FX rate** (logging a warning per pair). It
+  does **not** read `Retry-After`, and there is **no provider-level cooldown** — so on sustained
+  429 it re-hammers Yahoo every cycle (the observed log flood + sluggish backend when a stray
+  overlay selection left `provider=yahoo`).
+  **PROPOSED minimal contained fix (owner approval BEFORE building; no provider-loop rework):**
+  (1) respect the **`Retry-After`** header in the provider's 429 backoff (cap it); (2) a
+  **provider-level cooldown/circuit-breaker** — after K consecutive 429s, skip that provider for
+  the cooldown window and serve the cache; (3) on failure, **flag values honest-stale** (the
+  existing StalenessChip) rather than substituting a mock FX rate. Scope-contained to the
+  provider + worker; **awaiting owner approval.**
+
+**Checks:** frontend 93 tests + drift/typecheck/lint/build · backend 484 · contract current.
+Smoke fix-confirmation run green (0 console errors). Dev instance left reset + `.env` pristine.

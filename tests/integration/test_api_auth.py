@@ -44,7 +44,7 @@ async def test_ai_status_reports_unavailable_when_disabled(app_client):
 
 async def test_pin_lock_blocks_mutations(app_client):
     # Set a PIN, then lock; protected mutation must 401.
-    set_resp = await app_client.post("/api/v1/auth/set-pin", json={"pin": "4321"})
+    set_resp = await app_client.post("/api/v1/auth/set-pin", json={"pin": "004321"})
     assert set_resp.status_code == 200
     await app_client.post("/api/v1/auth/lock")
     app_client.cookies.clear()
@@ -53,17 +53,17 @@ async def test_pin_lock_blocks_mutations(app_client):
     )
     assert blocked.status_code == 401
     # Unlock with correct PIN restores access.
-    unlock = await app_client.post("/api/v1/auth/unlock", json={"pin": "4321"})
+    unlock = await app_client.post("/api/v1/auth/unlock", json={"pin": "004321"})
     assert unlock.status_code == 200
     ok = await app_client.post("/api/v1/watchlists", json={"name": "X", "symbols": []})
     assert ok.status_code == 200
 
 
 async def test_wrong_pin_rejected(app_client):
-    await app_client.post("/api/v1/auth/set-pin", json={"pin": "1111"})
+    await app_client.post("/api/v1/auth/set-pin", json={"pin": "001111"})
     await app_client.post("/api/v1/auth/lock")
     app_client.cookies.clear()
-    bad = await app_client.post("/api/v1/auth/unlock", json={"pin": "0000"})
+    bad = await app_client.post("/api/v1/auth/unlock", json={"pin": "000000"})
     assert bad.status_code == 401
 
 
@@ -77,7 +77,7 @@ async def test_can_set_first_pin_even_with_lan_enabled(app_client, monkeypatch):
         blocked = await app_client.post("/api/v1/watchlists", json={"name": "X", "symbols": []})
         assert blocked.status_code == 403
         # …but setting the FIRST PIN must still succeed (no chicken-and-egg).
-        r = await app_client.post("/api/v1/auth/set-pin", json={"pin": "5678"})
+        r = await app_client.post("/api/v1/auth/set-pin", json={"pin": "005678"})
         assert r.status_code == 200
         # Now authenticated via the returned cookie → mutations work.
         ok = await app_client.post("/api/v1/watchlists", json={"name": "Y", "symbols": []})

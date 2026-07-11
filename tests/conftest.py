@@ -23,6 +23,16 @@ os.environ.pop("LEDGERFRAME_MARKET_API_KEY", None)
 
 
 @pytest.fixture(autouse=True)
+def _isolate_env_file(tmp_path, monkeypatch):
+    """Tests must NEVER touch the real repo `.env` (page-first-run-checklist §F-11).
+    `apply_env()` (base_currency/timezone/provider writes) rewrites `envfile.ENV_PATH`;
+    point it at a per-test temp file so the suite can't mutate the developer's dev config."""
+    import app.core.envfile as envfile
+
+    monkeypatch.setattr(envfile, "ENV_PATH", tmp_path / ".env")
+
+
+@pytest.fixture(autouse=True)
 async def _fresh_engine_per_test():
     """Dispose the async engine after each test. Required on Postgres (asyncpg connections are
     event-loop-bound and pytest-asyncio uses a fresh loop per test); harmless on SQLite."""

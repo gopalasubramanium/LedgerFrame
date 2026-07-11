@@ -163,12 +163,18 @@ test("first-run checklist: shows when incomplete + unlocked; hidden once complet
   expect(screen.queryByRole("dialog", { name: "Set up LedgerFrame" })).toBeNull();
 });
 
-test("first-run checklist stays HIDDEN behind the lock gate (F-7)", async () => {
+test("first-run checklist stays HIDDEN behind the lock gate, then RESUMES after unlock (F-7)", async () => {
   stubFetch({ firstRun: true, pinSet: true });
+  const user = userEvent.setup();
   renderShell(<div>page</div>);
   // Locked → the checklist must not render (unlock precedes onboarding).
   await screen.findByRole("heading", { name: "Locked" });
   expect(screen.queryByRole("dialog", { name: "Set up LedgerFrame" })).toBeNull();
+
+  // Unlock → first-run is still incomplete → the overlay deterministically appears.
+  await user.type(screen.getByLabelText("PIN"), "123456");
+  await user.click(screen.getByRole("button", { name: "Unlock" }));
+  expect(await screen.findByRole("dialog", { name: "Set up LedgerFrame" })).toBeTruthy();
 });
 
 // Redirects (D-042/D-022/D-056) via the real route tree.

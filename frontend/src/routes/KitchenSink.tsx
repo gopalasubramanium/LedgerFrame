@@ -768,9 +768,9 @@ export function KitchenSink() {
             </div>
             <span className="ks__label">selected: {comboTz ?? "—"}</span>
           </Specimen>
-          <Specimen label="FirstRunChecklist · dismissible 5-step overlay (PROPOSED)">
+          <Specimen label="FirstRunChecklist · dismissible 5-step overlay + three-state steps + Combobox-inside-overlay (PROPOSED §F-1/§F-3/§F-4)">
             <button type="button" className="lf-btn" onClick={() => setFrOpen(true)}>Show first-run checklist</button>
-            <span className="ks__label">skippable steps + Settings links; dismiss/Done closes it</span>
+            <span className="ks__label">Fresh = 0/5, defaults are suggestions (pending), interacting confirms; open the Timezone picker to verify its menu layers ABOVE the overlay (§F-1).</span>
           </Specimen>
         </div>
       </Section>
@@ -791,6 +791,7 @@ export function KitchenSink() {
         onProvider={setFrProvider}
         onNoEgress={setFrNoEgress}
         onDismiss={() => setFrOpen(false)}
+        onNavigateAway={() => setFrOpen(false)}
       />
 
       <Dialog

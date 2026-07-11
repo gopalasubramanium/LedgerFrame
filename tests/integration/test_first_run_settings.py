@@ -58,3 +58,13 @@ async def test_first_run_complete_flag_persists(app_client):
 
     got = (await app_client.get("/api/v1/settings")).json()
     assert got["stored"]["first_run_complete"] == "1"
+
+
+async def test_set_pin_rejects_short_pin(app_client):
+    """F-8: the API enforces the 6-digit minimum (SECURITY-BASELINE §3) — a 4-digit PIN
+    is rejected at the boundary, not only by the frontend."""
+    r = await app_client.post("/api/v1/auth/set-pin", json={"pin": "1234"})
+    assert r.status_code == 422  # pydantic min_length violation
+    # A 6-digit PIN is accepted.
+    ok = await app_client.post("/api/v1/auth/set-pin", json={"pin": "123456"})
+    assert ok.status_code == 200

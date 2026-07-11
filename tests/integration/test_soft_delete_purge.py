@@ -65,7 +65,7 @@ async def test_purge_with_pin_removes_soft_deleted_only(app_client):
     assert soft_before >= 1
 
     # Set a PIN → the returned cookie authenticates the client for the purge.
-    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "8642"})).status_code == 200
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "008642"})).status_code == 200
 
     purge = await app_client.post("/api/v1/portfolio/purge-deleted")
     assert purge.status_code == 200
@@ -88,7 +88,7 @@ async def test_purge_with_pin_removes_soft_deleted_only(app_client):
 # --------------------------------------------------------------------------- #
 async def test_purged_transaction_cannot_be_restored(app_client):
     tid = await _soft_delete_one_transaction(app_client)
-    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "7531"})).status_code == 200
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "007531"})).status_code == 200
     assert (await app_client.post("/api/v1/portfolio/purge-deleted")).status_code == 200
 
     # Row is physically gone → restore 404 (client is authenticated via the set-pin cookie).
@@ -103,7 +103,7 @@ async def test_require_pin_does_not_affect_require_auth_endpoints(app_client):
     # No PIN: a require_auth mutation still works locally (unchanged behaviour).
     assert (await app_client.post("/api/v1/watchlists", json={"name": "A", "symbols": []})).status_code == 200
     # With a PIN set + authenticated, require_auth mutations still work.
-    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "2468"})).status_code == 200
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "002468"})).status_code == 200
     assert (await app_client.post("/api/v1/watchlists", json={"name": "B", "symbols": []})).status_code == 200
 
 

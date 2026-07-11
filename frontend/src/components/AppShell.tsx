@@ -66,6 +66,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   // First-run checklist (D-045). Shown when first-run isn't complete AND the app is
   // unlocked — the overlay mounts AFTER the lock gate (F-7).
   const [firstRunComplete, setFirstRunComplete] = useState(true); // assume done until known
+  // Session-only hide (F-2): a "more options" link closes the overlay WITHOUT completing;
+  // it reappears on the next full load if still incomplete (this resets on remount).
+  const [firstRunHidden, setFirstRunHidden] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState("");
   const [provider, setProvider] = useState("");
   const [noEgress, setNoEgress] = useState(false);
@@ -140,8 +143,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       </div>
       <LockScreen open={locked} onUnlock={onUnlock} error={lockError} busy={lockBusy} />
-      {/* First-run overlay — only when unlocked (AFTER the lock gate, F-7) and not done. */}
-      {!locked && !firstRunComplete && (
+      {/* First-run overlay — only when unlocked (AFTER the lock gate, F-7) and not done.
+          Deterministic: after unlock, if first-run is incomplete it shows again. */}
+      {!locked && !firstRunComplete && !firstRunHidden && (
         <FirstRunChecklist
           open
           baseCurrency={baseCurrency}
@@ -172,6 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             void updateSetting("privacy_mode", v ? "true" : "false");
           }}
           onDismiss={completeFirstRun}
+          onNavigateAway={() => setFirstRunHidden(true)}
         />
       )}
     </div>

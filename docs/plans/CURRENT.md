@@ -630,23 +630,27 @@ onboarding steps, per-lane provider config. Checks at close: **95 frontend + 32 
 
 ## NEXT
 
-1. **Portfolio page build (D-023) — via the template loop.** Instantiate
-   `docs/plans/page-portfolio.md` from `TEMPLATE-page-build.md`, **PLAN ONLY first** (owner
-   reviews the plan before any code). Portfolio is the canonical **overview-template** page
-   (Holdings' linked P-1 summary target). Fill every section from the specs; surface any NEEDS
-   DECISION before build; the new template Phase-3a (scripted pre-pass green before the owner
-   walk) applies.
-2. **Help copy task** (for the Help page plan, or a Holdings help section) —
+1. **Portfolio page build (D-023) — via the template loop.** `docs/plans/page-portfolio.md`
+   drafted; **Batch 13 NDs ratified + Phase-0 verification DONE (2026-07-11)** — **STOPPED for
+   owner sign-off** on §10 (5 open items: performance-return label, chart value-axis vs
+   rebased-to-0%, D-082 null bucket frontend-vs-backend, HHI drop-vs-delta, realised rail label).
+   No backend delta needed. Phase-0a scope = a **PriceChart §5 comparison-mode amendment** (the
+   current benchmark prop normalises each series independently — can't show out/under-performance).
+2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
+   across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
+   defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector
+   live here, not on Portfolio.
+3. **Help copy task** (for the Help page plan, or a Holdings help section) —
    surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
    **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price
    (existing types, no special form); **Ticker / name change** supported (name
    edits preserve history); **De-merger / Spin-off** parked (ROADMAP R-7).
-3. **Next page builds** — each via `docs/plans/TEMPLATE-page-build.md`, per the
+4. **Next page builds** — each via `docs/plans/TEMPLATE-page-build.md`, per the
    API-CONTRACT delta table: entity CRUD (D-065), the Realised P/L / Review /
    Ongoing-cost renames (D-026/D-030/D-029), route-rename redirects
    (D-022/D-056). `/refdata` (D-005) + holdings CSV (D-050) already shipped in the
    Holdings build.
-4. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
+5. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
    separate from design tokens.
 
 ## Needs decision

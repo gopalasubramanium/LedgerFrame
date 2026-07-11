@@ -230,9 +230,13 @@ summary reuses the canonical page's reader, never a second code path.
   vs manual asset; per-type meta whitelisted).
 - **CSV export:** merged into server-side `/portfolio/holdings.csv` (P-5, D-050);
   the client never generates the file.
-- **Summarises:** the value/positions header is a P-1 summary of the Portfolio
-  reader, linked (not a second computation).
-- **Links:** Portfolio (analytics); Pricing Health; InstrumentDetail per row.
+- **Summarises:** the value/positions header shows the **Net worth** headline — a P-1 summary of
+  the **single authoritative reader `value_portfolio`** (served by `GET /portfolio/summary`; the
+  header reads `total_value`, which is **net of liabilities** = Net worth), **linked, never a second
+  computation**. It **links to both Net worth and Portfolio** (page-portfolio ND-2, verified
+  2026-07-11). Portfolio summarises the same `value_portfolio` net total as "Net worth" — one reader,
+  no divergent code path.
+- **Links:** Net worth + Portfolio (from the headline); Pricing Health; InstrumentDetail per row.
 
 ### Accounts (`/accounts`) — D-064, D-065
 

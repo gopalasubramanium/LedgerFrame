@@ -1,0 +1,188 @@
+/* Portfolio (analytics) — overview template. Token-only; composes .lf-card sections. */
+.pf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.pf__rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+.pf__rail--tight {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+.pf__railtile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.pf__tilelink,
+.pf__link {
+  color: var(--accent);
+  font-size: var(--font-size-13);
+  text-decoration: none;
+}
+.pf__tilelink {
+  margin-top: var(--space-1);
+}
+.pf__tilelink:hover,
+.pf__link:hover {
+  text-decoration: underline;
+}
+
+.pf__netlink {
+  margin: 0;
+  font-size: var(--font-size-14);
+  color: var(--text-secondary);
+}
+.pf__netlink strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.pf__netlink a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.pf__netlink a:hover {
+  text-decoration: underline;
+}
+
+.pf__card {
+  padding: var(--space-5);
+}
+.pf__cardhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.pf__h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.pf__cardhead .pf__h2 {
+  margin-bottom: 0;
+}
+.pf__h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+.pf__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.pf__note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+
+.pf__donuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-5);
+}
+.pf__movers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-5);
+}
+.pf__moverrows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.pf__moverrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-14);
+}
+.pf__moversym a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.pf__moversym a:hover {
+  text-decoration: underline;
+}
+.pf__moverval {
+  font-variant-numeric: tabular-nums;
+}
+.pf__up {
+  color: var(--gain);
+}
+.pf__down {
+  color: var(--loss);
+}
+
+.pf__attr {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-14);
+}
+.pf__attr th,
+.pf__attr td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--border);
+}
+.pf__attr th {
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+.pf__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pf__attr a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.pf__attr a:hover {
+  text-decoration: underline;
+}
+.pf__residual td {
+  color: var(--text-secondary);
+  border-top: var(--border-width) solid var(--border-strong);
+}
+.pf__headline td {
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.pf__costs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}
+.pf__costblock {
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-4);
+}
+.pf__costnum {
+  margin: 0;
+  font-size: var(--font-size-20);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.pf__muted {
+  color: var(--text-tertiary);
+}

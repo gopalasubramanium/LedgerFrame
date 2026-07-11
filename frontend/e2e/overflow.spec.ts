@@ -10,6 +10,7 @@ const WIDTHS = [320, 375, 900, 1366];
 const ROUTES = [
   { name: "home (overview)", hash: "#/" },
   { name: "holdings (worklist)", hash: "#/holdings" },
+  { name: "portfolio (overview)", hash: "#/portfolio" },
   { name: "instrument (entity-detail)", hash: "#/instrument/AAPL" },
 ];
 const THEMES = ["light", "dark"] as const;

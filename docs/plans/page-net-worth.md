@@ -1,13 +1,13 @@
 # page-net-worth.md — Net worth (overview) page build plan
 
-**Status: Phases 0/0a/1/2 + Phase-3a scripted pre-pass GREEN (2026-07-12) — STOPPED for the owner's
-Phase-3b acceptance walk.** §9 all-resolved (§9); Phase 0 shipped the ND-3/ND-4 backend deltas
-(§11); Phase-0a confirmed existing components suffice (no §5 amendment); `/net-worth` assembled +
-routed + nav-built; tests + overflow suite extended; ND-1 demo snapshots seeded. The pre-pass drives
-the live page on seeded demo and runs GREEN ×3 — populated trend, **on-page statement reconciliation
-to the KPI headline** (795,980.93 == 795,980.93), KPI equal-geometry at 320/375/900/1366, 0 overflow
-× both themes, 0 console errors, no residual skeletons. Build record: §12; Phase-3b walk batches 1–3
-in §13. **Next: the owner's re-verify of batch 3.**
+**Status: DONE ✅ — page owner-accepted 2026-07-12 (see §14 retrospective).** Phases 0/0a/1/2 +
+Phase-3a scripted pre-pass + Phase-3b walk (batches 1–3, all ratified). §9 all-resolved (§9); Phase 0
+shipped the ND-3/ND-4 backend deltas (§11); Phase-0a confirmed existing components suffice (no §5
+amendment); `/net-worth` assembled + routed + nav-built; ND-1 demo snapshots seeded. **Three-way
+reciprocity verified** (Holdings header ↔ Net worth headline ↔ Portfolio summary — one reader,
+`/portfolio/summary.total_value`). Platform legacy: `DataTable` `<tfoot>` totals primitive + separator,
+honest-metadata rule, card-fill assertion class, `src/format/metrics.ts`. Build record: §12; Phase-3b
+walk §13; retrospective §14. Commits `2282926`→ batch-3 close-out. **No open blockers.**
 
 Net worth is the third **overview-template** page (Portfolio + Home are the others) and the canonical
 home for the net-worth headline, its trend, the liquidity ladder, and cash runway (IA §2/§5).
@@ -602,3 +602,46 @@ and Net worth.
 **Checks after batch 3:** frontend **120 vitest + 49 overflow + lint/typecheck/tokens/build** green.
 Live pre-pass GREEN ×3 (2×2 summary grid, sparkline fills — dead space 242px→1px, overlap 0 per tile
 at all breakpoints, plus all batch-1/2 + Phase-3a assertions).
+
+**Batch 3 — RATIFIED (owner, 2026-07-12, seen live):** the 2×2 Portfolio summary card (fills, no
+dead space). **Three-way reciprocity verified** (Holdings header ↔ Net worth headline ↔ Portfolio
+summary — **one reader**): all three bind `/portfolio/summary.total_value` (`Holdings.tsx:354`,
+`Portfolio.tsx:227`, `NetWorth.tsx:145`); the statement `net_worth` = `to_display(val.total_value)`
+reconciles by construction; live equality observed in the batch-3 pre-pass (795,980.93 across KPI +
+statement). One reader, no second code path (D-032/P-1).
+
+---
+
+## 14. MILESTONE RETROSPECTIVE — Net worth DONE ✅ (owner sign-off, 2026-07-12)
+
+**`/net-worth` is complete and owner-accepted.** The third overview-template page and the reciprocal
+of Portfolio — it **owns** the Net worth headline that Holdings and Portfolio summarise (D-032), and
+building it **closed the three-way reciprocity** (one reader, verified above). Phases 0/0a/1/2 +
+Phase-3a scripted pre-pass + Phase-3b walk (batches 1–3, all ratified). Two backend deltas
+(cash-and-deposits, signed statement reader); no §5 amendment (existing components sufficed).
+Commits `2282926`→ batch-3 close-out. No open blockers.
+
+**Process lessons (folded into `TEMPLATE-page-build.md` this commit):**
+1. **Fail-first + reproduce-the-defect-first (TEMPLATE §7/§8).** An assertion **never seen to fail is
+   not a guard**, and its corollary from this milestone: **reproduce the owner-visible defect before
+   writing the assertion** — batch 2 asserted sparkline↔tile *overlap* (its theory) and passed, but
+   the real defect was card **dead space**; the wrong theory + an honest measurement meant the "fix"
+   didn't land. The corrected §12b3-1 assertion measured the actual sparkline box vs each tile **and**
+   card-fill, was seen RED on the pre-fix build, then went green.
+2. **Verify-first again prevented a §3b guess.** Reading the snapshot schema (§12b1-4) — `assets/
+   liabilities/net_worth` scalars only, `detail_json` written empty — kept a liquid/illiquid trend
+   from being assumed buildable and **shaped ROADMAP R-28 correctly** (forward-only, no backfill).
+
+**Template legacy (reusable platform outcomes this milestone):**
+- **`DataTable` `<tfoot>` totals primitive** — reconciling totals share the body's column grid + scroll
+  gutter (no offset), with an inherited **section separator rule** (§12b1-2/§12b2-1).
+- **Honest-metadata rule** — a legend/`MetaStrip` line describes only a control that **exists** on the
+  page (PriceChart View line gated on `controls`; §12b2-3).
+- **Card-fill assertion class** — a card in an equal-height row must **fill** it (no dead space),
+  measured net of the card's own padding (§12b3-1).
+- **`src/format/metrics.ts`** — served-metric display + gain/loss tone (`metric`/`metricTone`/
+  `metricDisplay`), shared by Portfolio and Net worth.
+
+**Judgment-flagged (owner calls, not derivable from specs):** ND-3 "Cash & deposits" = cash +
+fixed_deposit (KPI scope on record, §3b); the Portfolio-summary redesign (2×2 + fill); R-28 shape
+(forward-only, opt-in). Each recorded with its rationale.

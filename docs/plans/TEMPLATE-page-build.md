@@ -320,6 +320,15 @@ the theme/density matrix. Written as checkable statements.*
       **measuring assertion to the scripted pre-pass** (rendered `getBoundingClientRect`, grouped
       as the eye groups it — e.g. per row), at **all breakpoints**, so a regression re-trips it.
       jsdom cannot measure — the assertion lives in the Playwright pre-pass / overflow suite.
+- [ ] **Fail-first, and reproduce the owner-visible defect BEFORE writing the assertion
+      (page-net-worth §12b3-1/§12b3-3):** an assertion **never seen to fail is not a guard**. First
+      **reproduce the reported defect** (measure it / screenshot it) so the assertion targets the
+      REAL geometry — do not assert your *theory* of the defect. (Batch 2 asserted sparkline↔tile
+      *overlap* and passed; the true defect was card **dead space** — the theory was wrong, the
+      measurement was honest, so the fix "did not land".) Confirm the new assertion goes **RED on the
+      current build**, then fix, then green. **Measure the actual element** (e.g. the sparkline svg
+      AND its `<path>` vs each tile), never container-vs-container. Report the fail-first run in the
+      §-entry.
 - [ ] **Copy hygiene (page-chrome §11-8):** no decision ID (`D-0…`/`P-…`/`§…`) or
       implementation note (`server-side`, enum/endpoint names) in any user-facing string
       — grep the rendered copy. A changed label is updated **app-wide** (§11-4), not only
@@ -357,9 +366,11 @@ tests. Never assemble the page against an endpoint that does not exist.*
   across runs. **Do not start the owner walk until the pre-pass returns green (0 console
   errors, correct fresh state).** **A geometry/visual fix during the walk must add its own
   measuring assertion to this pre-pass in the SAME batch (page-portfolio §12b4-1)** — a repeat
-  finding across batches means the earlier fix shipped without an assertion. Also **wait each
-  progressive-loaded card out of skeleton before asserting its content** (§12-8) so the pre-pass
-  never races a per-card reload.
+  finding across batches means the earlier fix shipped without an assertion. **That assertion must
+  be seen to FAIL on the pre-fix build (fail-first) and must measure the OWNER-VISIBLE defect, not a
+  theory of it (page-net-worth §12b3-1)** — reproduce the defect (measure/screenshot) first, or you
+  will "fix" the wrong thing and it recurs. Also **wait each progressive-loaded card out of skeleton
+  before asserting its content** (§12-8) so the pre-pass never races a per-card reload.
 - **Phase 3b — Owner acceptance walk (LIVE, Holdings retrospective) — JUDGMENT ITEMS ONLY:**
   the owner drives the **real rendered app**, because the biggest Holdings defects surfaced
   only there (silent 500-cap, snapshot-vs-ledger round-trip, 1366px overflow, mock-backed

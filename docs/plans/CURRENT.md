@@ -643,21 +643,30 @@ for stat rails + its pre-pass assertion. Pre-pass full green (data + controls + 
 (every visual/geometry fix ships a pre-pass assertion; wait cards out of skeleton before asserting).
 No open Portfolio blockers.
 
-## NET WORTH — Phases 0/0a/1/2 + Phase-3a pre-pass GREEN (2026-07-12) — awaiting owner walk
+## NET WORTH — DONE ✅ (page ACCEPTED, Phase-3b walk complete, 2026-07-12)
 
-**`/net-worth` is built and pre-pass-green; STOPPED for the owner's Phase-3b acceptance walk.** Third
-overview-template page, the reciprocal of Portfolio (owns the headline Portfolio/Holdings summarise,
-D-032). §9 all-resolved; **D-104 not needed here**; two backend deltas shipped in Phase 0 — **ND-3
-`cash_and_deposits`** on `/portfolio/summary` (= cash + fixed_deposit) and **ND-4 `GET
-/net-worth/statement`** (signed per-class balance, reconciles to the headline; statement ≠
-allocation). Phase 1 assembled the page (KPI strip, trend, statement, liquidity ladder, runway,
-insurance exclusion line, Portfolio/Review summaries), **ND-1 demo snapshots seeded** (26 synthetic,
-demo-only). Full record: **`page-net-worth.md` §9–§12**. Commits `2282926`→ Phase-3a close-out.
-Trunk-only workflow (memory: no branches). **Next: the owner's live Phase-3b walk.**
+**`/net-worth` is complete and owner-accepted.** Third overview-template page, the reciprocal of
+Portfolio — it owns the Net worth headline Holdings/Portfolio summarise (D-032), **closing the
+three-way reciprocity** (one reader, `/portfolio/summary.total_value`; verified). Phases 0/0a/1/2 +
+Phase-3a pre-pass + Phase-3b walk (batches 1–3, all ratified). Two backend deltas — **ND-3
+`cash_and_deposits`** (= cash + fixed_deposit) and **ND-4 `GET /net-worth/statement`** (signed
+per-class balance, reconciles to the headline; statement ≠ allocation, allocation stays gross-only);
+no §5 amendment. **ND-1 demo snapshots seeded** (26 synthetic, demo-only). New: **ROADMAP R-28**
+(liquid/illiquid trend — forward-only, plan-gated). Platform legacy: `DataTable` `<tfoot>` totals +
+separator, honest-metadata rule, card-fill assertion class, `src/format/metrics.ts`. Full record:
+**`page-net-worth.md` §9–§14** (§14 retrospective). Commits `2282926`→ batch-3 close-out.
 
 ## NEXT
 
-1. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
+1. **Pricing Health page build — via the template loop.** Draft `docs/plans/page-pricing-health.md`
+   **PLAN ONLY first** (owner reviews before any code), instantiating `TEMPLATE-page-build.md`
+   (IDENTITY · OWNERSHIP · API SURFACE with a backend-first *contract delta* list only if needed ·
+   COMPONENTS ratified-only · VOCABULARIES · DECISIONS IN FORCE · ACCEPTANCE · BUILD PHASES · NEEDS
+   DECISION). Then the standard loop: **Phase-0 verify-first** (D-019 — read what the freshness/
+   provenance readers actually serve before assuming shapes; contract gaps → §9, never a §3b guess),
+   Phase-3a **scripted pre-pass GREEN before** the owner's Phase-3b walk, every visual/geometry fix
+   **fail-first** (TEMPLATE §7/§8).
+2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
    across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
    defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector
    live here, not on Portfolio.

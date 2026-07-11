@@ -68,9 +68,12 @@ function metric(stats: PortfolioStats | null, label: string): StatMetric | undef
 }
 function metricDisplay(m: StatMetric | undefined): string {
   if (!m || m.value == null) return "—";
+  // Round served values for display (the backend may serve raw floats); never a long
+  // unbreakable number that overflows a stat tile. No money math — display rounding only.
   if (m.kind === "money") return m.signed ? formatSignedMoney(m.value) : formatMoney(m.value);
-  if (m.kind === "pct") return `${m.value}%`;
-  if (m.kind === "ratio") return String(m.value);
+  if (m.kind === "pct") return `${Number(m.value).toFixed(2)}%`;
+  if (m.kind === "ratio") return Number(m.value).toFixed(2);
+  if (m.kind === "count") return String(m.value);
   return String(m.value);
 }
 function segmentsOf(map: Record<string, number> | undefined): Segment[] {
@@ -263,7 +266,7 @@ export function Portfolio() {
               {(stats?.metrics.filter((m) => m.term_id === "term-concentration") ?? []).map((m) => (
                 <TrendStat key={m.label} label={m.label} value={metricDisplay(m)} />
               ))}
-              <TrendStat label="HHI" value={risk?.available && risk.hhi != null ? String(risk.hhi) : "—"} />
+              <TrendStat label="HHI" value={risk?.available && risk.hhi != null ? Number(risk.hhi).toFixed(4) : "—"} />
             </div>
           </section>
 
@@ -287,6 +290,7 @@ export function Portfolio() {
             <div className="lf-card__body">
               {attribution?.available ? (
                 <>
+                  <div className="pf__scroll">
                   <table className="pf__attr">
                     <thead>
                       <tr>
@@ -304,7 +308,7 @@ export function Portfolio() {
                         </tr>
                       ))}
                       <tr className="pf__residual">
-                        <td>Residual (income + realised + closed positions)</td>
+                        <td>Residual (income, realised, closed)</td>
                         <td>—</td>
                         <td className="pf__num">{formatSignedPercent(attribution.residual_pct)}</td>
                       </tr>
@@ -315,6 +319,7 @@ export function Portfolio() {
                       </tr>
                     </tbody>
                   </table>
+                  </div>
                   <p className="pf__note">Single-period approximation — sub-holdings + residual reconcile to the headline.</p>
                 </>
               ) : (

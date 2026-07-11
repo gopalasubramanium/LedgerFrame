@@ -4,14 +4,33 @@
   flex-direction: column;
   gap: var(--space-5);
 }
+/* Every top-level section must be allowed to shrink below its content's min-content width,
+   so a wide child (the attribution table) is clipped + scrolled by its .pf__scroll wrapper
+   instead of stretching the whole page (overflow discipline, template §7). */
+.pf > * {
+  min-width: 0;
+}
 
 .pf__rail {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  /* Min column wide enough for a large money value at the 28px stat size, so tiles never
+     force text overflow at any breakpoint (money can reach ~13rem). */
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: var(--space-3);
 }
 .pf__rail--tight {
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+/* Grid children MUST be allowed to shrink below their intrinsic / min widths, or a wide
+   TrendStat (its own min-width: 12rem) forces extra columns and overflows narrow viewports. */
+.pf__rail > *,
+.pf__donuts > *,
+.pf__movers > *,
+.pf__costs > * {
+  min-width: 0;
+}
+.pf__rail .lf-stat {
+  min-width: 0;
 }
 .pf__railtile {
   position: relative;
@@ -130,10 +149,17 @@
   color: var(--loss);
 }
 
+/* Wide content (the attribution table) scrolls inside its own container, never the page. */
+.pf__scroll {
+  overflow-x: auto;
+}
 .pf__attr {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-14);
+}
+.pf__attr td:first-child {
+  overflow-wrap: anywhere;
 }
 .pf__attr th,
 .pf__attr td {

@@ -137,7 +137,7 @@ test("sector donut renders the served D-082 'Not sector-classified (non-equity)'
 
 test("attribution shows an explicit residual row + headline that reconcile (ND-7)", async () => {
   renderPage();
-  expect(await screen.findByText(/Residual \(income \+ realised \+ closed positions\)/)).toBeTruthy();
+  expect(await screen.findByText(/Residual \(income, realised, closed\)/)).toBeTruthy();
   expect(screen.getByText("Headline return")).toBeTruthy();
   expect(screen.getByText(/Single-period approximation/)).toBeTruthy();
 });

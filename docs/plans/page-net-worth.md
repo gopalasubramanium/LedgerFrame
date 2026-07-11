@@ -6,8 +6,8 @@ Phase-3b acceptance walk.** §9 all-resolved (§9); Phase 0 shipped the ND-3/ND-
 routed + nav-built; tests + overflow suite extended; ND-1 demo snapshots seeded. The pre-pass drives
 the live page on seeded demo and runs GREEN ×3 — populated trend, **on-page statement reconciliation
 to the KPI headline** (795,980.93 == 795,980.93), KPI equal-geometry at 320/375/900/1366, 0 overflow
-× both themes, 0 console errors, no residual skeletons. Build record: §12. **Next: the owner's live
-Phase-3b walk (judgment items).**
+× both themes, 0 console errors, no residual skeletons. Build record: §12; Phase-3b walk batch 1 in
+§13. **Next: the owner's re-verify of batch 1.**
 
 Net worth is the third **overview-template** page (Portfolio + Home are the others) and the canonical
 home for the net-worth headline, its trend, the liquidity ladder, and cash runway (IA §2/§5).
@@ -480,3 +480,43 @@ cover it). Phases 0a/1/2/3a executed below (§12).
 
 **Commits:** `2282926` (draft) · `a2c3c1e` (§9 + Phase 0 deltas) · `b2af0fb` (Phase 1) · `0db1475`
 (Phase 2) · Phase-3a close-out. **STOP — the Phase-3b acceptance walk is the owner's.**
+
+---
+
+## 13. PHASE-3B WALK — batch 1 (owner, 2026-07-12)
+
+Recorded, fixed, pre-pass re-run green, awaiting owner re-verify. (Page NOT closed.)
+
+1. **§12b1-1 — KPI strip centre-aligned.** Applied the ratified centre-aligned tile treatment
+   (`.nw__kpis .lf-stat { align-items: center; text-align: center }`), matching the Portfolio rails.
+   Equal geometry still comes from the grid (§12b4-1). Visual — owner ratifies at re-verify.
+2. **§12b1-2 — Composition totals x-offset BUG (structural fix + assertion).** The totals
+   (Gross assets / Liabilities / Net worth) were a `<dl>` OUTSIDE the table's scroll region, so their
+   right-aligned values ignored the scrollbar gutter that shifts the body's Value column → a
+   horizontal offset. **Fixed structurally:** `DataTable` gains a **`footer`** prop rendering total
+   rows as `<tfoot>` inside the SAME `<table>` — footer and body now share **one column grid AND the
+   scroll gutter by construction**, so a total can never drift from its column. The net row is ruled +
+   bold (`.lf-table__foot--emph`). **Pre-pass assertion added:** the tfoot Value cell's right edge is
+   x-aligned (≤1px) with a body Value cell, **both themes** — verified 0px light + dark. (The runway
+   card keeps its own `.nw__totals` dl — no table there, no gutter, no offset.)
+3. **§12b1-3 — Portfolio + Review summaries equal height.** The row grid now stretches
+   (`align-items: stretch`) and the Review cell fills its stretched cell (`display:flex` +
+   `flex:1`), so content can't shrink a card. **Pre-pass assertion added** (same rule as the KPI /
+   §12b4-1 geometry): the two `.nw__summaries` cards are equal height per row — verified 443/443.
+4. **§12b1-4 — VERIFY ONLY (no build): snapshot schema for the R-28 liquid/illiquid trend.**
+   Reported, nothing built (snapshot shape untouched, no chart mode):
+   - **`net_worth_snapshots`** stores **scalar totals only**: `ts, base_currency, assets,
+     liabilities, net_worth`. **No liquidity or class decomposition.**
+   - **`portfolio_snapshots`** has a `detail_json` Text column (comment "allocations etc."), but the
+     worker (`app/worker.generate_snapshots`) **writes it empty (`"{}"`)** — so **no historical
+     decomposition exists** in practice.
+   - **Implication for R-28:** a liquid-vs-illiquid stacked-area trend has **no historical data
+     today**. It would require the worker to **start persisting a liquidity/class split going
+     forward** (populate `detail_json` or add columns). **ND-1's no-backfill honesty applies to any
+     split too:** historical liquidity can't be reconstructed without historical FX/prices (ROADMAP
+     R-8, parked) and would **fabricate** a split for manual assets (property/cash have no series).
+     → R-28 should be a **forward-only, opt-in** decomposition, mirroring ND-1. **Owner's call.**
+
+**Checks after batch 1:** frontend **120 vitest + 49 overflow + lint/typecheck/tokens/build** green.
+Live pre-pass GREEN ×3 (centre-aligned KPIs, footer↔body value x-aligned 0px both themes, summary
+cards equal height 443/443, populated trend, on-page reconciliation, 0 overflow, 0 console errors).

@@ -181,12 +181,19 @@ export function NetWorth() {
           <CardBody data={statement} lines={5} onRetry={reload}>
             {(st) => (
               <>
-                <DataTable columns={statementColumns} rows={st.rows} caption="Net-worth statement by asset class" stickyHeader />
-                <dl className="nw__totals">
-                  <div className="nw__totrow"><dt>Gross assets</dt><dd className="nw__num">{formatMoney(st.gross_assets)}</dd></div>
-                  <div className="nw__totrow"><dt>Liabilities</dt><dd className="nw__num">{formatMoney(st.liabilities)}</dd></div>
-                  <div className="nw__totrow nw__totrow--net"><dt>Net worth</dt><dd className="nw__num">{formatMoney(st.net_worth)}</dd></div>
-                </dl>
+                {/* Totals are <tfoot> rows of the SAME table (§12b1-2) so the Value column stays
+                    x-aligned with the body — never offset by the scroll gutter. */}
+                <DataTable
+                  columns={statementColumns}
+                  rows={st.rows}
+                  caption="Net-worth statement by asset class"
+                  stickyHeader
+                  footer={[
+                    { key: "gross", cells: { asset_class: "Gross assets", value: formatMoney(st.gross_assets) } },
+                    { key: "liab", cells: { asset_class: "Liabilities", value: formatMoney(st.liabilities) } },
+                    { key: "net", cells: { asset_class: "Net worth", value: formatMoney(st.net_worth) }, emphasis: true },
+                  ]}
+                />
                 <p className="nw__note">A balance statement (assets and liabilities), not an allocation weight — allocation lives on <Link to="/portfolio">Portfolio</Link>.</p>
               </>
             )}
@@ -282,7 +289,7 @@ export function NetWorth() {
           </div>
         </section>
 
-        <div data-card="review">
+        <div className="nw__reviewcell" data-card="review">
           <CardBody data={review} lines={4} onRetry={reload}>
             {() => <ReviewCard sections={reviewSections} attention={review?.count ?? 0} link={{ href: "#/review", label: "Review" }} />}
           </CardBody>

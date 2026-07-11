@@ -31,9 +31,12 @@
 .nw__kpis > * {
   min-width: 0;
 }
+/* Ratified centre-aligned tile treatment (page-net-worth §12b1-1, as on the Portfolio rails). */
 .nw__kpis .lf-stat {
   min-width: 0;
   padding: var(--space-4);
+  align-items: center;
+  text-align: center;
 }
 
 .nw__card {
@@ -127,14 +130,24 @@
   text-decoration: underline;
 }
 
-/* Summaries row: Portfolio headline + ReviewCard, side by side on wide screens. */
+/* Summaries row: Portfolio headline + ReviewCard, side by side on wide screens. Equal height
+   comes from the row GRID (align-items: stretch) — content cannot shrink a card (§12b1-3). */
 .nw__summaries {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
   gap: var(--space-5);
-  align-items: start;
+  align-items: stretch;
 }
 .nw__summaries > * {
+  min-width: 0;
+}
+/* The Portfolio card (.lf-card grid item) stretches to the row height on its own; the Review
+   cell must FILL its stretched cell so the ReviewCard's painted box matches (cf. §12b4-1). */
+.nw__reviewcell {
+  display: flex;
+}
+.nw__reviewcell > * {
+  flex: 1 1 auto;
   min-width: 0;
 }
 .nw__prow {

@@ -116,13 +116,13 @@ test("composition statement includes a NEGATIVE liability row and a reconciling 
   const { container } = renderPage();
   await screen.findByText("Composition by class");
   await waitFor(() => {
+    const stmt = container.querySelector('[data-card="statement"]') as HTMLElement;
     // Class labels resolve via the offline refdata registry (never a raw enum key).
-    expect(container.textContent).toMatch(/Liability/);
-    // The statement's Net worth total row (reconciles to the headline).
-    const totals = Array.from(container.querySelectorAll(".nw__totrow--net")).map((n) => n.textContent ?? "");
-    expect(totals.some((t) => /Net worth/.test(t))).toBe(true);
+    expect(stmt.textContent).toMatch(/Liability/);
+    // The statement's Net worth total is a <tfoot> row (shares the column grid, §12b1-2).
+    expect(stmt.querySelector(".lf-table__foot--emph")?.textContent).toMatch(/Net worth/);
     // Liability value renders negative.
-    expect(container.textContent).toMatch(/-420,000/);
+    expect(stmt.textContent).toMatch(/-420,000/);
   });
 });
 

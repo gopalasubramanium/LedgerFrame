@@ -106,6 +106,17 @@
 }
 .lf-table__td--gain { color: var(--gain); }
 .lf-table__td--loss { color: var(--loss); }
+/* Total rows (<tfoot>) share the body's column grid + scrollbar gutter (page-net-worth §12b1-2),
+   so a total value stays x-aligned with its column at all times. The net row is ruled + bold. */
+.lf-table__foot .lf-table__td {
+  border-bottom: 0;
+  color: var(--text-secondary);
+}
+.lf-table__foot--emph .lf-table__td {
+  border-top: var(--border-width) solid var(--border-strong);
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
 /* Entity links in cells match the Holdings treatment: accent, no underline (underline on hover)
    — never default browser blue/underline (§12b-3). */
 .lf-table__td a {

@@ -45,6 +45,15 @@ export interface SortState {
   dir: "asc" | "desc";
 }
 
+/** A `<tfoot>` total row. Cells are keyed by column key so the footer shares the body's
+ *  column grid AND scrollbar gutter by construction — a total value can NEVER drift out of
+ *  alignment with its column (page-net-worth §12b1-2). `emphasis` = the ruled/bold net row. */
+export interface FooterRow {
+  key: string;
+  cells: Partial<Record<string, ReactNode>>;
+  emphasis?: boolean;
+}
+
 export interface DataTableProps<R> {
   columns: Column<R>[];
   rows: R[];
@@ -57,6 +66,8 @@ export interface DataTableProps<R> {
   density?: "comfortable" | "compact";
   rowLink?: (row: R) => string;
   caption?: string;
+  /** Total rows rendered in `<tfoot>` inside the SAME table (shared column grid + gutter). */
+  footer?: FooterRow[];
 }
 
 const NUMERIC: ColumnFormat[] = [
@@ -88,6 +99,7 @@ export function DataTable<R>({
   density,
   rowLink,
   caption,
+  footer,
 }: DataTableProps<R>) {
   return (
     <div
@@ -214,6 +226,22 @@ export function DataTable<R>({
             );
           })}
         </tbody>
+        {footer && footer.length > 0 && (
+          <tfoot>
+            {footer.map((fr) => (
+              <tr key={fr.key} className={`lf-table__foot${fr.emphasis ? " lf-table__foot--emph" : ""}`}>
+                {columns.map((col) => {
+                  const isNum = col.align === "right" || (col.format && NUMERIC.includes(col.format));
+                  return (
+                    <td key={col.key} className={`lf-table__td${isNum ? " lf-table__td--num" : ""}`}>
+                      {fr.cells[col.key]}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tfoot>
+        )}
       </table>
       </div>
     </div>

@@ -66,16 +66,43 @@ test.describe.serial("net worth pre-pass (live)", () => {
 
     // PART 3: composition statement RECONCILES on-page to the headline (ND-4) --------------------
     const nwKpi = money(await kpis.locator(".lf-stat").filter({ hasText: "Net worth" }).locator(".lf-stat__value").textContent());
-    const stmtNet = money(await page.locator(".nw__totrow--net .nw__num").first().textContent());
+    const stmtNet = money(await page.locator('[data-card="statement"] .lf-table__foot--emph .lf-table__td--num').first().textContent());
     console.log("PART 3 — KPI net worth:", nwKpi, "· statement net total:", stmtNet);
     expect(Math.abs(nwKpi - stmtNet), "statement net total reconciles to the KPI headline").toBeLessThanOrEqual(1);
     // The statement carries a NEGATIVE liability row (signed balance, not a gross weight).
     const stmtText = (await page.locator('[data-card="statement"]').textContent()) ?? "";
     expect(stmtText).toMatch(/-[\d,]+/);
+    // §12b1-2: the total (tfoot) Value column is x-aligned with the body Value column, both themes
+    // (tfoot shares the table's column grid + scroll gutter — no scrollbar offset).
+    for (const theme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      await page.waitForTimeout(120);
+      const dx = await page.evaluate(() => {
+        const card = document.querySelector('[data-card="statement"]')!;
+        const bodyCell = card.querySelector("tbody tr .lf-table__td--num") as HTMLElement | null;
+        const footCell = card.querySelector("tfoot tr .lf-table__td--num") as HTMLElement | null;
+        if (!bodyCell || !footCell) return -1;
+        return Math.abs(bodyCell.getBoundingClientRect().right - footCell.getBoundingClientRect().right);
+      });
+      console.log(`PART 3 — footer↔body value x-offset (${theme}):`, dx);
+      expect(dx, `statement total value x-aligned with body value column (${theme})`).toBeLessThanOrEqual(1);
+    }
+    await page.emulateMedia({ colorScheme: "light" });
 
     // PART 4: liquidity ladder + Liquid line -----------------------------------------------------
     await expect(page.getByText(/Liquid \(Immediate \+ Short\) =/)).toBeVisible();
     expect(await page.locator('[data-card="liquidity"] .lf-table tbody tr').count(), "ladder has rungs").toBeGreaterThan(0);
+
+    // §12b1-3: the two summary cards (Portfolio + Review) are EQUAL height from the row grid when
+    // side by side (content cannot shrink a card) — measured at a wide viewport (single row).
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.waitForTimeout(150);
+    const summaryHeights = await page.evaluate(() => {
+      const cells = Array.from(document.querySelectorAll(".nw__summaries > *"));
+      return cells.map((c) => Math.round((c as HTMLElement).getBoundingClientRect().height));
+    });
+    console.log("PART 4b — summary card heights:", JSON.stringify(summaryHeights));
+    expect(Math.max(...summaryHeights) - Math.min(...summaryHeights), "summary cards equal height per row").toBeLessThanOrEqual(1);
 
     // PART 5: runway card + honest basis label (ND-9) --------------------------------------------
     await expect(page.getByText(/Basis: liquid assets ÷ recurring monthly net burn/)).toBeVisible();

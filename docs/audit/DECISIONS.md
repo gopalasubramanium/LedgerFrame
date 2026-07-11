@@ -441,8 +441,11 @@ Each amends the spec(s) noted; Claude Code applies them with zero interpretation
   three-null migration (Crypto / Index-ETF / Commodities → `sector=null`, D-009)
   **stands**; `sector` stays null in data (no forced merge). Sector views
   (allocation-by-sector and sector rollups) **display an explicit
-  "Not sector-classified (non-equity)" bucket** rather than dropping null rows.
-  Specs: MASTER-DATA §6, GLOSSARY (bucket label), INFORMATION-ARCHITECTURE
+  "Unclassified sector" bucket** (**label amended 2026-07-11**, page-portfolio §12-4;
+  was "Not sector-classified (non-equity)") rather than dropping null rows. The
+  GLOSSARY definition keeps the truth: non-equity holdings **have no sector**, not a
+  pending state. Served backend-side (`UNCLASSIFIED_SECTOR_LABEL`); contract untouched
+  (label is data). Specs: MASTER-DATA §6, GLOSSARY (bucket label), INFORMATION-ARCHITECTURE
   (Portfolio allocation).
 
 - **D-083 — Region derivation expanded to six buckets** (A10). The derived

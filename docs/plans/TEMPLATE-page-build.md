@@ -28,6 +28,12 @@ mid-build.
 - **Honesty (Product Guarantee 3):** every empty / "—" region shows a **reason**;
   stale values are flagged (never hidden or faked); insufficient inputs render
   "—", never a fabricated number.
+- **Progressive, per-card loading (page-portfolio §12-8) — the standard for overview pages.**
+  A composed page **NEVER blocks the whole page on the slowest reader.** Each card owns its
+  reader's state: **Skeleton** (`ui/Skeleton`) while loading → **data** / **EmptyState** / an
+  **honest error** (with retry). Fire readers **independently** (not one `Promise.all` gate); a
+  shared reader may drive several cards, but slow readers only skeleton their own card. **Acceptance
+  (pre-pass):** every card resolves **out of skeleton** (no `.lf-skeleton` left after load).
 - **Copy hygiene (page-chrome §11-8).** A **decision ID** (`D-0…`, `P-…`, `§…`) or an
   **implementation note** (`server-side`, an internal enum, an endpoint/table name)
   **never** appears in a **user-facing string** — only in code comments / plan docs.

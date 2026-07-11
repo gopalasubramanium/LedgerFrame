@@ -244,7 +244,7 @@ Notes:
   sanctioned path back to a charting dependency.
 - Charts use the semantic palette (§2.1): gain/loss green/red only where a value
   is a gain/loss.
-- **Categorical identity palette (AMENDMENT — PROPOSED 2026-07-11, page-portfolio §12-6).**
+- **Categorical identity palette (AMENDMENT — RATIFIED 2026-07-11, page-portfolio §12-6).**
   Segment/category identity is a **distinct axis** from semantic colour: a tokenized
   **`--cat-1..8`** set — a fixed-order 8-hue palette (blue · aqua · yellow · green · violet ·
   red · magenta · orange), **assigned in order, never cycled beyond the set** (a 9th identity

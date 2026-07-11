@@ -200,7 +200,7 @@ export const ALLOCATION_BY_SECTOR: Segment[] = [
   { label: "Financials", value: "114360.00" },
   { label: "Information Technology", value: "9420.13" },
   { label: "Real Estate", value: "24390.00" },
-  { label: "Not sector-classified (non-equity)", value: "229868.00" },
+  { label: "Unclassified sector", value: "229868.00" },
 ];
 
 // --- Quotes (Markets / Home quote-card row) ------------------------------------

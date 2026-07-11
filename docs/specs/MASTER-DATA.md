@@ -272,8 +272,8 @@ ticker used them (they simply start empty).
 **Null-sector display (D-082).** The three no-map rows keep `sector = null` in
 data (no forced merge — the honesty point of the mapping). In **sector views**
 (allocation-by-sector, sector rollups) these null-sector holdings are **not
-hidden**: they are collected into an explicit **"Not sector-classified
-(non-equity)"** bucket (GLOSSARY). Their allocation is already carried by
+hidden**: they are collected into an explicit **"Unclassified sector"** bucket
+(label amended 2026-07-11; GLOSSARY). Their allocation is already carried by
 `asset_class`; the bucket makes the null visible rather than silently dropping
 rows from a sector chart.
 

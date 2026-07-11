@@ -35,10 +35,13 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     const donutSegs = await page.locator(".lf-donut__legend .lf-donut__row").count();
     console.log("PART 2 — donut legend rows (all donuts):", donutSegs);
     expect(donutSegs, "allocation donuts render segments").toBeGreaterThan(0);
-    await expect(page.getByText("Not sector-classified (non-equity)").first()).toBeVisible(); // D-082
-    const footnote = await page.locator(".lf-donut__footnote").first().innerText();
-    console.log("PART 2 — liabilities footnote:", JSON.stringify(footnote));
+    await expect(page.getByText("Unclassified sector").first()).toBeVisible(); // D-082
+    // §12-4: the excluded-liabilities footnote is stated ONCE at the section bottom, asterisk-marked.
+    const footnote = (await page.getByText(/^\*\s*Liabilities .* excluded/).first().textContent()) ?? "";
+    console.log("PART 2 — liabilities footnote:", JSON.stringify(footnote.trim()));
     expect(footnote).toMatch(/Liabilities .* excluded/);
+    expect(await page.locator(".lf-donut__footnote").count(), "footnote is section-level, not per-donut").toBe(0);
+    expect(await page.locator(".pf__marker").count(), "affected donuts carry the * marker").toBeGreaterThanOrEqual(3);
 
     // --- PART 3: Contributors/Detractors — today (never Gainers/Losers) ---------------------
     await expect(page.getByRole("heading", { name: "Contributors — today", exact: true })).toBeVisible();
@@ -46,7 +49,8 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     expect(await page.getByText(/Gainers|Losers/).count(), "no Gainers/Losers wording").toBe(0);
 
     // --- PART 4: performance chart + controls (benchmark, window, include_manual) -----------
-    await expect(page.locator(".lf-pricechart__cmp").first()).toBeVisible(); // shared-axis benchmark line
+    // Wait for the performance card to resolve out of its skeleton (progressive loading, §12-8).
+    await expect(page.locator(".lf-pricechart__cmp").first()).toBeVisible({ timeout: 15_000 }); // shared-axis benchmark line
     // Window + include_manual on the default benchmark (SPY, which has demo history) → line stays.
     await page.getByRole("combobox", { name: "Time window" }).selectOption("3M");
     await page.waitForTimeout(500);
@@ -59,8 +63,10 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     // Switching benchmark to one WITHOUT demo history must degrade HONESTLY (line OR EmptyState),
     // never a crash or a fabricated curve (Guarantee 3).
     await page.getByRole("combobox", { name: "Benchmark" }).selectOption("QQQ");
-    await page.waitForTimeout(500);
     const perfCard = page.locator(".pf__card").filter({ hasText: "Performance" });
+    // Wait for the card to resolve out of its (re-)skeleton, then it must show a line OR an
+    // honest EmptyState — never a crash or a fabricated curve (Guarantee 3).
+    await expect(perfCard.locator(".lf-pricechart__line, .lf-empty").first()).toBeVisible({ timeout: 15_000 });
     const chartOk = await perfCard.locator(".lf-pricechart__line, .lf-empty").count();
     console.log("PART 4 — after benchmark switch, chart shows line-or-honest-empty:", chartOk > 0);
     expect(chartOk, "chart degrades honestly on a no-history benchmark").toBeGreaterThan(0);
@@ -74,6 +80,23 @@ test.describe.serial("portfolio pre-pass (live)", () => {
     // --- PART 6: costs — two blocks -------------------------------------------------------
     await expect(page.getByText("Recorded fees")).toBeVisible();
     await expect(page.getByText("Ongoing cost (expense ratio)")).toBeVisible();
+
+    // --- PART 6b: batch-2 — page-action icon, attribution export, donut hover, no skeletons ---
+    // §12: "Manage holdings" is an icon-only page-action (aria-label, no visible text label).
+    await expect(page.getByRole("link", { name: "Manage holdings" })).toBeVisible();
+    // §12-6: attribution has the ratified Export CSV + a filter input (DataTable).
+    await expect(page.getByRole("button", { name: "Export CSV" })).toBeVisible();
+    await expect(page.getByPlaceholder("Filter holdings…")).toBeVisible();
+    // §12-7: donut segment hover activates the segment + shows the label · value · pct readout.
+    const firstLegendRow = page.locator(".lf-donut__row").first();
+    await firstLegendRow.scrollIntoViewIfNeeded();
+    await firstLegendRow.hover();
+    await expect(firstLegendRow).toHaveClass(/is-active/);
+    const tip = (await page.locator(".lf-donut__tip").first().textContent()) ?? "";
+    console.log("PART 6b — donut hover readout:", JSON.stringify(tip.trim()));
+    expect(tip.trim().length, "donut hover shows a readout").toBeGreaterThan(0);
+    // §12-8: progressive loading — every card has resolved OUT of skeleton by now.
+    expect(await page.locator(".lf-skeleton").count(), "no card stuck in skeleton").toBe(0);
 
     // --- PART 7: NO horizontal overflow on the POPULATED page at every breakpoint ----------
     for (const theme of ["light", "dark"] as const) {

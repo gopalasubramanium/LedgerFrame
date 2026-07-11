@@ -498,3 +498,40 @@ Owner's live walk. Each finding recorded, fixed, pre-pass re-run, then owner re-
 
 **Checks after batch 1:** frontend **112 vitest + 41 Playwright** (incl. content-left-offset +
 raw-key guards) + drift + build green. Live pre-pass re-run green (below).
+
+**Batch 1 — RATIFIED (owner, 2026-07-11):** §12-2 compact stat rail and §12-6 categorical palette
+ratified as seen live (owner confirms the palette across theme + high-contrast at re-verify).
+
+## PHASE-3B WALK — batch 2 (owner, 2026-07-11)
+
+Recorded, fixed, pre-pass re-run green, awaiting owner re-verify.
+
+1. **D-082 label → "Unclassified sector" (owner pick; §12-4 resolved).** Served backend-side
+   (`UNCLASSIFIED_SECTOR_LABEL`); **D-082 amendment recorded in DECISIONS.md**, GLOSSARY + MASTER-DATA
+   updated (definition keeps the truth: non-equity holdings *have no sector*, not pending). The
+   segment carries an **explanation tooltip** (donut hover/legend). Contract untouched (label is data).
+2. **Page-action enforcement.** "Manage holdings" is now a **ratified icon-only framed page-action**
+   (`lf-iconbtn--framed`, Rows4 icon, tooltip + aria-label). Audited the page — no other text-action
+   stragglers (Reports/Net-worth are in-content D-100 cross-links, not header actions).
+3. **AllocationDonut true ring.** `.lf-donut__svg circle { fill: none }` beats the categorical fill
+   so the **centre is transparent** in every theme.
+4. **Excluded-liabilities footnote once per section.** One `* Liabilities … excluded` line at the
+   Allocation section bottom; each affected donut (class/sector/currency) carries the **`*` marker**;
+   the served figure is unchanged. (Per-donut `.lf-donut__footnote` removed from the page.)
+5. **Concentration + Risk&return tiles centre-aligned** (PROPOSED, ratify at re-verify); tabular
+   figures retained.
+6. **Return attribution → DataTable** (client sort + filter, like Holdings) + reconciling residual +
+   headline summary below. **Export: `GET /portfolio/attribution.csv`** (server-side, D-050;
+   contract regenerated same commit, +1 path; backend test) via the ratified **Export CSV** button.
+7. **Hover values.** PriceChart already had a crosshair + close tooltip; **added the benchmark value**
+   to the tooltip in comparison mode. **AllocationDonut segment hover/focus** shows *label · value ·
+   pct · note* (aria-live), **keyboard-reachable via the focusable legend**. Kitchen-sink specimens
+   (true-ring + hover donut; Skeleton).
+8. **Progressive per-card loading** (TEMPLATE amendment). `/portfolio` loads **per card**: each shows
+   `ui/Skeleton` → data / EmptyState / honest error; readers fire independently (no full-page block on
+   the slowest). New `Skeleton` component. Recorded in `TEMPLATE-page-build.md` as the overview
+   standard; **pre-pass asserts no card is left in skeleton**.
+
+**Checks after batch 2:** frontend **112 vitest + 41 Playwright** + drift + build; backend **490**
+(+ attribution.csv test), contract current. Live pre-pass green (donut hover readout, Export CSV,
+filter, no residual skeletons, 0 overflow 320/375/900/1366 × both themes, 0 console errors).

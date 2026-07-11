@@ -8157,6 +8157,98 @@
         ]
       }
     },
+    "/api/v1/portfolio/attribution.csv": {
+      "get": {
+        "description": "Server-side return-attribution CSV export (D-050 / P-5, page-portfolio \u00a712-6b). The client\nnever builds the file; every text cell is formula-injection sanitised. Rows are the per-holding\ncontributions plus an explicit residual + the headline (which reconcile), matching the table.",
+        "operationId": "portfolio_attribution_csv_api_v1_portfolio_attribution_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 365,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portfolio Attribution Csv",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
     "/api/v1/portfolio/benchmarks": {
       "get": {
         "operationId": "list_benchmarks_api_v1_portfolio_benchmarks_get",

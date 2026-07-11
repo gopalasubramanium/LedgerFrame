@@ -83,6 +83,9 @@ export interface Holding {
 export interface Segment {
   label: string;
   value: DecimalString;
+  /** Optional per-segment explanation, shown in the hover/focus tooltip (e.g. the D-082
+   *  "Unclassified sector" note). */
+  note?: string;
 }
 
 export interface Quote {

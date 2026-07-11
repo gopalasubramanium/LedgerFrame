@@ -14,7 +14,7 @@ vi.mock("../api/portfolio", () => ({
       has_stale: true, stale_count: 11,
       allocation_by_class: { equity: 45699.11, cash: 25000, property: 980000 },
       allocation_by_currency: { SGD: 738768, USD: 77203 },
-      allocation_by_sector: { Technology: 33171, "Not sector-classified (non-equity)": 229868 },
+      allocation_by_sector: { Technology: 33171, "Unclassified sector": 229868 },
       top_gainers: [{ id: 10, label: "VOO", symbol: "VOO", market_value: 1000, day_change: 120, day_change_pct: 1.2 }],
       top_losers: [], // empty → Detractors EmptyState
     },
@@ -121,18 +121,22 @@ test("empty Detractors shows an honest EmptyState (Nothing declined today, ND-9)
   expect(await screen.findByText(/Nothing declined today/)).toBeTruthy();
 });
 
-test("allocation donut carries the excluded-liabilities footnote (ND-4)", async () => {
+test("excluded-liabilities footnote appears ONCE per Allocation section, with asterisk markers (§12-4)", async () => {
   const { container } = renderPage();
   await screen.findByText("Allocation");
   await waitFor(() => {
-    const foots = Array.from(container.querySelectorAll(".lf-donut__footnote"));
-    expect(foots.some((f) => /Liabilities .* excluded/.test(f.textContent ?? ""))).toBe(true);
+    // One section-level footnote (a pf__note starting with "*"), not a per-donut footnote.
+    const notes = Array.from(container.querySelectorAll(".pf__note")).map((n) => n.textContent ?? "");
+    expect(notes.filter((t) => /^\*\s*Liabilities .* excluded/.test(t)).length).toBe(1);
+    expect(container.querySelectorAll(".lf-donut__footnote").length).toBe(0);
+    // Affected donut titles carry the asterisk marker.
+    expect(container.querySelectorAll(".pf__marker").length).toBeGreaterThanOrEqual(3);
   });
 });
 
-test("sector donut renders the served D-082 'Not sector-classified (non-equity)' bucket", async () => {
+test("sector donut renders the served D-082 'Unclassified sector' bucket", async () => {
   renderPage();
-  expect(await screen.findByText("Not sector-classified (non-equity)")).toBeTruthy();
+  expect(await screen.findByText("Unclassified sector")).toBeTruthy();
 });
 
 test("no donut legend label is a raw internal enum key (D-005 + copy hygiene, §12-3)", async () => {

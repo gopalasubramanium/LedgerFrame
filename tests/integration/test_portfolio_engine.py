@@ -89,7 +89,7 @@ async def test_sector_allocation_serves_the_d082_null_bucket(session):
     sec = val.sector_allocation()
     assert sec.get("Technology") == Decimal("1000")
     assert sec.get(UNCLASSIFIED_SECTOR_LABEL) == Decimal("50000")  # property, no sector
-    assert UNCLASSIFIED_SECTOR_LABEL == "Not sector-classified (non-equity)"
+    assert UNCLASSIFIED_SECTOR_LABEL == "Unclassified sector"  # D-082 amendment 2026-07-11
     gross = sum(h.market_value_base for h in val.holdings if h.market_value_base > 0)
     assert sum(sec.values()) == gross == Decimal("51000")  # liability excluded
 

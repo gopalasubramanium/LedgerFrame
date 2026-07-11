@@ -26,8 +26,9 @@ from app.services import fx
 from app.services.market import get_cached_quote, refresh_quote
 
 #: D-082 served label for the sector-allocation bucket holding every positive-value holding
-#: without a resolved sector (property, cash, deposits, and any equity not yet classified).
-UNCLASSIFIED_SECTOR_LABEL = "Not sector-classified (non-equity)"
+#: without a resolved sector (property, cash, deposits — non-equity assets have no sector; this
+#: is the honest truth, not a "pending" state). Amended 2026-07-11 (DECISIONS D-082 amendment).
+UNCLASSIFIED_SECTOR_LABEL = "Unclassified sector"
 
 log = logging.getLogger("ledgerframe")
 

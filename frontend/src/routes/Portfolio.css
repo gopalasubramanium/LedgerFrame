@@ -31,6 +31,16 @@
 .pf__rail--tight {
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
 }
+/* Concentration + Risk&return tiles: centre-align label + value (§12-5, PROPOSED). Tabular
+   figures retained (the value keeps font-variant-numeric: tabular-nums). */
+.pf__rail--tight .lf-stat {
+  align-items: center;
+  text-align: center;
+}
+/* Donut section: excluded-liabilities asterisk marker on affected donut titles (§12-4). */
+.pf__marker {
+  color: var(--text-tertiary);
+}
 /* Grid children MUST be allowed to shrink below their intrinsic / min widths. */
 .pf__rail > *,
 .pf__donuts > *,
@@ -171,52 +181,32 @@
 /* Attribution table (§12-5, D-101): wide content scrolls horizontally inside its own
    container (never the page); rows scroll vertically under a capped height with the header
    pinned OUTSIDE the scroll (sticky), like the Holdings tables. */
-.pf__scroll {
-  overflow: auto;
-  max-height: var(--table-max-h, 60vh);
-}
-.pf__attr thead th {
-  position: sticky;
-  top: 0;
-  background: var(--surface-raised);
-  z-index: 1;
-}
-.pf__attr {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-14);
-}
-.pf__attr td:first-child {
-  overflow-wrap: anywhere;
-}
-.pf__attr th,
-.pf__attr td {
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: var(--border-width) solid var(--border);
-}
-.pf__attr th {
-  color: var(--text-secondary);
-  font-weight: var(--weight-medium);
-}
+/* Attribution: the per-holding rows are a DataTable (§12-6, sort/filter/export, D-101 sticky);
+   the residual + headline are a summary list below that reconciles to the on-screen total. */
 .pf__num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.pf__attr a {
-  color: var(--accent);
-  text-decoration: none;
+.pf__attrsummary {
+  margin: var(--space-3) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
-.pf__attr a:hover {
-  text-decoration: underline;
-}
-.pf__residual td {
+.pf__attrsumrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-14);
   color: var(--text-secondary);
-  border-top: var(--border-width) solid var(--border-strong);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--border);
 }
-.pf__headline td {
-  font-weight: var(--weight-semibold);
+.pf__attrsumrow--headline {
   color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+  border-top-color: var(--border-strong);
 }
 
 .pf__costs {

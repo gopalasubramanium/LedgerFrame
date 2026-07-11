@@ -276,6 +276,11 @@ export function PriceChart({
           >
             <span className="lf-pricechart__tipdate">{hp.t}</span>
             <span>{hp.close.toLocaleString()}</span>
+            {/* Comparison mode (§12-7): read the benchmark value at the same point, so hover
+                compares both same-axis series, not just the portfolio line. */}
+            {useCmp && comparison && (
+              <span className="lf-pricechart__tipcmp">{comparison.label}: {cmpVals[hover!.i]?.toLocaleString()}</span>
+            )}
             {advanced && (
               <span className="lf-pricechart__tipohlc">
                 O {hp.open.toLocaleString()} · H {hp.high.toLocaleString()} · L {hp.low.toLocaleString()}

@@ -149,7 +149,7 @@ Home shows one summary of each, linked to its canonical page.
 | **Dimension** | The policy axis: asset_class / currency / region. |
 | **Bucket** | A value within a dimension (e.g. equity / SGD / India), driven by that dimension's master (D-055). |
 | **Region** | Derived from `listing_country`, never stored (D-007). Six buckets (D-083): **India** (IN), **Singapore** (SG), **US** (US), **Europe**, **APAC**, and **Other** (catch-all for any unlisted country). Full membership table in MASTER-DATA §4. |
-| **Not sector-classified (non-equity)** | The explicit sector-view bucket for holdings with `sector = null` — non-company exposures (crypto, index/ETF wrappers, commodities). Shown as its own bucket, not hidden (D-082). |
+| **Unclassified sector** | The explicit sector-view bucket for positive holdings with `sector = null` — non-equity assets (property, cash, deposits) and non-company exposures (crypto, index/ETF wrappers, commodities) that **have no sector** (this is the truth, not a "pending" state). Shown as its own bucket, never hidden (D-082; label amended 2026-07-11). |
 
 ---
 

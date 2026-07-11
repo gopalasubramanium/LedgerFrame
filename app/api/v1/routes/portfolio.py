@@ -300,6 +300,39 @@ async def portfolio_attribution(
     }
 
 
+@router.get("/portfolio/attribution.csv", response_class=PlainTextResponse)
+async def portfolio_attribution_csv(
+    days: int = 365, entity_id: int | None = Query(default=None),
+    session: AsyncSession = Depends(get_db),
+) -> PlainTextResponse:
+    """Server-side return-attribution CSV export (D-050 / P-5, page-portfolio §12-6b). The client
+    never builds the file; every text cell is formula-injection sanitised. Rows are the per-holding
+    contributions plus an explicit residual + the headline (which reconcile), matching the table."""
+    import csv
+    import io
+
+    from app.services.analytics import attribution as attribution_reader
+    from app.services.csv_import import sanitize_cell
+
+    base = get_settings().base_currency
+    window = max(7, min(days, 3650))
+    attr = await attribution_reader(session, base, window, entity_id=entity_id)
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["holding", "symbol", "asset_class", "sector", "contribution_pct"])
+    if attr.get("available"):
+        for h in attr.get("holdings", []):
+            w.writerow([
+                sanitize_cell(h.get("label") or ""), sanitize_cell(h.get("symbol") or ""),
+                sanitize_cell(h.get("asset_class") or ""), sanitize_cell(h.get("sector") or ""),
+                h.get("contribution_pct"),
+            ])
+        w.writerow(["Residual (income, realised, closed)", "", "", "", attr.get("residual_pct")])
+        w.writerow(["Headline return", "", "", "", attr.get("headline_return_pct")])
+    return PlainTextResponse(buf.getvalue(), media_type="text/csv", headers={
+        "Content-Disposition": 'attachment; filename="attribution.csv"'})
+
+
 class TransactionIn(BaseModel):
     account_id: int | None = None
     symbol: str | None = None

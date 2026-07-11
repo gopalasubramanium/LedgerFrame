@@ -32,6 +32,7 @@ import {
   ReviewCard,
   Select,
   Sidebar,
+  Skeleton,
   StaleBanner,
   StalenessChip,
   TextInput,
@@ -459,10 +460,28 @@ export function KitchenSink() {
               ]}
             />
           </Specimen>
+          <Specimen label="AllocationDonut · TRUE RING + segment HOVER/FOCUS (§12-3/§12-7): transparent centre; hover a segment or tab the legend for label · value · pct readout">
+            <AllocationDonut
+              segments={[
+                { label: "Property", value: "980000" },
+                { label: "Retirement", value: "65000" },
+                { label: "Fixed deposit", value: "50500" },
+                { label: "Equities & ETFs", value: "74000" },
+                { label: "Bonds", value: "30450" },
+                { label: "Cash", value: "25000", note: "Emergency reserve — instantly accessible." },
+              ]}
+            />
+          </Specimen>
+          <Specimen label="Skeleton (§12-8 progressive loading): per-card placeholder — bars + a block variant (shimmer collapses under reduced motion)">
+            <div className="ks__stack">
+              <Skeleton lines={3} />
+              <Skeleton block />
+            </div>
+          </Specimen>
           <Specimen label="AllocationDonut · by class">
             <AllocationDonut segments={ALLOCATION_BY_CLASS} />
           </Specimen>
-          <Specimen label="AllocationDonut · by sector (non-equity bucket, D-082)">
+          <Specimen label="AllocationDonut · by sector (Unclassified sector bucket, D-082)">
             <AllocationDonut segments={ALLOCATION_BY_SECTOR} />
           </Specimen>
           <Specimen label="AllocationDonut · AMENDMENT (PROPOSED, Portfolio ND-4): served D-082 bucket + excluded-liabilities FOOTNOTE (served figure, no client math)">

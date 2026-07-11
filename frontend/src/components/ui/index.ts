@@ -80,6 +80,8 @@ export type { LockScreenProps } from "./LockScreen";
 // ratify at /kitchen-sink before shell assembly.
 export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";
+export { Skeleton } from "./Skeleton";
+export type { SkeletonProps } from "./Skeleton";
 export { Combobox } from "./Combobox";
 export type { ComboboxProps, ComboboxOption } from "./Combobox";
 export { FirstRunChecklist } from "./FirstRunChecklist";

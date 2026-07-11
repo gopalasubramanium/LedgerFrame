@@ -49,3 +49,16 @@ async def test_attribution_endpoint_accepts_days_and_benchmark(app_client):
     body = r.json()
     assert body["attribution"]["window_days"] == 90        # clamped param threaded through
     assert body["risk"]["benchmark_symbol"] == "QQQ"       # benchmark threaded to risk metrics
+
+
+async def test_attribution_csv_export(app_client):
+    """§12-6b (D-050): server-side attribution CSV — header + per-holding rows + explicit
+    residual + headline (they reconcile), attachment content-type, sanitised cells."""
+    r = await app_client.get("/api/v1/portfolio/attribution.csv")
+    assert r.status_code == 200
+    assert "text/csv" in r.headers["content-type"]
+    assert "attachment" in r.headers.get("content-disposition", "")
+    lines = r.text.strip().splitlines()
+    assert lines[0] == "holding,symbol,asset_class,sector,contribution_pct"
+    assert any("Residual (income, realised, closed)" in l for l in lines)  # quoted (has commas)
+    assert any(l.startswith("Headline return") for l in lines)

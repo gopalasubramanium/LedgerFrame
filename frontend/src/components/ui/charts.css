@@ -1,6 +1,6 @@
-/* House-SVG chart layer (DESIGN-SYSTEM §4, D-053). No charting dependency.
- * Colour is semantic: gain/loss only on gain/loss; category segments use the
- * slate ramp + accent, never a rainbow. */
+/* House-SVG chart layer (DESIGN-SYSTEM §4, D-053). No charting dependency. Colour: semantic
+ * gain/loss only on gain/loss; category segments use the CATEGORICAL identity palette (§4
+ * amendment, --cat-1..8), never a rainbow of meaning. */
 
 .lf-spark {
   display: block;
@@ -67,6 +67,35 @@
 .lf-donut__pct {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+}
+/* True ring — transparent centre in every theme (§12-3): a CSS `fill:none` beats the presentation
+   attribute, so the categorical fill on `.lf-seg` never fills the disc. */
+.lf-donut__svg circle {
+  fill: none;
+  cursor: default;
+}
+/* Segment hover/focus readout (§12-7) — label · value · pct · note, aria-live for keyboard. */
+.lf-donut__tip {
+  flex-basis: 100%;
+  order: 3;
+  min-height: 1.15rem;
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.lf-donut__row[tabindex] {
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+}
+.lf-donut__row.is-active {
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+}
+.lf-donut__row:focus-visible {
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius-sm);
 }
 /* PROPOSED (page-portfolio ND-4) — honest footnote (e.g. excluded liabilities). */
 .lf-donut__footnote {
@@ -141,6 +170,7 @@
 }
 .lf-pricechart__tipdate { color: var(--text-secondary); }
 .lf-pricechart__tipohlc { color: var(--text-secondary); }
+.lf-pricechart__tipcmp { color: var(--text-secondary); }
 .lf-pricechart__note { color: var(--attention); }
 .lf-pricechart__empty { color: var(--text-secondary); font-size: var(--font-size-13); padding: var(--space-5) 0; }
 .lf-pricechart__legend {

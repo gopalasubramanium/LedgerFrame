@@ -1,19 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import "./Portfolio.css";
 import {
   AllocationDonut,
+  DataTable,
   EmptyState,
   PageHeader,
   PriceChart,
   Select,
+  Skeleton,
   StalenessChip,
   Switch,
   TrendStat,
 } from "../components/ui";
+import type { Column, SortState } from "../components/ui";
 import type { Segment } from "../mocks/types";
 import type { PricePoint } from "../mocks/types";
 import { useLabelFor } from "../refdata/refdata-context";
+import { Rows4 } from "../icons";
+import { apiDownload } from "../api/client";
 import {
   formatMoney,
   formatSignedMoney,
@@ -30,6 +36,7 @@ import {
   getTagAllocation,
 } from "../api/portfolio";
 import type {
+  AttributionHolding,
   AttributionResp,
   Benchmark,
   CostResp,
@@ -63,7 +70,7 @@ function windowToDays(w: string): number {
 }
 
 // Find a served metric by its exact served label (D-005 — never invent a label).
-function metric(stats: PortfolioStats | null, label: string): StatMetric | undefined {
+function metric(stats: PortfolioStats | null | undefined, label: string): StatMetric | undefined {
   return stats?.metrics.find((m) => m.label === label);
 }
 function metricDisplay(m: StatMetric | undefined): string {
@@ -84,44 +91,52 @@ function segmentsOf(map: Record<string, number> | undefined): Segment[] {
 function labeledSegments(map: Record<string, number> | undefined, labelFn: (k: string) => string): Segment[] {
   return Object.entries(map ?? {}).map(([k, value]) => ({ label: labelFn(k), value: String(value) }));
 }
+// D-082 (§12-4/§12-1): the "Unclassified sector" bucket carries an explanation tooltip so the
+// truth is legible — non-equity holdings have no sector, this is not a pending state.
+const UNCLASSIFIED_NOTE = "Non-equity holdings (property, cash, deposits) have no sector — not pending.";
+function sectorSegments(map: Record<string, number> | undefined): Segment[] {
+  return Object.entries(map ?? {}).map(([label, value]) => ({
+    label,
+    value: String(value),
+    note: label === "Unclassified sector" ? UNCLASSIFIED_NOTE : undefined,
+  }));
+}
 
 export function Portfolio() {
   const labelFor = useLabelFor();
-  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
-  const [stats, setStats] = useState<PortfolioStats | null>(null);
-  const [realised, setRealised] = useState<RealisedResp | null>(null);
-  const [tags, setTags] = useState<TagsResp | null>(null);
-  const [cost, setCost] = useState<CostResp | null>(null);
+  // Per-card progressive loading (§12-8): `undefined` = still loading (show a Skeleton),
+  // `null` = the reader failed (honest error), a value = loaded. Cards resolve independently.
+  const [summary, setSummary] = useState<PortfolioSummary | null>();
+  const [stats, setStats] = useState<PortfolioStats | null>();
+  const [realised, setRealised] = useState<RealisedResp | null>();
+  const [tags, setTags] = useState<TagsResp | null>();
+  const [cost, setCost] = useState<CostResp | null>();
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
-  const [perf, setPerf] = useState<PerformanceResp | null>(null);
-  const [attr, setAttr] = useState<AttributionResp | null>(null);
+  const [perf, setPerf] = useState<PerformanceResp | null>();
+  const [attr, setAttr] = useState<AttributionResp | null>();
 
   const [benchmark, setBenchmark] = useState("SPY");
   const [window, setWindow] = useState("1Y");
   const [includeManual, setIncludeManual] = useState(false);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Return-attribution table: client-side sort + filter (bounded dataset), like Holdings (§12-6).
+  const [attrSort, setAttrSort] = useState<SortState>({ key: "contribution_pct", dir: "desc" });
+  const [attrFilter, setAttrFilter] = useState("");
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const [s, st, r, t, c, b] = await Promise.all([
-      getPortfolioSummary(),
-      getPortfolioStats(),
-      getRealisedGains(),
-      getTagAllocation(),
-      getCostOfOwnership(),
-      getBenchmarks(),
-    ]);
-    if (s.ok) setSummary(s.data);
-    else setError(s.error);
-    if (st.ok) setStats(st.data);
-    if (r.ok) setRealised(r.data);
-    if (t.ok) setTags(t.data);
-    if (c.ok) setCost(c.data);
-    if (b.ok) setBenchmarks(b.data.benchmarks);
-    setLoading(false);
+  const reload = useCallback(() => {
+    // Fire each reader independently → every card resolves on its own (no full-page block on the
+    // slowest reader, §12-8). Reset to `undefined` (loading) first so a re-load re-skeletons.
+    setSummary(undefined);
+    setStats(undefined);
+    setRealised(undefined);
+    setTags(undefined);
+    setCost(undefined);
+    getPortfolioSummary().then((s) => setSummary(s.ok ? s.data : null));
+    getPortfolioStats().then((s) => setStats(s.ok ? s.data : null));
+    getRealisedGains().then((r) => setRealised(r.ok ? r.data : null));
+    getTagAllocation().then((t) => setTags(t.ok ? t.data : null));
+    getCostOfOwnership().then((c) => setCost(c.ok ? c.data : null));
+    getBenchmarks().then((b) => b.ok && setBenchmarks(b.data.benchmarks));
   }, []);
 
   useEffect(() => {
@@ -132,6 +147,8 @@ export function Portfolio() {
   const days = windowToDays(window);
   useEffect(() => {
     let live = true;
+    setPerf(undefined); // re-skeleton the chart/attribution cards while the new slice loads
+    setAttr(undefined);
     getPerformance(days, benchmark, includeManual).then((p) => live && setPerf(p.ok ? p.data : null));
     getAttribution(days, benchmark).then((a) => live && setAttr(a.ok ? a.data : null));
     return () => {
@@ -167,202 +184,243 @@ export function Portfolio() {
   const attribution = attr?.attribution;
   const risk = attr?.risk;
 
+  // Client-side filter + sort of the per-holding attribution rows (bounded set, §12-6).
+  const attrRows = useMemo<AttributionHolding[]>(() => {
+    const rows = attribution?.holdings ?? [];
+    const q = attrFilter.trim().toLowerCase();
+    const filtered = q
+      ? rows.filter((r) => [r.label, r.symbol, r.asset_class, r.sector].some((v) => (v ?? "").toLowerCase().includes(q)))
+      : rows;
+    const dir = attrSort.dir === "asc" ? 1 : -1;
+    const key = attrSort.key as keyof AttributionHolding;
+    return [...filtered].sort((a, b) => {
+      const av = a[key];
+      const bv = b[key];
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      return String(av ?? "").localeCompare(String(bv ?? "")) * dir;
+    });
+  }, [attribution, attrSort, attrFilter]);
+
+  const attrColumns: Column<AttributionHolding>[] = [
+    { key: "label", label: "Holding", sortable: true, render: (h) => (h.symbol ? <Link to={`/instrument/${encodeURIComponent(h.symbol)}`}>{h.label}</Link> : h.label) },
+    { key: "asset_class", label: "Class", sortable: true, render: (h) => (h.asset_class ? labelFor("asset_class", h.asset_class) : "—") },
+    { key: "sector", label: "Sector", sortable: true, render: (h) => h.sector ?? "—" },
+    { key: "contribution_pct", label: "Contribution", align: "right", format: "signed-percent", sortable: true },
+  ];
+
   return (
     <div className="pf">
       <PageHeader
         title="Portfolio"
         subtitle="Investment analytics — manage holdings on Holdings"
-        actions={<Link className="lf-btn" to="/holdings">Manage holdings ↗</Link>}
+        actions={
+          <Link className="lf-iconbtn lf-iconbtn--framed" to="/holdings" title="Manage holdings" aria-label="Manage holdings">
+            <Rows4 aria-hidden="true" />
+          </Link>
+        }
       />
 
-      {loading ? (
-        <EmptyState message="Loading…" reason="Fetching from the portfolio analytics readers." />
-      ) : error ? (
-        <EmptyState
-          message="Couldn't load your portfolio"
-          reason={`The reader is unreachable (${error}). Values are withheld, never guessed.`}
-          action={<button type="button" className="lf-btn" onClick={reload}>Retry</button>}
-        />
-      ) : (
-        <>
-          {/* Stat rail (D-032) — served figures only. Net worth is summarised with a link (D-032). */}
-          <section className="pf__rail">
-            <TrendStat label="Today's change" value={formatSignedMoney(summary?.day_change)} delta={summary?.day_change} />
-            <TrendStat label="Unrealised P/L" value={formatSignedMoney(summary?.unrealised_pl)} delta={summary?.unrealised_pl} />
-            <RealisedTile realised={realised} />
-            <TrendStat label="Cost basis" value={formatMoney(summary?.cost_basis)} />
-            <TrendStat label="Total return" value={formatSignedPercent(summary?.total_return_pct)} delta={summary?.total_return_pct} />
-            <TrendStat label={metric(stats, "Time-weighted return (TWR)")?.label ?? "Time-weighted return (TWR)"} value={metricDisplay(metric(stats, "Time-weighted return (TWR)"))} />
-          </section>
-          <p className="pf__netlink">
-            Net worth <strong>{formatMoney(summary?.total_value)}</strong> (net of liabilities) — canonical on{" "}
-            <Link to="/net-worth">Net worth ↗</Link>
-            {summary?.has_stale ? <> · <StalenessChip isStale asOf="" /> {summary.stale_count} stale</> : null}
-          </p>
+      {/* Per-card progressive loading (§12-8): each card resolves independently —
+          Skeleton while its reader loads, then data / EmptyState / honest error. */}
 
-          {/* Performance chart (D-035) — benchmark + window pickers + include-manual toggle. */}
-          <section className="pf__card lf-card">
-            <div className="pf__cardhead">
-              <h2 className="pf__h2">Performance</h2>
-              <div className="pf__controls">
-                <Select
-                  value={benchmark}
-                  onChange={setBenchmark}
-                  options={benchmarks.map((b) => ({ value: b.symbol, label: b.label }))}
-                  aria-label="Benchmark"
-                />
-                <Select
-                  value={window}
-                  onChange={setWindow}
-                  options={WINDOWS.map((w) => ({ value: w, label: w }))}
-                  aria-label="Time window"
-                />
-                <Switch checked={includeManual} onChange={setIncludeManual} label="Include manual assets" aria-label="Include manual assets" />
+      {/* Stat rail (D-032) + Net worth summary — driven by the summary reader. */}
+      <CardBody data={summary} lines={2} onRetry={reload}>
+        {(s) => (
+          <>
+            <section className="pf__rail" data-card="rail">
+              <TrendStat label="Today's change" value={formatSignedMoney(s.day_change)} delta={s.day_change} />
+              <TrendStat label="Unrealised P/L" value={formatSignedMoney(s.unrealised_pl)} delta={s.unrealised_pl} />
+              <RealisedTile realised={realised} />
+              <TrendStat label="Cost basis" value={formatMoney(s.cost_basis)} />
+              <TrendStat label="Total return" value={formatSignedPercent(s.total_return_pct)} delta={s.total_return_pct} />
+              <TrendStat label="Time-weighted return (TWR)" value={metricDisplay(metric(stats, "Time-weighted return (TWR)"))} />
+            </section>
+            <p className="pf__netlink">
+              Net worth <strong>{formatMoney(s.total_value)}</strong> (net of liabilities) — canonical on{" "}
+              <Link to="/net-worth">Net worth ↗</Link>
+              {s.has_stale ? <> · <StalenessChip isStale asOf="" /> {s.stale_count} stale</> : null}
+            </p>
+          </>
+        )}
+      </CardBody>
+
+      {/* Performance chart (D-035) — controls always visible; body loads on its own reader. */}
+      <section className="pf__card lf-card" data-card="performance">
+        <div className="pf__cardhead">
+          <h2 className="pf__h2">Performance</h2>
+          <div className="pf__controls">
+            <Select value={benchmark} onChange={setBenchmark} options={benchmarks.map((b) => ({ value: b.symbol, label: b.label }))} aria-label="Benchmark" />
+            <Select value={window} onChange={setWindow} options={WINDOWS.map((w) => ({ value: w, label: w }))} aria-label="Time window" />
+            <Switch checked={includeManual} onChange={setIncludeManual} label="Include manual assets" aria-label="Include manual assets" />
+          </div>
+        </div>
+        <div className="lf-card__body">
+          <CardBody data={perf} block onRetry={reload}>
+            {() => (
+              <>
+                {chartSeries.length >= 2 ? (
+                  <PriceChart series={chartSeries} mode="line" interval={window} comparison={chartComparison}
+                    coverageNote={perf?.stats ? undefined : "Not enough history for this window yet — showing what exists."} />
+                ) : (
+                  <EmptyState message="Not enough history yet" reason="The performance line needs at least two days of priced history for this window." />
+                )}
+                <p className="pf__note">
+                  {includeManual
+                    ? "Current holdings — price return (incl. manual assets): today's positions marked to market over the window."
+                    : "Current holdings — price return: today's invested positions marked to market over the window (excludes flows, closed positions and manual assets)."}
+                </p>
+              </>
+            )}
+          </CardBody>
+        </div>
+      </section>
+
+      {/* Allocation (D-033/D-048) — driven by the summary reader; footnote once (§12-4). */}
+      <section className="pf__card lf-card" data-card="allocation">
+        <h2 className="pf__h2">Allocation</h2>
+        <div className="lf-card__body">
+          <CardBody data={summary} block onRetry={reload}>
+            {(s) => (
+              <>
+                <div className="pf__donuts">
+                  <DonutBlock title="By class" marker={liabFootnote ? "*" : undefined} segments={labeledSegments(s.allocation_by_class, (k) => labelFor("asset_class", k))} />
+                  <DonutBlock title="By sector" marker={liabFootnote ? "*" : undefined} segments={sectorSegments(s.allocation_by_sector)} />
+                  <DonutBlock title="By currency" marker={liabFootnote ? "*" : undefined} segments={segmentsOf(s.allocation_by_currency)} />
+                  <DonutBlock title="By tag"
+                    segments={(tags?.tags ?? []).map((t) => ({ label: t.tag, value: String(t.value) }))}
+                    emptyReason="No tags yet — add tags to holdings to see this breakdown." />
+                </div>
+                {liabFootnote && <p className="pf__note">* {liabFootnote}</p>}
+              </>
+            )}
+          </CardBody>
+        </div>
+      </section>
+
+      {/* Contributors / Detractors — today (D-024/D-034). Never "Gainers/Losers". */}
+      <section className="pf__card lf-card" data-card="movers">
+        <h2 className="pf__h2">Contributors &amp; detractors — today</h2>
+        <div className="lf-card__body">
+          <CardBody data={summary} onRetry={reload}>
+            {(s) => (
+              <div className="pf__movers">
+                <MoverList title="Contributors — today" rows={s.top_gainers} emptyReason="Nothing gained today." />
+                <MoverList title="Detractors — today" rows={s.top_losers} emptyReason="Nothing declined today." />
               </div>
-            </div>
-            <div className="lf-card__body">
-              {chartSeries.length >= 2 ? (
-                <PriceChart
-                  series={chartSeries}
-                  mode="line"
-                  interval={window}
-                  comparison={chartComparison}
-                  coverageNote={perf?.stats ? undefined : "Not enough history for this window yet — showing what exists."}
-                />
-              ) : (
-                <EmptyState message="Not enough history yet" reason="The performance line needs at least two days of priced history for this window." />
-              )}
-              <p className="pf__note">
-                {includeManual
-                  ? "Current holdings — price return (incl. manual assets): today's positions marked to market over the window."
-                  : "Current holdings — price return: today's invested positions marked to market over the window (excludes flows, closed positions and manual assets)."}
-              </p>
-            </div>
-          </section>
+            )}
+          </CardBody>
+        </div>
+      </section>
 
-          {/* Allocation (D-033/D-048) — four donuts; class/currency/sector over GROSS assets. */}
-          <section className="pf__card lf-card">
-            <h2 className="pf__h2">Allocation</h2>
-            <div className="lf-card__body pf__donuts">
-              <DonutBlock title="By class" segments={labeledSegments(summary?.allocation_by_class, (k) => labelFor("asset_class", k))} footnote={liabFootnote} />
-              <DonutBlock title="By sector" segments={segmentsOf(summary?.allocation_by_sector)} footnote={liabFootnote} />
-              <DonutBlock title="By currency" segments={segmentsOf(summary?.allocation_by_currency)} footnote={liabFootnote} />
-              <DonutBlock
-                title="By tag"
-                segments={(tags?.tags ?? []).map((t) => ({ label: t.tag, value: String(t.value) }))}
-                emptyReason="No tags yet — add tags to holdings to see this breakdown."
-              />
-            </div>
-          </section>
-
-          {/* Contributors / Detractors — today (D-024/D-034). Never "Gainers/Losers". */}
-          <section className="pf__card lf-card">
-            <h2 className="pf__h2">Contributors &amp; detractors — today</h2>
-            <div className="lf-card__body pf__movers">
-              <MoverList title="Contributors — today" rows={summary?.top_gainers ?? []} emptyReason="Nothing gained today." />
-              <MoverList title="Detractors — today" rows={summary?.top_losers ?? []} emptyReason="Nothing declined today." />
-            </div>
-          </section>
-
-          {/* Concentration (D-029) — distinct figures; HHI from attribution.risk (ND-5). */}
-          <section className="pf__card lf-card">
-            <h2 className="pf__h2">Concentration</h2>
-            <div className="lf-card__body pf__rail pf__rail--tight">
-              {(stats?.metrics.filter((m) => m.term_id === "term-concentration") ?? []).map((m) => (
-                <TrendStat key={m.label} label={m.label} value={metricDisplay(m)} />
-              ))}
-              <TrendStat label="HHI" value={risk?.available && risk.hhi != null ? Number(risk.hhi).toFixed(4) : "—"} />
-            </div>
-          </section>
-
-          {/* Return / volatility — NOT a Sharpe ratio (D-030 protected copy). */}
-          <section className="pf__card lf-card">
-            <h2 className="pf__h2">Risk &amp; return</h2>
-            <div className="lf-card__body">
+      {/* Concentration (D-029) — distinct figures; HHI from attribution.risk (ND-5). */}
+      <section className="pf__card lf-card" data-card="concentration">
+        <h2 className="pf__h2">Concentration</h2>
+        <div className="lf-card__body">
+          <CardBody data={stats} onRetry={reload}>
+            {(st) => (
               <div className="pf__rail pf__rail--tight">
-                <TrendStat label="1Y return" value={metricDisplay(metric(stats, "1Y return"))} />
-                <TrendStat label="1Y volatility" value={metricDisplay(metric(stats, "1Y volatility"))} />
-                <TrendStat label="Return / volatility" value={metricDisplay(metric(stats, "Return / volatility"))} />
-                <TrendStat label="Max drawdown (1Y)" value={metricDisplay(metric(stats, "Max drawdown (1Y)"))} />
+                {st.metrics.filter((m) => m.term_id === "term-concentration").map((m) => (
+                  <TrendStat key={m.label} label={m.label} value={metricDisplay(m)} />
+                ))}
+                <TrendStat label="HHI" value={risk?.available && risk.hhi != null ? Number(risk.hhi).toFixed(4) : "—"} />
               </div>
-              <p className="pf__note">{NOT_A_SHARPE}</p>
-            </div>
-          </section>
+            )}
+          </CardBody>
+        </div>
+      </section>
 
-          {/* Attribution — per-holding contribution + explicit residual row (D-034/GLOSSARY). */}
-          <section className="pf__card lf-card">
-            <h2 className="pf__h2">Return attribution</h2>
-            <div className="lf-card__body">
-              {attribution?.available ? (
+      {/* Return / volatility — NOT a Sharpe ratio (D-030 protected copy). */}
+      <section className="pf__card lf-card" data-card="risk">
+        <h2 className="pf__h2">Risk &amp; return</h2>
+        <div className="lf-card__body">
+          <CardBody data={stats} onRetry={reload}>
+            {(st) => (
+              <>
+                <div className="pf__rail pf__rail--tight">
+                  <TrendStat label="1Y return" value={metricDisplay(metric(st, "1Y return"))} />
+                  <TrendStat label="1Y volatility" value={metricDisplay(metric(st, "1Y volatility"))} />
+                  <TrendStat label="Return / volatility" value={metricDisplay(metric(st, "Return / volatility"))} />
+                  <TrendStat label="Max drawdown (1Y)" value={metricDisplay(metric(st, "Max drawdown (1Y)"))} />
+                </div>
+                <p className="pf__note">{NOT_A_SHARPE}</p>
+              </>
+            )}
+          </CardBody>
+        </div>
+      </section>
+
+      {/* Attribution — DataTable (sort/filter/export) + reconciling residual + headline. */}
+      <section className="pf__card lf-card" data-card="attribution">
+        <h2 className="pf__h2">Return attribution</h2>
+        <div className="lf-card__body">
+          <CardBody data={attr} lines={5} onRetry={reload}>
+            {(a) =>
+              a.attribution.available ? (
                 <>
-                  <div className="pf__scroll">
-                  <table className="pf__attr">
-                    <thead>
-                      <tr>
-                        <th scope="col">Holding</th>
-                        <th scope="col">Class</th>
-                        <th scope="col" className="pf__num">Contribution</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(attribution.holdings ?? []).map((h) => (
-                        <tr key={h.holding_id}>
-                          <td>{h.symbol ? <Link to={`/instrument/${encodeURIComponent(h.symbol)}`}>{h.label}</Link> : h.label}</td>
-                          <td>{h.asset_class ? labelFor("asset_class", h.asset_class) : "—"}</td>
-                          <td className="pf__num">{formatSignedPercent(h.contribution_pct)}</td>
-                        </tr>
-                      ))}
-                      <tr className="pf__residual">
-                        <td>Residual (income, realised, closed)</td>
-                        <td>—</td>
-                        <td className="pf__num">{formatSignedPercent(attribution.residual_pct)}</td>
-                      </tr>
-                      <tr className="pf__headline">
-                        <td>Headline return</td>
-                        <td>—</td>
-                        <td className="pf__num">{formatSignedPercent(attribution.headline_return_pct)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  </div>
+                  <DataTable
+                    columns={attrColumns}
+                    rows={attrRows}
+                    sort={attrSort}
+                    onSort={(key) => setAttrSort((s) => ({ key, dir: s.key === key && s.dir === "desc" ? "asc" : "desc" }))}
+                    filter={{ value: attrFilter, onChange: setAttrFilter, placeholder: "Filter holdings…", ariaLabel: "Filter attribution" }}
+                    onExport={() => apiDownload(`/portfolio/attribution.csv?days=${days}`)}
+                    stickyHeader
+                    caption="Return attribution by holding"
+                  />
+                  <dl className="pf__attrsummary">
+                    <div className="pf__attrsumrow">
+                      <dt>Residual (income, realised, closed)</dt>
+                      <dd className="pf__num">{formatSignedPercent(a.attribution.residual_pct)}</dd>
+                    </div>
+                    <div className="pf__attrsumrow pf__attrsumrow--headline">
+                      <dt>Headline return</dt>
+                      <dd className="pf__num">{formatSignedPercent(a.attribution.headline_return_pct)}</dd>
+                    </div>
+                  </dl>
                   <p className="pf__note">Single-period approximation — sub-holdings + residual reconcile to the headline.</p>
                 </>
               ) : (
-                <EmptyState message="Attribution unavailable" reason={attribution?.reason ?? "Not enough priced history to attribute return honestly."} />
-              )}
-            </div>
-          </section>
+                <EmptyState message="Attribution unavailable" reason={a.attribution.reason ?? "Not enough priced history to attribute return honestly."} />
+              )
+            }
+          </CardBody>
+        </div>
+      </section>
 
-          {/* Costs (D-048) — recorded fees vs ongoing cost, TWO blocks, never blended. */}
-          <section className="pf__card lf-card">
-            <div className="pf__cardhead">
-              <h2 className="pf__h2">Costs</h2>
-              <Link className="pf__link" to="/reports">Reports ↗</Link>
-            </div>
-            <div className="lf-card__body pf__costs">
-              <div className="pf__costblock lf-card__body">
-                <h3 className="pf__h3">Recorded fees</h3>
-                <p className="pf__costnum">{formatMoney(cost?.recorded_fees.total)}</p>
-                <p className="pf__note">{cost?.recorded_fees.label ?? "Fees charged in the ledger."}</p>
+      {/* Costs (D-048) — recorded fees vs ongoing cost, TWO blocks, never blended. */}
+      <section className="pf__card lf-card" data-card="costs">
+        <div className="pf__cardhead">
+          <h2 className="pf__h2">Costs</h2>
+          <Link className="pf__link" to="/reports">Reports ↗</Link>
+        </div>
+        <div className="lf-card__body">
+          <CardBody data={cost} lines={3} onRetry={reload}>
+            {(c) => (
+              <div className="pf__costs">
+                <div className="pf__costblock lf-card__body">
+                  <h3 className="pf__h3">Recorded fees</h3>
+                  <p className="pf__costnum">{formatMoney(c.recorded_fees.total)}</p>
+                  <p className="pf__note">{c.recorded_fees.label}</p>
+                </div>
+                <div className="pf__costblock lf-card__body">
+                  <h3 className="pf__h3">Ongoing cost (expense ratio)</h3>
+                  {c.estimated_ongoing_cost.available ? (
+                    <p className="pf__costnum">{formatMoney(c.estimated_ongoing_cost.estimated_annual_total)} / yr</p>
+                  ) : (
+                    <p className="pf__costnum pf__muted">—</p>
+                  )}
+                  <p className="pf__note">{c.estimated_ongoing_cost.coverage_label}</p>
+                </div>
               </div>
-              <div className="pf__costblock lf-card__body">
-                <h3 className="pf__h3">Ongoing cost (expense ratio)</h3>
-                {cost?.estimated_ongoing_cost.available ? (
-                  <p className="pf__costnum">{formatMoney(cost.estimated_ongoing_cost.estimated_annual_total)} / yr</p>
-                ) : (
-                  <p className="pf__costnum pf__muted">—</p>
-                )}
-                <p className="pf__note">{cost?.estimated_ongoing_cost.coverage_label ?? "Estimated from each instrument's expense ratio."}</p>
-              </div>
-            </div>
-          </section>
-        </>
-      )}
+            )}
+          </CardBody>
+        </div>
+      </section>
     </div>
   );
 }
 
-function RealisedTile({ realised }: { realised: RealisedResp | null }) {
+function RealisedTile({ realised }: { realised: RealisedResp | null | undefined }) {
   // ND-12: label with the SERVED report year (never "YTD"); link to the full report.
   const label = realised ? `Realised P/L · ${realised.year}` : "Realised P/L";
   const value = realised ? formatSignedMoney(realised.base_realised_total_current_fx) : "—";
@@ -378,19 +436,22 @@ function RealisedTile({ realised }: { realised: RealisedResp | null }) {
 function DonutBlock({
   title,
   segments,
-  footnote,
+  marker,
   emptyReason,
 }: {
   title: string;
   segments: Segment[];
-  footnote?: string;
+  marker?: string;
   emptyReason?: string;
 }) {
   return (
     <div className="pf__donut">
-      <h3 className="pf__h3">{title}</h3>
+      <h3 className="pf__h3">
+        {title}
+        {marker ? <sup className="pf__marker">{marker}</sup> : null}
+      </h3>
       {segments.length > 0 ? (
-        <AllocationDonut segments={segments} footnote={footnote} aria-label={title} />
+        <AllocationDonut segments={segments} aria-label={title} />
       ) : (
         <EmptyState message="Nothing to show" reason={emptyReason ?? "No allocation data."} />
       )}
@@ -421,4 +482,31 @@ function MoverList({ title, rows, emptyReason }: { title: string; rows: MoverRow
       )}
     </div>
   );
+}
+
+// Per-card loading wrapper (§12-8): `undefined` → Skeleton, `null` → honest error (+ retry),
+// value → the card content. Overview cards each resolve on their own reader — no full-page block.
+function CardBody<T>({
+  data,
+  lines = 4,
+  block = false,
+  onRetry,
+  children,
+}: {
+  data: T | null | undefined;
+  lines?: number;
+  block?: boolean;
+  onRetry?: () => void;
+  children: (d: T) => ReactNode;
+}) {
+  if (data === undefined) return <Skeleton lines={lines} block={block} />;
+  if (data === null)
+    return (
+      <EmptyState
+        message="Couldn't load this section"
+        reason="The reader is unreachable — values are withheld, never guessed."
+        action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
+      />
+    );
+  return <>{children(data)}</>;
 }

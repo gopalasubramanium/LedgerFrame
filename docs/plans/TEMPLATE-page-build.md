@@ -87,6 +87,15 @@ DESIGN-SYSTEM.md §3 (page templates). Every row cites its spec section.*
 | Rotation eligibility | | IA §3 (D-044) |
 | One-line purpose | | IA §2 |
 
+> **Reports-group pages are worklist-shaped (page-pricing-health §13, ND-7):** a **summary header +
+> a diagnostics/records body** (e.g. Pricing Health = portfolio-confidence card + per-holding
+> diagnostics table). Use the Worklist template, not Overview.
+>
+> **Fast-path (page-pricing-health §13):** a clean **verify-first (§3/§10)** that finds every reader
+> already in the frozen contract **empties §3b → Phase 0 is skipped**, and if the ratified inventory
+> already covers the page, **Phase 0a is confirm-only (no §5 amendment)**. Reading the engine first is
+> the biggest schedule lever — it also prevents §3b guesses.
+
 ---
 
 ## 2. OWNERSHIP TABLE

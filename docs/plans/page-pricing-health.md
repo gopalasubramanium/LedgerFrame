@@ -1,12 +1,12 @@
 # page-pricing-health.md — Pricing Health (diagnostics) page build plan
 
-**Status: Phases 0a/1/2 + Phase-3a pre-pass GREEN (2026-07-12) — STOPPED for the owner's Phase-3b
-acceptance walk.** §9 all-resolved (§9); **no §3b deltas → Phase 0 skipped**; Phase-0a confirmed
-ratified parts suffice (no §5 amendment); `/pricing-health` assembled + routed + nav-built (first
-Reports-group page, Worklist template). The pre-pass drives the live page on seeded demo GREEN ×3 —
-14 diagnostics rows, **live banner↔page stale-count reconciliation** (ND-1), read-only routing chain +
-no priority config (D-072), correct-source MasterSelect, 0 overflow × both themes, 0 console errors.
-Build record: §11; Phase-3b walk batch 1 in §12. **Next: the owner's re-verify of batch 1.**
+**Status: DONE ✅ — page owner-accepted 2026-07-12 (see §13 retrospective).** First Reports-group
+page (Worklist template), canonical home for provenance/confidence/routing diagnostics (D-038). §9
+all-resolved; **no §3b deltas → Phase 0 skipped**; Phase-0a confirm-only (no §5 amendment); Phases
+1/2 + Phase-3a pre-pass + Phase-3b walk (batch 1, ratified). **ND-1 reconciliation via a shared
+`staleCount` query** (banner + page one source). Platform legacy: shared summary-count query pattern
++ `.lf-visually-hidden` caption rule (both promoted to DESIGN-SYSTEM §5.2). Build record: §11; walk
+§12; retrospective §13. **No open blockers.**
 
 Pricing Health is the **first Reports-group page** and the canonical home for **provenance,
 confidence, and routing diagnostics** (D-038) — the honest "why is this number what it is" view. The
@@ -419,3 +419,44 @@ utility + the **caption-hidden rule** for DataTables inside titled cards.
 **Checks after batch 1:** frontend **126 vitest + 57 overflow + lint/typecheck/tokens/build** green.
 Live pre-pass GREEN ×3 (shared-count skew test, confidence card-fill 261→1px, caption hidden,
 icon-only Refresh all, plus all Phase-3a assertions).
+
+**Batch 1 — RATIFIED (owner, 2026-07-12, seen live):** shared-`staleCount`-query reconciliation,
+confidence-card fill, caption rule, icon-only Refresh-all, dev.sh port guard. Refresh-all exercised
+live (gate + progress + served summary) and the row-detail read (routing chain + confidence_factors)
+— both honest. Promotions applied to DESIGN-SYSTEM §5.2 (shared-count query + `.lf-visually-hidden`
+caption rule).
+
+---
+
+## 13. MILESTONE RETROSPECTIVE — Pricing Health DONE ✅ (owner sign-off, 2026-07-12)
+
+**`/pricing-health` is complete and owner-accepted.** The first **Reports-group** page (Worklist
+template) and the canonical home for provenance/confidence/routing diagnostics (D-038). No backend
+deltas; no §5 amendment. Phases 0a/1/2 + Phase-3a pre-pass + Phase-3b walk (batch 1, all ratified).
+
+**Why this was the fastest page yet:**
+- **Verify-first (§10) emptied §3b.** Reading what the engine already serves —
+  `/portfolio/pricing-health`, per-holding + bulk refresh, `PATCH …source_override`,
+  `/system/identifier-duplicates`, confidence bands — showed **everything was already in the frozen
+  contract**, so **§3b was empty → Phase 0 was skipped entirely**. The single biggest time-saver.
+- **One-pass §9.** All 13 NDs resolved in one owner round, each matching a drafted option (one
+  override: rotation). No re-opens, no mid-build clarifications.
+- **Composition-only Phase 0a.** Ratified parts covered the page (`DataTable`, `ProvenanceBadge`,
+  `RowMenu`, `MasterSelect`, `MetaStrip`, `Dialog`, `TrendStat`) — **confirm-only, no specimens, no
+  §5 amendment** — because the taxonomy/provenance components already existed from Instrument Detail.
+
+**Reports-group template nuance (recorded per ND-7, for the pages that follow — Reports, etc.):**
+a Reports-group page is **report/worklist-shaped — a summary header + a diagnostics/records body**
+(here: the portfolio-confidence card + the per-holding diagnostics table). Encoded in
+`TEMPLATE-page-build.md`.
+
+**Template legacy (reusable platform outcomes this milestone):**
+- **`src/state/staleCount.ts`** — the shared, polled, invalidatable client-query pattern for any
+  chrome summary count that also renders on its canonical page (DESIGN-SYSTEM §5.2).
+- **`.lf-visually-hidden`** + the **caption-hidden rule** for DataTables inside titled cards
+  (DESIGN-SYSTEM §5.2).
+
+**Judgment-flagged (owner calls, recorded with rationale):** ND-2 (the banner never refreshed — brief
+divergence; refresh is a page affordance); ND-1 by-construction reconciliation via the shared query;
+ND-9 `/system/staleness` left orphaned (tech-debt). The §12ph1-1 **honest fail-first note** (a 0==0
+non-reproduction reported plainly, not dressed up) was owner-accepted as the right call.

@@ -25,6 +25,14 @@
   gap: var(--space-5);
   padding-bottom: var(--space-5);
   border-bottom: var(--border-width) solid var(--border);
+  /* Never force horizontal overflow at narrow widths (§11-14). */
+  flex-wrap: wrap;
+}
+/* The title block MUST be shrinkable, or the subtitle's narrow-width `nowrap`
+   (below) expands it and pushes the page past the viewport (§11-14 regression). */
+.lf-pageheader__titles {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .lf-pageheader__title {
   margin: 0;

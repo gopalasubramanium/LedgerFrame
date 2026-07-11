@@ -13,7 +13,7 @@ export interface PageHeaderProps {
 export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <header className="lf-pageheader">
-      <div>
+      <div className="lf-pageheader__titles">
         <h1 className="lf-pageheader__title">{title}</h1>
         {subtitle && <p className="lf-pageheader__subtitle">{subtitle}</p>}
       </div>

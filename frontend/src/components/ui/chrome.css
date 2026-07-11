@@ -119,6 +119,10 @@
    carries it, so exactly one brand is ever visible (D-066). */
 .lf-topbar__brand {
   display: none;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--font-size-16);
   font-weight: var(--weight-semibold);
   color: var(--text-primary);

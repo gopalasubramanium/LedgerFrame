@@ -286,3 +286,22 @@ by the owner. Not self-certified.
 
 **Checks:** frontend 80 tests · drift/typecheck/lint/build green; backend untouched.
 **STOP — owner re-verifies live + ratifies the PROPOSED items at the kitchen sink.**
+
+### Batch 3 (owner, 2026-07-11)
+
+- **§11-14 — REGRESSION: narrow-width horizontal overflow (fixed first, committed alone).**
+  Root cause: batch-2 §11-9 gave the `PageHeader` subtitle `white-space:nowrap` at narrow
+  widths, but `PageHeader` wrapped title+subtitle in a plain `<div>` with no `min-width:0`
+  — so the nowrap subtitle expanded that div past the viewport (horizontal scroll;
+  StaleBanner spanning only the visible width; dead band right of content). **Structural
+  fix:** nest title+subtitle in `.lf-pageheader__titles` (`min-width:0; flex:1 1 auto`) so
+  the subtitle clamps instead of pushing wide; `.lf-pageheader` gains `flex-wrap:wrap`; the
+  TopBar brand truncates (`min-width:0`/ellipsis) so the bar never overflows either.
+  **Regression test:** `overflow.test.tsx` permanently guards the structural invariant
+  (PageHeader nests the shrinkable titles wrapper). **Limitation (honest):** a true pixel
+  test — `scrollWidth <= clientWidth` at 320/375/900/1366px on the document + shell content
+  container — needs a **real browser**; jsdom has no layout engine (scrollWidth/clientWidth
+  are always 0, so such a test passes vacuously). That breakpoint suite is specced for
+  **Playwright (ADR pending)** — owner to approve the dev-dependency + browser download;
+  owner verifies 320px live meanwhile. `PageHeader.tsx`, `structure.css`, `chrome.css`,
+  `overflow.test.tsx`.

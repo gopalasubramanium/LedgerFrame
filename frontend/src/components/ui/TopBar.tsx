@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import "./chrome.css";
 import "./structure.css";
+import { RotateCw, Ban, LineChart, CandlestickChart, Menu, MoreHorizontal } from "../../icons";
 
-// Stateful-glyph rule (DESIGN-SYSTEM §5.5): each toggle shows a state-distinct glyph;
-// the tooltip names the state ("Function: state"), and the aria-label matches. Rotation
-// = arrows(on)/slashed(off); Detail = line(simple) vs candlestick(full). No collision
-// with ☰ (sidebar/menu toggle).
-const ROTATION_ICON = { on: "↻", off: "⊘" } as const;
-const DETAIL_ICON = { simple: "╱", full: "╪" } as const;
+// Stateful-icon rule (DESIGN-SYSTEM §5.5, lucide ADR-0003): each toggle shows a
+// state-distinct icon; the tooltip names the state ("Function: state") and the
+// aria-label matches. Rotation = RotateCw(on)/Ban(off); Detail = LineChart(simple)/
+// CandlestickChart(full). Menu is reserved for the nav toggle.
 
 // Global chrome (DESIGN-SYSTEM §5.5, D-066). The ONE slim top bar. At laptop+ the
 // display axes + rotation + Detail render inline, right-aligned. Below the laptop
@@ -81,7 +80,7 @@ export function TopBar({
           title={`Rotation: ${rotationOn ? "On" : "Off"}`}
           onClick={onToggleRotation}
         >
-          {rotationOn ? ROTATION_ICON.on : ROTATION_ICON.off}
+          {rotationOn ? <RotateCw aria-hidden="true" /> : <Ban aria-hidden="true" />}
         </button>
       )}
       {onToggleDetail && (
@@ -92,7 +91,11 @@ export function TopBar({
           title={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
           onClick={onToggleDetail}
         >
-          {detailLevel === "full" ? DETAIL_ICON.full : DETAIL_ICON.simple}
+          {detailLevel === "full" ? (
+            <CandlestickChart aria-hidden="true" />
+          ) : (
+            <LineChart aria-hidden="true" />
+          )}
         </button>
       )}
     </>
@@ -108,7 +111,7 @@ export function TopBar({
           title="Menu"
           onClick={onToggleNav}
         >
-          ☰
+          <Menu aria-hidden="true" />
         </button>
       )}
       <div className="lf-topbar__brand">LedgerFrame</div>
@@ -128,7 +131,7 @@ export function TopBar({
             title="Display settings"
             onClick={() => setOverflowOpen((v) => !v)}
           >
-            ⋯
+            <MoreHorizontal aria-hidden="true" />
           </button>
           {overflowOpen && (
             <div className="lf-topbar__popover" role="menu">

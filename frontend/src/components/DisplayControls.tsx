@@ -1,24 +1,33 @@
 import "./DisplayControls.css";
 import { useTheme } from "../theme/theme-context";
 import { useDisplay } from "../theme/display-context";
+import {
+  Sun,
+  Moon,
+  Monitor,
+  Rows2,
+  Rows4,
+  Contrast,
+  Circle,
+  Disc,
+  Waves,
+  Minus,
+  Wind,
+} from "../icons";
+import type { LucideIcon } from "../icons";
 
 // App chrome (not a §5 design component): the per-device display axis toggles
-// (theme/density/contrast/motion, D-066/D-078). Recomposed 2026-07-11 (page-chrome
-// Phase 0a re-ratify) as ICON-ONLY buttons with tooltips for the slim top bar.
+// (theme/density/contrast/motion, D-066/D-078). ICON-ONLY buttons with tooltips.
 //
-// STATEFUL-GLYPH RULE (DESIGN-SYSTEM §5.5, re-ratify 2026-07-11): a stateful toggle
-// renders a STATE-DISTINCT glyph per state — the icon shows the current state, the
-// tooltip names it — and no glyph collides with another bar control (☰ is reserved
-// for the sidebar/menu toggle). Theme = celestial; density = line-stacks; contrast =
-// squares; motion = waves.
-const THEME_ICON: Record<string, string> = { light: "☀", dark: "☾", system: "◐" };
+// STATEFUL-ICON RULE (DESIGN-SYSTEM §5.5): a stateful toggle renders a STATE-DISTINCT
+// icon per state (lucide, ADR-0003) — the icon shows the current state, the tooltip
+// names it ("Function: state"); no icon collides with another bar control (Menu is
+// reserved for the sidebar toggle).
+const THEME_ICON: Record<string, LucideIcon> = { light: Sun, dark: Moon, system: Monitor };
 const THEME_LABEL: Record<string, string> = { light: "Light", dark: "Dark", system: "System" };
-// comfortable = loose rows, compact = tight rows (NOT ☰).
-const DENSITY_ICON: Record<string, string> = { comfortable: "≡", compact: "≣" };
-// system = patterned (auto), normal = half, high = solid (max contrast).
-const CONTRAST_ICON: Record<string, string> = { system: "▨", normal: "◧", high: "■" };
-// full = waves (animated), reduced = flat line (still), system = follows OS.
-const MOTION_ICON: Record<string, string> = { full: "≈", reduced: "—", system: "≋" };
+const DENSITY_ICON: Record<string, LucideIcon> = { comfortable: Rows2, compact: Rows4 };
+const CONTRAST_ICON: Record<string, LucideIcon> = { system: Contrast, normal: Circle, high: Disc };
+const MOTION_ICON: Record<string, LucideIcon> = { full: Waves, reduced: Minus, system: Wind };
 
 export function DisplayControls() {
   const { choice, resolved, cycle } = useTheme();
@@ -39,6 +48,11 @@ export function DisplayControls() {
     `Contrast: ${contrastPref}` + (contrastPref === "system" ? ` (${contrast})` : "");
   const motionTip = `Motion: ${motionPref}` + (motionPref === "system" ? ` (${motion})` : "");
 
+  const ThemeIcon = THEME_ICON[choice];
+  const DensityIcon = DENSITY_ICON[density];
+  const ContrastIcon = CONTRAST_ICON[contrastPref];
+  const MotionIcon = MOTION_ICON[motionPref];
+
   return (
     <div className="lf-controls" role="group" aria-label="Display settings">
       <button
@@ -48,7 +62,7 @@ export function DisplayControls() {
         title={themeTip}
         aria-label={themeTip}
       >
-        {THEME_ICON[choice]}
+        <ThemeIcon aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -57,7 +71,7 @@ export function DisplayControls() {
         title={`Density: ${density}`}
         aria-label={`Density: ${density}`}
       >
-        {DENSITY_ICON[density]}
+        <DensityIcon aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -70,7 +84,7 @@ export function DisplayControls() {
           )
         }
       >
-        {CONTRAST_ICON[contrastPref]}
+        <ContrastIcon aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -83,7 +97,7 @@ export function DisplayControls() {
           )
         }
       >
-        {MOTION_ICON[motionPref]}
+        <MotionIcon aria-hidden="true" />
       </button>
     </div>
   );

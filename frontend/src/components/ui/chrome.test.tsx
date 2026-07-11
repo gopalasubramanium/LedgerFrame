@@ -86,8 +86,12 @@ test("Sidebar activePath overrides router location for previews", () => {
   expect(screen.getByRole("link", { name: "Holdings" }).className).toContain("is-active");
 });
 
-// --- TopBar stateful glyphs (state-distinct icon rule) ----------------------
-test("TopBar rotation and Detail toggles render a distinct glyph per state", () => {
+// --- TopBar stateful icons (state-distinct icon rule; lucide, ADR-0003) ------
+function svgClass(el: HTMLElement): string | null {
+  return el.querySelector("svg")?.getAttribute("class") ?? null;
+}
+
+test("TopBar rotation and Detail toggles render a distinct lucide icon per state", () => {
   const { rerender } = render(
     <TopBar
       rotationOn={false}
@@ -96,8 +100,10 @@ test("TopBar rotation and Detail toggles render a distinct glyph per state", () 
       onToggleDetail={() => {}}
     />,
   );
-  expect(screen.getByRole("button", { name: /Rotation: Off/ }).textContent).toBe("⊘");
-  expect(screen.getByRole("button", { name: /Detail: Simple/ }).textContent).toBe("╱");
+  const rotOff = svgClass(screen.getByRole("button", { name: /Rotation: Off/ }));
+  const detailSimple = svgClass(screen.getByRole("button", { name: /Detail: Simple/ }));
+  expect(rotOff).toContain("lucide-ban");
+  expect(detailSimple).toContain("lucide-chart-line");
 
   rerender(
     <TopBar
@@ -107,8 +113,13 @@ test("TopBar rotation and Detail toggles render a distinct glyph per state", () 
       onToggleDetail={() => {}}
     />,
   );
-  expect(screen.getByRole("button", { name: /Rotation: On/ }).textContent).toBe("↻");
-  expect(screen.getByRole("button", { name: /Detail: Full/ }).textContent).toBe("╪");
+  const rotOn = svgClass(screen.getByRole("button", { name: /Rotation: On/ }));
+  const detailFull = svgClass(screen.getByRole("button", { name: /Detail: Full/ }));
+  expect(rotOn).toContain("lucide-rotate-cw");
+  expect(detailFull).toContain("lucide-chart-candlestick");
+  // State-distinct (the rule).
+  expect(rotOn).not.toBe(rotOff);
+  expect(detailFull).not.toBe(detailSimple);
 });
 
 // --- StaleBanner (honest: hidden at 0) --------------------------------------

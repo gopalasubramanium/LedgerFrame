@@ -25,6 +25,7 @@ import {
 import type { Candle, InstrumentDetail as Detail, NewsItem } from "../api/instruments";
 import type { HoldingRow } from "../api/holdings";
 import { useLabelFor } from "../refdata/refdata-context";
+import { Pencil } from "../icons";
 import { formatMoney, formatPrice, formatSignedMoney } from "../format/number";
 
 // Instrument Detail (IA §360; entity-detail template) — a scoped view (P-3) of the
@@ -134,15 +135,15 @@ export function InstrumentDetail() {
             {isFundWrapped && (
               <button type="button" className="lf-btn" onClick={() => setCostOpen(true)}>Ongoing cost</button>
             )}
-            {/* Page-action icon button (§11-13): icon-only + tooltip/aria-label. */}
+            {/* Page-action icon button (§11-13/§11-16): framed icon-only. */}
             <button
               type="button"
-              className="lf-iconbtn"
+              className="lf-iconbtn lf-iconbtn--framed"
               onClick={() => setEditOpen(true)}
               title="Edit"
               aria-label="Edit"
             >
-              ✎
+              <Pencil aria-hidden="true" />
             </button>
           </>
         }

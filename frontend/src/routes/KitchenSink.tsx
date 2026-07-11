@@ -61,6 +61,31 @@ import {
   formatSignedMoney,
   formatSignedPercent,
 } from "../format/number";
+import {
+  Sun, Moon, Monitor, Rows2, Rows4, Contrast, Circle, Disc, Waves, Minus, Wind,
+  RotateCw, Ban, LineChart, CandlestickChart, Menu, MoreHorizontal, Pencil, Upload, Download, Plus,
+} from "../icons";
+
+// Every bar icon (lucide, ADR-0003) for the ratification row — all states shown.
+const BAR_ICONS = [
+  { label: "Theme: Light", Icon: Sun },
+  { label: "Theme: Dark", Icon: Moon },
+  { label: "Theme: System", Icon: Monitor },
+  { label: "Density: comfortable", Icon: Rows2 },
+  { label: "Density: compact", Icon: Rows4 },
+  { label: "Contrast: system", Icon: Contrast },
+  { label: "Contrast: normal", Icon: Circle },
+  { label: "Contrast: high", Icon: Disc },
+  { label: "Motion: full", Icon: Waves },
+  { label: "Motion: reduced", Icon: Minus },
+  { label: "Motion: system", Icon: Wind },
+  { label: "Rotation: On", Icon: RotateCw },
+  { label: "Rotation: Off", Icon: Ban },
+  { label: "Detail: Simple", Icon: LineChart },
+  { label: "Detail: Full", Icon: CandlestickChart },
+  { label: "Menu", Icon: Menu },
+  { label: "Overflow", Icon: MoreHorizontal },
+];
 
 function Specimen({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -564,7 +589,7 @@ export function KitchenSink() {
       {/* ---------------------------------------------------------------- */}
       <Section
         title="Global chrome (§5.5) — PROPOSED 2026-07-11 (recomposed at re-ratify)"
-        note="page-chrome Phase 0a (C-1): the app SHELL. Slim calm TopBar (D-066) with ICON-ONLY display controls (theme/density/contrast/motion) + rotation (D-044) + Detail (D-040) toggles right-aligned, Clock + DemoBadge; brand shows in the bar only at narrow widths (sidebar carries it at laptop+ — one brand at a time). StaleBanner/UpdateBanner are full-width status strips BELOW the bar, only when active. Sidebar shows all six D-043 group headers, with only BUILT pages as entries. LockScreen = D-002 access lock. STATEFUL-GLYPH RULE: click each icon toggle — the glyph itself changes per state (theme ☀/☾/◐, density ≡/≣, contrast ▨/◧/■, motion ≈/—/≋, rotation ↻/⊘, Detail ╱/╪), tooltip names it. Ratify in both themes/densities/contrast + a narrow width; hover for tooltips."
+        note="page-chrome Phase 0a (C-1): the app SHELL. Slim calm TopBar (D-066) with ICON-ONLY display controls (theme/density/contrast/motion) + rotation (D-044) + Detail (D-040) toggles right-aligned, Clock + DemoBadge; brand shows in the bar only at narrow widths (sidebar carries it at laptop+ — one brand at a time). StaleBanner/UpdateBanner are full-width status strips BELOW the bar, only when active. Sidebar shows all six D-043 group headers, with only BUILT pages as entries. LockScreen = D-002 access lock. STATEFUL-ICON RULE (lucide, ADR-0003): click each icon toggle — a state-distinct icon per state (theme sun/moon/monitor, density, contrast, motion, rotation, Detail line/candlestick), tooltip names it. Ratify in both themes/densities/contrast + a narrow width; hover for tooltips."
       >
         <div className="ks__stack">
           <Specimen label="App shell — slim TopBar (icon controls, right) + status strips BELOW the bar pushing content">
@@ -641,24 +666,24 @@ export function KitchenSink() {
 
           {/* Batch-2 PROPOSED specimens (page-chrome Phase 3 §11-5/11-11/11-13). */}
           <div className="ks__row">
-            <Specimen label="PROPOSED · icon-button uniformity — all 7 bar glyphs share one square hit area">
-              <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
-                {["☾", "≣", "◧", "≈", "⊘", "╱", "☰"].map((g) => (
-                  <button key={g} type="button" className="lf-iconbtn" aria-label={`glyph ${g}`} title={g}>
-                    {g}
+            <Specimen label="PROPOSED · SVG icon set (lucide, ADR-0003) — every bar icon at final size, both themes">
+              <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center", flexWrap: "wrap" }}>
+                {BAR_ICONS.map(({ label, Icon }) => (
+                  <button key={label} type="button" className="lf-iconbtn" aria-label={label} title={label}>
+                    <Icon aria-hidden="true" />
                   </button>
                 ))}
               </div>
-              <span className="ks__label">theme · density · contrast · motion · rotation · Detail · menu — verify they read visually uniform</span>
+              <span className="ks__label">theme (sun/moon/monitor) · density · contrast · motion · rotation · Detail (line/candlestick) · menu · overflow — uniform square hit area; verify both themes</span>
             </Specimen>
-            <Specimen label="PROPOSED · page-action icon buttons — Edit / Import / Export CSV (Add stays labeled)">
+            <Specimen label="PROPOSED · page-action icon buttons (§11-16) — all icon-only, framed; Add accent-filled">
               <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
-                <button type="button" className="lf-iconbtn" title="Edit" aria-label="Edit">✎</button>
-                <button type="button" className="lf-iconbtn" title="Import" aria-label="Import">↥</button>
-                <button type="button" className="lf-iconbtn" title="Export CSV" aria-label="Export CSV">↧</button>
-                <button type="button" className="lf-btn lf-btn--primary">Add</button>
+                <button type="button" className="lf-iconbtn lf-iconbtn--framed" title="Edit" aria-label="Edit"><Pencil aria-hidden="true" /></button>
+                <button type="button" className="lf-iconbtn lf-iconbtn--framed" title="Import" aria-label="Import"><Upload aria-hidden="true" /></button>
+                <button type="button" className="lf-iconbtn lf-iconbtn--framed" title="Export CSV" aria-label="Export CSV"><Download aria-hidden="true" /></button>
+                <button type="button" className="lf-iconbtn lf-iconbtn--primary" title="Add" aria-label="Add"><Plus aria-hidden="true" /></button>
               </div>
-              <span className="ks__label">DESIGN-SYSTEM §5.5 amendment — hover for tooltips; Add remains discoverable</span>
+              <span className="ks__label">DESIGN-SYSTEM §5.5 amendment — bordered surface (not ghost); Add keeps accent emphasis; hover for tooltips</span>
             </Specimen>
             <Specimen label="PROPOSED · narrow TopBar overflow (D-102 ext.) — resize below the laptop width">
               <span className="ks__label">Below the laptop breakpoint the display axes collapse into a single ⋯ popover; the App-shell specimen above shows it live when the window is narrowed.</span>

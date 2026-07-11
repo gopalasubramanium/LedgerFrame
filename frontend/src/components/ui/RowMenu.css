@@ -20,6 +20,11 @@
   color: var(--text-primary);
   border-color: var(--border);
 }
+.lf-rowmenu__trigger svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: block;
+}
 
 .lf-rowmenu__menu {
   position: absolute;

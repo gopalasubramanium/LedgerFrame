@@ -340,22 +340,24 @@ built pages appear as entries). Display axes, rotation, and Detail are rendered 
 **icon-only** `.lf-iconbtn` buttons (tooltip + aria-label carry state); rotation and
 Detail are plain buttons owned by TopBar, not separate components.
 
-**Stateful-glyph rule (re-ratify 2026-07-11).** A **stateful** toggle MUST render a
-**state-distinct glyph per state** — the glyph *shows* the current state, the tooltip
-*names* it (like theme's ☀/☾/◐). A single fixed glyph for a control that has states is
-forbidden. **No glyph may collide with another bar control**; `☰` is **reserved** for
-the sidebar/menu toggle (narrow widths) and is used nowhere else. Current bar assignments
-(each family is visually distinct so the row never reads as ambiguous):
+**Stateful-icon rule (re-ratify 2026-07-11; icons = lucide, ADR-0003 §11-15).** A
+**stateful** toggle MUST render a **state-distinct icon per state** — the icon *shows*
+the current state, the tooltip *names* it ("Function: state"). A single fixed icon for a
+control that has states is forbidden. **No icon may collide with another bar control**;
+`Menu` is **reserved** for the sidebar/menu toggle (narrow widths). Icons are lucide,
+imported per-name from `src/icons.ts` (tree-shaken, bundled, no CDN). Current bar
+assignments:
 
-| Control | States → glyphs | Family |
-|---------|-----------------|--------|
-| Theme | light `☀` · dark `☾` · system `◐` | celestial |
-| Density | comfortable `≡` (loose) · compact `≣` (tight) | line-stacks |
-| Contrast | system `▨` · normal `◧` · high `■` | squares |
-| Motion | full `≈` · reduced `—` · system `≋` | waves / flat |
-| Rotation | on `↻` · off `⊘` | arrows |
-| Detail | simple `╱` (line) · full `╪` (candlestick) | chart motif |
-| Menu/nav toggle | `☰` (reserved) | — |
+| Control | States → lucide icons |
+|---------|-----------------------|
+| Theme | light `Sun` · dark `Moon` · system `Monitor` |
+| Density | comfortable `Rows2` · compact `Rows4` |
+| Contrast | system `Contrast` · normal `Circle` · high `Disc` |
+| Motion | full `Waves` · reduced `Minus` · system `Wind` |
+| Rotation | on `RotateCw` · off `Ban` |
+| Detail | simple `LineChart` · full `CandlestickChart` |
+| Menu / overflow | `Menu` (reserved) · `MoreHorizontal` (overflow popover, RowMenu) |
+| Page actions | Edit `Pencil` · Import `Upload` · Export `Download` · Add `Plus` |
 
 **LockScreen blur (D-002, re-ratify 2026-07-11).** The lock renders over a **blurred,
 dimmed snapshot** of the live screen (`backdrop-filter: blur(--lock-blur)`, 24px), PIN
@@ -388,11 +390,13 @@ IANA timezone name live in the tooltip/`aria-label`.
 footer** (bottom-left); below the breakpoint it moves into the **top bar**. Never hidden
 while demo data is active.
 
-**Page-action icon buttons (PROPOSED — DESIGN-SYSTEM §5.5 amendment, batch 2).**
-Page-level actions render as **icon-only `.lf-iconbtn`** with tooltip + matching
-`aria-label` (Instrument Detail **Edit** `✎`; Holdings **Import** `↥` / **Export CSV**
-`↧`). **Exception:** the primary **Add** stays a **labeled** primary button so the
-primary action is discoverable. Ratify at the kitchen sink.
+**Page-action icon buttons (PROPOSED — DESIGN-SYSTEM §5.5 amendment; batch 2 §11-13,
+revised batch 3 §11-16).** **ALL** page-header actions are **icon-only `.lf-iconbtn`**
+with tooltip + matching `aria-label`, on a **visible bordered surface** — `.lf-iconbtn
+--framed` (not a ghost/naked icon): Instrument Detail **Edit** `Pencil`; Holdings
+**Import** `Upload` / **Export CSV** `Download`. The primary **Add** `Plus` is icon-only
+too but uses the **accent-filled `.lf-iconbtn--primary`** variant to keep primary
+emphasis + discoverability. Ratify at the kitchen sink.
 
 **Toast / Snackbar** *(amended 2026-07-10 — Holdings page-build §9-4).* A
 transient, timed, dismissible notification with an optional action slot, provided

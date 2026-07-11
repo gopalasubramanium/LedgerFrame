@@ -223,3 +223,29 @@
   color: var(--accent);
   border-color: var(--accent);
 }
+/* lucide SVG icons (ADR-0003) size from the token + inherit currentColor, so they
+   follow the theme. Applies inside any button. */
+.lf-iconbtn svg,
+.lf-btn svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex-shrink: 0;
+}
+/* Page-action variant (§11-16): a visible bordered surface — not a ghost/naked icon. */
+.lf-iconbtn--framed {
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+.lf-iconbtn--framed:hover {
+  border-color: var(--accent);
+}
+/* Primary page action (Add) keeps accent emphasis while going icon-only (§11-16). */
+.lf-iconbtn--primary {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.lf-iconbtn--primary:hover {
+  border-color: var(--accent);
+}

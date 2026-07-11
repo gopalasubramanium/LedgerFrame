@@ -305,3 +305,23 @@ by the owner. Not self-certified.
   **Playwright (ADR pending)** — owner to approve the dev-dependency + browser download;
   owner verifies 320px live meanwhile. `PageHeader.tsx`, `structure.css`, `chrome.css`,
   `overflow.test.tsx`.
+
+- **§11-15 — SVG icon set: lucide-react (ADR-0003, PROPOSED for kitchen-sink ratify).**
+  Adopted `lucide-react` as the platform icon set — **bundled + tree-shaken per-icon
+  import** (`src/icons.ts`), no CDN, no runtime fetch (no-egress applies to assets). All
+  Unicode glyphs replaced: bar toggles (theme Sun/Moon/Monitor, density Rows2/Rows4,
+  contrast Contrast/Circle/Disc, motion Waves/Minus/Wind, rotation RotateCw/Ban, Detail
+  LineChart/CandlestickChart), Menu, overflow + RowMenu `MoreHorizontal`, page actions
+  (Pencil/Upload/Download/Plus). The stateful-icon rule (§5.5) is unchanged — the
+  assignment table now lists icon names. Icons size from `--icon-size`, colour from
+  `currentColor` (theme-aware; drift-clean). **Bundle-size delta: JS 350.5 → 356.9 kB raw
+  (+6.4 kB), gzip 109.1 → 111.1 kB (+2.1 kB)** — only the ~20 icons in use are bundled.
+  Kitchen-sink row shows every bar icon at final size (both themes). `icons.ts`,
+  `DisplayControls.tsx`, `TopBar.tsx`, `RowMenu.tsx`, page actions, `tokens.css`,
+  `structure.css`.
+- **§11-16 — Page-header actions all icon-only + framed (revises §11-13; PROPOSED).**
+  Owner decision: **every** page-header action is icon-only, on a **visible bordered
+  surface** (`.lf-iconbtn--framed`, not ghost) — Holdings Import/Export CSV, Instrument
+  Detail Edit. **Add** goes icon-only too (`Plus`) but keeps the **accent-filled**
+  `.lf-iconbtn--primary` for primary emphasis. Tooltip + aria-label on each. Kitchen-sink
+  specimen row. `structure.css`, `Holdings.tsx`, `InstrumentDetail.tsx`.

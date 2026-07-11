@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Holdings.css";
+import { Upload, Download, Plus } from "../icons";
 import {
   ConfirmDialog,
   DataTable,
@@ -562,28 +563,34 @@ function PageHeaderHoldings({
       subtitle="Management surface — add/edit holdings, transactions, and manual assets; import; export."
       actions={
         <>
-          {/* Page-action icon buttons (§11-13): icon-only + tooltip/aria-label. Add
-              stays a labeled primary button so the primary action is discoverable. */}
+          {/* Page-action icon buttons (§11-13/§11-16): all icon-only, framed surface;
+              Add uses the accent-filled variant to keep primary emphasis. */}
           <button
             type="button"
-            className="lf-iconbtn"
+            className="lf-iconbtn lf-iconbtn--framed"
             onClick={onImport}
             title="Import"
             aria-label="Import"
           >
-            ↥
+            <Upload aria-hidden="true" />
           </button>
           <button
             type="button"
-            className="lf-iconbtn"
+            className="lf-iconbtn lf-iconbtn--framed"
             onClick={onExport}
             title="Export CSV"
             aria-label="Export CSV"
           >
-            ↧
+            <Download aria-hidden="true" />
           </button>
-          <button type="button" className="lf-btn lf-btn--primary" onClick={onAdd}>
-            Add
+          <button
+            type="button"
+            className="lf-iconbtn lf-iconbtn--primary"
+            onClick={onAdd}
+            title="Add"
+            aria-label="Add"
+          >
+            <Plus aria-hidden="true" />
           </button>
         </>
       }

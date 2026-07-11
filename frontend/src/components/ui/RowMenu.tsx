@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./RowMenu.css";
+import { MoreHorizontal } from "../../icons";
 
 // Compact per-row overflow menu (⋯) for worklist row actions — details / edit /
 // delete etc. (DESIGN-SYSTEM worklist template: row actions are a standard
@@ -47,7 +48,7 @@ export function RowMenu({ items, "aria-label": ariaLabel = "Row actions" }: RowM
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        ⋯
+        <MoreHorizontal aria-hidden="true" />
       </button>
       {open && (
         <div className="lf-rowmenu__menu" role="menu">

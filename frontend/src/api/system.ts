@@ -35,3 +35,11 @@ export async function unlock(pin: string): Promise<{ ok: true } | { ok: false; e
 export async function lock(): Promise<void> {
   await apiSend("/auth/lock", "POST");
 }
+
+// First-run PIN step (D-045): the first PIN sets from loopback with no auth (D-004);
+// changing an existing PIN needs an unlocked session — but the checklist runs AFTER the
+// lock gate (F-7), so a session is present in that case.
+export async function setPin(pin: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const r = await apiSend<{ ok: boolean }>("/auth/set-pin", "POST", { pin });
+  return r.ok ? { ok: true } : { ok: false, error: r.error };
+}

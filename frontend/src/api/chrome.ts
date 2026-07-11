@@ -2,7 +2,7 @@
 // These feed the top bar's Clock/DemoBadge and the StaleBanner. All are status
 // summaries — the chrome owns no figures (IA P-1). Every reader degrades to a safe
 // empty value so a failed call hides its chrome piece rather than breaking the shell.
-import { apiGet } from "./client";
+import { apiGet, apiSend } from "./client";
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 
@@ -14,7 +14,12 @@ export interface ChromeSettings {
 
 interface SettingsResponse {
   stored?: Record<string, string>;
-  defaults?: { timezone?: string; demo_mode?: boolean };
+  defaults?: {
+    timezone?: string;
+    demo_mode?: boolean;
+    base_currency?: string;
+    market_provider?: string;
+  };
 }
 
 export async function fetchChromeSettings(): Promise<ChromeSettings> {
@@ -61,6 +66,54 @@ interface HoldingsResp {
 }
 interface GlobalResp {
   groups?: { items?: { symbol?: string; label?: string; quote?: { price?: unknown; change_pct?: unknown; is_stale?: boolean } }[] }[];
+}
+
+// ---- First-run checklist (D-045) -------------------------------------------------
+// The checklist writes real settings through the canonical endpoints (F-2). PUT /settings
+// is the canonical base-currency / timezone / no-egress / first-run-flag path (F-10);
+// the data provider goes through /system/data-source (F-8; keys stay in Settings).
+export async function updateSetting(key: string, value: string): Promise<boolean> {
+  const r = await apiSend<{ ok?: boolean }>("/settings", "PUT", { values: { [key]: value } });
+  return r.ok;
+}
+
+export async function setDataProvider(provider: string): Promise<boolean> {
+  const r = await apiSend<{ ok?: boolean }>("/system/data-source", "PUT", { provider });
+  return r.ok;
+}
+
+export interface FirstRunState {
+  complete: boolean;
+  baseCurrency: string;
+  timezone: string;
+  provider: string;
+  noEgress: boolean;
+  pinSet: boolean;
+  demo: boolean;
+  providers: string[];
+}
+
+// One combined read for the shell's settings-derived state: whether first-run is done,
+// the current values the checklist edits, and the served provider list (frontend
+// zero-copy). Degrades to safe defaults so a failed call never breaks the shell.
+export async function fetchFirstRunState(): Promise<FirstRunState> {
+  const [s, a, d] = await Promise.all([
+    apiGet<SettingsResponse & { stored?: Record<string, string> }>("/settings"),
+    apiGet<{ pin_set?: boolean }>("/auth/state"),
+    apiGet<{ providers?: string[] }>("/system/data-source"),
+  ]);
+  const stored = s.ok ? s.data.stored ?? {} : {};
+  const defaults = s.ok ? s.data.defaults ?? {} : {};
+  return {
+    complete: TRUTHY.has((stored.first_run_complete ?? "").toLowerCase()),
+    baseCurrency: defaults.base_currency ?? "",
+    timezone: defaults.timezone ?? "UTC",
+    provider: defaults.market_provider ?? "",
+    noEgress: TRUTHY.has((stored.privacy_mode ?? "").toLowerCase()),
+    pinSet: a.ok ? !!a.data.pin_set : false,
+    demo: !!defaults.demo_mode,
+    providers: d.ok ? d.data.providers ?? [] : [],
+  };
 }
 
 export async function fetchTickerQuotes(): Promise<TickerQuote[]> {

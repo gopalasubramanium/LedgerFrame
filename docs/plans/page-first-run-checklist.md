@@ -1,10 +1,11 @@
 # page-first-run-checklist.md — First-run checklist (D-045) build plan
 
-**Status: SIGNED OFF (owner 2026-07-11). Phase 0 DONE · Phase 0a BUILT — AWAITING OWNER
-RATIFICATION before Phase 1 assembly.** §9 fully resolved (F-1..F-12). Phase 0a authored
-three PROPOSED §5.5 components (Switch · Combobox · FirstRunChecklist) + kitchen-sink
-specimens; checks green (88 frontend tests + 24 Playwright overflow + drift/typecheck/
-lint/build). **PAUSED for ratification** (see §10). Derived from PRODUCT-SPEC §7, D-045,
+**Status: Phase 0a RATIFIED · Phase 1 + Phase 2 DONE (2026-07-11). STOP — Phase 3 is the
+owner's live walk.** §9 fully resolved (F-1..F-12); the three §5.5 components ratified.
+The FirstRunChecklist is wired into `AppShell` after the lock gate; the five steps write
+their real endpoints; dismiss/skip-all set `first_run_complete`. Checks: **90 frontend
+tests + 32 Playwright overflow** (incl. the first-run overlay at 320–1366px, both themes)
++ 4 backend + drift/typecheck/lint/build — all green. Derived from PRODUCT-SPEC §7, D-045,
 SECURITY-BASELINE §3, D-069, chrome C-4.
 
 **This is a gate/overlay, not a content page — it adapts the template** (per the
@@ -206,9 +207,9 @@ then tell me to start Phase 1:**
 wire the five steps to `PUT /settings` (currency/timezone/no-egress/first_run_complete),
 `POST /auth/set-pin`, `PUT /system/data-source` (provider); first-run trigger reads
 `first_run_complete`; dismiss/skip-all set it (F-1/F-11); provider links out for keys (F-8).
-- **Phase 1 — Overlay assembly:** mount the ratified dismissible overlay into `AppShell` **after the lock gate** (F-7); wire the five steps to their endpoints with **inline-minimal controls** (F-2), each also **linking to its Settings home**; provider = selection-only + link-out for keys (F-8); honest interplay copy (F-9); skip/skip-all set the first-run flag = completion (F-1/F-11); no-egress respected.
-- **Phase 2 — Tests:** render/behaviour tests (skippable steps, first-run detection, PIN min-6 + loopback case, no-egress zero-call); **extend the Playwright overflow suite** for the overlay; drift/typecheck/lint green.
-- **Phase 3 — Owner acceptance walk (LIVE):** drive the real app on a **fresh no-PIN, no-settings instance** (both themes + a narrow width): the overlay appears, each step sets/skips, links behave, PIN + no-egress work, it does not reappear after completion. Each finding → numbered §-entry, re-verified live. Done only after this walk.
+- **Phase 1 — Overlay assembly: ✅ DONE.** `FirstRunChecklist` mounts in `AppShell` **after the lock gate** (`!locked && !firstRunComplete`, F-7). `fetchFirstRunState` reads the flag + current values + served provider list in one call. Handlers write the canonical endpoints: base currency / timezone / no-egress (`privacy_mode`) / `first_run_complete` → `PUT /settings`; PIN → `POST /auth/set-pin`; provider → `PUT /system/data-source` (selection-only; keys link to Settings, F-8). Dismiss / "Done — skip the rest" set `first_run_complete` (F-1/F-11). `api/system.setPin`, `api/chrome.{fetchFirstRunState,updateSetting,setDataProvider}`.
+- **Phase 2 — Tests: ✅ DONE.** Frontend: `AppShell.test` first-run shows-when-incomplete + **hidden behind the lock gate (F-7)**; `firstrun.test` (5) for the components; **Playwright overflow extended** to the overlay (320/375/900/1366 × both themes, 8 checks). Backend: `test_first_run_settings.py` (4) incl. the **F-10 base-currency side-effects** assertion (`.env` applied + `restarted_worker` reported). **90 frontend + 32 Playwright + 4 backend green.**
+- **Phase 3 — Owner acceptance walk (LIVE, owner-driven — NOT self-certified):** drive the real app on a **genuinely fresh instance** (reset one-liner below): overlay appears after unlock, each step sets/skips + writes, links behave, PIN + no-egress work, it does not reappear after completion. Each finding → numbered §-entry, re-verified live.
 
 ---
 

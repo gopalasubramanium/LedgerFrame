@@ -40,3 +40,25 @@ for (const theme of THEMES) {
     }
   }
 }
+
+// First-run checklist overlay (D-045). Opened from the kitchen-sink specimen (the shell
+// keeps it hidden without a backend); the overlay is fixed inset:0, so `.lf-firstrun`
+// scrollWidth vs clientWidth measures the overlay's own horizontal overflow, independent
+// of the gallery behind it.
+for (const theme of THEMES) {
+  for (const width of WIDTHS) {
+    test(`no horizontal overflow · ${theme} · first-run overlay · ${width}px`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/#/kitchen-sink");
+      await page.getByRole("button", { name: "Show first-run checklist" }).click();
+      await page.waitForSelector(".lf-firstrun__card", { timeout: 15_000 });
+
+      const over = await page.evaluate(() => {
+        const el = document.querySelector(".lf-firstrun");
+        return el ? el.scrollWidth - el.clientWidth : 0;
+      });
+      expect(over, "first-run overlay horizontal overflow (px)").toBeLessThanOrEqual(1);
+    });
+  }
+}

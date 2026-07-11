@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import "./AppShell.css";
 import {
   Clock,
   DemoBadge,
+  FirstRunChecklist,
   LockScreen,
   Sidebar,
   StaleBanner,
@@ -11,15 +12,38 @@ import {
   TopBar,
   UpdateBanner,
 } from "./ui";
+import type { FirstRunLinks } from "./ui";
 import { DisplayControls } from "./DisplayControls";
-import { fetchAuthState, fetchVersionCheck, unlock as apiUnlock } from "../api/system";
-import { fetchChromeSettings, fetchStaleSummary, fetchTickerQuotes } from "../api/chrome";
+import { fetchVersionCheck, setPin as apiSetPin, unlock as apiUnlock } from "../api/system";
+import {
+  fetchFirstRunState,
+  fetchStaleSummary,
+  fetchTickerQuotes,
+  setDataProvider,
+  updateSetting,
+} from "../api/chrome";
 import type { TickerQuote } from "../api/chrome";
 
+// Each first-run step links to its Settings home (D-045). Settings isn't built yet, so
+// the links land on the honest NotBuilt fallback (F-2) — one route for all four for now.
+const FIRST_RUN_LINKS: FirstRunLinks = {
+  general: "/settings",
+  security: "/settings",
+  prices: "/settings",
+  privacy: "/settings",
+};
+
+function timezoneOptions() {
+  const zones =
+    (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.(
+      "timeZone",
+    ) ?? ["UTC", "Asia/Singapore", "America/New_York", "Europe/London"];
+  return zones.map((z) => ({ label: z, value: z }));
+}
+
 // The app SHELL (DESIGN-SYSTEM §5.5, D-066): Sidebar + slim TopBar + status strips +
-// lock gate, composed ONCE around every page. Pages never re-implement chrome. The
-// shell owns UI state (nav open, rotation, detail level, lock) and consumes status
-// summaries (stale count, version, demo flag, timezone) — it owns no figures (IA P-1).
+// lock gate + first-run overlay, composed ONCE around every page. Pages never
+// re-implement chrome. The shell owns UI state and consumes status summaries.
 export function AppShell({ children }: { children: ReactNode }) {
   // UI state owned by the chrome.
   const [navOpen, setNavOpen] = useState(false);
@@ -27,26 +51,41 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [detailLevel, setDetailLevel] = useState<"simple" | "full">("simple");
   const [updateDismissed, setUpdateDismissed] = useState(false);
 
-  // Consumed status summaries.
+  // Consumed status summaries + settings-derived state.
   const [timezone, setTimezone] = useState("UTC");
   const [demo, setDemo] = useState(false);
   const [staleCount, setStaleCount] = useState(0);
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [ticker, setTicker] = useState<TickerQuote[]>([]);
 
-  // Lock gate (D-002 access lock). If a PIN is set, the app starts locked until this
-  // session is unlocked; a no-PIN instance is never gated (D-004 no-auth-when-no-PIN).
+  // Lock gate (D-002). PIN set → start locked; a no-PIN instance is never gated (D-004).
   const [locked, setLocked] = useState(false);
   const [lockBusy, setLockBusy] = useState(false);
   const [lockError, setLockError] = useState<string | null>(null);
 
+  // First-run checklist (D-045). Shown when first-run isn't complete AND the app is
+  // unlocked — the overlay mounts AFTER the lock gate (F-7).
+  const [firstRunComplete, setFirstRunComplete] = useState(true); // assume done until known
+  const [baseCurrency, setBaseCurrency] = useState("");
+  const [provider, setProvider] = useState("");
+  const [noEgress, setNoEgress] = useState(false);
+  const [pinSet, setPinSet] = useState(false);
+  const [providers, setProviders] = useState<string[]>([]);
+  const tzOptions = useMemo(timezoneOptions, []);
+
   useEffect(() => {
     let alive = true;
-    fetchAuthState().then((a) => alive && setLocked(a.pin_set));
-    fetchChromeSettings().then((s) => {
+    fetchFirstRunState().then((s) => {
       if (!alive) return;
+      setLocked(s.pinSet);
+      setPinSet(s.pinSet);
       setTimezone(s.timezone);
       setDemo(s.demo);
+      setNoEgress(s.noEgress);
+      setBaseCurrency(s.baseCurrency);
+      setProvider(s.provider);
+      setProviders(s.providers);
+      setFirstRunComplete(s.complete);
     });
     fetchStaleSummary().then((s) => alive && setStaleCount(s.stale_count));
     fetchVersionCheck().then((v) => {
@@ -67,8 +106,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     else setLockError(r.error || "Incorrect PIN");
   };
 
-  // DemoBadge lives in the sidebar footer at laptop+ and in the top bar at narrow
-  // widths (CSS shows the right one per breakpoint) — never hidden when demo is on.
+  // First-run step handlers — inline-minimal writes to the canonical endpoints (F-2).
+  const completeFirstRun = () => {
+    setFirstRunComplete(true);
+    void updateSetting("first_run_complete", "1");
+  };
+
   const demoBadge = demo ? <DemoBadge /> : undefined;
 
   return (
@@ -90,9 +133,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <UpdateBanner version={updateVersion} onDismiss={() => setUpdateDismissed(true)} />
         )}
         <main className="lf-shell__content">{children}</main>
-        {/* Global ticker footer (D-047 amendment, §11-17). It sits at the bottom of the
-            main column so content reserves its space (never hidden behind it). NOT
-            rendered while locked — the lock must leak nothing (D-002/§11-17d). */}
         {!locked && ticker.length > 0 && (
           <footer className="lf-shell__ticker">
             <TickerStrip quotes={ticker} />
@@ -100,6 +140,40 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       </div>
       <LockScreen open={locked} onUnlock={onUnlock} error={lockError} busy={lockBusy} />
+      {/* First-run overlay — only when unlocked (AFTER the lock gate, F-7) and not done. */}
+      {!locked && !firstRunComplete && (
+        <FirstRunChecklist
+          open
+          baseCurrency={baseCurrency}
+          timezone={timezone}
+          pinSet={pinSet}
+          provider={provider}
+          noEgress={noEgress}
+          timezoneOptions={tzOptions}
+          providerOptions={providers.map((p) => ({ label: p, value: p }))}
+          links={FIRST_RUN_LINKS}
+          onBaseCurrency={(v) => {
+            setBaseCurrency(v);
+            void updateSetting("base_currency", v);
+          }}
+          onTimezone={(v) => {
+            setTimezone(v);
+            void updateSetting("timezone", v);
+          }}
+          onSetPin={(pin) => {
+            void apiSetPin(pin).then((r) => r.ok && setPinSet(true));
+          }}
+          onProvider={(v) => {
+            setProvider(v);
+            void setDataProvider(v);
+          }}
+          onNoEgress={(v) => {
+            setNoEgress(v);
+            void updateSetting("privacy_mode", v ? "true" : "false");
+          }}
+          onDismiss={completeFirstRun}
+        />
+      )}
     </div>
   );
 }

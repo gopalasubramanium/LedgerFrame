@@ -397,8 +397,11 @@ Detail **Edit** `Pencil`; Holdings **Import** `Upload` / **Export CSV** `Downloa
 **primary** action (**Add** `Plus`) is icon-only too but uses the **accent-filled
 `.lf-iconbtn--primary`** variant so the primary action keeps its emphasis + discoverability.
 
-**First-run checklist components (PROPOSED 2026-07-11 — page-first-run-checklist Phase
-0a, D-045).** Three new pieces, ratified at `/kitchen-sink` before shell assembly:
+**First-run checklist components (RATIFIED 2026-07-11 — page-first-run-checklist Phase
+0a, D-045).** Three pieces, ratified at the kitchen sink (Switch · Combobox typed-filter
++ portal + narrow width · FirstRunChecklist overlay incl. all authored copy — the five
+step texts, the F-9 interplay lines, and the PIN access-lock/not-encryption note, D-002
+wording). `--radius-pill` ratified. Ratified as implemented:
 
 | Component | Props (surface) | Usage rules |
 |-----------|-----------------|-------------|
@@ -406,7 +409,7 @@ Detail **Edit** `Pencil`; Holdings **Import** `Upload` / **Export CSV** `Downloa
 | **Combobox** | `options` (`{label,value}[]`), `value`, `onChange`, `placeholder?`, `aria-label?` | **Searchable** picker over an arbitrary list (client-side filter). For long option sets (the ~400 IANA timezones, F-4) where `Select`/`MasterSelect` (native selects) are poor. Menu **portals to the viewport** (fixed + max-height + internal scroll) per §6. **NOT for MASTER-DATA categoricals** — use `MasterSelect`. |
 | **FirstRunChecklist** | `open`, five value props, `timezoneOptions`, `providerOptions`, `links`, per-step handlers, `onDismiss` | The D-045 first-run overlay: a **dismissible** card (not a blocking gate — F-1) with five **skippable** steps (base currency · timezone · PIN · data provider · no-egress), each an **inline-minimal control** that writes the real setting (F-2) plus a **"more options" link** to its Settings home. Presentational/prop-driven; the shell wires it in Phase 1 **after the lock gate** (F-7). Plain copy (no decision IDs); shows the F-9 interplay notes (no-egress → prices won't refresh; provider → noted when no-egress is on). Provider = **selection only** — the API-key path links to Settings, never a key field (F-8/D-069). |
 
-`--radius-pill` token added for the Switch track. All PROPOSED; ratify at the kitchen sink.
+`--radius-pill` token added for the Switch track. Ratified 2026-07-11.
 
 **Toast / Snackbar** *(amended 2026-07-10 — Holdings page-build §9-4).* A
 transient, timed, dismissible notification with an optional action slot, provided

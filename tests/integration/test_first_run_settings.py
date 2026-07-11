@@ -32,6 +32,21 @@ async def test_invalid_timezone_is_an_honest_400_never_a_silent_default(app_clie
     assert got["stored"].get("timezone") != "Not/AZone"
 
 
+async def test_base_currency_side_effects_are_reported(app_client):
+    """F-10: PUT /settings base_currency is the canonical path — it applies to the env
+    (so the engine re-reports), resets the FX cache, and restarts the worker. The
+    observable side effects: the response reports `restarted_worker`, and the new value
+    is reflected in the engine-consumed default."""
+    r = await app_client.put("/api/v1/settings", json={"values": {"base_currency": "USD"}})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["applied"]["base_currency"] == "USD"
+    assert "restarted_worker" in body  # the side-effect branch ran
+
+    got = (await app_client.get("/api/v1/settings")).json()
+    assert got["defaults"]["base_currency"] == "USD"  # env applied → engine re-reports
+
+
 async def test_first_run_complete_flag_persists(app_client):
     got = (await app_client.get("/api/v1/settings")).json()
     assert "first_run_complete" not in got["stored"]  # fresh instance → unset

@@ -16,6 +16,8 @@ interface FetchOpts {
   staleCount?: number;
   version?: { current: string; latest: string; update_available: boolean; url: string };
   ticker?: boolean;
+  /** When true, the first-run checklist is NOT yet complete (overlay should show). */
+  firstRun?: boolean;
 }
 
 function stubFetch(opts: FetchOpts = {}) {
@@ -30,8 +32,21 @@ function stubFetch(opts: FetchOpts = {}) {
       const url = String(input);
       if (url.includes("/auth/state")) return json({ pin_set: opts.pinSet ?? false });
       if (url.includes("/auth/unlock")) return json({ ok: true });
+      if (url.includes("/auth/set-pin")) return json({ ok: true });
+      if (url.includes("/system/data-source"))
+        return json({ providers: ["mock", "csv", "yahoo"] });
       if (url.includes("/settings"))
-        return json({ stored: {}, defaults: { timezone: "Asia/Singapore", demo_mode: false } });
+        return json({
+          // Default: first-run already complete (overlay stays hidden). Tests that want
+          // the overlay pass { firstRun: true }.
+          stored: opts.firstRun ? {} : { first_run_complete: "1" },
+          defaults: {
+            timezone: "Asia/Singapore",
+            demo_mode: false,
+            base_currency: "SGD",
+            market_provider: "mock",
+          },
+        });
       if (url.includes("/portfolio/summary"))
         return json({ has_stale: (opts.staleCount ?? 0) > 0, stale_count: opts.staleCount ?? 0 });
       if (url.includes("/portfolio/holdings"))
@@ -133,6 +148,27 @@ test("UpdateBanner appears only when an update is available (no-egress → hidde
   });
   renderShell(<div>page</div>);
   expect(await screen.findByText(/9\.9\.9 is available/)).toBeTruthy();
+});
+
+test("first-run checklist: shows when incomplete + unlocked; hidden once complete", async () => {
+  stubFetch({ firstRun: true, pinSet: false });
+  const { unmount } = renderShell(<div>page</div>);
+  expect(await screen.findByRole("dialog", { name: "Set up LedgerFrame" })).toBeTruthy();
+  unmount();
+
+  // Complete (default) → overlay never appears.
+  stubFetch({ firstRun: false, pinSet: false });
+  renderShell(<div>page</div>);
+  await waitFor(() => expect(document.querySelector(".lf-shell")).not.toBeNull());
+  expect(screen.queryByRole("dialog", { name: "Set up LedgerFrame" })).toBeNull();
+});
+
+test("first-run checklist stays HIDDEN behind the lock gate (F-7)", async () => {
+  stubFetch({ firstRun: true, pinSet: true });
+  renderShell(<div>page</div>);
+  // Locked → the checklist must not render (unlock precedes onboarding).
+  await screen.findByRole("heading", { name: "Locked" });
+  expect(screen.queryByRole("dialog", { name: "Set up LedgerFrame" })).toBeNull();
 });
 
 // Redirects (D-042/D-022/D-056) via the real route tree.

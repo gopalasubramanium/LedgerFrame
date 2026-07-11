@@ -202,3 +202,43 @@ yet** — Phase 1 does that after re-ratify.
 **On re-ratify → Phase 1** (shell assembly): mount Sidebar + slim TopBar + status strips +
 lock gate around `<Routes>`, move DisplayControls out of the page into the TopBar, wire
 redirects (D-042/D-022/D-056), and add the C-3 no-egress network-trace test.
+
+---
+
+## 11. PHASE 3 — OWNER ACCEPTANCE WALK (LIVE)
+
+Owner-driven live walk; each finding a numbered §-entry, fixed, then re-verified live
+by the owner. Not self-certified.
+
+### Batch 1 (owner, 2026-07-11) — fixed, awaiting owner live re-verify
+
+- **§11-1 — Nav toggle (☰) showed at laptop+ alongside the fixed sidebar.** Bug: the
+  hide rule `.lf-topbar__navtoggle { display:none }` (0,1,0) lost to `.lf-iconbtn {
+  display:inline-flex }` (0,1,0) by stylesheet import order (TopBar imports chrome.css
+  then structure.css), so the toggle rendered at every width. Fix: raised the selector
+  to `.lf-topbar .lf-topbar__navtoggle` (0,2,0) for both the base hide and the narrow-
+  width show, so it beats `.lf-iconbtn` regardless of order. Confirmed it toggles at the
+  **single 900px breakpoint** — the same one the sidebar uses for its fixed↔off-canvas
+  switch (`.lf-sidebar` + `.lf-sidebar__brand`), not a second breakpoint. `chrome.css`.
+- **§11-2 — Off-canvas open/dismiss (D-102).** ☰ → `AppShell` `setNavOpen` → Sidebar
+  `open` → `.is-open` slide-in + scrim (verified wired). Backdrop click already closed it
+  (scrim `onClick=onClose`); **Esc did not** — added an Escape keydown listener on the
+  Sidebar (active only while open). NavLink click still closes on navigation. Added a
+  render test: open shows panel+scrim `is-open`; Esc and backdrop each call `onClose`;
+  closed = no Esc handler. `Sidebar.tsx`, `chrome.test.tsx`.
+- **§11-3 — Removed the page-level "← Home" link from Holdings.** D-066: navigation is
+  chrome, composed once; the link predated the shell and now duplicated the Sidebar.
+  Checked `TEMPLATE-page-build.md` and DESIGN-SYSTEM §3 (worklist + entity-detail
+  templates) — **neither mandates a back affordance**, so removed it (and its now-empty
+  `hold__bar`). *Note for owner:* Instrument Detail carries a contextual **"← Holdings"**
+  (entity→parent, not a "← Home" nav duplicate) — left as-is per "no other visual
+  changes"; flag if you want it removed too. `Holdings.tsx`.
+- **§11-4 — Renamed "Export (server-side)" → "Export CSV" (PROPOSED).** User copy must
+  not carry implementation notes. Checked API-CONTRACT / PRODUCT-SPEC / GLOSSARY — **no
+  canonical D-050 export label is specified**, so per the finding used **"Export CSV"**,
+  recorded here as **PROPOSED for owner ratification**. The DataTable toolbar button
+  (used by both the holdings snapshot and the transactions ledger). `DataTable.tsx`;
+  test selector updated.
+
+**Checks:** frontend 80 tests · backend 479 · drift/typecheck/lint/contract green.
+**STOP — owner re-verifies live before the polish batch.**

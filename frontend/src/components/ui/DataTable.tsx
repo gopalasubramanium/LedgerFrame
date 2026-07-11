@@ -112,7 +112,7 @@ export function DataTable<R>({
           )}
           {onExport && (
             <button type="button" className="lf-btn" onClick={onExport}>
-              Export (server-side)
+              Export CSV
             </button>
           )}
         </div>

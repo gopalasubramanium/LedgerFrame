@@ -363,7 +363,7 @@ test("round-trip: the ledger Export downloads the server-side transactions.csv",
   await waitFor(() => expect(screen.getByText(/2024-05-01/)).toBeInTheDocument());
   // Two server-side exports on the page (holdings snapshot in the header, ledger in
   // the transactions section) — the ledger's is last in the DOM.
-  const exports = screen.getAllByRole("button", { name: /Export \(server-side\)/ });
+  const exports = screen.getAllByRole("button", { name: /Export CSV/ });
   await user.click(exports[exports.length - 1]);
   expect(vi.mocked(client.apiDownload)).toHaveBeenCalledWith("/portfolio/transactions.csv");
 });

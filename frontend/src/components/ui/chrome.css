@@ -111,8 +111,12 @@
   font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
-.lf-topbar__navtoggle {
-  display: none; /* only shown at narrow widths (D-102) */
+/* Compound selector (0,2,0) so it beats .lf-iconbtn's display:inline-flex (0,1,0)
+   regardless of stylesheet import order — the toggle is a .lf-iconbtn too. Shown
+   only at narrow widths (D-102), at the SAME 900px breakpoint as the sidebar's
+   fixed↔off-canvas switch. */
+.lf-topbar .lf-topbar__navtoggle {
+  display: none;
 }
 .lf-topbar__right {
   display: flex;
@@ -123,7 +127,9 @@
   margin-left: auto;
 }
 @media (max-width: 900px) {
-  .lf-topbar__navtoggle,
+  .lf-topbar .lf-topbar__navtoggle {
+    display: inline-flex;
+  }
   .lf-topbar__brand {
     display: inline-flex;
   }

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import "./chrome.css";
 import { NAV_GROUPS } from "./nav";
@@ -37,6 +38,17 @@ export function Sidebar({
   activePath,
   showAll = false,
 }: SidebarProps) {
+  // Off-canvas (D-102): Esc dismisses it, matching the backdrop click. No-op at
+  // laptop+ where the panel is fixed (open stays false there).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   return (
     <>
       <div

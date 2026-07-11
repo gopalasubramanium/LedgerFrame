@@ -48,6 +48,35 @@ test("Sidebar shows only built pages as entries; showAll reveals the full skelet
   expect(screen.getByRole("link", { name: "Portfolio" })).toBeTruthy();
 });
 
+test("Sidebar off-canvas (D-102): open shows scrim; Esc and backdrop click dismiss it", async () => {
+  const onClose = vi.fn();
+  const { container, rerender } = render(
+    <MemoryRouter>
+      <Sidebar open onClose={onClose} />
+    </MemoryRouter>,
+  );
+  // Open → panel + scrim carry is-open.
+  expect(container.querySelector(".lf-sidebar.is-open")).not.toBeNull();
+  expect(container.querySelector(".lf-sidebar__scrim.is-open")).not.toBeNull();
+
+  // Esc dismisses.
+  await userEvent.keyboard("{Escape}");
+  expect(onClose).toHaveBeenCalledTimes(1);
+
+  // Backdrop click dismisses.
+  (container.querySelector(".lf-sidebar__scrim") as HTMLElement).click();
+  expect(onClose).toHaveBeenCalledTimes(2);
+
+  // Closed → no Esc listener fires.
+  rerender(
+    <MemoryRouter>
+      <Sidebar open={false} onClose={onClose} />
+    </MemoryRouter>,
+  );
+  await userEvent.keyboard("{Escape}");
+  expect(onClose).toHaveBeenCalledTimes(2);
+});
+
 test("Sidebar activePath overrides router location for previews", () => {
   render(
     <MemoryRouter initialEntries={["/kitchen-sink"]}>

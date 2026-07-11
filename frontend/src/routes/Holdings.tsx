@@ -336,11 +336,6 @@ export function Holdings() {
 
   return (
     <div className="hold">
-      <div className="hold__bar">
-        <Link className="lf-btn" to="/">
-          ← Home
-        </Link>
-      </div>
 
       <PageHeaderHoldings
         onAdd={() => setAddOpen(true)}

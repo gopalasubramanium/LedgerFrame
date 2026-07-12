@@ -493,3 +493,29 @@ sparklines. **STOP after checks + pre-pass green (owner).**
 **frontend 140 unit + 93 Playwright overflow** · typecheck/lint/tokens/build green; **live pre-passes
 green** — Markets + Portfolio + Net-worth + Pricing-Health, **0 console errors**; D-105 precision
 verified live. **STOP for owner re-verify** (which ratifies the PROPOSED PageHeader search look).
+
+### Batch 4 (owner, 2026-07-13)
+
+**RATIFIED from batch 3 (owner, live):** the **PageHeader "Find a symbol"** placement + its 320px
+flex-wrap behavior (§12mk3-1), and **D-105** quote precision verified across ticker / grid /
+watchlists / Global (2dp + BTC 6-sig + honest "—" on unavailable).
+
+- **§12mk4-1 — BUG: Global-tab index rows misalign below the laptop breakpoint.** Long labels
+  ("US · Nasdaq 100 — via QQQ proxy") could force the price under the label and displace the sparkline.
+  **Root cause:** the row used `flex-wrap: wrap` + `justify-content: space-between`, which renders the
+  number group **inline** (beside the label) when it fits and **wrapped** (below) when it doesn't — so
+  rows with different label lengths render inconsistently. (Headless showed a *clean* transition at
+  ~640px — ≤~600 all-below, ≥640 all-inline — but a real phone's wider font metrics tip a width into a
+  **mixed** inline/wrapped state, which is the misalignment the owner saw.) **Fix (§12mk4-1):** an
+  **explicit two-line layout for EVERY row ≤900px** — line 1 = label + proxy, line 2 = spark + price +
+  change — *consistent for all rows, not just overflowing ones*. The number line is **right-anchored**
+  (`.mk__idxprice { margin-left: auto }`), so price/change align across rows at any width and the
+  fixed-width spark sits left, never displaced. **Fail-first:** at 880px the old row/wrap layout
+  renders the numbers **inline** (`allStacked=false`) — the assertion catches it; the fix stacks every
+  row (`true`). **Permanent assertion (pre-pass PART 1c):** 320/375/880 × **both themes**, on
+  **Asia-Pacific** (the most varied labels — the stress case): every row is 2-line stacked, **no
+  spark/price overlap**, and **price/change right-aligned across rows** (right-edge spread ≤ 2px).
+
+**Batch-4 verification:** **frontend 140 unit + 93 Playwright overflow** · typecheck/lint/tokens/build
+green; **live pre-pass green** — Markets PART 1c (align) at 320/375/880 × both themes, **0 console
+errors**. CSS-only fix (no contract/backend change). **STOP for owner phone re-verify.**

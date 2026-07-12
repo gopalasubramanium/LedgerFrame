@@ -144,6 +144,27 @@
   color: var(--text-secondary);
 }
 
+/* §12mk4-1 — below the laptop breakpoint, EVERY Global index row uses an explicit two-line layout:
+   line 1 = label + proxy, line 2 = spark + price + change. Consistent for ALL rows (not just ones
+   whose label overflows), so short/long labels never render a mixed inline/wrapped column that
+   misaligns the price/spark. The number line is right-anchored (price `margin-left:auto`), so
+   price/change align across rows at any width; the fixed-width spark sits left, never displaced. */
+@media (max-width: 900px) {
+  .mk__idxrow {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--space-1);
+  }
+  .mk__idxright {
+    display: flex;
+    width: 100%;
+  }
+  .mk__idxprice {
+    margin-left: auto;
+  }
+}
+
 /* Global-tab 30-day sparkline (§12mk2-1) — fixed footprint so loading/spark/absent never shift the
    row (overflow-safe). Global tab ONLY; grid/watchlist rows carry no spark. */
 .mk__spark {

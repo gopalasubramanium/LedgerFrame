@@ -54,6 +54,38 @@ test.describe.serial("markets pre-pass (live)", () => {
     expect(sparkCount, "sparklines render for available index symbols").toBeGreaterThan(0);
     expect(loadingStuck, "no sparkline stuck in the loading placeholder").toBe(0);
 
+    // PART 1c: Global-row alignment below the laptop breakpoint (§12mk4-1) — EVERY row uses the
+    // explicit 2-line layout (label line, then spark+price+change line), consistent regardless of
+    // label length; price/change right-aligned across rows; no spark/price overlap. Asia-Pacific has
+    // the most varied labels (the stress case). 320/375/880 × both themes. -------------------------
+    for (const theme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      for (const w of [320, 375, 880]) {
+        await page.setViewportSize({ width: w, height: 1000 });
+        await page.getByRole("button", { name: "Asia-Pacific" }).click();
+        await page.waitForTimeout(200);
+        const geo = await page.evaluate(() => {
+          const rows = [...document.querySelectorAll('[data-card="global"] .mk__idxrow')];
+          const d = rows.map((row) => {
+            const lab = (row.querySelector(".mk__idxlabel") as HTMLElement).getBoundingClientRect();
+            const sp = (row.querySelector(".mk__spark") as HTMLElement).getBoundingClientRect();
+            const pr = (row.querySelector(".mk__idxprice") as HTMLElement).getBoundingClientRect();
+            const cg = (row.querySelector(".mk__chg") as HTMLElement).getBoundingClientRect();
+            return { stacked: Math.round(sp.top) >= Math.round(lab.bottom) - 1, overlap: Math.round(sp.right) > Math.round(pr.left), chgR: Math.round(cg.right) };
+          });
+          return { allStacked: d.every((x) => x.stacked), anyOverlap: d.some((x) => x.overlap), spread: Math.max(...d.map((x) => x.chgR)) - Math.min(...d.map((x) => x.chgR)) };
+        });
+        console.log(`PART 1c — ${theme} ${w}px: allStacked=${geo.allStacked} overlap=${geo.anyOverlap} priceAlignSpread=${geo.spread}`);
+        expect(geo.allStacked, `every Global row is 2-line stacked · ${theme} ${w}px`).toBe(true);
+        expect(geo.anyOverlap, `no spark/price overlap · ${theme} ${w}px`).toBe(false);
+        expect(geo.spread, `price/change right-aligned across rows · ${theme} ${w}px`).toBeLessThanOrEqual(2);
+      }
+    }
+    // Restore the default context for the remaining parts.
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.getByRole("button", { name: "Americas" }).click();
+
     // PART 2: Gainers / Losers — a display-sort of served change_pct; the which-list copy is guarded --
     const movers = page.locator('[data-card="movers"]');
     await expect(movers.getByText("Gainers / Losers")).toBeVisible();

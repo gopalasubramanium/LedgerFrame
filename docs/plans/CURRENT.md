@@ -670,7 +670,17 @@ Platform legacy (promoted to DESIGN-SYSTEM §5.2): the **shared summary-count qu
 record: **`page-pricing-health.md` §9–§13** (§13 retrospective — the fastest page: verify-first emptied
 §3b, one-pass §9, composition-only Phase-0a). Commits `60d2338`→ batch-1 close-out.
 
-## MARKETS — Phases 1/2/3a DONE; Phase-3b walk IN-PROGRESS (batches 1–3 done, 2026-07-12)
+## MARKETS — Phases 1/2/3a DONE; Phase-3b walk IN-PROGRESS (batches 1–4 done, 2026-07-13)
+
+**Phase-3b batch 4 (owner, 2026-07-13)** — page-markets §12mk4. Batch-3 RATIFIED live (PageHeader
+search + 320px flex-wrap; D-105 precision). **§12mk4-1 BUG:** Global-tab index rows misaligned below
+the laptop breakpoint (long labels forced price under label / displaced the spark) — the flex-wrap
+space-between row rendered numbers inline-vs-wrapped inconsistently by label length. **Fix:** explicit
+2-line stacked layout for EVERY row ≤900px (label line, then spark+price+change line), number line
+right-anchored (`margin-left:auto`) so price/change align + the fixed spark never displaces. CSS-only.
+Fail-first proven (old layout at 880px = inline/not-stacked). Permanent pre-pass **PART 1c** asserts at
+320/375/880 × both themes (Asia-Pacific stress case): all stacked, no overlap, price/change aligned.
+140 unit + 93 overflow green; live pre-pass green, 0 console errors.
 
 **Phase-3b batch 3 (owner, 2026-07-12)** — page-markets §12mk3: **§12mk3-1** "Find a symbol" moved to
 the **PageHeader** (beside `+`; standalone card removed; 320px = header flex-wrap drops it to a row

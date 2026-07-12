@@ -138,11 +138,14 @@
 }
 /* Entity links in cells match the Holdings treatment: accent, no underline (underline on hover)
    — never default browser blue/underline (§12b-3). */
-.lf-table__td a {
+/* Centralized table-link treatment (page-markets §12mk1-2): the ratified accent, no-underline-at-rest
+   link, applied to EVERY anchor anywhere in a .lf-table so tables cannot opt out (was .lf-table__td a
+   — a per-instance scope that let non-cell/other tables slip back to the browser default). */
+.lf-table a {
   color: var(--accent);
   text-decoration: none;
 }
-.lf-table__td a:hover {
+.lf-table a:hover {
   text-decoration: underline;
 }
 /* Graceful degradation: long text truncates instead of forcing the table wider

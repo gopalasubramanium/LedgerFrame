@@ -88,6 +88,37 @@ test.describe.serial("markets pre-pass (live)", () => {
     await expect(idxLinks.first(), "ticker index entries link to /markets (R-17)").toBeVisible({ timeout: 15_000 });
     console.log("PART 5 — ticker /markets links:", await idxLinks.count());
 
+    // PART 5b: page-level symbol search wired to /markets/search (ND-5 REOPENED, §12mk1-5) ----------
+    await page.getByLabel("Search markets").fill("app");
+    const hit = page.locator('[data-card="search"] .mk__searchrow a').first();
+    await expect(hit, "served search hit renders").toBeVisible({ timeout: 10_000 });
+    expect(await hit.getAttribute("href"), "a hit links to InstrumentDetail").toContain("/instrument/");
+    await page.getByLabel("Search markets").fill("");
+
+    // PART 5c: link treatment (§12mk1-2) — NO browser-default underlined links in tables or the
+    // Gainers/Losers lists (the Portfolio §12b3-3 recurrence, now centralized in .lf-table + fixed). --
+    const underlined = await page.evaluate(() =>
+      [...document.querySelectorAll('.lf-table a, [data-card="movers"] .mk__movesym a')].filter((a) =>
+        getComputedStyle(a as HTMLElement).textDecorationLine.includes("underline"),
+      ).length,
+    );
+    console.log("PART 5c — underlined table/mover links (must be 0):", underlined);
+    expect(underlined, "no default-underlined links in tables or Gainers/Losers").toBe(0);
+
+    // PART 5d: single vertical scroll region (§12mk1-1) — at a TALL viewport the document/window must
+    // NOT scroll (pre-fix this page scrolled the whole window beside the content scroller). ----------
+    await page.setViewportSize({ width: 1366, height: 1000 });
+    await page.waitForTimeout(150);
+    const winScrolled = await page.evaluate(() => {
+      window.scrollTo(0, 5000);
+      const y = window.scrollY;
+      window.scrollTo(0, 0);
+      return y;
+    });
+    console.log("PART 5d — window scrolled (must be 0):", winScrolled);
+    expect(winScrolled, "document/window must not scroll — one region (shell content)").toBeLessThanOrEqual(1);
+    await page.setViewportSize({ width: 1366, height: 900 });
+
     // PART 6: progressive loading — nothing stuck in skeleton --------------------------------------
     await expect(page.locator(".lf-skeleton"), "no card stuck in skeleton").toHaveCount(0);
 

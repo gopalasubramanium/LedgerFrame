@@ -45,6 +45,37 @@ for (const theme of THEMES) {
   }
 }
 
+// Single vertical scroll region (page-markets §12mk1-1): the shell content is the ONLY vertical
+// scroller — the DOCUMENT/window itself must never scroll (a second scrollbar beside the content
+// was the bug; a tall descendant was propagating overflow up to documentElement). Backend-free here,
+// so we FORCE the content tall with a spacer, then assert the window still can't scroll — proving
+// the shell (not the document) owns the scroll. Height-sensitive → measured at a tall viewport.
+for (const route of ROUTES) {
+  for (const width of WIDTHS) {
+    test(`document never scrolls — one scroll region · ${route.name} · ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto(`/${route.hash}`);
+      await page.waitForSelector(".lf-topbar", { timeout: 15_000 });
+      // Force the shell content to overflow, so a broken containment would spill to the document.
+      await page.evaluate(() => {
+        const c = document.querySelector(".lf-shell__content");
+        if (c) {
+          const spacer = document.createElement("div");
+          spacer.style.height = "4000px";
+          c.appendChild(spacer);
+        }
+      });
+      const winScrolled = await page.evaluate(() => {
+        window.scrollTo(0, 8000);
+        const y = window.scrollY;
+        window.scrollTo(0, 0);
+        return y;
+      });
+      expect(winScrolled, "the document/window must not scroll — only .lf-shell__content does").toBeLessThanOrEqual(1);
+    });
+  }
+}
+
 // Content-left offset is OWNED by the shell (page-portfolio §12-1): every built content page
 // starts at the same left inset from the chrome — no page sets its own root padding. At ≤1366
 // the content box is narrower than any page's max-width, so no page centering shifts the left.

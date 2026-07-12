@@ -183,6 +183,19 @@
 .mk__moveprice {
   color: var(--text-secondary);
 }
+/* Gainers/Losers are LISTS, not tables, so the centralized .lf-table a rule can't reach them — they
+   carry the same ratified accent, no-underline-at-rest treatment here (page-markets §12mk1-2; the
+   Portfolio §12b3-3 mover-link fix, applied to the Markets movers so the browser default never
+   shows through). */
+.mk__movesym a,
+.mk__searchsym {
+  color: var(--accent);
+  text-decoration: none;
+}
+.mk__movesym a:hover,
+.mk__searchsym:hover {
+  text-decoration: underline;
+}
 
 .mk__chg {
   font-variant-numeric: tabular-nums;
@@ -252,6 +265,46 @@
 }
 .mk__wladd {
   min-width: 0;
+}
+
+/* Page-level symbol-search results. */
+.mk__searchresults {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mk__searchrow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--border);
+  min-width: 0;
+}
+.mk__searchrow:last-child {
+  border-bottom: 0;
+}
+.mk__searchsym {
+  font-weight: var(--weight-medium);
+  flex-shrink: 0;
+}
+.mk__searchname {
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Single vertical scroll region (§12mk1-1, D-101): the Markets tables are primary overview content,
+   so they FLOW into the page and let the shell content own the one scroll — they don't cap at
+   --table-max-h and open their own nested scrollbar beside it. (Bounded worklists elsewhere still
+   cap.) overflow stays auto so a wide table can still scroll horizontally; with no max-height it
+   simply grows to its rows and never scrolls vertically. */
+.mk .lf-table__scroll {
+  max-height: none;
 }
 
 .mk__signposts {

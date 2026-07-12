@@ -82,6 +82,7 @@ vi.mock("../api/markets", () => ({
   getMarketsOverview: vi.fn(async () => OVERVIEW),
   getMarketsGlobal: vi.fn(async () => GLOBAL),
   getWatchlists: vi.fn(async () => WATCHLISTS),
+  getMarketsSearch: vi.fn(async () => ({ ok: true, data: { results: [{ symbol: "TSMC", name: "Taiwan Semi", exchange: null }] } })),
   createWatchlist: (...a: unknown[]) => createWatchlist(...(a as [])),
   deleteWatchlist: (...a: unknown[]) => deleteWatchlist(...(a as [])),
   addWatchlistItem: (...a: unknown[]) => addWatchlistItem(...(a as [])),
@@ -184,6 +185,16 @@ test("instrument grid renders served instruments with a Held badge + search filt
     expect(within(grid).getByText("NVDA")).toBeTruthy();
     expect(within(grid).queryByText("MSFT")).toBeNull();
   });
+});
+
+test("page-level search hits /markets/search; a hit links to InstrumentDetail (ND-5, §12mk1-5)", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await screen.findByText("Find a symbol");
+  await user.type(screen.getByLabelText("Search markets"), "tsm");
+  // TSMC is only in the served search results (not the grid), so it uniquely identifies the hit.
+  const link = await screen.findByRole("link", { name: "TSMC" });
+  expect(link.getAttribute("href")).toContain("/instrument/TSMC");
 });
 
 test("create watchlist: dialog → createWatchlist([S]-gated) with the entered name (ND-4)", async () => {

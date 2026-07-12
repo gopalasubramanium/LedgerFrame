@@ -12,11 +12,21 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
+  /* Column flex child MUST be allowed to shrink below its content, else `.lf-shell__content`'s
+     overflow:auto can't clip — its content grows the column past 100vh and the WHOLE DOCUMENT
+     scrolls, producing a second scrollbar beside the content scroller (page-markets §12mk1-1). */
+  min-height: 0;
 }
 .lf-shell__content {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0; /* the sole vertical scroll region — see .lf-shell__main above (D-101) */
   overflow: auto;
+  /* Establish a layout-containment boundary so this scroller's overflow can NEVER propagate to the
+     document (a Chromium quirk where a tall descendant inflates documentElement.scrollHeight and the
+     whole window gains a second scrollbar beside the content scroller — page-markets §12mk1-1). This
+     is what guarantees the shell content is the ONE vertical scroll region. */
+  contain: layout;
   /* The gap from the sidebar/chrome is OWNED by the shell (page-portfolio §12-1) — every
      in-shell page inherits the same content padding; pages never set their own root padding. */
   padding: var(--space-7) var(--space-6) var(--space-12);

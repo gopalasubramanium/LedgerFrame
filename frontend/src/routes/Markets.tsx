@@ -26,6 +26,7 @@ import {
   deleteWatchlist,
   getMarketsGlobal,
   getMarketsOverview,
+  getMarketsSearch,
   getWatchlists,
   removeWatchlistItem,
 } from "../api/markets";
@@ -34,6 +35,7 @@ import type {
   MarketStatus,
   OverviewInstrument,
   OverviewResp,
+  SearchHit,
   ServedQuote,
   WatchlistT,
 } from "../api/markets";
@@ -112,6 +114,27 @@ export function Markets() {
   const [creating, setCreating] = useState(false); // new-watchlist dialog
   const [newName, setNewName] = useState("");
   const [deleting, setDeleting] = useState<WatchlistT | null>(null); // delete-list confirm
+
+  // Page-level symbol search (ND-5, §12mk1-5) → the served /markets/search provider search. `null`
+  // = no query yet; `[]` = queried, no hits. Distinct from the grid's client filter below.
+  const [searchQ, setSearchQ] = useState("");
+  const [results, setResults] = useState<SearchHit[] | null>(null);
+  useEffect(() => {
+    const q = searchQ.trim();
+    if (!q) {
+      setResults(null);
+      return;
+    }
+    let live = true;
+    const t = setTimeout(async () => {
+      const r = await getMarketsSearch(q);
+      if (live) setResults(r.ok ? r.data.results : []);
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [searchQ]);
 
   const reloadWatchlists = useCallback(() => {
     setWatchlists(undefined);
@@ -297,6 +320,29 @@ export function Markets() {
           </span>
         </p>
       )}
+
+      {/* Page-level symbol search (D-037, ND-5) — the served provider search over ANY symbol (finds
+          instruments not in the grid); a hit opens its InstrumentDetail page. The grid below has its
+          own client-side filter for narrowing already-served rows — the two are distinct. */}
+      <section className="mk__card lf-card" data-card="search">
+        <h2 className="mk__h2">Find a symbol</h2>
+        <div className="lf-card__body">
+          <TextInput value={searchQ} onChange={setSearchQ} placeholder="Search any symbol or name…" aria-label="Search markets" />
+          {results !== null &&
+            (results.length > 0 ? (
+              <ul className="mk__searchresults">
+                {results.map((r) => (
+                  <li key={`${r.symbol}-${r.exchange ?? ""}`} className="mk__searchrow">
+                    <Link to={`/instrument/${encodeURIComponent(r.symbol)}`} className="mk__searchsym">{r.symbol}</Link>
+                    <span className="mk__searchname">{r.name ?? ""}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState message="No matches" reason="No served hits for that query." />
+            ))}
+        </div>
+      </section>
 
       {/* ── Overview header: Global indices (region tabs) + Gainers / Losers ───────────────── */}
 

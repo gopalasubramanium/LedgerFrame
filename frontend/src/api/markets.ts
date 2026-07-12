@@ -76,9 +76,25 @@ export interface WatchlistsResp {
   watchlists: WatchlistT[];
 }
 
+export interface SearchHit {
+  symbol: string;
+  name: string | null;
+  exchange?: string | null;
+  asset_class?: string | null;
+  currency?: string | null;
+}
+export interface SearchResp {
+  results: SearchHit[];
+}
+
 export const getMarketsOverview = () => apiGet<OverviewResp>("/markets/overview");
 export const getMarketsGlobal = () => apiGet<GlobalResp>("/markets/global");
 export const getWatchlists = () => apiGet<WatchlistsResp>("/watchlists");
+// Page-level symbol search (page-markets ND-5, §12mk1-5) — the served provider search. DISTINCT from
+// the grid's client-side filter (which only narrows already-served rows) and from the watchlist
+// InstrumentPicker (which calls the class-aware /instruments/search). A hit links to InstrumentDetail.
+export const getMarketsSearch = (q: string) =>
+  apiGet<SearchResp>(`/markets/search?q=${encodeURIComponent(q)}`);
 
 // Watchlist management — ONLY here (D-052). Every mutation is require_auth (session [S], ND-4);
 // the server writes, the client never fabricates. No rename endpoint exists (ND-4 — rename DECLINED).

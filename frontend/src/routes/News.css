@@ -31,48 +31,10 @@
   color: var(--text-primary);
 }
 
-/* Segmented headline-bucket tabs (§12nw1-2) — the ratified segmented-button pattern (Markets
-   Global-tab precedent): role=group + aria-pressed, connected buttons. Wraps to multiple rows at
-   320px (no overflow); labels are the SERVED bucket names, verbatim (ND-3). */
-.nw__seg {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
+/* Headline-bucket tabs use the shared `Segmented` primitive (segmented.css, §12nw1-2 → §13a). The
+   served bucket names are the tab labels, verbatim (ND-3); the tab bar wraps to multiple rows at 320px. */
+.nw__tabs {
   margin-bottom: var(--space-4);
-  border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1);
-}
-.nw__segbtn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--font-size-13);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.nw__segbtn:hover {
-  color: var(--text-primary);
-}
-.nw__segbtn--on {
-  background: var(--surface-raised);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-}
-.nw__segbtn:focus-visible {
-  outline: var(--focus-width) solid var(--focus-ring);
-  outline-offset: var(--focus-offset);
-}
-.nw__segcount {
-  font-size: var(--font-size-12);
-  color: var(--text-tertiary);
-  font-variant-numeric: tabular-nums;
 }
 .nw__h3 {
   margin: 0 0 var(--space-2);

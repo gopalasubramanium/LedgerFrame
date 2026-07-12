@@ -1,0 +1,43 @@
+/* Segmented control (DESIGN-SYSTEM §5.2, extracted 2026-07-13 — page-news §13a). Token-only. A bordered
+   container with borderless segments; the active segment fills. Wraps to multiple rows at narrow
+   widths (no overflow). One look for PriceChart periods, Markets region tabs, and News buckets. */
+.lf-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+}
+.lf-segbtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-size-13);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.lf-segbtn:hover {
+  color: var(--text-primary);
+}
+.lf-segbtn--on {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+.lf-segbtn:focus-visible {
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+/* Optional count badge inside a segment label (e.g. News bucket item counts). */
+.lf-segbtn__count {
+  font-size: var(--font-size-12);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}

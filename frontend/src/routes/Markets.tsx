@@ -11,6 +11,7 @@ import {
   InstrumentPicker,
   PageHeader,
   RowMenu,
+  Segmented,
   Skeleton,
   Sparkline,
   StalenessChip,
@@ -374,19 +375,12 @@ export function Markets() {
         <div className="mk__cardhead">
           <h2 className="mk__h2">Global — world indices</h2>
           {global && activeGroup && (
-            <div className="mk__seg" role="group" aria-label="Region">
-              {global.groups.map((g) => (
-                <button
-                  key={g.region}
-                  type="button"
-                  className={`mk__segbtn${g.region === activeGroup.region ? " mk__segbtn--on" : ""}`}
-                  aria-pressed={g.region === activeGroup.region}
-                  onClick={() => setRegion(g.region)}
-                >
-                  {g.region}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              aria-label="Region"
+              value={activeGroup.region}
+              onChange={setRegion}
+              options={global.groups.map((g) => ({ value: g.region, label: g.region }))}
+            />
           )}
         </div>
         <div className="lf-card__body">

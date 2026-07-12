@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import "./News.css";
-import { EmptyState, GlossaryTerm, NewsList, PageHeader, Skeleton, useToast } from "../components/ui";
+import { EmptyState, GlossaryTerm, NewsList, PageHeader, Segmented, Skeleton, useToast } from "../components/ui";
 import { relativeTime } from "../format/time";
 import { RotateCw } from "../icons";
 import { getBriefing, getGroupedNews, getNoEgress, refreshBriefing } from "../api/news";
@@ -127,19 +127,21 @@ export function News() {
               const active = g.groups.find((grp) => grp.name === activeArea) ?? g.groups[0];
               return (
                 <>
-                  <div className="nw__seg" role="group" aria-label="News area">
-                    {g.groups.map((grp) => (
-                      <button
-                        key={grp.name}
-                        type="button"
-                        className={`nw__segbtn${grp.name === active.name ? " nw__segbtn--on" : ""}`}
-                        aria-pressed={grp.name === active.name}
-                        onClick={() => setActiveArea(grp.name)}
-                      >
-                        {grp.name}
-                        <span className="nw__segcount">{grp.items.length}</span>
-                      </button>
-                    ))}
+                  <div className="nw__tabs">
+                    <Segmented
+                      aria-label="News area"
+                      value={active.name}
+                      onChange={setActiveArea}
+                      options={g.groups.map((grp) => ({
+                        value: grp.name,
+                        label: (
+                          <>
+                            {grp.name}
+                            <span className="lf-segbtn__count">{grp.items.length}</span>
+                          </>
+                        ),
+                      }))}
+                    />
                   </div>
                   <NewsList items={active.items} showSymbols emptyMessage="No headlines" emptyReason="No headlines in this bucket right now." />
                 </>

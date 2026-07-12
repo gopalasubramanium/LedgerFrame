@@ -34,7 +34,7 @@ test.describe.serial("news pre-pass (live)", () => {
     // PART 2: grouped headlines — served buckets + NewsList links (ND-3/ND-5) ------------------------
     const heads = page.locator('[data-card="headlines"] .lf-newslist__head');
     await expect(heads.first()).toBeVisible({ timeout: 15_000 });
-    const groupCount = await page.locator('[data-card="headlines"] .nw__seg .nw__segbtn').count();
+    const groupCount = await page.locator('[data-card="headlines"] .lf-segmented .lf-segbtn').count();
     const itemCount = await heads.count();
     console.log("PART 2 — bucket tabs:", groupCount, "· headlines (active bucket):", itemCount);
     expect(groupCount, "grouped headline buckets render as tabs").toBeGreaterThan(0);
@@ -42,7 +42,7 @@ test.describe.serial("news pre-pass (live)", () => {
     // PART 2b: segmented tabs (§12nw1-2) — one bucket visible; switching shows another. Iterate the
     // buckets to find an external-linked headline (RSS feeds carry urls; some provider items don't)
     // and a per-symbol InstrumentDetail link (the "My holdings" bucket) — proving ND-5 links + tabs.
-    const tabs = page.locator('[data-card="headlines"] .nw__seg .nw__segbtn');
+    const tabs = page.locator('[data-card="headlines"] .lf-segmented .lf-segbtn');
     const tabCount = await tabs.count();
     console.log("PART 2b — bucket tabs:", await tabs.allInnerTexts());
     expect(tabCount, "served buckets render as segmented tabs").toBeGreaterThan(0);

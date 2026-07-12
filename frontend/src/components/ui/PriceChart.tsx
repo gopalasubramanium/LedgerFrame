@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import "./charts.css";
+import { Segmented } from "./Segmented";
 import type { PricePoint } from "../../mocks/types";
 
 // House-SVG price/performance chart (DESIGN-SYSTEM §5.2, D-035). No ECharts. All
@@ -174,33 +175,19 @@ export function PriceChart({
     <div className="lf-pricechart">
       {controls && (
         <div className="lf-pricechart__controls">
-          <div className="lf-pricechart__toggle" role="group" aria-label="Chart view">
-            {(["simple", "advanced"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`lf-chartbtn${view === v ? " lf-chartbtn--on" : ""}`}
-                aria-pressed={view === v}
-                onClick={() => setView(v)}
-              >
-                {v === "simple" ? "Simple" : "Advanced"}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            aria-label="Chart view"
+            value={view}
+            onChange={(v) => setView(v as "simple" | "advanced")}
+            options={[{ value: "simple", label: "Simple" }, { value: "advanced", label: "Advanced" }]}
+          />
           {periods && onPeriodChange && (
-            <div className="lf-pricechart__periods" role="group" aria-label="Period">
-              {periods.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className={`lf-chartbtn${activePeriod === p ? " lf-chartbtn--on" : ""}`}
-                  aria-pressed={activePeriod === p}
-                  onClick={() => onPeriodChange(p)}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              aria-label="Period"
+              value={activePeriod ?? ""}
+              onChange={onPeriodChange}
+              options={periods.map((p) => ({ value: p, label: p }))}
+            />
           )}
         </div>
       )}

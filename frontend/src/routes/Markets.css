@@ -70,39 +70,7 @@
 .mk__pill--warn { color: var(--attention); border-color: var(--attention); }
 .mk__pill--neutral { color: var(--text-tertiary); }
 
-/* Segmented region tabs — the ratified segmented-button pattern (PriceChart-periods precedent):
-   role=group + aria-pressed, connected buttons. Wraps on narrow widths (no overflow). */
-.mk__seg {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1);
-}
-.mk__segbtn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--font-size-13);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.mk__segbtn:hover {
-  color: var(--text-primary);
-}
-.mk__segbtn--on {
-  background: var(--surface-raised);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-}
-.mk__segbtn:focus-visible {
-  outline: var(--focus-width) solid var(--focus-ring);
-  outline-offset: var(--focus-offset);
-}
+/* Region tabs use the shared `Segmented` primitive (segmented.css) — page-news §13a. */
 
 /* Global index rows. */
 .mk__idxrows {

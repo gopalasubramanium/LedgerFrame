@@ -24,7 +24,7 @@ test.describe.serial("markets pre-pass (live)", () => {
     await expect(page.getByRole("heading", { name: "Markets", exact: true })).toBeVisible({ timeout: 15_000 });
     await expect(page.locator(".mk__pill")).toContainText(/US · (Open|Closed|Pre-market|Post-market|Unknown)/);
 
-    const tabs = page.locator(".mk__seg .mk__segbtn");
+    const tabs = page.locator('[data-card="global"] .lf-segmented .lf-segbtn');
     await expect(tabs.first()).toBeVisible({ timeout: 15_000 });
     const tabCount = await tabs.count();
     console.log("PART 1 — region tabs:", await tabs.allInnerTexts());

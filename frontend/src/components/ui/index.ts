@@ -40,6 +40,8 @@ export { QuoteCardRow } from "./QuoteCardRow";
 export type { QuoteCardRowProps, QuoteSource } from "./QuoteCardRow";
 export { NewsList } from "./NewsList";
 export type { NewsListProps, NewsListItem } from "./NewsList";
+export { Segmented } from "./Segmented";
+export type { SegmentedProps, SegmentedOption } from "./Segmented";
 export { TickerStrip } from "./TickerStrip";
 export type { TickerStripProps } from "./TickerStrip";
 

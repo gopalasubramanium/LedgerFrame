@@ -47,6 +47,17 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "Price-move lists ranked by price change — Markets' pair. NOT Contributors / Detractors (the contribution-weighted pair, canonical on Portfolio). The two are never interchanged (D-024).",
   },
+  // News terms (page-news ND-9). Trimmed from GLOSSARY.md (News — briefing & headlines).
+  "term-briefing": {
+    term: "Briefing",
+    definition:
+      "A short, factual daily summary built deterministically from your own served figures — never a fabricated number. Information only, not advice.",
+  },
+  "term-headlines": {
+    term: "Headlines",
+    definition:
+      "Grouped news headlines retrieved from your configured sources, deduplicated and grouped by area. Retrieved, never invented; under no-egress none are fetched (honest empty).",
+  },
 };
 
 export function lookupTerm(id: string): GlossaryEntry | undefined {

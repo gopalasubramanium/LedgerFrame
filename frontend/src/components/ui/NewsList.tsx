@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import "./news.css";
 import { EmptyState } from "./EmptyState";
+import { relativeTime } from "../../format/time";
 
 // Extracted from the Instrument Detail news list (the recurring-pattern rule, page-news ND-5): a list
 // of headlines, each an EXTERNAL link opening in a new tab + a `source · relative-time` meta line, with
@@ -21,20 +22,6 @@ export interface NewsListProps {
   showSymbols?: boolean;
   emptyMessage?: string;
   emptyReason?: string;
-}
-
-/** Relative age of a served timestamp ("3h ago"). Display-only client formatting — NOT money. */
-function relativeTime(iso: string | null): string {
-  if (!iso) return "";
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return "";
-  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
-  if (s < 60) return "just now";
-  const m = Math.round(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.round(h / 24)}d ago`;
 }
 
 export function NewsList({

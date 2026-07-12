@@ -133,6 +133,13 @@ and "Top movers" is retired as a label.
 
 Home shows one summary of each, linked to its canonical page.
 
+### News (briefing & headlines) — D-037/D-068 (page-news ND-9)
+
+| Term | Canonical definition |
+|------|----------------------|
+| **Briefing** | A short, **factual** daily summary of your portfolio and the market, built **deterministically from your own served figures** — never a fabricated number. **Information only, not advice.** Canonical on **News** (Home shows a summary). Richer AI narration is a future addition (AI-surfaces milestone, D-068) and is not shown until then. **[Help]** |
+| **Headlines** | **Grouped news headlines** retrieved from your configured sources (RSS + provider), **deduplicated** and grouped by area (My holdings · India · Singapore · US · Global · Macro / FX); "My holdings" ranked by relevance. **Retrieved, never invented** — the app never fabricates a headline (Guarantee 3). Under **no-egress**, none are fetched (honest empty). Canonical on **News**. **[Help]** |
+
 ---
 
 ## Allocation, risk, policy

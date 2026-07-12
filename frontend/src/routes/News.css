@@ -1,0 +1,59 @@
+/* News (Markets-group home) — overview + worklist hybrid (ND-4). Token-only; the shell owns the root
+   padding. Every child min-width:0 so a long headline/group can never force page overflow. */
+.nw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.nw > * {
+  min-width: 0;
+}
+
+.nw__card {
+  padding: var(--space-5);
+}
+.nw__h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.nw__h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+/* Briefing prose — a served display string rendered verbatim. */
+.nw__briefing {
+  margin: 0;
+  font-size: var(--font-size-14);
+  line-height: var(--line-16);
+  color: var(--text-primary);
+}
+.nw__meta {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-12);
+  color: var(--text-tertiary);
+}
+
+/* Grouped headlines — two columns at laptop+, stacked below. */
+.nw__groups {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+@media (min-width: 56rem) {
+  .nw__groups {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.nw__groups > * {
+  min-width: 0;
+}
+.nw__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

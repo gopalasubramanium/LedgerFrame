@@ -36,7 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Markets", path: "/markets", built: true },
       { label: "Heatmap", path: "/heatmap" },
-      { label: "News", path: "/news" },
+      { label: "News", path: "/news", built: true },
     ],
   },
   {

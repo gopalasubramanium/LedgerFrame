@@ -751,7 +751,19 @@ composition-only (no §5 amendment — segmented-button region tabs + chip statu
 - **Open at the walk:** the page-chrome ticker index-link §-entry still needs its one-line **CLOSE**
   (ND-5). Commits `72b8630`… (draft) → §9 → Phase 1 → Phase 2 → Phase 3a.
 
-## NEWS — Phases 0/0a/1/2/3a DONE; Phase-3b walk IN-PROGRESS (batch 1 done, 2026-07-13)
+## NEWS — DONE ✅ (page ACCEPTED, owner re-verify, 2026-07-13)
+
+**`/news` is complete and owner-accepted.** Third Markets-group page (overview + worklist hybrid, ND-4);
+canonical home for the **briefing + grouped headlines** (D-037/D-068); receives Markets' region links
+(D-051). Phases 0/0a/1/2/3a + Phase-3b (batch 1) + close-out. **§9 one-pass; zero §5-amendment
+fallbacks** (NewsList + Segmented both extracted, not invented). Single backend delta: **ND-2 no-egress
+guard** (behavioral, contract unchanged; C-3 network-trace test). Platform legacy promoted (DESIGN-SYSTEM
+§5.2): **`NewsList`** (RATIFIED) + **`Segmented`** (extracted, all 3 call-sites migrated — PriceChart,
+Markets, News). Retrospective lessons folded into TEMPLATE §3b (verify-first **audits guards, not just
+shapes** — caught a shipping Guarantee-5 hole). Full record: **`page-news.md` §9–§13**. Open follow-ups
+(non-blocking): feed management → **Settings plan** (ND-6); **`GET /news` unconsumed** → tech-debt (ND-7).
+
+### (walk log — the phases above are now DONE)
 
 **Phase-3b batch 1 (owner, 2026-07-13)** — page-news §12: **NewsList RATIFIED** (§12nw1-1, DESIGN-SYSTEM
 §5.2). **§12nw1-2** headline buckets → **segmented tabs** (Markets Global-tab pattern; one served bucket
@@ -781,9 +793,14 @@ single scroll, 0 overflow × both themes, 0 console errors). **146 unit + 105 Pl
 
 ## NEXT
 
-1. **News — Phase-3b owner acceptance walk (LIVE).** Judgment items → numbered `page-news.md §*`
-   entries, fixed + re-verified live, geometry fixes fail-first (TEMPLATE §7/§8); owner closes the page.
-   (Phases 0/0a/1/2/3a done above.) **`NewsList` ratifies at this walk** (DESIGN-SYSTEM §5.2, extracted).
+1. **Review page build — via the template loop, PLAN ONLY first** (`docs/plans/page-review.md`; owner
+   reviews before any code). **Rationale for the queue:** Review is the **last unbuilt canonical source
+   Home summarises** — Net worth's `ReviewCard` already reads its reader — so building it **unblocks
+   Home**. D-038/D-059 (Reports-group; worklist template — a summary header + attention/records body,
+   per the page-pricing-health §13 note); signal thresholds are **named constants each with a rationale**
+   (D-059), per-signal try/except resilience. Standard loop: **Phase-0 verify-first** (D-019 — read what
+   the review reader serves + its honesty guards, §13a), Phase-3a **pre-pass GREEN before** the walk,
+   fail-first (TEMPLATE §7/§8). **Heatmap (D-053, needs a treemap §5 amendment) slots after Review.**
 2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
    across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
    defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector

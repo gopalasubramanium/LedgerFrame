@@ -1,7 +1,7 @@
 # page-news.md — News page build plan
 
-**Status: §9 RESOLVED — Phases 0/0a/1/2/3a DONE; Phase-3b walk IN-PROGRESS (batch 1 done, owner
-2026-07-13).** Pre-pass GREEN; build record §11, walk log §12. Drafted 2026-07-13 from
+**Status: DONE ✅ — News owner-accepted (re-verify, 2026-07-13).** Phases 0/0a/1/2/3a + Phase-3b walk
+(batch 1) + close-out (Segmented extraction) complete; retrospective §13. Drafted 2026-07-13 from
 `TEMPLATE-page-build.md` (incl. the tooling-guard fail-first + the ⚠ verify-first divergence-flag +
 vertical-single-scroll additions, and the Markets-group hybrid-shape precedent). Verify-first pass done
 (§10 — read what the news/briefing/feeds readers actually serve before assuming shapes, D-019).
@@ -470,5 +470,43 @@ ND-6 (feeds mgmt home), plus ND-4/7/8/9/10/11/12. **No build until the owner res
 **Batch-1 verification:** frontend **148 unit + 105 Playwright** (tabs + refresh + no-egress-disable) ·
 typecheck/lint/tokens/build green; **live pre-pass green** — 3 bucket tabs, external + symbol links
 across buckets, briefing refresh works, **both refresh buttons disabled under no-egress**, single scroll
-region, 0 overflow × both themes, **0 console errors**. **STOP for owner re-verify** (ratifies the
-PROPOSED segmented tabs). Phase 3b continues; owner closes the page.
+region, 0 overflow × both themes, **0 console errors**.
+
+---
+
+## 13. RETROSPECTIVE — News DONE (owner-accepted re-verify, 2026-07-13)
+
+**Re-verify PASSED (owner):** segmented bucket tabs **RATIFIED**; per-card refresh verified incl. both
+buttons honestly disabled under no-egress; briefing cold-read + external click-through done. News is the
+third Markets-group page (overview + worklist hybrid, ND-4) and the canonical home for the briefing +
+grouped headlines (D-037/D-068).
+
+- **§13a — Centralization applied NOW, not later: the `Segmented` primitive.** The segmented pattern
+  recurred **3×** (PriceChart view-toggle + periods · Markets region tabs · News buckets). Per the
+  Markets retrospective's own lesson (**per-instance copies of a standard are the defect**, §12mk1-2), a
+  shared **`ui/Segmented`** was extracted **in the close-out commit** and **all three call-sites
+  migrated** (`lf-chartbtn`/`mk__seg`/`nw__seg` removed) — no behavior change, DESIGN-SYSTEM §5.2 records
+  it. **The right time to centralize a recurring pattern is when it recurs, not "later".**
+- **(a) Verify-first now audits GUARDS, not just shapes.** Verify-first (D-019) caught a **shipping
+  Guarantee-5 hole**: the news/feeds readers made egress with **no `privacy_mode` guard** (ND-2). A
+  served surface that *should* be guarded but isn't is a **§9 item**, exactly like a missing shape —
+  reading the engine means checking its **honesty guards** (no-egress, auth), not only its response
+  fields. Folded into `TEMPLATE-page-build.md` §3b (verify-first divergence flag).
+- **(b) Owner reversals are §-entries, not silent edits.** ND-8 (drafted "no page refresh") was
+  **reversed** by the owner (per-card refresh); it is recorded as **§12nw1-3 (ND-8 REVERSAL)** with the
+  verify-first report — the reversal, its rationale, and the endpoint/auth facts are visible in the
+  record, never a quiet change. Folded into TEMPLATE §8/§9 (walk-finding discipline).
+- **(c) Cleanest page yet.** **One §9 pass** (all 12 resolved together), **zero §5-amendment fallbacks**
+  (the `NewsList` extraction and the `Segmented` extraction both succeeded — **extraction over
+  invention**), and the deferral posture held (AI narration deferred, ND-1 — News shipped the
+  deterministic briefing). The single backend delta was a **behavioral guard** (ND-2), contract
+  unchanged; everything else was ratified-component composition.
+
+**Milestone shape:** verify-first → §9 one-pass → **Phase 0 = the ND-2 guard (backend-first)** → Phase
+0a `NewsList` extraction → Phases 1/2 → Phase-3a pre-pass green → Phase-3b **1 batch** (segmented tabs +
+per-card refresh) → close-out (`Segmented` extraction + retrospective). **Open follow-ups:** feed
+management → the **Settings plan** (ND-6); **`GET /news` unconsumed** → tech-debt (ND-7). No blockers.
+
+**Close-out verification:** backend **497** · frontend **148 unit + 105 Playwright** ·
+typecheck/lint/tokens/build green; live **news + markets** pre-passes green after the `Segmented`
+migration, **0 console errors**.

@@ -154,6 +154,12 @@ premise. Two catches this pattern earned: the **banner-refresh premise** (the br
 StaleBanner offered refresh — it never did) and **a served endpoint shipping unwired** (`/markets/search`
 had no caller; the picker used `/instruments/search`). A divergence surfaced early is a §9 item, not a
 walk finding.
+> **Audit GUARDS, not just shapes (page-news §13a).** Verify-first also checks each reader's **honesty
+> guards**, not only its response fields: a surface that **egresses** must honour **no-egress**; a
+> mutation must carry the right **auth**. A served surface that *should* be guarded but **isn't** is a
+> §9 item exactly like a missing shape — the News readers made egress with **no `privacy_mode` guard**
+> (a **shipping Guarantee-5 hole**), caught only because verify-first grepped for the guard. Reading the
+> engine means reading its guards.
 
 | kind | Endpoint (current → intended) | Decision | Why this page needs it |
 |------|-------------------------------|----------|------------------------|

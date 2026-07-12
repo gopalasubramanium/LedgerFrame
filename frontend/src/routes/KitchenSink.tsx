@@ -91,13 +91,13 @@ const FIRST_RUN_LINKS = {
 const TICKER_DEMO = [
   ...QUOTES.map((q, i) => ({
     symbol: q.symbol,
-    price: q.price,
+    priceDisplay: q.price == null ? null : String(q.price), // D-105: backend-formatted display string
     changePct: q.changePct,
     stale: i === 1,
     href: `/instrument/${q.symbol}`,
   })),
-  { symbol: "US · S&P 500", price: "5000.00", changePct: "0.42" },
-  { symbol: "India · Nifty 50", price: "24500.00", changePct: "-0.18" },
+  { symbol: "US · S&P 500", priceDisplay: "5,000.00", changePct: "0.42" },
+  { symbol: "India · Nifty 50", priceDisplay: "24,500.00", changePct: "-0.18" },
 ];
 
 // Every bar icon (lucide, ADR-0003) for the ratification row — all states shown.

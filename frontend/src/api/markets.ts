@@ -12,6 +12,9 @@ export interface ServedQuote {
   symbol: string;
   exchange?: string | null;
   price: string | number | null;
+  // D-105: the backend-formatted display string for `price` (class-appropriate precision). Rendered
+  // verbatim — the frontend never re-formats a quote price. `price` stays numeric for sorting.
+  price_display?: string | null;
   change_pct: string | number | null;
   currency: string;
   source: string;

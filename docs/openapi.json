@@ -802,6 +802,17 @@
             ],
             "title": "Price"
           },
+          "price_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Display"
+          },
           "price_ts": {
             "anyOf": [
               {

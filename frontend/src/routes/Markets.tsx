@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import "./Markets.css";
@@ -21,7 +21,7 @@ import type { Column, InstrumentPick, SortState } from "../components/ui";
 import { useLabelFor } from "../refdata/refdata-context";
 import { getInstrumentHistory } from "../api/instruments";
 import { Plus } from "../icons";
-import { formatPrice, formatSignedPercent, signOf } from "../format/number";
+import { formatSignedPercent, signOf } from "../format/number";
 import {
   addWatchlistItem,
   createWatchlist,
@@ -92,7 +92,8 @@ interface GridRow {
   asset_class: string;
   country: string | null;
   currency: string;
-  price: number | null;
+  price: number | null; // numeric — for column SORT only
+  price_display: string | null; // D-105 served display string — for RENDER
   change_pct: number | null;
   held: boolean;
   is_stale: boolean;
@@ -117,10 +118,16 @@ export function Markets() {
   const [newName, setNewName] = useState("");
   const [deleting, setDeleting] = useState<WatchlistT | null>(null); // delete-list confirm
 
-  // Page-level symbol search (ND-5, §12mk1-5) → the served /markets/search provider search. `null`
-  // = no query yet; `[]` = queried, no hits. Distinct from the grid's client filter below.
+  // Page-level symbol search (ND-5 → §12mk3-1: lives in the PageHeader) → the served /markets/search
+  // provider search. `null` = no query yet; `[]` = queried, no hits. Distinct from the grid's client
+  // filter below. Results render in a dropdown under the header input; a hit → InstrumentDetail.
   const [searchQ, setSearchQ] = useState("");
   const [results, setResults] = useState<SearchHit[] | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const closeSearch = useCallback(() => {
+    setSearchQ("");
+    setResults(null);
+  }, []);
   useEffect(() => {
     const q = searchQ.trim();
     if (!q) {
@@ -137,6 +144,15 @@ export function Markets() {
       clearTimeout(t);
     };
   }, [searchQ]);
+  // Dismiss the results dropdown on an outside click (the input stays in the header).
+  useEffect(() => {
+    if (results === null) return;
+    const onDoc = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) closeSearch();
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [results, closeSearch]);
 
   const reloadWatchlists = useCallback(() => {
     setWatchlists(undefined);
@@ -182,6 +198,7 @@ export function Markets() {
       country: it.country,
       currency: it.quote.currency,
       price: numOf(it.quote.price),
+      price_display: it.quote.price_display ?? null,
       change_pct: numOf(it.quote.change_pct),
       held: it.held,
       is_stale: it.quote.is_stale,
@@ -223,7 +240,7 @@ export function Markets() {
     },
     { key: "asset_class", label: "Class", sortable: true, render: (r) => labelFor("asset_class", r.asset_class) },
     { key: "country", label: "Country", sortable: true, render: (r) => r.country ?? "—" },
-    { key: "price", label: "Price", align: "right", sortable: true, render: (r) => `${r.currency} ${formatPrice(r.price)}` },
+    { key: "price", label: "Price", align: "right", sortable: true, render: (r) => `${r.currency} ${r.price_display ?? "—"}` },
     {
       key: "change_pct",
       label: "Change",
@@ -302,15 +319,40 @@ export function Markets() {
         title="Markets"
         subtitle="Quotes, indices, market status, Gainers / Losers, the instrument grid, the Global tab, and watchlists"
         actions={
-          <button
-            type="button"
-            className="lf-iconbtn lf-iconbtn--framed"
-            onClick={() => { setNewName(""); setCreating(true); }}
-            title="New watchlist"
-            aria-label="New watchlist"
-          >
-            <Plus aria-hidden="true" />
-          </button>
+          <div className="mk__headeractions">
+            {/* Page-level "Find a symbol" search (§12mk3-1, PROPOSED) — the served /markets/search over
+                ANY symbol; a hit opens InstrumentDetail. At ≤560px the header's flex-wrap drops this
+                action group to its own row under the title (a row under the header — the simplest
+                ratified-compatible narrow behavior). The grid keeps its own client-side filter. */}
+            <div className="mk__search" ref={searchRef}>
+              <TextInput value={searchQ} onChange={setSearchQ} placeholder="Find a symbol…" aria-label="Search markets" />
+              {results !== null && (
+                <div className="mk__searchmenu">
+                  {results.length > 0 ? (
+                    <ul className="mk__searchresults">
+                      {results.map((r) => (
+                        <li key={`${r.symbol}-${r.exchange ?? ""}`} className="mk__searchrow">
+                          <Link to={`/instrument/${encodeURIComponent(r.symbol)}`} className="mk__searchsym" onClick={closeSearch}>{r.symbol}</Link>
+                          <span className="mk__searchname">{r.name ?? ""}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mk__searchempty">No matches — no served hits for that query.</p>
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              className="lf-iconbtn lf-iconbtn--framed"
+              onClick={() => { setNewName(""); setCreating(true); }}
+              title="New watchlist"
+              aria-label="New watchlist"
+            >
+              <Plus aria-hidden="true" />
+            </button>
+          </div>
         }
       />
 
@@ -322,29 +364,6 @@ export function Markets() {
           </span>
         </p>
       )}
-
-      {/* Page-level symbol search (D-037, ND-5) — the served provider search over ANY symbol (finds
-          instruments not in the grid); a hit opens its InstrumentDetail page. The grid below has its
-          own client-side filter for narrowing already-served rows — the two are distinct. */}
-      <section className="mk__card lf-card" data-card="search">
-        <h2 className="mk__h2">Find a symbol</h2>
-        <div className="lf-card__body">
-          <TextInput value={searchQ} onChange={setSearchQ} placeholder="Search any symbol or name…" aria-label="Search markets" />
-          {results !== null &&
-            (results.length > 0 ? (
-              <ul className="mk__searchresults">
-                {results.map((r) => (
-                  <li key={`${r.symbol}-${r.exchange ?? ""}`} className="mk__searchrow">
-                    <Link to={`/instrument/${encodeURIComponent(r.symbol)}`} className="mk__searchsym">{r.symbol}</Link>
-                    <span className="mk__searchname">{r.name ?? ""}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState message="No matches" reason="No served hits for that query." />
-            ))}
-        </div>
-      </section>
 
       {/* ── Overview header: Global indices (region tabs) + Gainers / Losers ───────────────── */}
 
@@ -392,7 +411,7 @@ export function Markets() {
                           </span>
                           <span className="mk__idxright">
                             <IndexSpark symbol={it.symbol} />
-                            <span className="mk__idxprice">{it.quote.currency} {formatPrice(it.quote.price)}</span>
+                            <span className="mk__idxprice">{it.quote.currency} {it.quote.price_display ?? "—"}</span>
                             <span className={`mk__chg lf-chg--${sign}`}>{formatSignedPercent(it.quote.change_pct)}</span>
                             <StalenessChip isStale={it.quote.is_stale} asOf={asOfOf(it.quote)} />
                           </span>
@@ -576,7 +595,7 @@ function MoveList({ title, rows, emptyReason }: { title: string; rows: OverviewI
                   <Link to={`/instrument/${encodeURIComponent(it.symbol)}`}>{it.symbol}</Link>
                 </span>
                 <span className="mk__moveright">
-                  <span className="mk__moveprice">{it.quote.currency} {formatPrice(it.quote.price)}</span>
+                  <span className="mk__moveprice">{it.quote.currency} {it.quote.price_display ?? "—"}</span>
                   <span className={`mk__chg lf-chg--${sign}`}>{formatSignedPercent(it.quote.change_pct)}</span>
                 </span>
               </li>
@@ -594,7 +613,7 @@ interface WlRow {
   symbol: string;
   name: string;
   currency: string;
-  price: number | null;
+  price_display: string | null; // D-105 served display string
   change_pct: number | null;
   is_stale: boolean;
   as_of: string;
@@ -615,7 +634,7 @@ function WatchlistCard({
     symbol: it.symbol,
     name: it.name,
     currency: it.quote.currency,
-    price: numOf(it.quote.price),
+    price_display: it.quote.price_display ?? null,
     change_pct: numOf(it.quote.change_pct),
     is_stale: it.quote.is_stale,
     as_of: asOfOf(it.quote),
@@ -632,7 +651,7 @@ function WatchlistCard({
         </span>
       ),
     },
-    { key: "price", label: "Price", align: "right", render: (r) => `${r.currency} ${formatPrice(r.price)}` },
+    { key: "price_display", label: "Price", align: "right", render: (r) => `${r.currency} ${r.price_display ?? "—"}` },
     {
       key: "change_pct",
       label: "Change",

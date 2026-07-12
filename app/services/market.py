@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.money import pct_change
+from app.core.money import format_price_display, pct_change
 from app.models import Instrument
 from app.models import Quote as QuoteRow
 from app.providers.market import get_provider
@@ -207,6 +207,7 @@ async def refresh_quote(session: AsyncSession, symbol: str, exchange: str | None
         await session.execute(stmt)
         await session.flush()
         q.is_stale = False
+        q.price_display = format_price_display(q.price, instrument.asset_class)  # D-105
         return q
     except Exception as exc:  # noqa: BLE001
         log.warning("quote refresh failed for %s: %s", symbol, exc)
@@ -234,6 +235,7 @@ async def get_cached_quote(
         symbol=symbol.upper(),
         exchange=exchange,
         price=row.price,
+        price_display=format_price_display(row.price, instrument.asset_class),  # D-105
         previous_close=row.previous_close,
         change=(row.price - row.previous_close) if row.previous_close else None,
         change_pct=pct_change(row.price, row.previous_close) if row.previous_close else None,

@@ -24,7 +24,7 @@ import { InstrumentDetail } from "./InstrumentDetail";
 import * as api from "../api/instruments";
 
 const DETAIL = {
-  quote: { symbol: "AAPL", price: 190.5, change: 0.6, change_pct: 0.32, currency: "USD", source: "mock", entitlement: "delayed", received_at: "2026-07-10T00:00:00", is_stale: false },
+  quote: { symbol: "AAPL", price: 190.5, price_display: "190.50", change: 0.6, change_pct: 0.32, currency: "USD", source: "mock", entitlement: "delayed", received_at: "2026-07-10T00:00:00", is_stale: false },
   instrument: { symbol: "AAPL", name: "Apple Inc.", asset_class: "equity", currency: "USD", exchange: "NASDAQ", sector: "Technology", country: "US", annual_cost_bps: null, identifiers: [], asset_detail: {}, history_status: null },
 };
 

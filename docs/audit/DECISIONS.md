@@ -723,13 +723,31 @@ clarifying notes recorded in the guide.
     casing diverges from what the write path would produce; it is intentional and
     demo-only. Recorded in MASTER-DATA (tags) + GLOSSARY where tags are defined.
 
+- **D-105 — Quote-price display precision by asset class** (owner, 2026-07-12;
+  page-markets §12mk3-2). Quote prices are formatted for display **in the backend**
+  (money = served display strings; the frontend renders them verbatim, no client
+  formatting). **Policy:** equities / ETFs / funds / indices → **2dp**; crypto →
+  **up to 6 significant digits** (so sub-cent tokens aren't truncated to `0.00`).
+  Grouped thousands; **stored native precision is unchanged — display only.**
+  - **Where:** `format_price_display(price, asset_class)` in `app/core/money.py`,
+    applied in the quote display path (`get_cached_quote` / `refresh_quote`, so
+    overview / global / watchlist / instrument-detail quotes carry it) and the
+    holdings serializer (`_hv`, for the TickerStrip's holdings price). Served as a
+    new `price_display` field on the `Quote` schema + `HoldingView`.
+  - **Renders everywhere quotes appear** (frontend renders `price_display`
+    verbatim): TickerStrip, Markets movers / grid / watchlists / Global tab,
+    InstrumentDetail quote. **Portfolio VALUES (money) keep 2dp** money formatting —
+    this touches quote prices only. `None` price → `None` display → "—" (never a
+    fabricated 0). Contract: `HoldingView.price_display` added (API-CONTRACT
+    regenerated same commit; no path change).
+
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.
 **D-090 and D-091 were ratified 2026-07-10** (D-090 with the ETF-Bonus amendment);
 **D-094** records the table dataset-size posture; **D-095** the CSV round-trip
 contract; **D-096** the generated import template; **D-097** the class-aware
-instrument picker; **D-104** the tag normalise-vs-verbatim posture. None changes an
-earlier decision.
+instrument picker; **D-104** the tag normalise-vs-verbatim posture; **D-105** the
+backend quote-price display precision by asset class. None changes an earlier decision.
 
 ---
 

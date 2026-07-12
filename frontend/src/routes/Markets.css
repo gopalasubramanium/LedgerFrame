@@ -303,10 +303,42 @@
   min-width: 0;
 }
 
-/* Page-level symbol-search results. */
+/* Page-level "Find a symbol" search in the PageHeader (§12mk3-1). The input sits beside the
+   new-watchlist +; at ≤560px the header's flex-wrap drops this group to its own row under the title
+   (a row under the header). Results render in a dropdown anchored to the input. */
+.mk__headeractions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.mk__search {
+  position: relative;
+  width: 12rem;
+  max-width: 100%;
+}
+.mk__searchmenu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  max-height: 18rem;
+  overflow-y: auto;
+}
+.mk__searchempty {
+  margin: 0;
+  padding: var(--space-2);
+  font-size: var(--font-size-13);
+  color: var(--text-tertiary);
+}
 .mk__searchresults {
   list-style: none;
-  margin: var(--space-3) 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -315,12 +347,12 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
-  padding: var(--space-2) 0;
-  border-bottom: var(--border-width) solid var(--border);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
   min-width: 0;
 }
-.mk__searchrow:last-child {
-  border-bottom: 0;
+.mk__searchrow:hover {
+  background: var(--bg);
 }
 .mk__searchsym {
   font-weight: var(--weight-medium);

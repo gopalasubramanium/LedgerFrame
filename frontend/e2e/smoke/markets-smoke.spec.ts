@@ -99,10 +99,10 @@ test.describe.serial("markets pre-pass (live)", () => {
     await expect(idxLinks.first(), "ticker index entries link to /markets (R-17)").toBeVisible({ timeout: 15_000 });
     console.log("PART 5 — ticker /markets links:", await idxLinks.count());
 
-    // PART 5b: page-level symbol search wired to /markets/search (ND-5 REOPENED, §12mk1-5) ----------
+    // PART 5b: PageHeader "Find a symbol" search wired to /markets/search (§12mk3-1) ----------------
     await page.getByLabel("Search markets").fill("app");
-    const hit = page.locator('[data-card="search"] .mk__searchrow a').first();
-    await expect(hit, "served search hit renders").toBeVisible({ timeout: 10_000 });
+    const hit = page.locator(".mk__searchmenu .mk__searchrow a").first();
+    await expect(hit, "served search hit renders in the header dropdown").toBeVisible({ timeout: 10_000 });
     expect(await hit.getAttribute("href"), "a hit links to InstrumentDetail").toContain("/instrument/");
     await page.getByLabel("Search markets").fill("");
 

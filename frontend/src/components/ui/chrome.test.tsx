@@ -131,8 +131,8 @@ test("TickerStrip links holdings symbols to instrument detail; indices stay unli
     <MemoryRouter>
       <TickerStrip
         quotes={[
-          { symbol: "AAPL", price: "190", changePct: "1.2", href: "/instrument/AAPL" },
-          { symbol: "US · S&P 500", price: "5000", changePct: "0.4" },
+          { symbol: "AAPL", priceDisplay: "190.00", changePct: "1.2", href: "/instrument/AAPL" },
+          { symbol: "US · S&P 500", priceDisplay: "5,000.00", changePct: "0.4" },
         ]}
       />
     </MemoryRouter>,

@@ -8,11 +8,31 @@ browser) and are produced explicitly via :func:`to_display`.
 
 from __future__ import annotations
 
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Context, Decimal, InvalidOperation
 
 ZERO = Decimal("0")
 CENTS = Decimal("0.01")
 PRICE_Q = Decimal("0.000001")  # quote precision (6dp) covers FX & crypto
+
+# D-105: quote-price DISPLAY precision by asset class, formatted in the backend so the frontend
+# renders the string verbatim (money = served display strings; no client formatting). Stored native
+# precision is unchanged — this is display only. Equities / ETFs / funds / indices → 2dp; crypto →
+# up to 6 significant digits (so sub-cent tokens aren't truncated to "0.00").
+_SIG6 = Context(prec=6, rounding=ROUND_HALF_UP)
+_CRYPTO_CLASSES = frozenset({"crypto"})
+
+
+def format_price_display(value: Decimal | None, asset_class: object = None) -> str | None:
+    """A served display string for a QUOTE price at class-appropriate precision (D-105). None passes
+    through (never a fabricated 0). Grouped thousands; crypto keeps 6 significant digits (trailing
+    zeros trimmed), everything else is 2dp."""
+    if value is None:
+        return None
+    p = D(value)
+    ac = (asset_class.value if hasattr(asset_class, "value") else str(asset_class or "")).lower()
+    if ac in _CRYPTO_CLASSES:
+        return format(_SIG6.create_decimal(p), ",f")  # 6 significant digits, fixed notation
+    return format(p.quantize(CENTS, rounding=ROUND_HALF_UP), ",.2f")
 
 
 def D(value: object) -> Decimal:

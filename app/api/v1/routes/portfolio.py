@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_auth, require_pin
 from app.core.config import get_settings
-from app.core.money import ZERO, D, money, to_display
+from app.core.money import ZERO, D, format_price_display, money, to_display
 from app.core.provenance import valuation_label
 from app.models import (
     Account,
@@ -50,7 +50,10 @@ def _hv(h) -> dict:
     return {
         "id": h.holding_id, "label": h.label, "name": h.name, "symbol": h.symbol,
         "asset_class": h.asset_class, "quantity": to_display(h.quantity),
+        # D-105: per-unit QUOTE price gets class-appropriate display precision (crypto → 6 sig figs);
+        # market_value + the rest stay 2dp money (unaffected — this touches quote prices only).
         "currency": h.native_currency, "price": to_display(h.price),
+        "price_display": format_price_display(h.price, h.asset_class),
         "market_value": to_display(h.market_value_base),
         "cost_basis": to_display(h.cost_basis_base),
         "unrealised_pl": to_display(h.unrealised_pl_base),
@@ -116,6 +119,7 @@ class HoldingView(BaseModel):
     quantity: float | None = None
     currency: str | None = None
     price: float | None = None
+    price_display: str | None = None  # D-105 served display string (class-appropriate quote precision)
     market_value: float | None = None
     cost_basis: float | None = None
     unrealised_pl: float | None = None

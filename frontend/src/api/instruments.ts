@@ -22,6 +22,7 @@ export interface InstrumentMeta {
 export interface InstrumentQuote {
   symbol: string;
   price?: number | null;
+  price_display?: string | null; // D-105 served display string (rendered verbatim)
   change?: number | null;
   change_pct?: number | null;
   currency?: string;

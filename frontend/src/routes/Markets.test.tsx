@@ -19,7 +19,9 @@ function q(over: Partial<Record<string, unknown>> = {}) {
 function instr(symbol: string, pct: number, over: Partial<Record<string, unknown>> = {}) {
   return {
     symbol, name: `${symbol} Inc`, asset_class: "equity", currency: "USD", country: "US",
-    held: false, quote: q({ symbol, change_pct: pct, price: 100 + pct }), ...over,
+    // price_display is the SERVED display string (D-105) — a recognizable marker proves the UI
+    // renders it verbatim rather than client-formatting the numeric price.
+    held: false, quote: q({ symbol, change_pct: pct, price: 100 + pct, price_display: `${symbol} disp` }), ...over,
   };
 }
 
@@ -168,6 +170,13 @@ test("Global tab badges a proxy-sourced index and NOT a real index level (ND-6, 
   expect(dow.textContent).not.toMatch(/proxy/);
 });
 
+test("quote prices render the SERVED display string, not a client-formatted value (D-105)", async () => {
+  renderPage();
+  // The grid renders quote.price_display verbatim (see the served OVERVIEW fixture below).
+  await screen.findByText("US · S&P 500");
+  await waitFor(() => expect(screen.getAllByText(/AAPL disp/).length).toBeGreaterThan(0));
+});
+
 test("Global-tab index rows render a 30-day sparkline (batch 2, §12mk2-1)", async () => {
   const { container } = renderPage();
   await screen.findByText("US · S&P 500");
@@ -200,11 +209,12 @@ test("instrument grid renders served instruments with a Held badge + search filt
   });
 });
 
-test("page-level search hits /markets/search; a hit links to InstrumentDetail (ND-5, §12mk1-5)", async () => {
+test("PageHeader search hits /markets/search; a hit links to InstrumentDetail (§12mk3-1)", async () => {
   const user = userEvent.setup();
   renderPage();
-  await screen.findByText("Find a symbol");
-  await user.type(screen.getByLabelText("Search markets"), "tsm");
+  // The search input lives in the PageHeader (aria-label), not a standalone card.
+  const input = await screen.findByLabelText("Search markets");
+  await user.type(input, "tsm");
   // TSMC is only in the served search results (not the grid), so it uniquely identifies the hit.
   const link = await screen.findByRole("link", { name: "TSMC" });
   expect(link.getAttribute("href")).toContain("/instrument/TSMC");

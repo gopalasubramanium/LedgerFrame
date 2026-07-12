@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.core.money import D, money, pct_change, price, to_display
+from app.core.money import D, format_price_display, money, pct_change, price, to_display
 from app.services import fx
 from app.services.csv_import import sanitize_cell
 
@@ -19,6 +19,18 @@ def test_money_quantizes_to_cents():
 
 def test_price_six_dp():
     assert price("1.2345678") == Decimal("1.234568")
+
+
+def test_format_price_display_by_asset_class():
+    # D-105: equities / ETFs / funds / indices → 2dp, grouped.
+    assert format_price_display(Decimal("5309.719711"), "equity") == "5,309.72"
+    assert format_price_display(Decimal("553.5"), "etf") == "553.50"
+    assert format_price_display(Decimal("39012.4"), None) == "39,012.40"  # index / unknown → 2dp
+    # crypto → up to 6 significant digits (sub-cent tokens not truncated to 0.00).
+    assert format_price_display(Decimal("67773.25297"), "crypto") == "67,773.3"
+    assert format_price_display(Decimal("0.00234567"), "crypto") == "0.00234567"
+    # None passes through — never a fabricated 0.
+    assert format_price_display(None, "equity") is None
 
 
 def test_D_rejects_garbage():

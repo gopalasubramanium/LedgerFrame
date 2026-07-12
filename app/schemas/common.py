@@ -52,6 +52,9 @@ class Quote(MoneyModel):
     symbol: str
     exchange: str | None = None
     price: Decimal | None = None  # None == genuinely unavailable; never fabricated
+    # D-105: the served DISPLAY string for `price` at class-appropriate precision (set by the quote
+    # display formatter; the frontend renders it verbatim, no client formatting). None when no price.
+    price_display: str | None = None
     previous_close: Decimal | None = None
     change: Decimal | None = None
     change_pct: Decimal | None = None

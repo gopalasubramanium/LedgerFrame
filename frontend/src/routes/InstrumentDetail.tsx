@@ -26,7 +26,7 @@ import type { Candle, InstrumentDetail as Detail, NewsItem } from "../api/instru
 import type { HoldingRow } from "../api/holdings";
 import { useLabelFor } from "../refdata/refdata-context";
 import { Pencil } from "../icons";
-import { formatMoney, formatPrice, formatSignedMoney } from "../format/number";
+import { formatMoney, formatSignedMoney } from "../format/number";
 
 // Instrument Detail (IA §360; entity-detail template) — a scoped view (P-3) of the
 // quote / history / news / portfolio readers for ONE instrument. It owns nothing;
@@ -168,7 +168,7 @@ export function InstrumentDetail() {
             <div className="lf-card__body">
               <div className="ins__price">
                 {quote?.price != null ? (
-                  <span className="ins__pricenum">{quote.currency} {formatPrice(quote.price)}</span>
+                  <span className="ins__pricenum">{quote.currency} {quote.price_display ?? "—"}</span>
                 ) : (
                   <span className="ins__pricenum ins__muted">—</span>
                 )}

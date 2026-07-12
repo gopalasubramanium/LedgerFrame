@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import "./data.css";
-import { formatPrice, formatSignedPercent, signOf } from "../../format/number";
+import { formatSignedPercent, signOf } from "../../format/number";
 import type { DecimalString } from "../../format/number";
 import { TriangleAlert } from "../../icons";
 
@@ -15,7 +15,8 @@ import { TriangleAlert } from "../../icons";
 // (R-17, page-markets ND-5 — Markets owns the indices). The mapping is set in `fetchTickerQuotes`.
 export interface TickerQuote {
   symbol: string;
-  price: DecimalString;
+  /** D-105 backend-formatted display string, rendered verbatim (no client formatting). */
+  priceDisplay: string | null;
   changePct: DecimalString;
   stale?: boolean;
   /** Link target (holdings → /instrument/{symbol}; indices → /markets); omitted → unlinked. */
@@ -44,7 +45,7 @@ export function TickerStrip({ quotes }: TickerStripProps) {
               ) : (
                 <strong>{q.symbol}</strong>
               )}
-              <span>{formatPrice(q.price)}</span>
+              <span>{q.priceDisplay ?? "—"}</span>
               <span className={`lf-chg--${sign}`}>{formatSignedPercent(q.changePct)}</span>
               {q.stale && (
                 <span className="lf-ticker__stale" title="Stale price" aria-label="stale">

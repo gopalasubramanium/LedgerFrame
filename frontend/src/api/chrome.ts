@@ -35,6 +35,8 @@ export async function fetchStaleSummary(): Promise<StaleSummary> {
 export interface TickerQuote {
   symbol: string;
   price: string | null;
+  /** D-105 backend-formatted display string for the price; rendered verbatim (no client formatting). */
+  priceDisplay: string | null;
   changePct: string | null;
   stale?: boolean;
   /** Link target: holdings → their instrument-detail page (D-098); world indices → `/markets`,
@@ -46,10 +48,10 @@ const numToStr = (v: unknown): string | null =>
   v === null || v === undefined ? null : String(v);
 
 interface HoldingsResp {
-  holdings?: { symbol?: string | null; price?: number | null; day_change_pct?: number | null; is_stale?: boolean }[];
+  holdings?: { symbol?: string | null; price?: number | null; price_display?: string | null; day_change_pct?: number | null; is_stale?: boolean }[];
 }
 interface GlobalResp {
-  groups?: { items?: { symbol?: string; label?: string; quote?: { price?: unknown; change_pct?: unknown; is_stale?: boolean } }[] }[];
+  groups?: { items?: { symbol?: string; label?: string; quote?: { price?: unknown; price_display?: string | null; change_pct?: unknown; is_stale?: boolean } }[] }[];
 }
 
 // ---- First-run checklist (D-045) -------------------------------------------------
@@ -113,6 +115,7 @@ export async function fetchTickerQuotes(): Promise<TickerQuote[]> {
       out.push({
         symbol: hv.symbol,
         price: numToStr(hv.price),
+        priceDisplay: hv.price_display ?? null, // D-105 served display string
         changePct: numToStr(hv.day_change_pct),
         stale: !!hv.is_stale,
         // D-098: holdings link to their instrument-detail page.
@@ -128,6 +131,7 @@ export async function fetchTickerQuotes(): Promise<TickerQuote[]> {
         out.push({
           symbol: label,
           price: numToStr(it.quote?.price),
+          priceDisplay: it.quote?.price_display ?? null, // D-105 served display string
           changePct: numToStr(it.quote?.change_pct),
           stale: !!it.quote?.is_stale,
           // R-17 (page-markets ND-5): world indices link to /markets, which owns them. The Global

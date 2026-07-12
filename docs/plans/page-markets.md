@@ -435,4 +435,31 @@ wired + tested here; the one-line close in `page-chrome.md` remains for a later 
 
 **Batch-1 verification:** frontend **138 unit + 93 Playwright overflow** green (the +28 single-scroll
 guards included); **live pre-pass green** with the new single-scroll / link / page-search assertions;
-**0 console errors**; typecheck/lint/tokens/build green. **STOP after checks + pre-pass green (owner).**
+**0 console errors**; typecheck/lint/tokens/build green.
+
+### Batch 2 (owner, 2026-07-12)
+
+- **§12mk2-1 — Global-tab 30-day sparklines (scoped option (a), APPROVED).** Each **Global-tab index
+  row** renders a **30d `Sparkline`** via the existing `getInstrumentHistory(symbol, 30)` (reused; no
+  new reader). **Progressive per-row load:** a motion-safe placeholder → the spark. **Honest absent
+  state:** a fetch failure / <2 closes renders "**—**" (`.mk__spark--na`), **never a fabricated flat
+  line**. The ratified `Sparkline` is a static SVG (no animation); only the **loading placeholder**
+  pulses, and it collapses under reduced motion (both the OS `prefers-reduced-motion` and the in-app
+  `data-motion="reduced"` toggle). **Fixed footprint** so loading/spark/absent never shift the row
+  (overflow-safe). The spark's tone = its own net direction (chart geometry / visualization, not a
+  reported figure — the PriceChart precedent). **Global tab ONLY** — grid + watchlist rows carry **no**
+  spark. Scoped **(b)** (grid/watchlist sparks) and **(c)** (a batch history endpoint) **DECLINED**;
+  **(c) recorded NOT-REGISTERED** (per-symbol `GET /instruments/{symbol}/history` only) — revisit on
+  demonstrated need. **Assertions:** unit (an SVG spark renders in the Global tab) + pre-pass **PART
+  1b** (sparks render for available symbols; **0 stuck** in the loading placeholder) + the existing
+  0-overflow sweep still green.
+- **§11-3 / §11-5 — ACCEPTED (owner).** Dialog+TextInput compose ratified primitives (no amendment);
+  the page-level `/markets/search` wiring stands.
+
+**Batch-2 verification:** frontend **139 unit + 93 Playwright overflow** green; **live pre-pass green**
+(**PART 1b: 3 sparks rendered, 0 stuck**; 0 overflow at 320/375/900/1366 × both themes); **0 console
+errors**; typecheck/lint/tokens/build green.
+
+**Owner's upcoming walk covers:** ticker index-click (→ then CLOSE the page-chrome ND-5 §-entry),
+watchlist CRUD loop, proxy-badge cold read, page search for an off-grid symbol, and the new
+sparklines. **STOP after checks + pre-pass green (owner).**

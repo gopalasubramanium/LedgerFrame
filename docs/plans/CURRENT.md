@@ -670,7 +670,15 @@ Platform legacy (promoted to DESIGN-SYSTEM §5.2): the **shared summary-count qu
 record: **`page-pricing-health.md` §9–§13** (§13 retrospective — the fastest page: verify-first emptied
 §3b, one-pass §9, composition-only Phase-0a). Commits `60d2338`→ batch-1 close-out.
 
-## MARKETS — Phases 1/2/3a DONE; Phase-3b walk IN-PROGRESS (batch 1 done, 2026-07-12)
+## MARKETS — Phases 1/2/3a DONE; Phase-3b walk IN-PROGRESS (batches 1–2 done, 2026-07-12)
+
+**Phase-3b batch 2 (owner, 2026-07-12)** — page-markets §12mk2: **§12mk2-1 Global-tab 30-day
+sparklines** (scoped option (a) approved). Per index row, a 30d `Sparkline` via the existing
+`getInstrumentHistory`; progressive per-row (motion-safe placeholder → spark), honest absent ("—") on
+fetch failure (no fabricated flat line), reduced-motion-safe, fixed footprint (overflow-safe). **Global
+tab ONLY**; grid/watchlist sparks (b) + a batch history endpoint (c) DECLINED — (c) recorded
+**not-registered**. §11-3/§11-5 accepted. 139 unit + 93 overflow green; live pre-pass green (PART 1b: 3
+sparks, 0 stuck; 0 overflow; 0 console errors).
 
 **Phase-3b batch 1 (owner, 2026-07-12)** — page-markets §12: reconciliations RATIFIED (§11-1 [Help]
 scope, §11-2 gainers>0, §11-3 Dialog+TextInput both pre-ratified/not-new); **§11-5 wired** a page-level

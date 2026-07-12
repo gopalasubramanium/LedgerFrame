@@ -144,6 +144,42 @@
   color: var(--text-secondary);
 }
 
+/* Global-tab 30-day sparkline (§12mk2-1) — fixed footprint so loading/spark/absent never shift the
+   row (overflow-safe). Global tab ONLY; grid/watchlist rows carry no spark. */
+.mk__spark {
+  display: inline-flex;
+  align-items: center;
+  width: 4.5rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+.mk__spark .lf-spark {
+  width: 100%;
+  height: 100%;
+}
+.mk__spark--na {
+  justify-content: center;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.mk__spark--loading {
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  /* Opacity-only pulse; collapses to a static tint under reduced motion (both the OS setting and the
+     in-app display-axis toggle) — no fabricated line, no directional shimmer. */
+  animation: mk-spark-pulse 1.6s ease-in-out infinite;
+}
+@keyframes mk-spark-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk__spark--loading { animation: none; }
+}
+:root[data-motion="reduced"] .mk__spark--loading {
+  animation: none;
+}
+
 /* Gainers / Losers — two equal lists, stacked below laptop. */
 .mk__movers {
   display: grid;

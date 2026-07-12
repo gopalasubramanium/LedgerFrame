@@ -12,12 +12,14 @@ import {
   PageHeader,
   RowMenu,
   Skeleton,
+  Sparkline,
   StalenessChip,
   TextInput,
   useToast,
 } from "../components/ui";
 import type { Column, InstrumentPick, SortState } from "../components/ui";
 import { useLabelFor } from "../refdata/refdata-context";
+import { getInstrumentHistory } from "../api/instruments";
 import { Plus } from "../icons";
 import { formatPrice, formatSignedPercent, signOf } from "../format/number";
 import {
@@ -389,6 +391,7 @@ export function Markets() {
                             )}
                           </span>
                           <span className="mk__idxright">
+                            <IndexSpark symbol={it.symbol} />
                             <span className="mk__idxprice">{it.quote.currency} {formatPrice(it.quote.price)}</span>
                             <span className={`mk__chg lf-chg--${sign}`}>{formatSignedPercent(it.quote.change_pct)}</span>
                             <StalenessChip isStale={it.quote.is_stale} asOf={asOfOf(it.quote)} />
@@ -528,6 +531,34 @@ export function Markets() {
         onConfirm={onDelete}
       />
     </div>
+  );
+}
+
+// Global-tab-ONLY 30-day sparkline (batch 2, §12mk2-1). Progressive per-row: `undefined` = loading
+// (a motion-safe placeholder), `null` = no recent history (an HONEST absent state — never a fabricated
+// flat line), `number[]` = the served closes. The line's tone is its OWN direction (chart geometry, a
+// visualization property — not a reported financial figure; same precedent as PriceChart's overlays).
+function IndexSpark({ symbol }: { symbol: string }) {
+  const [closes, setCloses] = useState<number[] | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    getInstrumentHistory(symbol, 30).then((r) => {
+      if (!live) return;
+      const cs = r.ok ? r.data.candles.map((c) => Number(c.close)).filter((n) => Number.isFinite(n)) : [];
+      setCloses(cs.length >= 2 ? cs : null);
+    });
+    return () => {
+      live = false;
+    };
+  }, [symbol]);
+
+  if (closes === undefined) return <span className="mk__spark mk__spark--loading" aria-label="Loading 30-day trend" />;
+  if (closes === null) return <span className="mk__spark mk__spark--na" title="No recent history" aria-label="No recent history">—</span>;
+  const tone = signOf(closes[closes.length - 1] - closes[0]);
+  return (
+    <span className="mk__spark">
+      <Sparkline points={closes} tone={tone} aria-label={`${symbol} 30-day trend`} />
+    </span>
   );
 }
 

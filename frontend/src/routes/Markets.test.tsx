@@ -89,9 +89,13 @@ vi.mock("../api/markets", () => ({
   removeWatchlistItem: (...a: unknown[]) => removeWatchlistItem(...(a as [])),
 }));
 
-// Keep the InstrumentPicker inert (no provider search in the unit test).
+// Keep the InstrumentPicker inert (no provider search) + serve 30d history for the Global sparklines.
 vi.mock("../api/instruments", () => ({
   searchInstruments: vi.fn(async () => ({ ok: true, data: { existing: [], other_class: [], suggestions: [] } })),
+  getInstrumentHistory: vi.fn(async () => ({
+    ok: true,
+    data: { symbol: "X", interval: "1d", candles: Array.from({ length: 30 }, (_, i) => ({ ts: "", open: 1, high: 1, low: 1, close: 100 + i, volume: 1 })) },
+  })),
 }));
 
 // No refdata backend in the test — labelFor falls back to the offline registry.
@@ -162,6 +166,15 @@ test("Global tab badges a proxy-sourced index and NOT a real index level (ND-6, 
   // The Dow row is a real ^-index level → no proxy badge on it.
   const dow = (await screen.findByText("US · Dow Jones")).closest("li") as HTMLElement;
   expect(dow.textContent).not.toMatch(/proxy/);
+});
+
+test("Global-tab index rows render a 30-day sparkline (batch 2, §12mk2-1)", async () => {
+  const { container } = renderPage();
+  await screen.findByText("US · S&P 500");
+  // Progressive per-row: each Americas index row fetches 30d history → renders an SVG sparkline.
+  await waitFor(() =>
+    expect(container.querySelectorAll('[data-card="global"] .mk__spark .lf-spark').length).toBeGreaterThan(0),
+  );
 });
 
 test("region segmented tabs switch the SERVED Global group (ND-2, no client region model)", async () => {

@@ -43,6 +43,17 @@ test.describe.serial("markets pre-pass (live)", () => {
     expect(await page.locator('[data-card="global"] .mk__proxy').count(), "no proxy badge on commodities").toBe(0);
     await page.getByRole("button", { name: "Americas" }).click();
 
+    // PART 1b: Global-tab 30-day sparklines (batch 2, §12mk2-1) — progressive per-row; sparks render
+    // for available symbols; none stuck in the loading placeholder; NO fabricated flat line. ---------
+    const sparks = page.locator('[data-card="global"] .mk__spark .lf-spark');
+    await expect(sparks.first(), "index-row sparkline renders").toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(400);
+    const sparkCount = await sparks.count();
+    const loadingStuck = await page.locator('[data-card="global"] .mk__spark--loading').count();
+    console.log("PART 1b — sparklines rendered:", sparkCount, "· loading stuck:", loadingStuck);
+    expect(sparkCount, "sparklines render for available index symbols").toBeGreaterThan(0);
+    expect(loadingStuck, "no sparkline stuck in the loading placeholder").toBe(0);
+
     // PART 2: Gainers / Losers — a display-sort of served change_pct; the which-list copy is guarded --
     const movers = page.locator('[data-card="movers"]');
     await expect(movers.getByText("Gainers / Losers")).toBeVisible();

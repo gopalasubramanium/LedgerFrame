@@ -670,7 +670,21 @@ Platform legacy (promoted to DESIGN-SYSTEM §5.2): the **shared summary-count qu
 record: **`page-pricing-health.md` §9–§13** (§13 retrospective — the fastest page: verify-first emptied
 §3b, one-pass §9, composition-only Phase-0a). Commits `60d2338`→ batch-1 close-out.
 
-## MARKETS — Phases 1/2/3a DONE; Phase-3b owner walk PENDING (2026-07-12)
+## MARKETS — Phases 1/2/3a DONE; Phase-3b walk IN-PROGRESS (batch 1 done, 2026-07-12)
+
+**Phase-3b batch 1 (owner, 2026-07-12)** — page-markets §12: reconciliations RATIFIED (§11-1 [Help]
+scope, §11-2 gainers>0, §11-3 Dialog+TextInput both pre-ratified/not-new); **§11-5 wired** a page-level
+`/markets/search` "Find a symbol" (InstrumentPicker uses `/instruments/search`, so it was truly
+unwired, not redundant). Fixes: **§12mk1-1** two-vertical-scrollbars BUG — shell `min-height:0` +
+`contain:layout` on `.lf-shell__content` (Chromium overflow-propagation; document scrolled beside the
+content) + Markets tables flow; **permanent ALL-PAGES single-scroll assertion** added to the overflow
+suite (fail-first proven). **§12mk1-2** REPEAT MISS (Portfolio §12b3-3) — centralized `.lf-table__td a`
+→ `.lf-table a` + fixed the Gainers/Losers list links; asserted 0 underlined. **§12mk1-3** VERIFY-ONLY:
+history endpoint is per-symbol (no batch), ~4KB@30d/~25KB@180d, resolves for proxies+watchlist symbols —
+feeds a scoped sparkline decision (not built). Still open: the page-chrome ticker index-link §-entry
+CLOSE. 138 unit + 93 overflow green; live pre-pass green, 0 console errors.
+
+### (prior) Phases 1/2/3a — DONE (2026-07-12)
 
 **`/markets` is built + pre-pass green; awaiting the owner acceptance walk.** Fifth
 overview-template page (an **overview + worklist hybrid**, ND-3 — the Markets-group shape Heatmap/News

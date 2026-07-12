@@ -1,7 +1,8 @@
 # page-markets.md — Markets page build plan
 
-**Status: §9 RESOLVED (owner, 2026-07-12) — BUILDING.** Phase 0 skipped (no §3b delta), Phase 0a
-composition-only (no §5 amendment). Drafted 2026-07-12 from
+**Status: §9 RESOLVED — Phases 1/2/3a DONE, Phase-3b walk IN-PROGRESS (batch 1 done, owner
+2026-07-12).** Phase 0 skipped (no §3b delta), Phase 0a composition-only (no §5 amendment). Drafted
+2026-07-12 from
 `TEMPLATE-page-build.md` (incl. the §7/§8 fail-first + reproduce-the-defect-first amendments, the
 Reports-group/worklist-shape note, the Phase-3a scripted-pre-pass standard, and progressive-per-card
 loading). Verify-first pass done (§10 — read what the markets/quotes/indices/watchlist readers
@@ -374,4 +375,64 @@ confirms (ND-4/6/7/8/9/10/11). **No further build until the owner resolves §9.*
 
 **STOP after the pre-pass (owner directive).** Phase 3b = the owner acceptance walk (live, judgment
 items) → numbered `§*` findings, each fixed + re-verified, geometry fixes fail-first; owner closes the
-page. **Not started.**
+page.
+
+---
+
+## 12. PHASE-3B ACCEPTANCE WALK — batch 1 (owner, 2026-07-12)
+
+**Reconciliation calls (from the §11 flags) — owner rulings:**
+- **§11-1 RATIFIED.** `[Help]` scope stands: only **Gainers / Losers** carries a `GlossaryTerm`;
+  ETF-proxy honesty is served copy (needs no glossary anchor); Index / Market status are served
+  labels. No invented terms.
+- **§11-2 RATIFIED.** Gainers filtered **> 0** (symmetry is the honest read) — on an all-red day the
+  Gainers list is **empty with a reason** ("Nothing gained today."), Losers likewise on an all-green day.
+- **§11-3 CONFIRMED — composes ratified primitives only, nothing new this build.** The new-watchlist
+  create uses **`Dialog`** (§5.4 amendment, ratified at the Holdings build) + **`TextInput`** (§5.1,
+  authored + ratified at the Holdings build — *not* new here). No retroactive §5.5 amendment / no
+  kitchen-sink specimen needed.
+- **§11-5 REOPENED → WIRED.** Report first: the watchlist **`InstrumentPicker` calls
+  `/instruments/search`** (the class-aware endpoint), **NOT `/markets/search`** — so `/markets/search`
+  was genuinely unwired, not redundant (both ultimately hit `get_provider().search_instruments`, but
+  the endpoint had no caller). Fix: wired a **page-level "Find a symbol" search to the served
+  `/markets/search`** (a hit → InstrumentDetail); the **grid filter stays client-side** for in-grid
+  narrowing. `§12mk1-5`.
+
+**Batch fixes:**
+- **§12mk1-1 — BUG: two vertical scrollbars (structural, fail-first).** Repro (live diag): at tall
+  viewports (h ≥ ~950) `/markets` scrolled the **whole document** (`window.scrollY` reached 712) beside
+  the `.lf-shell__content` scroller — a Chromium overflow-**propagation** quirk where a tall descendant
+  inflates `documentElement.scrollHeight` even though `.lf-shell` is `100vh/overflow:hidden` and `body`
+  never overflows. Not reproducible on the other pages' content, but a latent shell gap. **Structural
+  fix on the shell:** `min-height: 0` on the flex column (`.lf-shell__main`/`__content`) + **`contain:
+  layout` on `.lf-shell__content`** (a containment boundary that stops the propagation — the guarantee
+  the shell content is the ONE vertical scroller). Markets tables also **flow** (`.mk .lf-table__scroll
+  { max-height: none }`) so a capped grid doesn't open a *nested* second scrollbar either. **Invariant +
+  permanent ALL-PAGES assertion** (was a gap in the horizontal-only suite): every route × width, force
+  the content tall with a spacer, then assert the **window cannot scroll** — only `.lf-shell__content`
+  does. Proven fail-first: `winScrolled` = **0 with the fix vs 548 with containment removed**.
+- **§12mk1-2 — REPEAT MISS: default-styled links (Portfolio §12b3-3 recurred).** The earlier fix was
+  **per-instance**; this is the **centralization** the retrospective demanded. The shared table rule
+  is broadened `.lf-table__td a` → **`.lf-table a`** so *any* anchor in *any* table gets the ratified
+  accent/no-underline treatment (tables cannot opt out). The Gainers/Losers are **lists, not tables**,
+  so they can't inherit it — fixed per-page (`.mk__movesym a`, mirroring Portfolio's `.pf__moversym a`)
+  along with the new search-result links. **Assertion** (live pre-pass): **0** underlined anchors inside
+  `.lf-table` or the Gainers/Losers lists.
+- **§12mk1-3 — VERIFY ONLY (no build): price-history data cost.** Endpoint **`GET
+  /instruments/{symbol}/history?interval=1d&days=N`** → `{symbol, interval, candles:[{ts,open,high,low,
+  close,volume}]}`. **Per-symbol only — NO batch endpoint.** Resolves for **every** symbol tried: `SPY`
+  (ETF proxy) 180, `^GSPC` (real index) 181, `BTC` 180, `AAPL` 180 — so **index proxies AND watchlist
+  symbols resolve**. Payload ≈ **~140 B/candle → ~25 KB at 180 daily candles, ~4 KB at 30d.** Cost for
+  Global-tab index sparklines (~14 indices): **~14 requests (no batch) × ~4 KB @30d ≈ 56 KB** (or ~350 KB
+  @180d). `Sparkline` is ratified (takes `number[]` closes). **Scoped decision for the owner (not this
+  batch):** (a) **Global-tab index sparklines** (14 progressive per-card fetches, ~56 KB @30d), (b)
+  **click-through-only** (InstrumentDetail already has the full house-SVG `PriceChart`), or (c) **ROADMAP
+  a batch history endpoint** if sparklines are wanted broadly (grid + watchlists too). Recommend (a) at a
+  short window if the owner wants movement-over-time on the board; otherwise (b).
+
+**Still open (not in batch 1):** the page-chrome **ticker index-link §-entry CLOSE** (ND-5) — R-17 is
+wired + tested here; the one-line close in `page-chrome.md` remains for a later batch/close-out.
+
+**Batch-1 verification:** frontend **138 unit + 93 Playwright overflow** green (the +28 single-scroll
+guards included); **live pre-pass green** with the new single-scroll / link / page-search assertions;
+**0 console errors**; typecheck/lint/tokens/build green. **STOP after checks + pre-pass green (owner).**

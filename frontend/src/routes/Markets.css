@@ -1,0 +1,268 @@
+/* Markets (Markets-group home) — overview + worklist hybrid (ND-3). Token-only; the shell owns the
+   root padding. Every child carries min-width:0 so a wide table/row can never force page overflow. */
+.mk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.mk > * {
+  min-width: 0;
+}
+
+.mk__card {
+  padding: var(--space-5);
+}
+.mk__cardhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.mk__cardhead .mk__h2 {
+  margin: 0;
+}
+
+.mk__h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-16);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.mk__h2sub {
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+}
+.mk__h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+.mk__note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+
+/* Market-status pill — served state as a labelled chip (colour never the sole signal). */
+.mk__statusline {
+  margin: 0;
+}
+.mk__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.mk__pilldot {
+  font-size: var(--font-size-12);
+}
+.mk__pill--ok { color: var(--gain); border-color: var(--gain); }
+.mk__pill--warn { color: var(--attention); border-color: var(--attention); }
+.mk__pill--neutral { color: var(--text-tertiary); }
+
+/* Segmented region tabs — the ratified segmented-button pattern (PriceChart-periods precedent):
+   role=group + aria-pressed, connected buttons. Wraps on narrow widths (no overflow). */
+.mk__seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+}
+.mk__segbtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-size-13);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.mk__segbtn:hover {
+  color: var(--text-primary);
+}
+.mk__segbtn--on {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+.mk__segbtn:focus-visible {
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* Global index rows. */
+.mk__idxrows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mk__idxrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.mk__idxrow:last-child {
+  border-bottom: 0;
+}
+.mk__idxlabel {
+  color: var(--text-primary);
+  min-width: 0;
+}
+.mk__proxy {
+  margin-left: var(--space-2);
+  font-size: var(--font-size-12);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.mk__idxright {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+.mk__idxprice {
+  color: var(--text-secondary);
+}
+
+/* Gainers / Losers — two equal lists, stacked below laptop. */
+.mk__movers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+@media (min-width: 56rem) {
+  .mk__movers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.mk__movers > * {
+  min-width: 0;
+}
+.mk__moverows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mk__moverow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.mk__moverow:last-child {
+  border-bottom: 0;
+}
+.mk__moveright {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+.mk__moveprice {
+  color: var(--text-secondary);
+}
+
+.mk__chg {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Instrument-identity cell (grid + watchlist tables). */
+.mk__ident {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+}
+.mk__identsym {
+  font-weight: var(--weight-medium);
+}
+.mk__identname {
+  font-size: var(--font-size-13);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 22ch;
+}
+.mk__held {
+  padding: 0 var(--space-1);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-12);
+  color: var(--text-tertiary);
+}
+.mk__changecell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* Watchlists panel — cards side by side at wide widths, stacked on narrow. */
+.mk__wlpanel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+@media (min-width: 56rem) {
+  .mk__wlpanel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.mk__wlpanel > * {
+  min-width: 0;
+}
+.mk__wlcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.mk__wlhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.mk__wlhead .mk__h3 {
+  margin: 0;
+}
+.mk__wladd {
+  min-width: 0;
+}
+
+.mk__signposts {
+  margin: 0;
+  font-size: var(--font-size-13);
+  color: var(--text-tertiary);
+}
+.mk__signposts a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.mk__signposts a:hover {
+  text-decoration: underline;
+}

@@ -40,6 +40,13 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "Liquid assets ÷ recurring net burn (expenses − income), at today's FX.",
   },
+  // Trimmed from GLOSSARY.md (Movers — two pairs, D-024). Markets shows Gainers / Losers; the
+  // contribution-weighted pair (Contributors / Detractors) is Portfolio's — never interchanged.
+  "term-gainers-losers": {
+    term: "Gainers / Losers",
+    definition:
+      "Price-move lists ranked by price change — Markets' pair. NOT Contributors / Detractors (the contribution-weighted pair, canonical on Portfolio). The two are never interchanged (D-024).",
+  },
 };
 
 export function lookupTerm(id: string): GlossaryEntry | undefined {

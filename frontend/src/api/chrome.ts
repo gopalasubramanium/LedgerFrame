@@ -37,7 +37,8 @@ export interface TickerQuote {
   price: string | null;
   changePct: string | null;
   stale?: boolean;
-  /** Entity-detail link (holdings only, D-098); indices stay unlinked. */
+  /** Link target: holdings → their instrument-detail page (D-098); world indices → `/markets`,
+   *  the Markets-group home that owns them (R-17, page-markets ND-5). Never a dead link. */
   href?: string;
 }
 
@@ -129,6 +130,9 @@ export async function fetchTickerQuotes(): Promise<TickerQuote[]> {
           price: numToStr(it.quote?.price),
           changePct: numToStr(it.quote?.change_pct),
           stale: !!it.quote?.is_stale,
+          // R-17 (page-markets ND-5): world indices link to /markets, which owns them. The Global
+          // tab lives on the page (no deep-link anchor). Holdings still → InstrumentDetail (above).
+          href: "/markets",
         });
       }
     }

@@ -10,15 +10,15 @@ import { TriangleAlert } from "../../icons";
 // "reduced"; then the strip is static + manually scrollable — data.css). Staleness stays
 // visible per item — the price is FLAGGED, never hidden or faked (Product Guarantee).
 //
-// D-098 (§11-19): a symbol with an `href` links to its entity-detail page; a symbol
-// WITHOUT one renders unlinked (indices have no instrument-detail route — never a dead
-// link).
+// D-098 (§11-19): a symbol with an `href` links to its target page; a symbol WITHOUT one renders
+// unlinked (never a dead link). Holdings → their instrument-detail page; world indices → `/markets`
+// (R-17, page-markets ND-5 — Markets owns the indices). The mapping is set in `fetchTickerQuotes`.
 export interface TickerQuote {
   symbol: string;
   price: DecimalString;
   changePct: DecimalString;
   stale?: boolean;
-  /** Entity-detail route (holdings → /instrument/{symbol}); omitted for indices. */
+  /** Link target (holdings → /instrument/{symbol}; indices → /markets); omitted → unlinked. */
   href?: string;
 }
 

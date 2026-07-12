@@ -13,6 +13,7 @@ const ROUTES = [
   { name: "holdings (worklist)", hash: "#/holdings" },
   { name: "portfolio (overview)", hash: "#/portfolio" },
   { name: "markets (overview+worklist)", hash: "#/markets" },
+  { name: "news (overview+worklist)", hash: "#/news" },
   { name: "instrument (entity-detail)", hash: "#/instrument/AAPL" },
   { name: "pricing health (worklist)", hash: "#/pricing-health" },
 ];
@@ -82,7 +83,7 @@ for (const route of ROUTES) {
 test("built pages share one content-left inset (shell owns the padding)", async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   const lefts: number[] = [];
-  for (const hash of ["#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/instrument/AAPL", "#/pricing-health"]) {
+  for (const hash of ["#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/news", "#/instrument/AAPL", "#/pricing-health"]) {
     await page.goto(`/${hash}`);
     await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
     lefts.push(

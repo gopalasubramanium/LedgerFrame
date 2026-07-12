@@ -330,3 +330,48 @@ Ran the read-what-the-engine-serves pass before drafting §3/§4. **No shape was
 **Owner sign-off surface (all in §9):** ND-1 (Gainers/Losers source — the one potential §3b delta),
 ND-2 (region model + Tabs), ND-3 (template fit), ND-5 (R-17 ticker wiring — required), plus the
 confirms (ND-4/6/7/8/9/10/11). **No further build until the owner resolves §9.**
+
+---
+
+## 11. BUILD RECORD — Phases 1/2/3a DONE; Phase 3b (owner walk) PENDING (2026-07-12)
+
+§9 resolved (owner, 2026-07-12) → **Phase 0 skipped** (ND-1 = display-sort, no §3b delta) →
+**Phase 0a composition-only** (no §5 amendment: segmented buttons + chip status pill are ratified).
+
+- **Phase 1 (`bb…`/assembly).** `frontend/src/routes/Markets.tsx` (+`.css`) + `api/markets.ts`, routed
+  at `/markets` (`AppRoutes.tsx`, nav `built:true`). Overview+worklist hybrid (ND-3): market-status
+  pill · Global tab (served groups as segmented region tabs, per-index ETF-proxy badge, honest
+  real/proxy note) · Gainers/Losers (display-sort of served `change_pct`, top/bottom N=5, losers only
+  <0, honest empty) · instrument grid (search + column sort, Held badge, staleness; no region filter)
+  · watchlists (multi-list, add via `InstrumentPicker`, remove via `RowMenu`, create via
+  `Dialog`+`TextInput`, delete via `ConfirmDialog`, all `[S]`) · Heatmap/News signposts.
+  **R-17 wired:** `fetchTickerQuotes` sets index `href` → `/markets` (holdings still → InstrumentDetail).
+- **Phase 2 (tests).** `Markets.test.tsx` (9) incl. the **which-list copy test** (never
+  Contributors/Detractors) + proxy-badge + display-sort + watchlist CRUD; `api/chrome.test.ts` (2) the
+  **R-17 ticker-link test**; overflow suite extended to `/markets`. **137 unit + 65 Playwright green.**
+- **Phase 3a (pre-pass, GREEN first run).** `e2e/smoke/markets-smoke.spec.ts` on live app + real
+  backend: 5 region tabs · Gainers/Losers 10 rows · grid 20 rows (search→1) · proxy badge shown /
+  absent on commodities · watchlist create/delete round-trip · **R-17 ticker links present (30)** · 0
+  overflow at 320/375/900/1366 × both themes · **0 console errors.**
+
+**Build-time reconciliations (small judgment calls, faithful to §9 — flag at the walk if any is off):**
+1. **`[Help]` scope.** Only **Gainers / Losers** is a GLOSSARY term, so it gets the `GlossaryTerm`
+   popover (which-list distinction). **Index / ETF proxy / Market status are NOT glossary terms** —
+   ND-6 makes the proxy honesty **served copy** ("— via SPY proxy"), and Index/Market status are
+   served display labels. No new glossary terms invented (CLAUDE.md hard rule). The drafted §7 line
+   naming Index/ETF-proxy `[Help]` is superseded by this — served copy, not popovers.
+2. **Gainers honesty.** ND-1 constrained losers to `<0`; for symmetry the **gainers list is filtered
+   to `>0`** (a decliner can't be a "Gainer") — a flat symbol appears in neither. Honest reading; relax
+   at the walk if the owner wants pure top-N.
+3. **Create-list control.** `ConfirmDialog` can't collect a name, so **create uses `Dialog`+`TextInput`**
+   (the same primitive `ConfirmDialog` wraps); **delete uses `ConfirmDialog`** (destructive). Both
+   `[S]` server-side. Composition of ratified parts — no new component.
+4. **Ticker index-link §-entry (page-chrome).** R-17 is wired here; the page-chrome close-out note
+   still needs its one-line **CLOSE** (ND-5) — do at the walk/close.
+5. **`/markets/search` reader** left unwired — symbol discovery is the class-aware `InstrumentPicker`
+   (`/instruments/search`); the grid "search" is a client filter of served rows (ND-2). No unused
+   reader added.
+
+**STOP after the pre-pass (owner directive).** Phase 3b = the owner acceptance walk (live, judgment
+items) → numbered `§*` findings, each fixed + re-verified, geometry fixes fail-first; owner closes the
+page. **Not started.**

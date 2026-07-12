@@ -670,17 +670,35 @@ Platform legacy (promoted to DESIGN-SYSTEM §5.2): the **shared summary-count qu
 record: **`page-pricing-health.md` §9–§13** (§13 retrospective — the fastest page: verify-first emptied
 §3b, one-pass §9, composition-only Phase-0a). Commits `60d2338`→ batch-1 close-out.
 
+## MARKETS — Phases 1/2/3a DONE; Phase-3b owner walk PENDING (2026-07-12)
+
+**`/markets` is built + pre-pass green; awaiting the owner acceptance walk.** Fifth
+overview-template page (an **overview + worklist hybrid**, ND-3 — the Markets-group shape Heatmap/News
+inherit). Plan `docs/plans/page-markets.md` §11 has the full record. **§9 all-resolved (owner
+2026-07-12); no §3b delta** (ND-1 = display-sort of served `change_pct`) → Phase 0 skipped; Phase 0a
+composition-only (no §5 amendment — segmented-button region tabs + chip status pill are ratified).
+- **Phase 1** — page + `/markets` route + `api/markets.ts`. Market status · Global tab (served groups
+  as segmented region tabs, per-index **ETF-proxy honesty badge** D-051/ND-6, no client region map) ·
+  **Gainers/Losers** display-sort (top/bottom N=5, losers only <0, honest empty; which-list rule
+  guarded, never Contributors/Detractors, D-024) · instrument grid (search + column sort, Held badge)
+  · **watchlist management** (only here, D-052; create/delete/add/remove, `[S]`; rename DECLINED) ·
+  Heatmap/News signposts. **R-17 wired** — `fetchTickerQuotes` sets index `href` → `/markets` (ND-5).
+- **Phase 2** — `Markets.test.tsx` (9, incl. which-list copy test + proxy badge + display-sort +
+  watchlist CRUD) + `api/chrome.test.ts` (2, R-17 ticker-link) + overflow suite extended to `/markets`.
+  **137 unit + 65 Playwright green; check/build green.**
+- **Phase 3a** — `e2e/smoke/markets-smoke.spec.ts` GREEN first run (live app + real backend): every
+  section populated, R-17 ticker links present (30), watchlist round-trip, proxy badge shown/absent
+  correctly, 0 overflow 320/375/900/1366 × both themes, 0 console errors.
+- Build-time reconciliations recorded in §11 (glossary `[Help]` scope = Gainers/Losers only; gainers
+  filtered >0 for honesty; create via Dialog+TextInput; `/markets/search` left unwired).
+- **Open at the walk:** the page-chrome ticker index-link §-entry still needs its one-line **CLOSE**
+  (ND-5). Commits `72b8630`… (draft) → §9 → Phase 1 → Phase 2 → Phase 3a.
+
 ## NEXT
 
-1. **Markets page build — via the template loop.** Draft `docs/plans/page-markets.md` **PLAN ONLY
-   first** (owner reviews before any code), instantiating `TEMPLATE-page-build.md` (IDENTITY ·
-   OWNERSHIP · API SURFACE with a *contract delta* list only if needed · COMPONENTS ratified-only ·
-   VOCABULARIES · DECISIONS IN FORCE · ACCEPTANCE · BUILD PHASES · NEEDS DECISION). Standard loop:
-   **Phase-0 verify-first** (D-019 — read what the markets/quote/global readers serve; gaps → §9,
-   never a §3b guess), Phase-3a **scripted pre-pass GREEN before** the walk, geometry fixes
-   **fail-first** (TEMPLATE §7/§8). **Markets shipping unblocks ROADMAP R-17** (TickerStrip index
-   entries link to Markets, D-047-amend/D-098) — **the plan must include wiring R-17** (indices →
-   `/markets`, currently unlinked).
+1. **Markets — Phase-3b owner acceptance walk (LIVE).** Each finding → a numbered `page-markets.md §*`
+   entry, fixed + re-verified live, geometry fixes fail-first (TEMPLATE §7/§8); close the page-chrome
+   ticker index-link §-entry (ND-5); then the owner closes the page. (Phases 1/2/3a done above.)
 2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
    across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
    defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector

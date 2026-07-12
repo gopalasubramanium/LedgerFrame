@@ -1,6 +1,8 @@
 # page-news.md — News page build plan
 
-**Status: PLAN ONLY — owner reviews §9 before any code.** Drafted 2026-07-13 from
+**Status: §9 RESOLVED (owner, 2026-07-13) — BUILDING.** Phase 0 = the ND-2 no-egress guard
+(backend-first, contract unchanged); Phase 0a composition-confirm (extract the InstrumentDetail
+news-list; no §5 amendment expected). Drafted 2026-07-13 from
 `TEMPLATE-page-build.md` (incl. the tooling-guard fail-first + the ⚠ verify-first divergence-flag +
 vertical-single-scroll additions, and the Markets-group hybrid-shape precedent). Verify-first pass done
 (§10 — read what the news/briefing/feeds readers actually serve before assuming shapes, D-019).
@@ -246,9 +248,64 @@ served `/news/grouped` labels verbatim; no client mapping.**
 
 ---
 
-## 9. NEEDS DECISION — OPEN (owner resolves; nothing resolved here)
+## 9. NEEDS DECISION — RESOLVED (owner, 2026-07-13)
 
-Items flagged **⚠** may need a backend delta or an owner scope call.
+All 12 items resolved. Each matched a topic laid out at draft; a few are owner refinements of the
+drafted leaning (ND-1 carries **no** AI copy; ND-8 declines the drafted refresh affordance). The
+considered-options record is retained beneath.
+
+**Resolutions (owner, 2026-07-13):**
+- **ND-1 (a) — SHIP the deterministic briefing now; NO AI copy.** The briefing is a real served surface
+  that self-degrades honestly today; render `/briefing.text` + `generated_at`. **LLM narration stays
+  DEFERRED to the AI-surfaces milestone** (D-067/D-068, R-22) — same posture as the Instrument
+  explainer; **the card carries no AI copy** (no "coming soon" note) until then.
+- **ND-2 (a) — backend `privacy_mode` guard (⚠ GUARANTEE-5 ENFORCEMENT, Phase 0, HIGHEST PRIORITY).**
+  Guard the **feeds/briefing readers** mirroring the **C-3 `system/version-check`** pattern: under
+  no-egress, **ZERO outbound calls** — serve **cached headlines flagged stale** OR an **honest
+  empty-with-reason**. **Backend test = the C-3 pattern** (zero client/provider constructions under
+  no-egress; non-zero when off). **Contract unchanged — a behavioral guard** (not a reshape). **Ships
+  regardless of the rest of the page.**
+- **ND-3 — News renders its OWN served buckets verbatim (D-005); no client re-mapping, ever.** No
+  mapping between the three groupings. **Markets' region-group links land on `/news` PAGE-LEVEL** (the
+  groupings don't align; inventing a mapping would fabricate data). **Recorded as a divergence note
+  against D-051's phrasing:** *linking* satisfies it; *alignment* is not invented.
+- **ND-4 — Hybrid CONFIRMED.** Briefing card header + grouped-headlines body (the Markets-group shape).
+- **ND-5 — Compose from existing primitives; EXTRACT the InstrumentDetail news-list to the shared
+  layer** (the recurring-pattern rule) rather than author a new `NewsList`. Relative time from the
+  served `published_at` (client formatting fine — **not money**); external links **labelled with the
+  source, open in a new tab**. **CONDITIONAL:** if the extraction genuinely fails, **STOP and propose
+  the §5 amendment** (don't invent one).
+- **ND-6 — Feed management is SETTINGS territory** (config, not content — the provider-key precedent).
+  **News DISPLAYS only**; feed CRUD is a **recorded item for the Settings plan** — **nothing built
+  here now** (the `/news/feeds*` endpoints exist but are deferred to Settings).
+- **ND-7 — Wire `/news/grouped`** (the page IS grouped headlines). **`/news` (flat) recorded as
+  UNCONSUMED + a tech-debt line** (the `/system/staleness` precedent) — not wired gratuitously, not
+  silently ignored.
+- **ND-8 — NO page-level refresh affordance.** Freshness is **flags shown from served data**; refresh
+  semantics belong to the **worker / Pricing Health**, not News. **Declines the drafted briefing-refresh
+  button;** `POST /briefing/refresh` is **not wired here** (worker refreshes the briefing). Confirm
+  nothing new.
+- **ND-9 — `[Help]` on "Briefing" (esp. its deterministic nature) and "Headlines" — both GLOSSARY
+  terms.** Author both in GLOSSARY (canonical) + the frontend slice this build.
+- **ND-10 — Rotation-eligible: YES** (D-044).
+- **ND-11 — No entity scope** (market news; readers take none).
+- **ND-12 — Headlines render as PLAIN TEXT always** (no HTML-injection path), **length-clamped with
+  ellipsis**, **source label shown**. **Add a sanitisation test** (a headline containing markup renders
+  inert).
+
+**Confirms:** served labels throughout (D-005); `[S]`-gated where any mutation remains (feeds live on
+Settings, so News has none); no-egress → honest cached/empty (Guarantee 5); no fabricated headlines
+(Guarantee 3); the briefing quotes `value_portfolio` (no recompute, P-1).
+
+**Build sequence:** **Phase 0 = the ND-2 backend guard (backend-first, contract unchanged)** → **Phase
+0a composition-confirm** (extract the InstrumentDetail news-list; no §5 amendment expected) → **Phase 1**
+assembly (briefing card, no AI copy, no refresh; grouped headlines; GLOSSARY Briefing/Headlines) →
+**Phase 2** (the **no-egress zero-call test** + the **sanitisation test**) → **Phase 3a** scripted
+pre-pass **GREEN**. STOP after the pre-pass report.
+
+---
+
+**Considered options (draft record — the resolutions above are authoritative).**
 
 - **ND-1 — Briefing scope & the deferred AI narration. ⚠ CROSS-MILESTONE.** `/briefing` = a
   **deterministic factual template** + **optional validated AI narration** (D-068, P-6). The AI path

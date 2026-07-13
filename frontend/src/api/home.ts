@@ -5,16 +5,13 @@ import { apiGet } from "./client";
 // Home aggregate endpoint: `/dashboard/home` was RETIRED (§9-4) precisely so each card reads its own
 // canonical reader and loads progressively — an aggregate is a single gate.
 //
-// This module carries ONLY Home's own preferences (the served settings), not any figure.
+// This module carries ONLY Home's own preference (the served setting), not any figure.
+//
+// There is NO layout preference. §12ho1-6 removed the Simple layout: Home has ONE composition (the
+// ratified grid, §12ho1-5), so `home_layout` was retired from the contract rather than left behind
+// as a key nothing consumes (D-078).
 
-/** page-home §9-1: the ratified vocabulary is Simple / Full ("Expert" was RETIRED). */
-export type HomeLayout = "simple" | "full";
 export type HomeQuoteSource = "markets" | "holdings" | "global" | "watchlist";
-
-export interface HomePrefs {
-  layout: HomeLayout;
-  quoteSource: HomeQuoteSource;
-}
 
 interface SettingsShape {
   stored?: Record<string, string>;
@@ -22,18 +19,20 @@ interface SettingsShape {
 }
 
 /**
- * The SERVED Home preferences (§9-3/§9-7): the stored value when the owner has set one, else the
- * SERVED default — the frontend never invents a layout or a source of its own. Server-persisted, so
- * a kiosk survives a browser wipe and rotation lands on the configured layout (D-078/D-040).
+ * The SERVED quote-card source (§9-7): the stored value when the owner has set one, else the SERVED
+ * default — the frontend never invents a source, and carries no copy of the vocabulary (D-005).
+ * Server-persisted, so a kiosk survives a browser wipe (D-078).
  *
- * §9-2a: there is no user-facing switch until Settings ships; the layout is read here and honoured.
+ * `null` means the settings reader is unreachable. Home does NOT hold the page on that: the source
+ * decides only WHICH quotes one card shows, so an unreachable settings reader must not blank a page
+ * whose other cards are fine — that card says so itself. (This reader used to gate the entire page,
+ * because it also carried the LAYOUT, and a page cannot render a composition it does not know. With
+ * one layout, there is nothing to wait for.)
  */
-export async function getHomePrefs(): Promise<HomePrefs | null> {
+export async function getHomeQuoteSource(): Promise<HomeQuoteSource | null> {
   const r = await apiGet<SettingsShape>("/settings");
-  if (!r.ok) return null; // the reader is unreachable — say so; never invent a layout
+  if (!r.ok) return null;
   const stored = r.data.stored ?? {};
   const defaults = (r.data.defaults ?? {}) as Record<string, string | undefined>;
-  const layout = (stored.home_layout ?? defaults.home_layout) as HomeLayout;
-  const source = (stored.home_quote_source ?? defaults.home_quote_source) as HomeQuoteSource;
-  return { layout, quoteSource: source };
+  return (stored.home_quote_source ?? defaults.home_quote_source ?? null) as HomeQuoteSource | null;
 }

@@ -1,4 +1,9 @@
-/* HOME MOCKUP (page-home §12ho1-4) — the geometry the owner ratifies before any wiring.
+/* THE HOME GRID — the RATIFIED geometry (page-home §12ho1-5, owner 2026-07-13).
+ *
+ * ONE stylesheet, imported by BOTH the live page (routes/Home.tsx) and the static gate artifact
+ * (routes/HomeMockup.tsx in /kitchen-sink). They cannot drift: what the owner ratified in the
+ * browser IS what ships. Home has ONE layout (§12ho1-6 — the Simple layout was removed), so there
+ * is no layout branch here and no second map to maintain.
  * Tokens only (no raw colours/sizes — ADR-0002). Semantic colour only: the sole hues are the
  * gain/loss tones on signed figures and the donut's categorical palette. Hierarchy is SIZE and
  * PLACEMENT — never motion, never a decorative accent. */
@@ -13,20 +18,9 @@
   box-sizing: border-box;
 }
 
+/* The page header is the ratified PageHeader (§5) — the same component every page opens with. The
+ * grid simply refuses to let it grow: it takes what it needs, the rows take the rest. */
 .hm3__pagehead { flex: 0 0 auto; }
-.hm3__h1 {
-  margin: 0;
-  font-size: var(--font-size-28);
-  line-height: var(--line-28);
-  font-weight: var(--weight-semibold);
-  color: var(--text-primary);
-}
-.hm3__sub {
-  margin: var(--space-1) 0 0;
-  font-size: var(--font-size-13);
-  line-height: var(--line-13);
-  color: var(--text-secondary);
-}
 
 /* ---- FULL: 12 columns × 3 rows. No half-empty rows; the rows fill the viewport. ---------- */
 .hm3__grid {
@@ -34,11 +28,16 @@
   min-height: 0; /* the rows may shrink to fit rather than push the page taller */
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  /* Rows are sized to what each row's tallest tile ACTUALLY needs, measured in the browser — not to
-   * an even split that clips real content. Row 3 carries the most (briefing + THREE headlines, §9-9:
-   * 246px); rows 1-2 are bounded by the ReviewCard's three verdicts and the donut's 9rem ring. The
-   * page's own padding and gaps paid for it: NO figure, chart, or list was shrunk to win the fit. */
-  grid-template-rows: 205fr 210fr 246fr;
+  /* Rows keep the ratified PROPORTIONS (205 : 210 : 246 — row 3 carries the briefing + THREE
+   * headlines, rows 1-2 the ReviewCard's verdicts and the donut's 9rem ring), but every row is
+   * FLOORED at its own min-content. So when the content region is tall enough the map fills it
+   * exactly as ratified; and when it is not — real data is taller than demo data, and the real page
+   * sits inside the chrome, which the mockup frame did not (§12ho1-7) — the rows GROW and the shell
+   * scrolls. A tile never hides its own content to keep a promise about height. */
+  grid-template-rows:
+    minmax(min-content, 205fr)
+    minmax(min-content, 210fr)
+    minmax(min-content, 246fr);
   gap: var(--space-3);
 }
 
@@ -48,7 +47,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  overflow: hidden; /* a tile clips its own content — it never pushes the page into a scroll */
+  /* NOT `overflow: hidden`. It was here to stop a tile pushing the page into a scroll — which is
+   * exactly how the wired page came to sever the donut, the briefing's third headline and the stale
+   * line, while every "does it overflow" check stayed green. Clipping is not fitting (§12ho1-7). */
 }
 
 /* R1 — hero. The headline block leads; Review takes the strongest remaining corner. */
@@ -127,9 +128,11 @@
   color: var(--text-primary);
 }
 
-/* Every card pairs its figure with a compact visual. */
-.hm3__spark { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-end; }
-.hm3__spark--lead { flex: 1 1 auto; }
+/* Every card pairs its figure with a COMPACT visual — and compact means bounded. These were
+ * `flex: 1 1 auto` with no height of their own, so once the rows were floored at min-content the
+ * charts started DEMANDING height instead of filling what was left (the donut asked for 432px).
+ * A sparkline is a glance, not a chart: it gets a fixed, modest height. */
+.hm3__spark { flex: 0 0 auto; height: 3rem; display: flex; align-items: flex-end; }
 .hm3__spark > * { width: 100%; }
 
 /* The sparkline's caption names ITS canonical page (Portfolio) — the tile summarises two. */
@@ -160,7 +163,11 @@
   right: var(--space-5);
 }
 
-.hm3__donut { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; }
+.hm3__donut { flex: 0 0 auto; display: flex; align-items: center; min-width: 0; }
+/* The donut sits BESIDE its legend — that is the ratified reading (§12ho1-5). Left to wrap, it
+ * stacked the legend UNDER the ring in a 4-column tile and the tile doubled in height. */
+.hm3__donut .lf-donut { flex-wrap: nowrap; width: 100%; gap: var(--space-4); }
+.hm3__donut .lf-donut__legend { min-width: 0; }
 
 /* ---- Movers: two PAIRS, four tight columns (D-024 — never interchanged). ----------------- */
 .hm3__movers {
@@ -219,22 +226,6 @@
   overflow: hidden;
 }
 
-/* ---- SIMPLE: a calm centred column. No grid. -------------------------------------------- */
-.hm3__column {
-  width: 100%;
-  max-width: 46rem;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.hm3__changeline {
-  font-size: var(--font-size-16);
-  line-height: var(--line-16);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
-}
-
 /* ---- Tablet / mobile: one viewport is NOT promised below 1366 (the page may scroll). ------ */
 @media (max-width: 1365px) {
   .hm3__grid {
@@ -255,4 +246,17 @@
   .hm3__cell { grid-column: 1 !important; }
   .hm3__twohead { grid-template-columns: 1fr; }
   .hm3__movers { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Per-item staleness is preserved in the summary (Guarantee 3) — the summary never presents a stale
+ * figure as fresh. The stale COUNT itself belongs to the chrome StaleBanner; Home shows no second
+ * count and re-fetches nothing (§2 — one fetch site). */
+.hm3__stale {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  color: var(--text-tertiary);
 }

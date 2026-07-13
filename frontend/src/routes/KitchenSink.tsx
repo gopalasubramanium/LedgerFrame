@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import "./KitchenSink.css";
 import { DisplayControls } from "../components/DisplayControls";
 import { TokenBoard } from "./TokenBoard";
-import { HomeMockupFull, HomeMockupSimple } from "./HomeMockup";
+import { HomeMockupFull } from "./HomeMockup";
 import {
   AllocationDonut,
   Clock,
@@ -607,21 +607,14 @@ export function KitchenSink() {
       {/* ---------------------------------------------------------------- */}
       <Section
         bleed
-        title="Home mockup — RATIFICATION GATE (page-home §12ho1-4)"
-        note="STATIC: hardcoded demo-shaped data, no readers, no fetches. It is mounted here and nowhere else — `/` stays unbuilt until this geometry is ratified and then wired to the canonical readers. Each frame below IS a viewport: the Full frame is exactly 1366×768, the hard target, so what you see inside it is what the page looks like at that size — no scrolling, no half-empty rows. Toggle the theme above to see both. Judge the LAYOUT (size, placement, density); every figure is fake."
+        title="Home grid — RATIFIED reference (page-home §12ho1-5)"
+        note="RATIFIED 2026-07-13 (§12ho1-5) and WIRED — the live Home at `/` renders this geometry from the canonical readers, importing the SAME stylesheet, so the two cannot drift. Home has ONE layout (§12ho1-6). NOTE the frame is 1366×680 — the CONTENT REGION at a 1366×768 screen, i.e. the viewport MINUS the chrome (top bar + ticker). The original frame was a bare 768 tall and so promised the page the chrome's height on top of its own; with REAL data (more asset classes, longer headlines) the grid does not fit one viewport — see §12ho1-7. Demo data is deliberately small, so this specimen still fits; the live page is the honest measure."
       >
         <div className="ks__stack">
-          <Specimen label="FULL · 1366×768 — 12 columns × 3 rows. The lead is Today's change (largest figure on the page); Review takes the strongest remaining corner. Attention dominates by SIZE, not motion.">
+          <Specimen label="The ratified grid · 1366×680 (the real content region) — 12 columns × 3 rows. Today's change leads; Review takes the strongest remaining corner. Attention dominates by SIZE, not motion.">
             <div className="ks__viewportscroll">
               <div className="ks__viewport">
                 <HomeMockupFull />
-              </div>
-            </div>
-          </Specimen>
-          <Specimen label="SIMPLE · a calm centred column (D-046: headline + ReviewCard + briefing — nothing else). No grid.">
-            <div className="ks__viewportscroll">
-              <div className="ks__viewport ks__viewport--simple">
-                <HomeMockupSimple />
               </div>
             </div>
           </Specimen>

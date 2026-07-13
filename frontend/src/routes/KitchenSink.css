@@ -181,7 +181,7 @@
 .ks__viewportscroll { overflow-x: auto; }
 .ks__viewport {
   width: 85.375rem;
-  height: 48rem;
+  height: 42.5rem;
   flex: 0 0 auto;
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-lg);
@@ -189,4 +189,3 @@
   background: var(--surface);
   resize: vertical;
 }
-.ks__viewport--simple { height: 40rem; }

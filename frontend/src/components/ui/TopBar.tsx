@@ -7,12 +7,12 @@ import { RotateCw, Ban, Menu, MoreHorizontal } from "../../icons";
 // Stateful-icon rule (DESIGN-SYSTEM §5.5, lucide ADR-0003): each toggle shows a
 // state-distinct icon; the tooltip names the state ("Function: state") and the
 // aria-label matches. Rotation = RotateCw(on)/Ban(off) — the ONE toggle this bar owns.
-// The Detail toggle was REMOVED (page-home §9-15, DESIGN-SYSTEM §5.5 amendment): the Home layout is a
-// SETTINGS control ("Home layout: Simple / Full") backed by the server-persisted `home_layout`, per
-// D-040/IA — never a top-bar toggle holding state that persists nowhere. Menu is the nav toggle.
+// The Detail toggle was REMOVED (page-home §9-15, DESIGN-SYSTEM §5.5 amendment) — it held state that
+// persisted nowhere. Nothing replaced it: §12ho1-6 removed the Simple layout, so Home has ONE layout
+// and there is no layout to toggle, in this bar or in Settings. Menu is the nav toggle.
 
 // Global chrome (DESIGN-SYSTEM §5.5, D-066). The ONE slim top bar. At laptop+ the
-// display axes + rotation + Detail render inline, right-aligned. Below the laptop
+// display axes + rotation render inline, right-aligned. Below the laptop
 // breakpoint (D-102 extension, batch 2 §11-11) they collapse into a single overflow
 // popover so the bar never wraps at any width ≥320px: ☰ + brand + overflow + Clock +
 // DemoBadge. The DemoBadge shows in the bar only at narrow widths (at laptop+ it lives

@@ -1,8 +1,9 @@
 # page-home.md — Home page build plan
 
-**Status: REBUILD. The first assembly was REJECTED by the owner (§12ho1-4, 2026-07-14) and TORN DOWN —
-`/` is honestly unbuilt. Phase 0 (backend/contract) STANDS. The next gate is the STATIC HOME MOCKUP at
-`/kitchen-sink`, awaiting owner ratification in the browser. NOTHING is wired until it is ratified.**
+**Status: REBUILT + WIRED, but BLOCKED at §12ho1-7 — the ratified grid does NOT fit one viewport once
+it is wired inside the chrome with real data. Phases 1 and 2 are DONE; Phase 3a CANNOT be certified
+until the owner picks a lever (§12ho1-7). Home ships ONE layout (§12ho1-6 — Simple removed).
+Read §12ho1-7 FIRST.**
 *(Historical: §9 RESOLVED 2026-07-13; Phases 0/0a/1/2/3a and Phase-3b Batch 1 are recorded below — the
 Phase-1 assembly they describe no longer exists. Read §12ho1-4 first.)*
 Drafted from `TEMPLATE-page-build.md`. **Verify-first (§10) was done BEFORE §1–§8** (D-019 — read what
@@ -808,3 +809,126 @@ the `full` default · §12ho1-1 subtitle pick (a/b/c) · §12ho1-2 codified ↗ 
 §9 resolutions (per-card progressive loading, honest per-widget empty/stale/error states, [Help] per
 §9-12, deep links per D-038, layouts via the served `home_layout`, single scroll, copy hygiene), and
 the pre-pass gains the per-widget and viewport-fit assertions this regression earned.
+
+---
+
+## §12ho1-5 — GATE RESULT: the grid is RATIFIED (owner, 2026-07-13)
+
+The static Full mockup is **RATIFIED as-is**: the 12-column × 3-row grid, Today's change as the lead,
+Review in the strongest remaining corner, row heights sized to content, the 1366×768 fit.
+
+**The three flagged proposals — all APPROVED:**
+1. **The hero tile carries TWO ↗** (net-worth figures + the Portfolio sparkline) — the Movers precedent.
+2. **Gross assets / Liabilities lines APPROVED** — recorded as a **D-046 content widening**. P-1 holds:
+   both figures live on the canonical Net worth page, so the summary adds nothing its canon lacks.
+3. **A SummaryHead on QuoteCardRow APPROVED** as the PROPOSED §5 amendment — **ratify at the walk**.
+
+**The ratified geometry is now ONE stylesheet** — `routes/home-grid.css` — imported by **both** the live
+page and the static specimen in `/kitchen-sink`. They cannot drift: what was ratified is what ships.
+
+---
+
+## §12ho1-6 — SIMPLE LAYOUT REMOVED (owner reversal, 2026-07-13)
+
+**Home ships ONE layout — the ratified grid.** Owner's rationale, recorded: *one strong layout beats two
+half-maintained ones.* The **widget set is unchanged** and still FIXED (R-19 stays parked); only the
+*choice between two layouts* dies. Cascade, all in one batch, none silent:
+
+- **D-046 AMENDMENT** (DECISIONS.md): Home layout = the ratified grid; the Simple definition is
+  **RETIRED**. The D-046 row itself is marked amended, so the table never reads as current on its own.
+- **Contract delta (backend-first, fail-first):** `home_layout` **REMOVED** from `_ALLOWED_KEYS`, from
+  the served defaults, and from the served vocabulary. Keeping it would have left a **write-only key** —
+  precisely the D-078 defect just recorded against the rotation keys. `home_quote_source` **stays**.
+  Tests flipped: key-accepted → **key-REJECTED**, plus a shape-discriminating assertion that the key is
+  absent from **both** the defaults and the vocabularies (a 400 alone can be an accident).
+  Contract regenerated same commit; drift green — and note the regen produced **no diff**: `/settings`
+  serves a free dict, so a shape check **cannot see an allow-list key**. That is exactly why the
+  served-value tests carry this, and it is worth remembering the next time a key is added.
+- **The removal exposed a trap, and it is fixed rather than re-armed.** `PUT /settings` used to
+  `continue` past unknown keys — so a write to a key the server does not store returned **200 and
+  changed nothing**. That is what made the original Phase-0 bug invisible for a whole build, and merely
+  delisting `home_layout` would have re-created it verbatim. **An unknown key is now an honest 400.**
+- **GLOSSARY:** *"Home layout: Simple / Full"* → **Deprecated terms**, joining *"Detail level:
+  Simple/Expert"* (which it had itself retired). The "Home" entry no longer points at a layout control.
+  Parity guard green.
+- **IA + DESIGN-SYSTEM** corrected: the *"rotating to Home uses the configured layout"* and *"Home
+  branches on Simple/Full"* lines are gone — there is nothing left to configure or branch on.
+- **§9-1 / §9-2 / §9-3** (the label, the interim control, the default) stand as **history, SUPERSEDED**.
+  Nothing to ratify there any more.
+
+---
+
+## §12ho1-7 — ⚠ BLOCKING: the ratified grid does NOT fit one viewport once it is WIRED. **OWNER'S CALL.**
+
+**I am reporting this rather than shrinking anything to hide it — and the fault is mine.**
+
+**The gate artifact flattered the design.** The mockup frame was a bare **1366×768**. The real page does
+not get a bare viewport: it sits inside the chrome, so its content region at a 1366×768 screen is
+**680px**, and after the PageHeader the grid gets **~573px**. My frame promised the page the chrome's
+height on top of its own. *(The specimen is now 1366×**680** — the region the page actually gets. A gate
+that measures a box the product does not have is not a gate.)*
+
+**And demo data flattered it a second time.** With the real dataset the honest content needs **~891px**:
+
+| Row | Needs | Driver |
+|---|---|---|
+| R1 | 293px | the ReviewCard |
+| R2 | **328px** | the allocation donut — the legend carries **8 asset classes**, not the demo's 5 |
+| R3 | 270px | briefing + THREE headlines (§9-9) |
+
+**891 needed vs ~573 available.** Measured live at 1366×768: the page scrolls **346px**; at 1440×900,
+**174px**; it fits only at ~1920×1080. Screenshot: `docs/evidence/page-home/12ho1-7-wired-1366x768.png`.
+
+**What I did NOT do:** shrink type, truncate a figure, or clip a tile. The first wiring *did* clip —
+it severed the donut, the third headline and the stale line while every "does it overflow" check
+stayed green, because the tiles were `overflow: hidden`. **Clipping is not fitting.** The grid now
+floors every row at its own min-content: it fills the region exactly as ratified when it can, and when
+it cannot, the tiles stay whole and the **shell** scrolls (the single scroll region, D-100/D-101, is
+intact; horizontal overflow is 0 at every breakpoint).
+
+**Two real defects the wiring surfaced, both fixed:**
+1. **The ReviewCard was listing EVERY review item** — which makes Home *the Review page* and violates
+   P-1. It now shows **N=3** (the ratified mockup showed 3; the §9-6/§9-9 precedent). The **attention
+   count is untouched** — it is the SERVED count, so it still reconciles with `/review` by construction.
+   **PROPOSED — ratify at the walk.**
+2. **The donut was WRAPPING its legend under the ring** in a 4-column tile (doubling the tile's height),
+   instead of sitting **beside** it as ratified. Pinned to `nowrap`.
+
+### The levers — none of them are mine to pull
+
+| # | Lever | Cost |
+|---|---|---|
+| **A** | **Accept the scroll** at 1366×768 (~346px). | Breaks the "at-a-glance, no-scroll snapshot" purpose — the very thing that failed the first build. |
+| **B** | **Cap the donut legend** (e.g. top 5 classes + the rest as one "Other" segment, served). | Needs a decision on what "Other" means; a truncated legend must not misrepresent the ring. |
+| **C** | **Shrink the donut ring** (9rem → ~6rem) and/or drop the briefing to 1 clamped line. | Density, not dishonesty — but it is a design change to a ratified component. |
+| **D** | **Two rows at 1366**, moving Quotes below the fold as the one thing you scroll to. | Changes the ratified map. |
+| **E** | **Accept that the target is 1440×900+**, and 1366×768 scrolls a little. | Honest, and the appliance may well run at 1080p. |
+
+**My reading, offered not taken:** **B + E**. The donut legend is the single biggest offender (328px in a
+573px budget) and an 8-row legend is not a *summary* anyway; capping it is the one change that buys the
+fit without touching type size or the ratified map. But an "Other" bucket is a **data** decision, and
+that is yours.
+
+### Status
+
+- **Phase 1 (wiring) — DONE.** All 7 D-046 cards from the canonical readers; per-card progressive
+  loading (no `Promise.all` gate); honest per-widget empty/stale/error states; [Help] on Net worth,
+  Today's change, Briefing (§9-12); deep links (D-038); both movers pairs, never interchanged (D-024);
+  per-item staleness preserved on the quote cards; **no layout branch anywhere**.
+  *Also hardened:* a reader answering with a partial payload used to **throw and take the page down**
+  (`Object.entries(undefined)`) — the old page never hit it only because it sat behind the layout gate.
+  A missing field now degrades to an honest empty with a reason, never a white screen.
+- **Phase 2 (tests) — DONE.** 8 Home tests: the D-046 set + no layout branch; D-024 label integrity;
+  the SERVED attention count (Home never recounts, and never out-details `/review`); Guarantee 3
+  (per-item staleness in the compact summary); Guarantee 5 (no-egress reason); the honest unreachable
+  reader (one bad reader never blanks the page); the empty briefing; copy hygiene.
+  `npm run check` **exit 0** — lint · typecheck · tokens · **177 unit** · **135 Playwright**.
+  Backend **621**, contract drift green, glossary parity green.
+- **Phase 3a (pre-pass) — INCOMPLETE, and I will not self-certify it.** Live at 1366×768 and 1440×900:
+  all 7 cards render, **0 left in skeleton**, **9 ↗**, **0 clipped tiles**, **0 horizontal overflow**,
+  **0 console errors**. But the **viewport-fit assertion the task requires CANNOT pass** — see above.
+  It is not a test I can make green without a decision that is yours to make.
+
+**STOP.** Pending ratification at the walk: §9-11 strings · §9-13 "Home" · §9-15 TopBar amendment
+(applied) · §12ho1-1 subtitle pick · the QuoteCardRow SummaryHead amendment · the Deprecated-terms
+additions · **the ReviewCard N=3 cap** · **and §12ho1-7 above, which blocks the fit.**

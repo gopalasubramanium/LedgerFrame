@@ -2,12 +2,13 @@ import {
   AllocationDonut,
   NewsList,
   QuoteCardRow,
+  PageHeader,
   ReviewCard,
   Sparkline,
   SummaryHead,
   SummaryLink,
 } from "../components/ui";
-import "./HomeMockup.css";
+import "./home-grid.css";
 
 // HOME MOCKUP — the ratification gate for the Home REBUILD (page-home §12ho1-4).
 //
@@ -124,14 +125,14 @@ function MoverList({ title, rows }: { title: string; rows: { sym: string; pct: s
   );
 }
 
-/** FULL — the 12-column, 3-row map. Fits 1366×768 with demo data; no half-empty rows. */
+/** The RATIFIED grid: 12 columns × 3 rows. Fits 1366×768 with demo data; no half-empty rows.
+ *  Home has ONE layout (§12ho1-6) — there is no Simple variant to render. */
 export function HomeMockupFull() {
   return (
     <div className="hm3 hm3--full">
-      <header className="hm3__pagehead">
-        <h1 className="hm3__h1">Home</h1>
-        <p className="hm3__sub">Your summary — tap any card for the full picture</p>
-      </header>
+      <div className="hm3__pagehead">
+        <PageHeader title="Home" subtitle="Your summary — tap any card for the full picture" />
+      </div>
 
       <div className="hm3__grid">
         {/* R1 · HERO — Net worth: the anchor figure, its gross/liabilities split, and its trend,
@@ -216,35 +217,6 @@ export function HomeMockupFull() {
         <section className="lf-card hm3__cell hm3__cell--quotes">
           <SummaryLink to="#/markets" destination="Markets" />
           <QuoteCardRow quotes={QUOTES} source="holdings" />
-        </section>
-      </div>
-    </div>
-  );
-}
-
-/** SIMPLE — a calm centred column (D-046: headline + ReviewCard + briefing). No grid gymnastics. */
-export function HomeMockupSimple() {
-  return (
-    <div className="hm3 hm3--simple">
-      <header className="hm3__pagehead">
-        <h1 className="hm3__h1">Home</h1>
-        <p className="hm3__sub">Your summary — tap any card for the full picture</p>
-      </header>
-
-      <div className="hm3__column">
-        <section className="lf-card">
-          <SummaryHead title="Net worth" to="#/net-worth" destination="Net worth" whole />
-          <div className="hm3__figure hm3__figure--anchor">
-            796,216.68 <span className="hm3__unit">SGD</span>
-          </div>
-          <div className="hm3__changeline hm3__figure--up">+2,140.55 SGD · +0.27% today</div>
-        </section>
-
-        <ReviewCard attention={3} link={{ href: "#/review", label: "Review" }} sections={REVIEW_SECTIONS} />
-
-        <section className="lf-card">
-          <SummaryHead title="Briefing" to="#/news" destination="News" whole />
-          <p className="hm3__briefing">{BRIEFING}</p>
         </section>
       </div>
     </div>

@@ -106,9 +106,9 @@ test("TopBar rotation toggle renders a distinct lucide icon per state", () => {
   expect(rotOn).not.toBe(rotOff);
 });
 
-// page-home §9-15 — the Detail toggle is GONE from the top bar. The Home layout is a SETTINGS control
-// ("Home layout: Simple / Full") backed by the server-persisted `home_layout` (D-040/IA); a top-bar
-// toggle holding state that persisted nowhere is exactly what the amendment removed.
+// page-home §9-15 — the Detail toggle is GONE from the top bar: it held state that persisted nowhere.
+// And nothing replaced it — §12ho1-6 removed the Simple layout, so there is no Home layout to toggle
+// anywhere (the `home_layout` setting is retired from the contract too).
 test("TopBar has NO Detail toggle (page-home §9-15)", () => {
   render(<TopBar rotationOn={false} onToggleRotation={() => {}} />);
   expect(screen.queryByRole("button", { name: /Detail/i })).toBeNull();

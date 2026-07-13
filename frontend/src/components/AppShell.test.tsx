@@ -243,20 +243,17 @@ test("/snapshot redirects to /net-worth and /planning to /cash-flow (D-042/D-022
   await waitFor(() => expect(screen.getByTestId("loc").textContent).toBe("/cash-flow"));
 });
 
-test("the routed page renders inside the shell with chrome around it — and `/` is HONESTLY UNBUILT", async () => {
+test("the routed page renders inside the shell with chrome around it — `/` is HOME (§12ho1-6)", async () => {
   renderRoutesAt("/");
   // Chrome present…
   expect(document.querySelector(".lf-sidebar__brand")).not.toBeNull();
   expect(document.querySelector(".lf-topbar")).not.toBeNull();
-  // …with the routed page mounted inside it. This asserted HOME at `/` until page-home §12ho1-4 tore
-  // the rejected assembly down. `/` now renders the shell's honest unbuilt state (Guarantee 3 — a
-  // reason, never a blank screen), and NO fragment of the old assembly survives.
-  await waitFor(() => expect(document.querySelector(".lf-notbuilt")).not.toBeNull());
+  // …with Home mounted inside it: the REBUILT page on the ratified grid (§12ho1-5), wired to the
+  // canonical readers. No fragment of the rejected assembly (`.hm2`) survives, and the page renders
+  // WITHOUT waiting on a layout: there is only one (§12ho1-6), so it never gates on /settings.
+  await waitFor(() => expect(document.querySelector(".hm3")).not.toBeNull());
   expect(document.querySelector(".hm2")).toBeNull();
-  // (A data-backed page is deliberately NOT mounted here: this file's fetch stub answers unknown
-  // URLs with `{}`, so a real page's readers reject after teardown and leak an unhandled rejection
-  // into whatever test runs next. Real pages inside the shell are covered in a real browser by
-  // e2e/overflow.spec.ts, which renders every built page and asserts the shared content inset.)
+  expect(document.querySelector(".lf-notbuilt")).toBeNull();
 });
 
 test("an unbuilt route lands on the honest NotBuilt fallback inside the shell", async () => {

@@ -21,15 +21,17 @@ const ROUTES = [
   // caught the original defect. The live pages are checked opportunistically: whenever they DO
   // render a header, its geometry must hold.
   { name: "kitchen-sink (specimens)", hash: "#/kitchen-sink", strict: true },
+  { name: "home (the rebuilt grid)", hash: "#/", strict: false },
   { name: "net worth", hash: "#/net-worth", strict: false },
   { name: "portfolio", hash: "#/portfolio", strict: false },
   { name: "instrument detail", hash: "#/instrument/AAPL", strict: false },
 ];
 
-// The Home mockup is the RATIFICATION GATE (§12ho1-4): its whole claim is "Full fits one viewport at
-// 1366×768 with demo data, and no tile clips its content". A claim nobody checks is a claim that
-// rots — so the gate artifact is asserted, not just looked at. The frame IS 1366×768.
-test("home mockup · Full fits 1366×768 and no tile clips its content", async ({ page }) => {
+// The grid specimen (§12ho1-5). The invariant worth asserting is NOT "it fits" — the wired page does
+// NOT fit one viewport with real data (§12ho1-7), and asserting a fit against a chrome-less frame is
+// how the first version of this gate flattered the design. What must ALWAYS hold is that no tile
+// hides its own content: clipping is not fitting.
+test("home grid specimen · no tile clips its own content", async ({ page }) => {
   await page.setViewportSize({ width: 1500, height: 900 });
   await page.goto("/#/kitchen-sink");
   await page.locator(".hm3--full").waitFor({ state: "attached", timeout: 15_000 });
@@ -60,8 +62,7 @@ test("home mockup · Full fits 1366×768 and no tile clips its content", async (
     };
   });
 
-  expect(report.vOverflow, "Full must fit the 768px viewport — no vertical scroll").toBeLessThanOrEqual(0);
-  expect(report.hOverflow, "Full must fit the 1366px viewport — no horizontal scroll").toBeLessThanOrEqual(0);
+  expect(report.hOverflow, "the grid must never scroll sideways").toBeLessThanOrEqual(0);
   expect(report.clipped, "a tile is hiding its own content to make the layout fit").toEqual([]);
 });
 

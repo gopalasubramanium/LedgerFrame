@@ -1,9 +1,9 @@
 # page-heatmap.md — Heatmap page build plan
 
-**Status: Phase-3b BATCH 1 DONE — owner RE-VERIFY pending (2026-07-13).** The owner walked the live page
-and ratified ND-7 (click-through), ND-11 (GLOSSARY "Heatmap") and the ND-12/coverage copy (CLOSE lines in
-§9); Batch 1 (§12) reverses ND-7c and adds the **tile readout** — PROPOSED, ratify at the re-verify.
-Pre-pass GREEN; build record §11, walk record §12. Drafted 2026-07-13 from
+**Status: DONE ✅ — owner ACCEPTED the Heatmap page 2026-07-13.** All phases built, walked and closed:
+§9 resolved one-pass; §11 build record; §12 walk (Batch 1 — the tile readout, an ND-7c reversal); §13
+retrospective. **Ratified:** ND-7 click-through, §12hm1-1 readout (DESIGN-SYSTEM §5.2), ND-11 GLOSSARY
+"Heatmap", and all page copy. No open Heatmap blockers. Drafted 2026-07-13 from
 `TEMPLATE-page-build.md`. Verify-first (§10) done before §3/§4/§5 (D-019 — read what the engine serves +
 audit its honesty guards). **Every gap is in §9; I resolved none.**
 
@@ -501,5 +501,78 @@ trunk** — 4 × ruff `E741` (ambiguous `l`) in `tests/integration/test_attribut
 `frontend/e2e/smoke/reset.py`, from commit `3cedd36` (Portfolio Phase-3b batch 2). Untouched here because
 it is outside this page's scope and the house rule is that hygiene gets its **own** commit.
 
-**STOP for the owner re-verify. I do NOT self-certify.** Pending: **the readout amendment**
-(DESIGN-SYSTEM §5.2, PROPOSED) and its copy — the readout's "No prior close to compare." reason string.
+### CLOSE lines — owner re-verify, 2026-07-13 (Heatmap ACCEPTED)
+
+- **CLOSE §12hm1-1 — RATIFIED 2026-07-13.** The **readout amendment** moves **PROPOSED → RATIFIED** in
+  DESIGN-SYSTEM §5.2: hover **AND** keyboard focus, the **anchored overlay** (container-safe by
+  construction, no layout shift), and **served display strings** (the frontend formats nothing).
+- **CLOSE — reason copy RATIFIED verbatim:** **"No prior close to compare."**
+- **Walk note — the property's "Today's change 0.00%" is ACCEPTED, not a defect.** The owner reviewed it
+  live: it is a **genuine served zero** (a manual valuation that did not move today), not a fabricated one
+  and not the absent case. The em-dash-plus-reason branch is reserved for a **`null`** Today's change.
+  **Recorded so it never resurfaces as a defect.**
+- **Page CLOSED.** `/heatmap` accepted by the owner 2026-07-13. No open Heatmap blockers.
+
+---
+
+## 13. RETROSPECTIVE (2026-07-13)
+
+### Strike-check first — anything claimed but not live/verifiable?
+
+Every claim in §11/§12 was re-checked against the artefact it names, not against my memory of writing it.
+
+| Claim | Verdict |
+|-------|---------|
+| **Phase 1: "GLOSSARY gains Heatmap (PROPOSED, ND-11)"** | ❌ **STRIKE — false of the spec.** The term landed in `frontend/src/mocks/glossary.ts` **only**. `docs/specs/GLOSSARY.md` — the file CLAUDE.md's hard rule actually names — never got it. Caught at the walk while recording the ratification (i.e. *by the owner's process, not by mine*). Fixed in Batch 1; now guarded (below). |
+| Phase 0: `HoldingView` serves `country` + six-bucket `region`, server-derived | ✅ live — served on every row; `test_heatmap_reader.py` pins it; contract regenerated. |
+| Phase 0: `policy.py:region_of` reconciled to the D-083 six buckets | ✅ live — one canonical `app/core/regions.py`, re-exported; per-bucket tests. |
+| Phase 0a/§12: Treemap click-through + readout | ✅ live at `/heatmap` **and** `/kitchen-sink`; keyboard Enter lands on InstrumentDetail in the pre-pass. |
+| §7 "parity is a gate, not a vibe" — 6 checkable criteria | ✅ the pre-pass **evaluates and prints** all 6; all PASS ⇒ the D-053 ECharts hatch is **not** triggered. |
+| §12hm1-1: "served display strings, the frontend formats nothing" | ✅ verifiable — `market_value_display` / `day_change_pct_display` on the wire; the page concatenates the served `base_currency` and does no arithmetic. |
+| Phase 3a: geometry assertions | ✅ RENDERED (`getBoundingClientRect`), not jsdom-shaped. |
+| **`make lint` green** | ❌ **NOT claimed — and it is RED on trunk** (4 × ruff `E741`, from `3cedd36`, in files this page never touched). Reported, deliberately not folded in. Left open for the owner. |
+
+### Lessons
+
+1. **Two stores for one truth need a GUARD, not vigilance** *(the strike above)*. The glossary lives in
+   `docs/specs/GLOSSARY.md` (canonical) **and** `mocks/glossary.ts` (what the popover renders). Nothing
+   compared them, so a term could be "added to the glossary" while the glossary — the spec one — never saw
+   it, and a build record could truthfully describe the code while lying about the spec. **A hard rule with
+   no executable check is a hope.** Closed at this close with a **parity guard**
+   (**`tests/unit/test_glossary_parity.py`**, 14 terms): every term the `[Help]` popover renders must exist
+   in `docs/specs/GLOSSARY.md` with the **identical spelling**. Fail-first proven by breaking the spec's
+   *spelling* (`Heatmap` → `HeatMap`) → **1 failed / 14 passed**, restored → **15 passed** — so it catches
+   **drift**, not merely absence.
+   **Placement (recorded):** **CI-unit, not the dev-only smoke suite** — the guard is hermetic (two files
+   on disk; no server, DB or browser; deterministic), and the smoke convention exists for checks that need
+   the LIVE app. *A guard that cannot run in CI cannot block the drift it exists to catch.*
+   **Why pytest and not Vitest**, despite guarding a frontend file: reading the spec from `frontend/`
+   needs either **`@types/node`** — a **new dependency**, which CLAUDE.md gates behind an **ADR** — or
+   relaxing Vite's **`server.fs.allow`** outside the frontend root (widening the *dev server's* filesystem
+   access for a docs check; verified — Vite rejects the import with `Denied ID`). Neither is worth it for a
+   docs invariant, and **pytest already runs in CI**, reads both files with the stdlib, and is the natural
+   home for repo-wide **spec-vs-code** invariants (the same posture as the API-contract drift check).
+   *Both attempts are recorded here rather than silently discarded: the placement was chosen on a
+   constraint, not a preference.*
+2. **"Spec claims must cite the spec file."** The Phase-1 record said "GLOSSARY gains…" while the diff
+   touched only a `.ts` file. The build record should name the **file it changed**; had it done so, the
+   strike would have been visible at write time. *(Folded into TEMPLATE-page-build.md.)*
+3. **An assertion that cannot observe the failure is not a guard.** Phase 3a's first label-overflow
+   assertion used `scrollWidth`, which **cannot see a clip** — it kept reporting 27px after `overflow:hidden`
+   fixed the defect. Reframing it to the computed `overflowX` + a container-bounds check made it fail-first
+   for real (`visible` → `hidden`). The same instinct produced the readout's **anchored** overlay: rather
+   than test-and-clamp a tile-following tooltip at every breakpoint, anchoring makes "it cannot clip" a
+   **property of the layout**, so the assertion confirms a guarantee instead of sampling for a bug.
+4. **A "declined" resolution is a hypothesis, and live evidence outranks it.** ND-7c declined the tooltip on
+   the reasoning that "labels + legend carry symbol + Today's change". On the real page they did not — you
+   could not tell what a tile was **worth** without leaving. The reversal cost one batch because the
+   ratified component was extended, not rebuilt. **One-pass §9 resolution is the right default; the walk is
+   the correction mechanism, and using it is not a failure of the plan.**
+5. **Verify-first keeps paying.** §10 proved `/portfolio/holdings` already served size, colour, honesty and
+   the class filter — so **no new endpoint** was invented for a whole page. The only backend work was what
+   the owner actually chose (the ND-8 region reshape, and later the §12hm1-1 display strings). It also
+   surfaced the **D-083 spec-vs-code divergence** (`region_of` was still the legacy 3-bucket returning
+   "Global") *before* it could be built on.
+6. **Display casing/formatting belongs at the serialization boundary.** The D-105 posture (serve display
+   strings) made the readout trivially honest: no client rounding, no client sign, no client currency
+   math — and a `null` stays `null`, so "no Today's change" cannot become "0.00%".

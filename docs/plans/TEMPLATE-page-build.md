@@ -38,6 +38,18 @@ mid-build.
   **implementation note** (`server-side`, an internal enum, an endpoint/table name)
   **never** appears in a **user-facing string** — only in code comments / plan docs.
   User copy is plain language; every shown term matches GLOSSARY.
+- **A GLOSSARY term ships to the SPEC, not just the popover data (page-heatmap §13-1).** The glossary
+  has **two stores** — `docs/specs/GLOSSARY.md` (canonical; the file CLAUDE.md's hard rule names) and
+  `frontend/src/mocks/glossary.ts` (what `[Help]` renders). page-heatmap added a term to the **second
+  only**, and the build record claimed the first: the spec was never touched and nothing noticed until an
+  owner walk. **Add the term to `GLOSSARY.md` first**, then the popover data. Guarded by
+  **`tests/unit/test_glossary_parity.py`** (CI-unit) — every popover term must exist in the spec with the
+  **identical spelling**. *Generalise: whenever one truth lives in two stores, write the guard — vigilance
+  is not a mechanism.*
+- **A spec claim must cite the spec FILE (page-heatmap §13-2).** In §11/§12, when a record says "GLOSSARY
+  gains X" / "DESIGN-SYSTEM §5 amended", it must **name the file the diff actually touched**. A claim about
+  a spec whose diff contains no spec file is a **strike** — and writing the filename is what makes that
+  visible at write time rather than at the walk.
 - **Label/copy changes are app-wide (page-chrome §11-4).** When a user-facing label or
   copy string changes, **grep the whole frontend** and update **every** instance in the
   same change — never fix only the one you found (§11-4 recurred because the first fix

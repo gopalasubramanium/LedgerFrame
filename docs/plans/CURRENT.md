@@ -833,16 +833,71 @@ reconciliation demonstrated LIVE** (ReviewCard count == Review page count == ser
 round-trip, 0 overflow × both themes, 0 console errors. **Backend 501 · 153 unit + 117 Playwright.**
 Open at the walk: **Mark reviewed + Severity GLOSSARY ratify** (ND-11).
 
+## HEATMAP — DONE ✅ (owner accepted 2026-07-13)
+
+**`/heatmap` is built, walked and CLOSED.** Markets-group overview page; **owns nothing canonical** — a
+treemap **visualisation** of `/portfolio/holdings` (tile size = served `market_value`, tile colour = served
+**Today's change**). Priced-only, **assets only** (liabilities excluded), **stale INCLUDED** (staleness
+honesty carried by the global StaleBanner, ND-3); honest coverage note + both empty states. Full record:
+**`page-heatmap.md` §9–§13** (§13 retrospective).
+
+**Verify-first paid for itself: NO new endpoint.** §10 proved the existing holdings reader already served
+size, colour, honesty and the class filter. Backend work was only what the owner chose:
+- **§3b reshape (ND-8, applied):** `HoldingView` gains **`country`** + a **server-derived `region`** (D-083
+  **six** buckets — no client region map). This also **reconciled a spec-vs-code divergence**: `region_of`
+  was still the legacy 3-bucket (`IN/SG/US` → "Global"); there is now **one canonical**
+  `app/core/regions.py`, reused by both `HoldingView.region` and the policy region dimension.
+- **§12hm1-1 (applied):** `HoldingView` gains **`market_value_display`** + **`day_change_pct_display`** —
+  served display strings (D-105 posture; the frontend formats nothing).
+
+**DESIGN-SYSTEM §5.2 Treemap — two amendments RATIFIED 2026-07-13** *(this supersedes the earlier NEXT-item
+phrasing that a "§5 amendment" was needed for the page treatment: the Treemap render + magnitude scale were
+**already ratified** (2026-07-10), so no page-treatment amendment was required — per the plan's Step-2.3
+correction. The amendments below are the two **interactions the owner chose at the walk**, not the render.)*:
+- **Click-through** (ND-7) — optional per-node `href` makes a tile a **keyboard-operable link** to its
+  instrument (D-098); Enter native + Space handled; outline/inset-shadow only ⇒ **no layout shift**.
+- **Readout** (§12hm1-1, an **ND-7c REVERSAL** on live evidence) — name/symbol · value · **Today's change**
+  on **hover AND keyboard focus** (never hover-only, WCAG 1.4.13); an **anchored overlay** that is
+  **container-safe by construction** (an edge tile cannot push it past the map boundary — verified at
+  320px) and out of flow ⇒ no layout shift. A missing figure → **em dash + reason** (ratified copy: *"No
+  prior close to compare."*), never a fabricated 0; a **real served zero** shows as `0.00%`.
+
+**D-053 ECharts escape hatch — NOT triggered.** §7 defined parity as **6 checkable criteria**; the pre-pass
+evaluates and prints them — **all 6 PASS**, so the **house SVG stands** and no ADR/dependency was needed.
+
+**Walk (§12, Batch 1)** — one finding: **§12hm1-1** the tile readout. **Ratified at the walk:** ND-7
+click-through, ND-11 GLOSSARY **"Heatmap"**, ND-12 + coverage/assets-only copy; at the re-verify: the
+**readout amendment** + its reason copy. **Accepted, not defects:** the dominant flat **"Home (est.)"** tile
+(largest holding, no daily change — honest v1 parity) and its **"Today's change 0.00%"** (a genuine served
+zero for a manual valuation).
+
+**⚠ STRIKE found at the walk (§13) — and closed.** The Phase-1 record claimed "GLOSSARY gains Heatmap", but
+the term had landed in **`mocks/glossary.ts` only** — `docs/specs/GLOSSARY.md`, the file the hard rule
+names, never got it. **Platform legacy:** a **glossary parity guard**
+(**`tests/unit/test_glossary_parity.py`**, CI-unit, 14 terms) now asserts every `[Help]` popover term exists
+in the spec with the **identical spelling** (fail-first proven on a *spelling* drift, not just absence) —
+*one truth in two stores needs a guard, not vigilance*. **Placement:** CI-unit, not the dev-only smoke suite
+(it is hermetic); **pytest not Vitest** because reading the spec from `frontend/` would need `@types/node`
+(a new dependency ⇒ ADR) or a widened Vite `server.fs.allow` — see `page-heatmap.md` §13-1. Folded into
+`TEMPLATE-page-build.md` (+ "a spec claim must cite the spec FILE").
+
+**Verification:** backend **552** · ruff clean on touched files · contract drift green; frontend
+`npm run check` **exit 0** (lint · typecheck · tokens · **172 unit** · **129 Playwright**); **live pre-pass
+GREEN** — RENDERED geometry, readout on hover+focus container-bounded on all 12 tiles @320px & @1366px,
+keyboard Enter → InstrumentDetail, 0 overflow × both themes, **0 console errors**.
+
+**⚠ Open, NOT mine, NOT fixed (owner's call):** `make lint` is **RED on trunk** — 4 × ruff `E741` in
+`tests/integration/test_attribution_api.py` + `frontend/e2e/smoke/reset.py`, from commit `3cedd36`. Left
+untouched (out of page scope; hygiene gets its own commit).
+
 ## NEXT
 
-1. **Heatmap page (D-053) — `docs/plans/page-heatmap.md`, PLAN ONLY first.** The treemap page treatment is
-   a **DESIGN-SYSTEM §5 amendment + the ECharts escape hatch** (D-053) — author PROPOSED, **ratify at
-   `/kitchen-sink` before assembly** (the ratified `Treemap` exists but D-053's page treatment does not).
-   Markets links to `/heatmap` (never embeds, page-markets ND-11).
-2. **Home page** — now unblocked: **every canonical source Home summarises exists** (Net worth, Portfolio,
-   Holdings, Pricing Health, Markets, News, Review). Home Simple/Full composition + ticker strip
-   (D-046/D-047, IA). Via `TEMPLATE-page-build.md`.
-3. **Release-readiness plan — `docs/plans/release-readiness.md`, PLAN ONLY (NEW, owner 2026-07-13).**
+1. **Home page — `docs/plans/page-home.md`, PLAN ONLY first.** Now unblocked: **every canonical source Home
+   summarises exists** (Net worth, Portfolio, Holdings, Pricing Health, Markets, News, Review, Heatmap). A
+   **composition-only** page — it owns **nothing**; every widget summarises a canonical reader with a link
+   (P-1/D-038), never a recompute. **D-046 Simple/Full layouts** (+ the D-047 ticker strip in Full) and
+   D-040 Detail level. Via `TEMPLATE-page-build.md`: verify-first (§10) → §1–§8 → **STOP at §9**.
+2. **Release-readiness plan — `docs/plans/release-readiness.md`, PLAN ONLY (owner 2026-07-13).**
    **Define "first public release" BEFORE the remaining-page count is read as a release date:** source vs
    packaged distribution; **license**; **R-24 disposition** (first-boot license-acceptance gate — build
    now vs parked); **upgrade / migration policy**; a **distribution-facing security pass** (the D-001
@@ -850,19 +905,19 @@ Open at the walk: **Mark reviewed + Severity GLOSSARY ratify** (ND-11).
    **no build**.
 
 Then the existing queue, unchanged:
-4. **Remaining Planning-group pages** (Policy · Cash flow · Scenarios · Insurance · Estate), **Accounts**
+3. **Remaining Planning-group pages** (Policy · Cash flow · Scenarios · Insurance · Estate), **Accounts**
    (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it, Portfolio
    defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live here),
    **Reports + Reports Pack**, **Settings**, **Help**, **Legal** — each via `TEMPLATE-page-build.md`.
    **AI-surfaces milestone remains deferred intact** (D-067/D-068).
-5. **Help copy task** (for the Help page plan, or a Holdings help section) —
+4. **Help copy task** (for the Help page plan, or a Holdings help section) —
    surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
    **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price
    (existing types, no special form); **Ticker / name change** supported (name
    edits preserve history); **De-merger / Spin-off** parked (ROADMAP R-7). Remaining
    API-CONTRACT delta-table renames still to apply per page: Realised P/L / Ongoing-cost
    (D-026/D-029), route-rename redirects (D-022/D-056). (Review D-030 rename now applied.)
-6. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
+5. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
    separate from design tokens.
 
 ## Needs decision

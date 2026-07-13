@@ -42,9 +42,13 @@ export interface SummaryHeadProps {
 /** A summary tile's header: the title, with the ↗ affordance pinned top-right. */
 export function SummaryHead({ title, to, destination, whole }: SummaryHeadProps) {
   if (whole) {
+    // NOT `lf-summarylink` — that class absolutely-positions the CORNER GLYPH, and putting it on the
+    // header made the header itself absolute (it wins over `.lf-summaryhead { position: relative }` on
+    // source order), tearing every whole-header out of its tile and piling them in the page's corner
+    // (§12ho1-4). The header is a link; it is not the glyph. Guarded by e2e/tile-integrity.spec.ts.
     return (
       <Link
-        className="lf-summaryhead lf-summaryhead--whole lf-summarylink"
+        className="lf-summaryhead lf-summaryhead--whole"
         data-summarylink
         to={to}
         aria-label={destination}

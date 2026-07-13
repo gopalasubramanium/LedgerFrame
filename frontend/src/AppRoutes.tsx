@@ -10,7 +10,6 @@ import { News } from "./routes/News";
 import { Review } from "./routes/Review";
 import { PricingHealth } from "./routes/PricingHealth";
 import { InstrumentDetail } from "./routes/InstrumentDetail";
-import { Home } from "./routes/Home";
 import { NotBuilt } from "./routes/NotBuilt";
 
 // The app route tree (D-066): every product route renders inside the ONE AppShell;
@@ -27,7 +26,10 @@ export function AppRoutes() {
         element={
           <AppShell>
             <Routes>
-              <Route path="/" element={<Home />} />
+              {/* Home is UNBUILT (page-home §12ho1-4): the owner rejected the first assembly and closed
+                * incremental patching of it. `/` is honestly unbuilt until the static mockup at
+                * /kitchen-sink is ratified and wired — it never renders a half-torn-down page. */}
+              <Route path="/" element={<NotBuilt />} />
               <Route path="/net-worth" element={<NetWorth />} />
               <Route path="/holdings" element={<Holdings />} />
               <Route path="/portfolio" element={<Portfolio />} />

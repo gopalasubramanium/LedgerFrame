@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import "./KitchenSink.css";
 import { DisplayControls } from "../components/DisplayControls";
 import { TokenBoard } from "./TokenBoard";
+import { HomeMockupFull, HomeMockupSimple } from "./HomeMockup";
 import {
   AllocationDonut,
   Clock,
@@ -31,6 +32,7 @@ import {
   QuantityInput,
   QuoteCardRow,
   ReviewCard,
+  SummaryHead,
   Select,
   Sidebar,
   Skeleton,
@@ -147,9 +149,19 @@ function Specimen({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+function Section({
+  title,
+  note,
+  bleed,
+  children,
+}: {
+  title: string;
+  note?: string;
+  bleed?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <section className="ks__section">
+    <section className={`ks__section${bleed ? " ks__section--bleed" : ""}`}>
       <h2 className="ks__h2">{title}</h2>
       {note && <p className="ks__note">{note}</p>}
       {children}
@@ -592,6 +604,31 @@ export function KitchenSink() {
       </Section>
 
       {/* ---------------------------------------------------------------- */}
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        bleed
+        title="Home mockup — RATIFICATION GATE (page-home §12ho1-4)"
+        note="STATIC: hardcoded demo-shaped data, no readers, no fetches. It is mounted here and nowhere else — `/` stays unbuilt until this geometry is ratified and then wired to the canonical readers. Each frame below IS a viewport: the Full frame is exactly 1366×768, the hard target, so what you see inside it is what the page looks like at that size — no scrolling, no half-empty rows. Toggle the theme above to see both. Judge the LAYOUT (size, placement, density); every figure is fake."
+      >
+        <div className="ks__stack">
+          <Specimen label="FULL · 1366×768 — 12 columns × 3 rows. The lead is Today's change (largest figure on the page); Review takes the strongest remaining corner. Attention dominates by SIZE, not motion.">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport">
+                <HomeMockupFull />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="SIMPLE · a calm centred column (D-046: headline + ReviewCard + briefing — nothing else). No grid.">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--simple">
+                <HomeMockupSimple />
+              </div>
+            </div>
+          </Specimen>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
       <Section title="Structure & chrome (§5.4)">
         <div className="ks__stack">
           <Specimen label="Card / panel (D-100, ratified w/ amendment) — LAYERED: outer --surface-raised card + nested --surface body panel (the Holdings net-worth family)">
@@ -601,6 +638,25 @@ export function KitchenSink() {
                 Content sits in a nested panel on <code>--surface</code> with its own
                 border — depth, not a single flat fill. Both themes + high-contrast.
               </div>
+            </div>
+          </Specimen>
+          {/* The linked-summary affordance (DESIGN-SYSTEM §5 RULE, page-home §12ho1-2). It shipped to four
+            * pages with NO gallery specimen — so nobody ever LOOKED at it, and a cascade collision that
+            * tore every `whole` header out of its tile went unseen (§12ho1-4). It has a specimen now. */}
+          <Specimen label="SummaryHead · plain — the ↗ sits top-right INSIDE the tile; the title may carry a [Help] popover (so the header is NOT one link: nesting interactive content inside a link is a defect)">
+            <div className="lf-card">
+              <SummaryHead
+                title={<GlossaryTerm term="term-net-worth">Net worth</GlossaryTerm>}
+                to="#/net-worth"
+                destination="Net worth"
+              />
+              <div className="lf-card__body">The figure this tile summarises.</div>
+            </div>
+          </Specimen>
+          <Specimen label="SummaryHead · whole — a PURE summary tile: the entire header is the click target. Must still render INSIDE its tile (never absolutely positioned to the page)">
+            <div className="lf-card">
+              <SummaryHead title="Performance" to="#/portfolio" destination="Portfolio" whole />
+              <div className="lf-card__body">The whole header is one link; the ↗ glyph is decorative.</div>
             </div>
           </Specimen>
           <Specimen label="Scrollable panel (D-101, ratified w/ amendment) — header OUTSIDE the scroll; only the body scrolls, thumb starts below the header">

@@ -8,10 +8,10 @@ import { test, expect } from "@playwright/test";
 
 const WIDTHS = [320, 375, 900, 1366];
 const ROUTES = [
-  // `/` is HOME (page-home Phase 1 — it replaced the boot scaffold). NOTE: this suite runs with NO
-  // backend, so Home renders its honest layout-unreachable state; the LIVE composition (both layouts ×
-  // both themes × every breakpoint) is driven by the Phase-3a pre-pass against the real backend.
-  { name: "home (overview)", hash: "#/" },
+  // `/` is HOME — currently UNBUILT (page-home §12ho1-4: the first assembly was rejected and torn
+  // down), so it renders the honest NotBuilt state. The route stays in this suite so the shell is
+  // still measured at `/`; the page's own layout suites return when the ratified mockup is wired.
+  { name: "home (unbuilt)", hash: "#/" },
   { name: "net worth (overview)", hash: "#/net-worth" },
   { name: "holdings (worklist)", hash: "#/holdings" },
   { name: "portfolio (overview)", hash: "#/portfolio" },
@@ -88,7 +88,9 @@ for (const route of ROUTES) {
 test("built pages share one content-left inset (shell owns the padding)", async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   const lefts: number[] = [];
-  for (const hash of ["#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review"]) {
+  // `#/` is absent on purpose: Home is UNBUILT (§12ho1-4) and this test is about BUILT pages. It
+  // returns to the list when the ratified Home is wired.
+  for (const hash of ["#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review"]) {
     await page.goto(`/${hash}`);
     await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
     lefts.push(

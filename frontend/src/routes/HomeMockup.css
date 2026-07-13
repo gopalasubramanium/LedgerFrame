@@ -1,0 +1,258 @@
+/* HOME MOCKUP (page-home §12ho1-4) — the geometry the owner ratifies before any wiring.
+ * Tokens only (no raw colours/sizes — ADR-0002). Semantic colour only: the sole hues are the
+ * gain/loss tones on signed figures and the donut's categorical palette. Hierarchy is SIZE and
+ * PLACEMENT — never motion, never a decorative accent. */
+
+.hm3 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-4);
+  background: var(--surface-sunken, var(--surface));
+  box-sizing: border-box;
+}
+
+.hm3__pagehead { flex: 0 0 auto; }
+.hm3__h1 {
+  margin: 0;
+  font-size: var(--font-size-28);
+  line-height: var(--line-28);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.hm3__sub {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+
+/* ---- FULL: 12 columns × 3 rows. No half-empty rows; the rows fill the viewport. ---------- */
+.hm3__grid {
+  flex: 1 1 auto;
+  min-height: 0; /* the rows may shrink to fit rather than push the page taller */
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  /* Rows are sized to what each row's tallest tile ACTUALLY needs, measured in the browser — not to
+   * an even split that clips real content. Row 3 carries the most (briefing + THREE headlines, §9-9:
+   * 246px); rows 1-2 are bounded by the ReviewCard's three verdicts and the donut's 9rem ring. The
+   * page's own padding and gaps paid for it: NO figure, chart, or list was shrunk to win the fit. */
+  grid-template-rows: 205fr 210fr 246fr;
+  gap: var(--space-3);
+}
+
+.hm3__cell {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow: hidden; /* a tile clips its own content — it never pushes the page into a scroll */
+}
+
+/* R1 — hero. The headline block leads; Review takes the strongest remaining corner. */
+.hm3__cell--networth { grid-column: 1 / span 4; grid-row: 1; }
+.hm3__cell--change   { grid-column: 5 / span 4; grid-row: 1; }
+.hm3__cell--review   { grid-column: 9 / span 4; grid-row: 1; }
+/* R2 */
+.hm3__cell--alloc    { grid-column: 1 / span 4; grid-row: 2; }
+.hm3__cell--movers   { grid-column: 5 / span 8; grid-row: 2; }
+/* R3 */
+/* 6/6, not 7/5: at 5 columns the stale chip pushes the last quote card past the tile's edge and it
+ * gets clipped. A tile never truncates an honesty affordance to save space. */
+.hm3__cell--brief    { grid-column: 1 / span 6; grid-row: 3; }
+.hm3__cell--quotes   { grid-column: 7 / span 6; grid-row: 3; }
+
+/* The ReviewCard is itself a card — it must fill its cell, not sit inside a second one. */
+.hm3__cell--review > .lf-review { height: 100%; overflow: hidden; }
+
+/* Two ↗ side by side: a tile that summarises TWO canonical pages names both (Movers precedent). */
+.hm3__twohead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* ---- Figures: tabular, top of the ratified type scale (12/13/14/16/20/28). --------------- */
+.hm3__figure {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+/* The anchor: net worth. Large, but NOT the lead. */
+.hm3__figure--anchor {
+  font-size: var(--font-size-20);
+  line-height: var(--line-20);
+}
+/* THE LEAD: Today's change is the largest figure on the page (28 — the scale's top). */
+.hm3__figure--lead {
+  font-size: var(--font-size-28);
+  line-height: var(--line-28);
+}
+.hm3__leadpct {
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+}
+.hm3__figure--up { color: var(--gain); }
+.hm3__figure--down { color: var(--loss); }
+.hm3__unit {
+  font-size: var(--font-size-13);
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+}
+
+/* The gross/liabilities split — the net-worth reader serves both; Net worth shows both (P-1). */
+.hm3__split {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.hm3__splitrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+.hm3__splitrow dt { color: var(--text-secondary); }
+.hm3__splitrow dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* Every card pairs its figure with a compact visual. */
+.hm3__spark { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-end; }
+.hm3__spark--lead { flex: 1 1 auto; }
+.hm3__spark > * { width: 100%; }
+
+/* The sparkline's caption names ITS canonical page (Portfolio) — the tile summarises two. */
+.hm3__sparkcap {
+  position: relative; /* the ↗ is absolute — this is the box it is absolute to */
+  display: flex;
+  align-items: baseline;
+  padding-right: var(--space-5);
+  margin-top: auto; /* push the chart block to the bottom of the card */
+}
+.hm3__sparklabel {
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+/* Quotes: the component owns its head, so the tile contributes only the corner ↗ — which needs a
+ * positioned box, and room so it never lands on the source select. */
+.hm3__cell--quotes {
+  position: relative;
+  padding-right: var(--space-6);
+}
+/* Absolute offsets resolve against the card's PADDING box, so top/right must be re-stated to sit on
+ * the card's content edge — otherwise the ↗ lands flush on the border, out of line with the head. */
+.hm3__cell--quotes > .lf-summarylink {
+  top: var(--space-5);
+  right: var(--space-5);
+}
+
+.hm3__donut { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; }
+
+/* ---- Movers: two PAIRS, four tight columns (D-024 — never interchanged). ----------------- */
+.hm3__movers {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+.hm3__moverlist { min-width: 0; }
+.hm3__moverhead {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  text-transform: none;
+}
+.hm3__moverrows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.hm3__moverrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+.hm3__moversym {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm3__moverpct { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hm3__moverpct--up { color: var(--gain); }
+.hm3__moverpct--down { color: var(--loss); }
+
+/* ---- Briefing: clamped so an essay never blows the row height. --------------------------- */
+.hm3__briefing {
+  margin: 0;
+  flex: 0 0 auto; /* a flex column shrinks its children — the briefing must not be squeezed to nothing */
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 2 lines leaves room for all THREE headlines (§9-9) — no clipped list */
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- SIMPLE: a calm centred column. No grid. -------------------------------------------- */
+.hm3__column {
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.hm3__changeline {
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+}
+
+/* ---- Tablet / mobile: one viewport is NOT promised below 1366 (the page may scroll). ------ */
+@media (max-width: 1365px) {
+  .hm3__grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: none;
+  }
+  .hm3__cell { overflow: visible; }
+  .hm3__cell--networth { grid-column: 1 / span 6; grid-row: auto; }
+  .hm3__cell--change   { grid-column: 1 / span 3; grid-row: auto; }
+  .hm3__cell--review   { grid-column: 4 / span 3; grid-row: auto; }
+  .hm3__cell--alloc    { grid-column: 1 / span 2; grid-row: auto; }
+  .hm3__cell--movers   { grid-column: 3 / span 4; grid-row: auto; }
+  .hm3__cell--brief    { grid-column: 1 / span 3; grid-row: auto; }
+  .hm3__cell--quotes   { grid-column: 4 / span 3; grid-row: auto; }
+}
+@media (max-width: 899px) {
+  .hm3__grid { grid-template-columns: 1fr; }
+  .hm3__cell { grid-column: 1 !important; }
+  .hm3__twohead { grid-template-columns: 1fr; }
+  .hm3__movers { grid-template-columns: repeat(2, 1fr); }
+}

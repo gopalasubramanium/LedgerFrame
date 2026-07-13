@@ -99,10 +99,12 @@
   border-radius: var(--radius-lg);
 }
 .lf-review__head {
+  position: relative; /* the corner ↗ is absolute — this is the box it is absolute TO (§12ho1-4) */
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  padding-right: var(--space-5); /* reserve the corner so the attention count never runs under the ↗ */
 }
 .lf-review__title {
   margin: 0;

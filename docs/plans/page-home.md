@@ -1,7 +1,10 @@
 # page-home.md — Home page build plan
 
-**Status: §9 RESOLVED (owner one-pass, 2026-07-13) — BUILDING. Phases 0/0a/1/2/3a; Phase-3b owner walk
-PENDING.**
+**Status: REBUILD. The first assembly was REJECTED by the owner (§12ho1-4, 2026-07-14) and TORN DOWN —
+`/` is honestly unbuilt. Phase 0 (backend/contract) STANDS. The next gate is the STATIC HOME MOCKUP at
+`/kitchen-sink`, awaiting owner ratification in the browser. NOTHING is wired until it is ratified.**
+*(Historical: §9 RESOLVED 2026-07-13; Phases 0/0a/1/2/3a and Phase-3b Batch 1 are recorded below — the
+Phase-1 assembly they describe no longer exists. Read §12ho1-4 first.)*
 Drafted from `TEMPLATE-page-build.md`. **Verify-first (§10) was done BEFORE §1–§8** (D-019 — read what
 the engine actually serves *and audit its honesty guards*, not just its shapes). **Every gap went to §9;
 the owner resolved all 16 in one pass (2026-07-13) — resolutions at the head of §9, options preserved.**
@@ -664,3 +667,144 @@ themes × 320/375/900/1366 · **0 console errors**.
 **Pending ratification at re-verify (carried + new):** §9-1 label + Deprecated-terms entry · §9-11
 empty-state strings · §9-13 "Home" · §9-15 TopBar amendment · the `full` default · **§12ho1-1 subtitle
 pick (a/b/c)** · **§12ho1-2 codified affordance rule** · **§12ho1-3 approved grid**.
+
+---
+
+## §12ho1-4 — REGRESSION: the assembly is REJECTED; Phase-1 REBUILD behind a new gate (2026-07-14)
+
+**Owner verdict (verbatim): the page requires a fresh build; incremental patching of this assembly is
+closed.** This entry records the regression, the salvage audit, and the new gate. **The Home page is
+TORN DOWN. `/` is honestly unbuilt. Nothing is wired until the mockup below is ratified.**
+
+### 1. The regression — reproduced BEFORE anything was touched (fail-first)
+
+Screenshots: `docs/evidence/page-home/12ho1-4-REGRESSION-home.png`,
+`…-REGRESSION-net-worth.png`. Geometry probe at 1366×768 on the live app:
+
+| Owner observation | Reproduced | Measurement |
+|---|---|---|
+| (a) card header rows are GONE from their tiles; the ↗ headers pile up at the top-right of the PAGE | ✅ | **5 of 7** `.lf-summaryhead` computed `position: absolute`, all pinned to **y=75, right-aligned to the page** — **10 overlapping pairs**. The visible garble is `ContribAlloGaiPeDeQuotes ↗`. |
+| (b) the approved §12ho1-3 grid was not applied — still a stacked column | ✅ | Correct, and **expected**: §12ho1-3 Step 2 was never built (the plan STOPped for approval). The approval and the build never met. |
+| (c) net effect worse than before Batch 1 | ✅ | Confirmed — Batch 1 introduced (a). |
+
+**Root cause (one line, and it is not Home's).** `SummaryHead`'s `whole` branch rendered
+`className="lf-summaryhead lf-summaryhead--whole lf-summarylink"`. In `structure.css`,
+`.lf-summarylink { position: absolute; top: 0; right: 0 }` (:279) is declared **after**
+`.lf-summaryhead { position: relative }` (:258) at **equal specificity** — so **`absolute` won**, and
+every whole-header was ripped out of its tile and positioned against a distant ancestor. The class
+that positions the **corner glyph** was put on the **header**.
+
+**It was never Home-only. It shipped to FOUR pages** — `whole` is used 11×: Home (6), **Instrument
+Detail (3)**, **Net worth (1)**, **Portfolio (1)**. Net worth's *"Portfolio ↗"* was floating above its
+own H1 in the page's corner, on a page the owner had already CLOSED. A third instance of the same
+defect class was then found in the ratified **ReviewCard**: `.lf-review__head` had no
+`position: relative`, so its ↗ escaped the same way.
+
+**Why every suite was green.** The §12ho1-2 checks **counted** the affordance — 8 `[data-summarylink]`,
+8 with `aria-label`, first one keyboard-focusable. All of that stays true of a header lying in a heap
+in the wrong corner. **A count is not a geometry**, and jsdom has no layout engine (ADR-0004). The
+kitchen-sink had **no SummaryHead specimen at all**, so nobody — human or machine — ever *looked* at
+the component. That is the process defect, and it is fixed below.
+
+### 2. Salvage audit — proven by suites, not by claims
+
+**KEPT** (all still green): Phase-0 backend/contract work (`home_layout` + `home_quote_source` keys and
+their served defaults, `/dashboard/home` retired, watchlist quotes) — pinned by
+`tests/integration/test_home_reader.py`, which is why deleting the frontend smoke spec lost **no**
+Phase-0 proof; the §9 resolutions; the backend, copy-hygiene and glossary-parity guards; the TopBar
+§9-15 removal; and the codified **corner-↗ RULE** (DESIGN-SYSTEM §5) — **the rule stands; its
+implementation failed.**
+
+**REPAIRED, not deleted — `SummaryHead` / `SummaryLink` / `ReviewCard`.** The diagnosis says the
+primitives are **sound** and only the `whole` branch's class composition was wrong: the non-`whole`
+form was correct all along (it rendered `relative`, inside its tile, throughout the regression).
+Deleting them would have broken four pages to fix one line. So: the `lf-summarylink` class comes off
+the header, `.lf-review__head` gets `position: relative`, and both are now **guarded** (below).
+
+**DELETED:** the Home page tree — `routes/Home.tsx`, `Home.css`, `Home.test.tsx`, and
+`e2e/smoke/home-smoke.spec.ts` (its composition assertions describe a page that no longer exists).
+`/` renders the honest **NotBuilt** state; `nav.ts` no longer marks Home built. There is no
+half-torn-down page anywhere.
+
+### 3. The guard that would have caught it — `e2e/tile-integrity.spec.ts` (NEW, permanent)
+
+The invariant, stated once: **a summary header renders inside its own tile.** Asserted in a real
+browser: no header is `position: absolute`; every header sits within its `.lf-card`'s bounds; **no two
+headers overlap**; and every ↗ sits inside the header that owns it. **Fail-first: RED on all four
+routes** — *including the kitchen-sink specimen*, which proves the defect was in the **primitive**,
+not in Home's usage — **GREEN after the repair.** The gallery now carries **SummaryHead specimens
+(plain + `whole`)**, so the component can never again ship unlooked-at.
+
+### 4. NEW GATE — the static Home mockup at `/kitchen-sink` ⟵ **STOP: OWNER RATIFIES IN THE BROWSER**
+
+`routes/HomeMockup.tsx` — **static by construction**: hardcoded demo-shaped data, **no readers, no
+fetches, no state**, mounted **only** in the gallery, never at `/`. Real tokens, ratified components.
+**Each frame IS a viewport** (the Full frame is exactly 1366×768), so the fit is *seen*, not asserted
+at. Toggle the gallery's theme control for dark.
+
+Screenshots: `12ho1-4-mockup-full-light.png`, `…-full-dark.png`, `…-simple-light.png`.
+
+**Full — 12 columns × 3 rows, fits 1366×768 with demo data, 0 overflow, 0 clipped tiles:**
+
+```
+┌─────────────────────────┬─────────────────────────┬────────────────────────┐
+│ NET WORTH      (1-4)  ↗ │ TODAY'S CHANGE  (5-8) ↗ │ REVIEW      (9-12)  ↗  │ R1
+│ 796,216.68 SGD          │  +2,140.55 SGD  ← LEAD  │ "3 need a look"        │
+│ Gross assets / Liabilities│ +0.27%   (28px, toned) │ 3 verdict rows         │
+│ Performance ↗ + sparkline│ sparkline               │                        │
+├─────────────────────────┼─────────────────────────┴────────────────────────┤
+│ ALLOCATION     (1-4)  ↗ │ MOVERS                        (5-12)  ↗ ↗        │ R2
+│ donut BESIDE its legend │ Contributors│Detractors│Gainers│Losers (N=3 each) │
+├─────────────────────────┴──────────────┬───────────────────────────────────┤
+│ BRIEFING + HEADLINES     (1-6)       ↗ │ QUOTES            (7-12)       ↗  │ R3
+│ 2 clamped lines + 3 headlines          │ source select + compact cards      │
+└────────────────────────────────────────┴───────────────────────────────────┘
+```
+
+- **The lead is Today's change** — the largest figure on the page (28px, the **top of the ratified
+  type scale**), gain/loss toned. Net worth is the *anchor*, not the lead. Review is the second lead
+  **by placement**. Attention dominates by **SIZE**, never motion.
+- **Row heights are sized to what each row's tallest tile actually needs, measured in the browser**
+  (205 / 210 / 246px) — not an even split that clips real content. **No figure, chart or list was
+  shrunk to win the fit**; the page's own padding and gaps paid for it. **No half-empty rows.**
+- **Simple** = a calm centred column (max 46rem): headline + ReviewCard + briefing. No grid.
+- **Forbidden imports honoured:** no widget picker (R-19), no greeting, no projected income, no
+  spending, no goal gauge, no account filter, no "as of" footer. The D-046 set is **fixed**.
+- **Guarded:** the mockup's own claim — *fits 1366×768, no tile clips its content* — is asserted in
+  `tile-integrity.spec.ts`, so the gate artifact cannot silently rot before ratification.
+
+#### Three things the mockup PROPOSES — they are decisions, not improvisations
+
+1. **The hero card summarises TWO canonical pages.** The net-worth figures are **Net worth**'s; the
+   sparkline is **Portfolio**'s performance series (D-035/§9-8). So the tile carries **two ↗** — the
+   Movers precedent — rendered as the title's ↗ plus a *"Performance ↗"* caption on the chart, rather
+   than two competing titles. **Approve, or split them back into two tiles (which costs the 3-row fit).**
+2. **Gross assets / Liabilities now appear on Home.** D-046 lists only *"net worth + Today's change
+   lines"*. Both figures **are** on the canonical Net worth page, so P-1's corollary is satisfied — but
+   this **widens D-046's widget content**. **Ratify or drop.**
+3. **`QuoteCardRow` renders its own head** (*"Quotes"* + the source select), so the Quotes tile adds
+   **only** the corner ↗ — otherwise the title appears twice. Giving the component a proper
+   `SummaryHead` is a **PROPOSED §5 amendment**; it was **not** improvised into `ui/`.
+
+*Also noted, not acted on:* the type scale tops out at **28px**, so the hero figure is 28px. If you
+want a stronger lead, that is a **type-scale amendment** (a display size) — say so and it is proposed
+properly, not smuggled in as a raw pixel value.
+
+### 5. Verification
+
+Backend **620**, unchanged (no backend file touched). Frontend `npm run check` **exit 0**: lint ·
+typecheck · tokens · **169 unit** (Home's 10 removed with the page) · **134 Playwright** (129 + the 5
+new tile-integrity assertions). `tile-integrity` proven **RED before / GREEN after** on all four
+routes. Full mockup measured at 1366×768: **vertical overflow 0 · horizontal overflow 0 · clipped
+tiles 0**, light and dark.
+
+### 6. Pending ratification (carried + new)
+
+§9-1 label + Deprecated-terms · §9-11 empty-state strings · §9-13 "Home" · §9-15 TopBar amendment ·
+the `full` default · §12ho1-1 subtitle pick (a/b/c) · §12ho1-2 codified ↗ rule · **the mockup itself**
+· **the three PROPOSED items above**.
+
+**STOP — nothing is wired.** After ratification, Phase 1 rebuilds against the canonical readers per the
+§9 resolutions (per-card progressive loading, honest per-widget empty/stale/error states, [Help] per
+§9-12, deep links per D-038, layouts via the served `home_layout`, single scroll, copy hygiene), and
+the pre-pass gains the per-widget and viewport-fit assertions this regression earned.

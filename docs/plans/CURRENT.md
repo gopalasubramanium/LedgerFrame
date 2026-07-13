@@ -908,7 +908,17 @@ widget is a linked summary of the canonical page's reader (P-1/D-038). Shipped:
 
 ## NEXT
 
-1. **Release-readiness plan — `docs/plans/release-readiness.md`, PLAN ONLY (owner 2026-07-13).**
+1. **Release-readiness — `docs/plans/release-readiness.md` DRAFTED 2026-07-14; ⏸ STOP at §2 (NEEDS
+   DECISION), owner one pass.** Audit done (§1, verify-first with file:line). **It does NOT pause the
+   page queue** — Policy runs in parallel. Headline findings for the owner: the repo **already declares
+   AGPL-3.0-or-later** in `pyproject.toml:7` and an SPDX header on **every** file — but there is **no
+   `LICENSE` file**, so RD-2 is a *confirm-or-change*, not a blank page; the **version is incoherent**
+   (backend `3.24.0`, frontend `0.1.0`, product "v2", no tags, no changelog); the **`.env` data-dir
+   contract is honoured by the app but not by the bash scripts**, whose defaults **disagree with each
+   other** (the Review-close gotcha is a **class**, not a one-off); and **no-egress (Guarantee 5) is not
+   consulted anywhere in the price / FX / AI paths** — only in news/briefing/version-check. 10 decisions
+   (RD-1..RD-10); a conditional gated checklist follows once they land.
+   *(Original framing, owner 2026-07-13.)*
    **Define "first public release" BEFORE the remaining-page count is read as a release date:** source vs
    packaged distribution; **license**; **R-24 disposition** (first-boot license-acceptance gate — build
    now vs parked); **upgrade / migration policy**; a **distribution-facing security pass** (the D-001

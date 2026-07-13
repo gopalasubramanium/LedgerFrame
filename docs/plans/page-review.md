@@ -1,8 +1,7 @@
 # page-review.md — Review page build plan
 
-**Status: §9 RESOLVED (owner one-pass, 2026-07-13) — BUILDING.** Phase 0 backend-first (ND-1 thresholds
-+ D-087 signal + ND-2 rename); Phase 0a confirm-only (DateInput ratified — no §5 amendment). Drafted
-2026-07-13 from
+**Status: §9 RESOLVED — Phases 0/0a/1/2/3a DONE, Phase-3b owner walk PENDING (2026-07-13).** Pre-pass
+GREEN; build record §11. Drafted 2026-07-13 from
 `TEMPLATE-page-build.md` (incl. the tooling-guard fail-first, the ⚠ verify-first divergence-flag +
 **audit-guards** additions, the vertical-single-scroll invariant, and the Reports-group worklist-shape
 note). Verify-first pass done (§10 — read what the review reader actually serves **and its honesty
@@ -380,3 +379,43 @@ shape** — before drafting §3/§4/§5. **No shape was assumed; gaps went to §
 **Owner sign-off surface (all in §9):** ND-1 (threshold divergence — the headline reconciliation), ND-2
 (D-030 rename timing), ND-3 (reader + P-1 single-fetch), ND-4 (severity chip / §5), ND-5 (acknowledgement
 scope), plus ND-6/7/8/9/10/11/12. **No build until the owner resolves §9.**
+
+---
+
+## 11. BUILD RECORD — Phases 0/0a/1/2/3a DONE; Phase-3b (owner walk) PENDING (2026-07-13)
+
+- **Phase 0 — backend-first (ND-1 + ND-2), fail-first.** `review.py`: **`_RUNWAY_LOW_MONTHS = 3`,
+  `_GOAL_SOON_DAYS = 180`** (D-084) + the **D-087 `_OTHER_CLASS_OVERUSE_PCT = 10`** signal (fires when
+  `other`-class > 10% of gross; own `try/except` via a pure `_other_class_overuse_item` helper so the
+  guard is **isolated-testable**, D-059). **D-030 rename** `/review/centre → /review` (contract
+  regenerated same commit; drift green). Backend tests (constants + signal firing + **isolated failure
+  path** + rename + **ND-3 reconciliation** `/portfolio/review.count == /review.attention_count`) were
+  shown **RED on the old values** (fail-first), then green. **PRODUCT-SPEC §5 divergence note closed**
+  (code now matches spec). **Backend 499 → 501** (+ the reconciliation + rename fixes).
+- **Phase 0a — confirm-only.** The composition is all ratified (PageHeader · ReviewCard-precedent ·
+  DataTable · Dialog + TextInput + **DateInput** · EmptyState · Skeleton · GlossaryTerm); the neutral
+  **severity chip is page-local** (Pricing Health `ph__chip` precedent). **No §5 amendment** (DateInput
+  exists — the ND-8 STOP-gate did not trip).
+- **Phase 1 — assembly.** `routes/Review.tsx` (+`.css`) + `api/review.ts`, routed at `/review` (nav
+  `built:true`). Worklist: **summary rail** (served net worth [→ Net worth], today's change, confidence,
+  needs-a-look count, last-reviewed — **no client re-thresholding**) + **attention body** (`DataTable`:
+  **neutral severity chip served-verbatim** ND-4, item, **area → canonical-page link** ND-7 with
+  **unknown-area no-link**) **sorted review-first** + **review history** (last-24 legend) + **Mark-
+  reviewed** (`Dialog` + `TextInput` + `DateInput`, `[S]`, toast + reload, ND-8). Honest empty (served
+  `ok` → "Nothing needs a look right now."). **`[Help]` on Review**; GLOSSARY gains **Mark reviewed** +
+  **Severity** (PROPOSED, ND-11).
+- **Phase 2 — tests.** Backend **ND-3 reconciliation** test; `Review.test.tsx` (5): neutral chip +
+  review-first sort (ND-4); area-map link + **unknown-area no-link** (ND-7); honest empty; **Mark-
+  reviewed request-body assertion** (note + next-review date, ND-8/§7); history + legend. Overflow +
+  single-scroll extended to `/review`. **153 unit + 117 Playwright.**
+- **Phase 3a — pre-pass GREEN (first run).** `e2e/smoke/review-smoke.spec.ts` on live app + real
+  backend: 5 attention rows · neutral chip verbatim · area links · **ND-3 reconciliation LIVE across
+  BOTH surfaces** (`/portfolio/review.count` 4 == `/review.attention_count` 4 == Review-page DOM 4 ==
+  Net-worth ReviewCard DOM 4) · **Mark-reviewed round-trip** (history 0 → 1) · `[Help]` · single scroll
+  region · 0 overflow 320/375/900/1366 × both themes · **0 console errors**.
+
+**Verification:** backend **501** · ruff · contract drift clean; frontend **153 unit + 117 Playwright** ·
+typecheck/lint/tokens/build green; **live pre-pass GREEN**, 0 console errors. **STOP for the Phase-3b
+owner walk (judgment items) — I do NOT self-certify.** Phase 3b: each finding → a numbered `§*` entry,
+fail-first, geometry fixes fail-first; the **Mark reviewed + Severity GLOSSARY terms ratify at the walk**
+(ND-11); owner closes the page.

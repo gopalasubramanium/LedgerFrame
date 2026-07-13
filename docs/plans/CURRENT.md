@@ -791,31 +791,45 @@ single scroll, 0 overflow × both themes, 0 console errors). **146 unit + 105 Pl
 - **Recorded for later:** feed management deferred to the **Settings plan** (ND-6); **`GET /news`
   unconsumed** → tech-debt line (ND-7); D-051 region-link divergence noted (ND-3, no mapping invented).
 
+## REVIEW — Phases 0/0a/1/2/3a DONE; Phase-3b owner walk PENDING (2026-07-13)
+
+**`/review` is built + pre-pass green; awaiting the owner acceptance walk.** Planning-group page (worklist
+template); canonical home for review verdicts + attention + Mark-reviewed/history + the D-059 threshold
+table. §9 all-resolved (owner one-pass 2026-07-13). Full record: **`page-review.md` §9–§11**. **Phase 0
+(backend-first, fail-first):** reconciled the code to spec — **`_RUNWAY_LOW_MONTHS=3`, `_GOAL_SOON_DAYS=180`
+(D-084)** + the **D-087 over-use signal**, and the **D-030 rename `/review/centre → /review`** (contract
+regenerated; PRODUCT-SPEC §5 divergence note closed). **Phase 1:** worklist page — summary rail + attention
+DataTable (**neutral severity chip verbatim** ND-4, **area→canonical-page link** ND-7 w/ unknown-area
+no-link, review-first sort) + history (last-24 legend) + Mark-reviewed (Dialog+TextInput+DateInput, [S]);
+GLOSSARY gains **Mark reviewed + Severity** (PROPOSED). **Phase 2:** ND-3 reconciliation + area-map +
+Mark-reviewed request-body tests; overflow/single-scroll extended. **Phase 3a:** pre-pass GREEN — **ND-3
+reconciliation demonstrated LIVE** (ReviewCard count == Review page count == served count), Mark-reviewed
+round-trip, 0 overflow × both themes, 0 console errors. **Backend 501 · 153 unit + 117 Playwright.**
+Open at the walk: **Mark reviewed + Severity GLOSSARY ratify** (ND-11).
+
 ## NEXT
 
-1. **Review page build — via the template loop, PLAN ONLY first** (`docs/plans/page-review.md`; owner
-   reviews before any code). **Rationale for the queue:** Review is the **last unbuilt canonical source
-   Home summarises** — Net worth's `ReviewCard` already reads its reader — so building it **unblocks
-   Home**. D-038/D-059 (Reports-group; worklist template — a summary header + attention/records body,
-   per the page-pricing-health §13 note); signal thresholds are **named constants each with a rationale**
-   (D-059), per-signal try/except resilience. Standard loop: **Phase-0 verify-first** (D-019 — read what
-   the review reader serves + its honesty guards, §13a), Phase-3a **pre-pass GREEN before** the walk,
-   fail-first (TEMPLATE §7/§8). **Heatmap (D-053, needs a treemap §5 amendment) slots after Review.**
-2. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
+1. **Review — Phase-3b owner acceptance walk (LIVE).** Judgment items → numbered `page-review.md §*`
+   entries, fixed + re-verified live, geometry fixes fail-first (TEMPLATE §7/§8); the **Mark reviewed +
+   Severity GLOSSARY terms ratify at this walk** (ND-11); owner closes the page. (Phases 0/0a/1/2/3a done.)
+2. **Heatmap page build (D-053) — after Review.** Needs a **treemap §5 amendment** (the ratified
+   `Treemap` exists in the inventory but D-053's page treatment ratifies at its own walk); Markets links
+   to `/heatmap` (never embeds, page-markets ND-11).
+3. **Accounts page plan (D-065) — future.** When drafted, it **must wire `entity_id` scoping**
    across every portfolio reader (all `/portfolio/*` readers already accept `entity_id`; Portfolio
    defaults to household with no selector — page-portfolio ND-8). Entity CRUD + the entity selector
    live here, not on Portfolio.
-3. **Help copy task** (for the Help page plan, or a Holdings help section) —
+4. **Help copy task** (for the Help page plan, or a Holdings help section) —
    surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
    **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price
    (existing types, no special form); **Ticker / name change** supported (name
    edits preserve history); **De-merger / Spin-off** parked (ROADMAP R-7).
-4. **Next page builds** — each via `docs/plans/TEMPLATE-page-build.md`, per the
+5. **Next page builds** — each via `docs/plans/TEMPLATE-page-build.md`, per the
    API-CONTRACT delta table: entity CRUD (D-065), the Realised P/L / Review /
    Ongoing-cost renames (D-026/D-030/D-029), route-rename redirects
    (D-022/D-056). `/refdata` (D-005) + holdings CSV (D-050) already shipped in the
    Holdings build.
-5. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
+6. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
    separate from design tokens.
 
 ## Needs decision

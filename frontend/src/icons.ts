@@ -22,7 +22,8 @@ export {
   // Rotation (on / off)
   RotateCw,
   Ban,
-  // Detail level (simple line / full candlestick)
+  // Charts (LineChart also flags the Net worth trend). The top-bar Detail toggle that once
+  // used these was REMOVED — page-home §9-15 (the Home layout is a Settings control).
   LineChart,
   CandlestickChart,
   // Menu / overflow

@@ -248,8 +248,9 @@ test("a real routed page renders inside the shell with chrome around it", async 
   // Chrome present…
   expect(document.querySelector(".lf-sidebar__brand")).not.toBeNull();
   expect(document.querySelector(".lf-topbar")).not.toBeNull();
-  // …with the real page mounted inside the main region.
-  expect(await screen.findByText(/Frontend scaffold/)).toBeTruthy();
+  // …with the real page mounted inside the main region. `/` is HOME now (page-home Phase 1 —
+  // it replaced the boot/health scaffold, which is deleted).
+  await waitFor(() => expect(document.querySelector(".hm2")).not.toBeNull());
 });
 
 test("an unbuilt route lands on the honest NotBuilt fallback inside the shell", async () => {

@@ -12,6 +12,8 @@ export interface HoldingRow {
   quantity?: number | null;
   currency?: string | null;
   price?: number | null;
+  // D-105 served display string for the QUOTE price (class-appropriate precision) — rendered verbatim.
+  price_display?: string | null;
   market_value?: number | null;
   // §12hm1-1 served display strings (D-105 posture — rendered verbatim, the frontend formats
   // nothing). Null when the figure does not exist: shown as "—" + a reason, never fabricated.

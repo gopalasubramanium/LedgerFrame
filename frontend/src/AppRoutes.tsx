@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
-import App from "./App";
 import { KitchenSink } from "./routes/KitchenSink";
 import { Holdings } from "./routes/Holdings";
 import { Portfolio } from "./routes/Portfolio";
@@ -11,6 +10,7 @@ import { News } from "./routes/News";
 import { Review } from "./routes/Review";
 import { PricingHealth } from "./routes/PricingHealth";
 import { InstrumentDetail } from "./routes/InstrumentDetail";
+import { Home } from "./routes/Home";
 import { NotBuilt } from "./routes/NotBuilt";
 
 // The app route tree (D-066): every product route renders inside the ONE AppShell;
@@ -27,7 +27,7 @@ export function AppRoutes() {
         element={
           <AppShell>
             <Routes>
-              <Route path="/" element={<App />} />
+              <Route path="/" element={<Home />} />
               <Route path="/net-worth" element={<NetWorth />} />
               <Route path="/holdings" element={<Holdings />} />
               <Route path="/portfolio" element={<Portfolio />} />

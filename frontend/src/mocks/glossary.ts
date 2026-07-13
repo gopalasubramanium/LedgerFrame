@@ -80,6 +80,12 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "A treemap visualisation of your holdings — tile size is position value, colour is Today's change. It owns no figure; every number comes from the canonical readers.",
   },
+  // Home term (page-home ND/§9-13, PROPOSED — ratify at the walk).
+  "term-home": {
+    term: "Home",
+    definition:
+      "The summary dashboard. It owns nothing — every figure on it is a linked summary of the page that owns it (P-1/D-038).",
+  },
 };
 
 export function lookupTerm(id: string): GlossaryEntry | undefined {

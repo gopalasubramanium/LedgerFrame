@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import "./chrome.css";
 import "./structure.css";
-import { RotateCw, Ban, LineChart, CandlestickChart, Menu, MoreHorizontal } from "../../icons";
+import { RotateCw, Ban, Menu, MoreHorizontal } from "../../icons";
 
 // Stateful-icon rule (DESIGN-SYSTEM §5.5, lucide ADR-0003): each toggle shows a
 // state-distinct icon; the tooltip names the state ("Function: state") and the
-// aria-label matches. Rotation = RotateCw(on)/Ban(off); Detail = LineChart(simple)/
-// CandlestickChart(full). Menu is reserved for the nav toggle.
+// aria-label matches. Rotation = RotateCw(on)/Ban(off) — the ONE toggle this bar owns.
+// The Detail toggle was REMOVED (page-home §9-15, DESIGN-SYSTEM §5.5 amendment): the Home layout is a
+// SETTINGS control ("Home layout: Simple / Full") backed by the server-persisted `home_layout`, per
+// D-040/IA — never a top-bar toggle holding state that persists nowhere. Menu is the nav toggle.
 
 // Global chrome (DESIGN-SYSTEM §5.5, D-066). The ONE slim top bar. At laptop+ the
 // display axes + rotation + Detail render inline, right-aligned. Below the laptop
@@ -27,9 +29,6 @@ export interface TopBarProps {
   /** Rotation toggle state + handler (D-044); rendered only when a handler is given. */
   rotationOn?: boolean;
   onToggleRotation?: () => void;
-  /** App-wide Detail level (D-040); rendered only when a handler is given. */
-  detailLevel?: "simple" | "full";
-  onToggleDetail?: () => void;
   /** Reserved slot for the Ask panel (D-067) — DEFERRED (C-2). */
   askSlot?: ReactNode;
 }
@@ -41,8 +40,6 @@ export function TopBar({
   demoBadge,
   rotationOn,
   onToggleRotation,
-  detailLevel,
-  onToggleDetail,
   askSlot,
 }: TopBarProps) {
   const [overflowOpen, setOverflowOpen] = useState(false);
@@ -81,21 +78,6 @@ export function TopBar({
           onClick={onToggleRotation}
         >
           {rotationOn ? <RotateCw aria-hidden="true" /> : <Ban aria-hidden="true" />}
-        </button>
-      )}
-      {onToggleDetail && (
-        <button
-          type="button"
-          className="lf-iconbtn"
-          aria-label={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
-          title={`Detail: ${detailLevel === "full" ? "Full" : "Simple"}`}
-          onClick={onToggleDetail}
-        >
-          {detailLevel === "full" ? (
-            <CandlestickChart aria-hidden="true" />
-          ) : (
-            <LineChart aria-hidden="true" />
-          )}
         </button>
       )}
     </>

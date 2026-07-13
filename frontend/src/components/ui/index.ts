@@ -38,7 +38,7 @@ export { Treemap } from "./Treemap";
 export type { TreemapProps } from "./Treemap";
 export type { TreemapNode } from "../../mocks/types";
 export { QuoteCardRow } from "./QuoteCardRow";
-export type { QuoteCardRowProps, QuoteSource } from "./QuoteCardRow";
+export type { QuoteCardItem, QuoteCardRowProps, QuoteSource } from "./QuoteCardRow";
 export { NewsList } from "./NewsList";
 export type { NewsListProps, NewsListItem } from "./NewsList";
 export { Segmented } from "./Segmented";

@@ -21,7 +21,7 @@ export interface NavGroup {
 // The six groups, verbatim from INFORMATION-ARCHITECTURE §3. Do not reorder or
 // rename without a D-043 amendment.
 export const NAV_GROUPS: NavGroup[] = [
-  { label: "Overview", items: [{ label: "Home", path: "/" }] },
+  { label: "Overview", items: [{ label: "Home", path: "/", built: true }] },
   {
     label: "Wealth",
     items: [

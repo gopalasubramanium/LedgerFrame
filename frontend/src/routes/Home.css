@@ -1,0 +1,77 @@
+/* Home (`/`) — the composed landing page (DESIGN-SYSTEM §3 Overview template, D-046).
+ * Layered cards (D-100/D-101); the page never owns a scroll region of its own — the shell scrolls.
+ * Both layouts (Simple / Full) use this grid; Full simply has more cards. */
+
+.hm2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.hm2__card { min-width: 0; } /* a card may shrink — never force the page to scroll sideways */
+
+.hm2__link {
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+}
+.hm2__link:hover { color: var(--text-primary); }
+.hm2__links { display: flex; gap: var(--space-4); }
+
+/* Headline: the KPI tiles share one grid, so no wrapper resizes a tile. */
+.hm2__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+}
+
+.hm2__note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+
+.hm2__briefing {
+  margin: 0;
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  color: var(--text-secondary);
+}
+
+/* Movers — both pairs (D-024). They sit side by side but are never merged into one list. */
+.hm2__movers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-5);
+}
+.hm2__moverlist { min-width: 0; }
+.hm2__moverhead {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+.hm2__moverrows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.hm2__moverrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+.hm2__moversym {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm2__moverpct { font-variant-numeric: tabular-nums; }

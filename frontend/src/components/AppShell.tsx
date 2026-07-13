@@ -48,7 +48,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   // UI state owned by the chrome.
   const [navOpen, setNavOpen] = useState(false);
   const [rotationOn, setRotationOn] = useState(false);
-  const [detailLevel, setDetailLevel] = useState<"simple" | "full">("simple");
   const [updateDismissed, setUpdateDismissed] = useState(false);
 
   // Consumed status summaries + settings-derived state.
@@ -150,8 +149,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           demoBadge={demoBadge}
           rotationOn={rotationOn}
           onToggleRotation={() => setRotationOn((v) => !v)}
-          detailLevel={detailLevel}
-          onToggleDetail={() => setDetailLevel((d) => (d === "simple" ? "full" : "simple"))}
         />
         <StaleBanner count={staleCount} />
         {!updateDismissed && (

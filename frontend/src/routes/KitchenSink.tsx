@@ -69,7 +69,7 @@ import {
 } from "../format/number";
 import {
   Sun, Moon, Monitor, Rows2, Rows4, Contrast, Circle, Disc, Waves, Minus, Wind,
-  RotateCw, Ban, LineChart, CandlestickChart, Menu, MoreHorizontal, Pencil, Upload, Download, Plus,
+  RotateCw, Ban, Menu, MoreHorizontal, Pencil, Upload, Download, Plus,
 } from "../icons";
 
 // First-run checklist demo options (Phase 0a specimens).
@@ -88,6 +88,17 @@ const FIRST_RUN_LINKS = {
   prices: "/settings",
   privacy: "/settings",
 };
+
+// QuoteCardRow specimen — the row's own item shape (page-home Phase 1): only the fields it renders.
+const QUOTE_CARDS = QUOTES.map((q, i) => ({
+  symbol: q.symbol,
+  name: q.name,
+  price: q.price,
+  changePct: q.changePct,
+  currency: q.currency,
+  isStale: i === 1,
+  asOf: q.provenance.asOf,
+}));
 
 // Ticker demo: holdings LINK to instrument detail (D-098); the two indices are unlinked.
 const TICKER_DEMO = [
@@ -123,8 +134,6 @@ const BAR_ICONS = [
   { label: "Motion: system", Icon: Wind },
   { label: "Rotation: On", Icon: RotateCw },
   { label: "Rotation: Off", Icon: Ban },
-  { label: "Detail: Simple", Icon: LineChart },
-  { label: "Detail: Full", Icon: CandlestickChart },
   { label: "Menu", Icon: Menu },
   { label: "Overflow", Icon: MoreHorizontal },
 ];
@@ -197,7 +206,6 @@ export function KitchenSink() {
 
   // §5.5 global chrome demos (PROPOSED 2026-07-11 — page-chrome Phase 0a)
   const [rotationOn, setRotationOn] = useState(false);
-  const [detailLevel, setDetailLevel] = useState<"simple" | "full">("simple");
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [lockError, setLockError] = useState<string | null>(null);
@@ -558,7 +566,7 @@ export function KitchenSink() {
         note="QuoteCardRow carries a source select. TickerStrip (D-047 AMENDMENT, PROPOSED) is now the GLOBAL CHROME FOOTER — holdings + world indices, all widths; halts under reduced motion (then static + manually scrollable); staleness flagged per item; hidden entirely under lock."
       >
         <div className="ks__stack">
-          <QuoteCardRow quotes={QUOTES} source={quoteSource} onSourceChange={setQuoteSource} />
+          <QuoteCardRow quotes={QUOTE_CARDS} source={quoteSource} onSourceChange={setQuoteSource} />
           <Specimen label="TickerStrip · global footer — holdings LINK to instrument detail (D-098); indices unlinked; one stale">
             <TickerStrip quotes={TICKER_DEMO} />
           </Specimen>
@@ -654,7 +662,8 @@ export function KitchenSink() {
                     price: "128.4500",
                     changePct: "0.42",
                     currency: "USD",
-                    provenance: PROV_STALE,
+                    isStale: true,
+                    asOf: PROV_STALE.asOf,
                   },
                 ]}
                 source="watchlist"
@@ -732,7 +741,7 @@ export function KitchenSink() {
       {/* ---------------------------------------------------------------- */}
       <Section
         title="Global chrome (§5.5) — PROPOSED 2026-07-11 (recomposed at re-ratify)"
-        note="page-chrome Phase 0a (C-1): the app SHELL. Slim calm TopBar (D-066) with ICON-ONLY display controls (theme/density/contrast/motion) + rotation (D-044) + Detail (D-040) toggles right-aligned, Clock + DemoBadge; brand shows in the bar only at narrow widths (sidebar carries it at laptop+ — one brand at a time). StaleBanner/UpdateBanner are full-width status strips BELOW the bar, only when active. Sidebar shows all six D-043 group headers, with only BUILT pages as entries. LockScreen = D-002 access lock. STATEFUL-ICON RULE (lucide, ADR-0003): click each icon toggle — a state-distinct icon per state (theme sun/moon/monitor, density, contrast, motion, rotation, Detail line/candlestick), tooltip names it. Ratify in both themes/densities/contrast + a narrow width; hover for tooltips."
+        note="page-chrome Phase 0a (C-1): the app SHELL. Slim calm TopBar (D-066) with ICON-ONLY display controls (theme/density/contrast/motion) + the rotation toggle (D-044) right-aligned, Clock + DemoBadge; brand shows in the bar only at narrow widths (sidebar carries it at laptop+ — one brand at a time). StaleBanner/UpdateBanner are full-width status strips BELOW the bar, only when active. Sidebar shows all six D-043 group headers, with only BUILT pages as entries. LockScreen = D-002 access lock. STATEFUL-ICON RULE (lucide, ADR-0003): click each icon toggle — a state-distinct icon per state (theme sun/moon/monitor, density, contrast, motion, rotation), tooltip names it. The Detail toggle was REMOVED (page-home §9-15) — the Home layout is a Settings control. Ratify in both themes/densities/contrast + a narrow width; hover for tooltips."
       >
         <div className="ks__stack">
           <Specimen label="App shell — slim TopBar (icon controls, right) + status strips BELOW the bar pushing content">
@@ -746,10 +755,6 @@ export function KitchenSink() {
                 demoBadge={<DemoBadge />}
                 rotationOn={rotationOn}
                 onToggleRotation={() => setRotationOn((v) => !v)}
-                detailLevel={detailLevel}
-                onToggleDetail={() =>
-                  setDetailLevel((d) => (d === "simple" ? "full" : "simple"))
-                }
               />
               <StaleBanner count={3} />
               {!updateDismissed && (

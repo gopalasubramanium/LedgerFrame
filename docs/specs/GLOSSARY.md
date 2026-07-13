@@ -223,11 +223,11 @@ These two "documents" ideas are distinct and must not be merged in copy:
 
 | Term | Canonical definition |
 |------|----------------------|
-| **Detail level: Simple/Expert** | Presentation-only view mode; scoped to Home in v2 (D-040). The control's single label wherever it appears (D-030). |
-| **Home layout: Simple / Full** | The Settings control choosing Home's composition; Full adds the fuller widget set and the ticker strip (D-040/D-046/D-047). |
+| **Home layout: Simple / Full** | The Settings control choosing Home's composition (D-040/D-046). **Simple** = headline + ReviewCard + briefing; **Full** = the fixed linked-summary set. **RATIFIED as the single label for this control** (page-home §9-1) — "Detail level: Simple/Expert" is retired. Server-persisted (`home_layout`), so rotation lands on the configured layout (D-078/D-044). *(The ticker strip is NOT part of Full: the **D-047 AMENDMENT** made TickerStrip global chrome on every page.)* |
 | **No-egress toggle** | The privacy switch that makes the device make zero outbound network calls when enabled — feeds, version check, and banner included (Product Guarantee 5). |
 | **Demo mode** | `market_provider == "mock"` — deterministic DEMO data, entitlement delayed, seeded on empty DB. |
 | **Reports Pack** | A print/export artifact composed from canonical readers with disclaimers preserved — the one sanctioned duplication, reachable from Reports only (D-038/D-061). Not a page in the IA sense. |
+| **Home** | The summary dashboard (`/`). It **owns nothing** — every figure on it is a **linked summary** of the page that owns it, read from that page's canonical reader (P-1/D-038). Composition is fixed (D-046) and chosen by **Home layout: Simple / Full**. **[Help]** *(PROPOSED 2026-07-13, page-home §9-13 — ratify at the walk.)* |
 | **Heatmap** | A treemap visualisation of your holdings — tile size is position value, colour is **Today's change**. It owns no figure; every number comes from the canonical readers. Priced holdings only; assets only (liabilities excluded), with an honest coverage note. **[Help]** *(RATIFIED 2026-07-13, page-heatmap ND-11.)* |
 
 ---
@@ -239,6 +239,7 @@ copy.
 
 | Retired term | Use instead | Decision |
 |--------------|-------------|----------|
+| Detail level: Simple/**Expert** | **Home layout: Simple / Full** — the single label for this control (page-home §9-1; two spellings could not both satisfy D-030) | D-030 / D-040 / page-home §9-1 |
 | Total value | Net worth (with liabilities) / Gross assets (positive holdings), per context | D-021 |
 | Portfolio value | Net worth / Gross assets, per context | D-021 |
 | Snapshot (page/nav) | Net worth | D-022 |

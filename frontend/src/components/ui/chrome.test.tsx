@@ -94,35 +94,24 @@ function svgClass(el: HTMLElement): string | null {
   return el.querySelector("svg")?.getAttribute("class") ?? null;
 }
 
-test("TopBar rotation and Detail toggles render a distinct lucide icon per state", () => {
-  const { rerender } = render(
-    <TopBar
-      rotationOn={false}
-      onToggleRotation={() => {}}
-      detailLevel="simple"
-      onToggleDetail={() => {}}
-    />,
-  );
+test("TopBar rotation toggle renders a distinct lucide icon per state", () => {
+  const { rerender } = render(<TopBar rotationOn={false} onToggleRotation={() => {}} />);
   const rotOff = svgClass(screen.getByRole("button", { name: /Rotation: Off/ }));
-  const detailSimple = svgClass(screen.getByRole("button", { name: /Detail: Simple/ }));
   expect(rotOff).toContain("lucide-ban");
-  expect(detailSimple).toContain("lucide-chart-line");
 
-  rerender(
-    <TopBar
-      rotationOn
-      onToggleRotation={() => {}}
-      detailLevel="full"
-      onToggleDetail={() => {}}
-    />,
-  );
+  rerender(<TopBar rotationOn onToggleRotation={() => {}} />);
   const rotOn = svgClass(screen.getByRole("button", { name: /Rotation: On/ }));
-  const detailFull = svgClass(screen.getByRole("button", { name: /Detail: Full/ }));
   expect(rotOn).toContain("lucide-rotate-cw");
-  expect(detailFull).toContain("lucide-chart-candlestick");
   // State-distinct (the rule).
   expect(rotOn).not.toBe(rotOff);
-  expect(detailFull).not.toBe(detailSimple);
+});
+
+// page-home §9-15 — the Detail toggle is GONE from the top bar. The Home layout is a SETTINGS control
+// ("Home layout: Simple / Full") backed by the server-persisted `home_layout` (D-040/IA); a top-bar
+// toggle holding state that persisted nowhere is exactly what the amendment removed.
+test("TopBar has NO Detail toggle (page-home §9-15)", () => {
+  render(<TopBar rotationOn={false} onToggleRotation={() => {}} />);
+  expect(screen.queryByRole("button", { name: /Detail/i })).toBeNull();
 });
 
 // --- TickerStrip symbol links (D-098; §11-19) -------------------------------

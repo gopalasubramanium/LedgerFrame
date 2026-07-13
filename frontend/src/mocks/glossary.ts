@@ -74,6 +74,12 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "How much attention an item warrants: 'review' (worth a look) or 'info' (a low-priority nudge — never a hard wall). Reporting only.",
   },
+  // Heatmap term (page-heatmap ND-11, PROPOSED — ratify at the walk).
+  "term-heatmap": {
+    term: "Heatmap",
+    definition:
+      "A treemap visualisation of your holdings — tile size is position value, colour is Today's change. It owns no figure; every number comes from the canonical readers.",
+  },
 };
 
 export function lookupTerm(id: string): GlossaryEntry | undefined {

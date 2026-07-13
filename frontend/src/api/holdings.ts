@@ -22,6 +22,8 @@ export interface HoldingRow {
   is_priced: boolean;
   valuation_method?: string | null;
   valuation_label?: string | null;
+  country?: string | null; // ISO-3166 alpha-2 listing country (null when unknown)
+  region?: string | null; // D-083 six-bucket region, server-derived (page-heatmap ND-8)
 }
 export interface HoldingsResponse {
   base_currency: string;

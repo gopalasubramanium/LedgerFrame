@@ -36,6 +36,7 @@ export { PriceChart } from "./PriceChart";
 export type { PriceChartProps, Overlay } from "./PriceChart";
 export { Treemap } from "./Treemap";
 export type { TreemapProps } from "./Treemap";
+export type { TreemapNode } from "../../mocks/types";
 export { QuoteCardRow } from "./QuoteCardRow";
 export type { QuoteCardRowProps, QuoteSource } from "./QuoteCardRow";
 export { NewsList } from "./NewsList";

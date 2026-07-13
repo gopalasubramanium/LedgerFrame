@@ -6,6 +6,7 @@ import { Holdings } from "./routes/Holdings";
 import { Portfolio } from "./routes/Portfolio";
 import { NetWorth } from "./routes/NetWorth";
 import { Markets } from "./routes/Markets";
+import { Heatmap } from "./routes/Heatmap";
 import { News } from "./routes/News";
 import { Review } from "./routes/Review";
 import { PricingHealth } from "./routes/PricingHealth";
@@ -31,6 +32,7 @@ export function AppRoutes() {
               <Route path="/holdings" element={<Holdings />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/markets" element={<Markets />} />
+        <Route path="/heatmap" element={<Heatmap />} />
               <Route path="/news" element={<News />} />
               <Route path="/review" element={<Review />} />
               <Route path="/instrument/:symbol" element={<InstrumentDetail />} />

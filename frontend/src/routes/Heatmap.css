@@ -1,0 +1,69 @@
+/* Heatmap (Markets group, Overview template) — token-only; the shell owns root padding. */
+.hm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.hm > * {
+  min-width: 0;
+}
+
+.hm__card {
+  padding: var(--space-5);
+}
+
+/* Filter Selects in the header actions — wrap at narrow widths (no overflow). */
+.hm__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Legend + honest notes. */
+.hm__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+}
+.hm__legenditem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.hm__swatch {
+  display: inline-block;
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+.hm__swatch--gain {
+  background: var(--gain);
+}
+.hm__swatch--loss {
+  background: var(--loss);
+}
+.hm__legendmeta {
+  color: var(--text-tertiary);
+}
+
+/* Let the treemap fill a comfortable, viewport-bounded area (never overflowing the one
+   scroll region). Scoped override of the component's default 18rem. */
+.hm__card .lf-treemap__svg {
+  height: min(60vh, 40rem);
+  min-height: 18rem;
+}
+
+.hm__note,
+.hm__help {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-tertiary);
+}
+.hm__help {
+  margin-top: 0;
+}

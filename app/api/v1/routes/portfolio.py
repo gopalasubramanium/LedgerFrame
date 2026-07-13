@@ -16,6 +16,7 @@ from app.api.deps import get_db, require_auth, require_pin
 from app.core.config import get_settings
 from app.core.money import ZERO, D, format_price_display, money, to_display
 from app.core.provenance import valuation_label
+from app.core.regions import region_of
 from app.models import (
     Account,
     AssetClass,
@@ -65,6 +66,10 @@ def _hv(h) -> dict:
         "valuation_method": method,
         "valuation_label": valuation_label(ValuationMethod(method), is_stale=h.is_stale, price_available=True),
         "price_ts": h.price_ts.isoformat() if getattr(h, "price_ts", None) else None,
+        # page-heatmap ND-8: listing country + its SERVER-DERIVED D-083 region bucket (no client
+        # region map). `region` is total (unknown/absent country → "Other"); `country` may be null.
+        "country": getattr(h, "country", None),
+        "region": region_of(getattr(h, "country", None)),
     }
 
 
@@ -130,6 +135,8 @@ class HoldingView(BaseModel):
     valuation_method: str | None = None
     valuation_label: str | None = None
     price_ts: str | None = None  # as-of ISO timestamp (null when unpriced)
+    country: str | None = None   # ISO-3166 alpha-2 listing country (null when unknown)
+    region: str | None = None    # D-083 six-bucket region, server-derived from country (page-heatmap ND-8)
 
 
 class HoldingsResponse(BaseModel):

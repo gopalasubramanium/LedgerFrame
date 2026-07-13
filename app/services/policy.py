@@ -19,15 +19,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
+
+# D-083: region is the six-bucket model (India · Singapore · US · Europe · APAC · Other), derived
+# server-side from listing_country. The canonical derivation lives in app.core.regions and is
+# re-exported here so the policy region dimension and the served HoldingView.region use the SAME
+# function (page-heatmap §10-9 — reconciled from the legacy 3-bucket + "Global").
+from app.core.regions import region_of  # re-exported for policy._bucket_of + importers
 from app.models import InvestmentPolicy, PolicyTarget
 from app.services.portfolio import value_portfolio
 
 DIMENSIONS = ("asset_class", "currency", "region")
-_REGION = {"IN": "India", "SG": "Singapore", "US": "US"}
-
-
-def region_of(country: str | None) -> str:
-    return _REGION.get((country or "").upper(), "Global")
 
 
 def _q(v: Decimal, dp: int = 2) -> float:

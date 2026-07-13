@@ -713,6 +713,17 @@
             ],
             "title": "Cost Basis"
           },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
           "currency": {
             "anyOf": [
               {
@@ -834,6 +845,17 @@
               }
             ],
             "title": "Quantity"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
           },
           "symbol": {
             "anyOf": [

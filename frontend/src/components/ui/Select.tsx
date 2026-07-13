@@ -36,7 +36,7 @@ export function Select({
     );
   }
   return (
-    <span className={`lf-field${disabled ? " lf-field--disabled" : ""}`}>
+    <span className={`lf-field lf-field--select${disabled ? " lf-field--disabled" : ""}`}>
       <select
         className="lf-field__select"
         value={value}

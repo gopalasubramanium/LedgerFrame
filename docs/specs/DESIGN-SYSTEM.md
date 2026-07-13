@@ -528,3 +528,40 @@ the top of §2); values taken verbatim from the brief are marked **BRIEF**.
   item is a **future** ADR if/when the UI/serif fonts are self-hosted (a bundle
   dependency); the ratified fallback system stacks keep the system shippable
   meanwhile (§2.2). Not blocking.
+
+
+---
+
+## §5 AMENDMENTS — page-home Phase-3b Batch 2 (PROPOSED 2026-07-14, ratify at re-verify)
+
+**A. `SummaryHead` gains a `meta` slot — and it is the ONE tile-header anatomy (§12ho2-5).**
+Every summary tile's header is: **title (left) · optional trailing meta · ↗ (right)** — one type size,
+one weight, one spacing. `meta` is what removed the page-local header bars: **ReviewCard**'s attention
+count (*"3 need a look"*) and **QuoteCardRow**'s source select now sit **in** the header row instead of
+each tile inventing its own. A header carrying interactive meta (a Select, a [Help] popover) is **not**
+a whole-header link — nesting an interactive element inside a link is an accessibility defect.
+
+**B. `QuoteCardRow` gains `summary={{to, destination}}` (§12ho1-5, owner-approved).** When the row IS a
+summary tile it renders the standard `SummaryHead`; without it the caller had to bolt on a second title
+or a naked corner ↗. Omit it and the row keeps its plain label (the gallery / non-summary use).
+
+**C. The ↗ is the Lucide `arrow-up-right` SVG (§12ho2-8).** ADR-0003's set. A typographic "↗" rendered
+differently in every font and sat on the text baseline instead of optically centred on the title. It is
+one component, so every site changed at once. `aria-label` is unchanged; the icon is `aria-hidden`.
+
+**D. `AllocationDonut` gains `legendMax` + `legendMore` (§12ho1-7, owner: lever B).** The **legend** caps
+at the N largest classes **by served value**; the **RING still draws every segment** — a capped ring
+would misrepresent the figure. The overflow row states a **count** and links to the canonical page
+(*"+4 more ↗"*). **No "Other" bucket is invented and no share is recomputed** (Guarantee 3, D-105): this
+is a display **selection**, the same class as the Gainers/Losers sort — not money math.
+
+**E. `NewsList` gains `clampLines` (§12ho2-9).** A summary clamps each headline to one line and links to
+the page that owns the full text; News itself clamps nothing.
+
+**F. §5.2 — `Select` RESTING STATE is borderless (§12ho2-11, PLATFORM-WIDE).** A Select is a **view-scope**
+control ("which slice am I looking at"), not a data-entry field; wearing the same hard border as a
+MoneyInput made every scope picker read as an empty form waiting to be filled. **Resting:** borderless on
+a subtly elevated surface. **Hover:** the border returns. **Focus-visible: the ring is RETAINED, unchanged
+— a11y is not a style to trade away.** Text inputs keep their border: *"type here"* is a different promise
+from *"choose a view"*. Applies at **every** Select site (Home quotes, Markets, Heatmap, …) because it is
+one component. Specimens in `/kitchen-sink`.

@@ -43,3 +43,13 @@
 .lf-newslist__sym:hover {
   text-decoration: underline;
 }
+
+/* §12ho2-9: a SUMMARY clamps each headline to one line — the full text lives on News, which the ↗
+ * points at. Ellipsised, never truncated silently mid-render. */
+.lf-newslist--clamp-1 .lf-newslist__head {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

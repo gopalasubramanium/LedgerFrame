@@ -98,7 +98,9 @@ afterEach(() => {
 
 test("renders the D-046 widget set — and NO layout branch exists (§12ho1-6)", async () => {
   const { container } = renderHome();
-  for (const card of ["networth", "change", "review", "allocation", "movers", "briefing", "quotes"]) {
+  // "news", not "briefing": §12ho2-7 retitled the tile — it shows headlines as well as the Briefing,
+  // and naming the whole tile after one of its two parts mislabelled the rest.
+  for (const card of ["networth", "change", "review", "allocation", "movers", "news", "quotes"]) {
     await waitFor(() => expect(container.querySelector(`[data-card="${card}"]`)).not.toBeNull());
   }
   // There is exactly ONE layout. Nothing on this page may branch on a layout, and no card is left
@@ -158,7 +160,7 @@ test("an unreachable reader is HONEST — a reason and a retry, never a guessed 
   // The figure is WITHHELD — the page must not invent a zero.
   expect(screen.queryByText(/796,216\.68/)).toBeNull();
   // …and the cards whose readers DID answer still render: one bad reader never blanks the page.
-  expect(document.querySelector('[data-card="briefing"]')).not.toBeNull();
+  expect(document.querySelector('[data-card="news"]')).not.toBeNull();
 });
 
 test("an empty briefing says WHY (Guarantee 3) rather than showing an empty box", async () => {

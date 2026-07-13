@@ -12,7 +12,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  height: 100%;
+  /* §12ho2-4 — the backdrop covered only HALF the page: `height: 100%` resolves against the content
+   * region, so once the grid grew past it the background stopped where the box stopped and the rest
+   * of the scrolled page showed the shell behind it — a visible seam. `min-height` makes the surface
+   * span the region AND follow the content, whichever is taller. */
+  min-height: 100%;
   padding: var(--space-4);
   background: var(--surface-sunken, var(--surface));
   box-sizing: border-box;
@@ -28,16 +32,19 @@
   min-height: 0; /* the rows may shrink to fit rather than push the page taller */
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  /* Rows keep the ratified PROPORTIONS (205 : 210 : 246 — row 3 carries the briefing + THREE
-   * headlines, rows 1-2 the ReviewCard's verdicts and the donut's 9rem ring), but every row is
-   * FLOORED at its own min-content. So when the content region is tall enough the map fills it
-   * exactly as ratified; and when it is not — real data is taller than demo data, and the real page
-   * sits inside the chrome, which the mockup frame did not (§12ho1-7) — the rows GROW and the shell
-   * scrolls. A tile never hides its own content to keep a promise about height. */
-  grid-template-rows:
-    minmax(min-content, 205fr)
-    minmax(min-content, 210fr)
-    minmax(min-content, 246fr);
+  /* Rows are CONTENT-sized, and stretch to fill only when there is spare room.
+   *
+   * They were `minmax(min-content, 205fr/210fr/246fr)` — which quietly wrecked the layout. In a grid
+   * whose own height is content-driven, `fr` distributes space in PROPORTION, so the single tallest
+   * row (News, with real headlines) scaled EVERY other row up with it: rows that needed 255px were
+   * handed 352px, and the page scrolled 533px at 1440×900 to pay for empty space it never used.
+   *
+   * `auto` rows + `align-content: stretch` give the behaviour the ratified map actually wants: each
+   * row takes what its tallest tile needs, and any LEFTOVER height is shared out so the rows still
+   * fill the region (no half-empty rows — the owner's original complaint). Nothing is ever squeezed
+   * below its content: a tile never hides what it has to say to keep a promise about height. */
+  grid-template-rows: repeat(3, auto);
+  align-content: stretch;
   gap: var(--space-3);
 }
 
@@ -47,6 +54,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  padding: var(--space-4); /* the grid is dense by design; DENSITY is a legitimate lever, content is not */
   /* NOT `overflow: hidden`. It was here to stop a tile pushing the page into a scroll — which is
    * exactly how the wired page came to sever the donut, the briefing's third headline and the stale
    * line, while every "does it overflow" check stayed green. Clipping is not fitting (§12ho1-7). */
@@ -128,56 +136,95 @@
   color: var(--text-primary);
 }
 
-/* Every card pairs its figure with a COMPACT visual — and compact means bounded. These were
- * `flex: 1 1 auto` with no height of their own, so once the rows were floored at min-content the
- * charts started DEMANDING height instead of filling what was left (the donut asked for 432px).
- * A sparkline is a glance, not a chart: it gets a fixed, modest height. */
-.hm3__spark { flex: 0 0 auto; height: 3rem; display: flex; align-items: flex-end; }
-.hm3__spark > * { width: 100%; }
-
-/* The sparkline's caption names ITS canonical page (Portfolio) — the tile summarises two. */
-.hm3__sparkcap {
-  position: relative; /* the ↗ is absolute — this is the box it is absolute to */
+/* §12ho2-3 / §12ho2-9 — the sparkline ANCHORS TO THE TILE BOTTOM and fills the width. It used to sit
+ * directly under the figure with a dead band of empty tile beneath it. `margin-top: auto` pushes it
+ * to the floor of the flex column, so the figure stays at the top, the chart sits on the bottom edge,
+ * and the space between them belongs to neither.
+ *
+ * It stays BOUNDED (a fixed height, not `flex: 1 1 auto`): these charts have no intrinsic height, so
+ * once the rows were floored at min-content they began DEMANDING space instead of filling it — the
+ * donut asked for 432px (§12ho1-7). A sparkline is a glance, not a chart. */
+.hm3__spark {
+  /* §12ho2-3: the chart GROWS into whatever the figure leaves, and sits on the tile's floor — so there
+   * is no dead band between the two. It still has a MIN, not a fixed height: these charts have no
+   * intrinsic size, so an unbounded `flex: 1 1 auto` let them DEMAND space instead of filling it (the
+   * donut once asked for 432px — §12ho1-7). Grow, yes; drive the row's height, no. */
+  flex: 1 1 auto;
+  margin-top: auto;
+  min-height: 3rem;
   display: flex;
-  align-items: baseline;
-  padding-right: var(--space-5);
-  margin-top: auto; /* push the chart block to the bottom of the card */
+  align-items: flex-end;
 }
-.hm3__sparklabel {
-  font-size: var(--font-size-12);
-  line-height: var(--line-12);
-  font-weight: var(--weight-semibold);
-  color: var(--text-secondary);
+.hm3__spark > *,
+.hm3__spark svg {
+  width: 100%;
 }
+/* The lead tile has one figure and one chart, so its chart takes the whole remaining band. */
+.hm3__spark--lead { min-height: 4.5rem; }
 
-/* Quotes: the component owns its head, so the tile contributes only the corner ↗ — which needs a
- * positioned box, and room so it never lands on the source select. */
-.hm3__cell--quotes {
-  position: relative;
-  padding-right: var(--space-6);
-}
-/* Absolute offsets resolve against the card's PADDING box, so top/right must be re-stated to sit on
- * the card's content edge — otherwise the ↗ lands flush on the border, out of line with the head. */
-.hm3__cell--quotes > .lf-summarylink {
-  top: var(--space-5);
-  right: var(--space-5);
-}
+/* §12ho2-5: the hero's "Performance" caption WAS a page-local header variant (its own label class,
+ * its own ↗ placement). It is now a plain SummaryHead like every other tile header — so these rules
+ * are gone rather than tweaked. The second header sits above the chart it names. */
+.hm3__cell--networth > .lf-summaryhead:nth-of-type(2) { margin-top: auto; }
 
-.hm3__donut { flex: 0 0 auto; display: flex; align-items: center; min-width: 0; }
+/* §12ho2-6 — Quotes FILLS its tile: the cards wrap into as many rows as the height allows (two, at
+ * the ratified geometry) instead of one row with a dead band under it. Horizontal scrolling is the
+ * fallback WITHIN the tile only, when a source serves more than the rows can hold — the page itself
+ * never scrolls sideways. */
+.hm3__cell--quotes .lf-quoterow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+}
+/* EXACTLY two rows (§12ho2-6). Free wrapping was the trap: with a source that serves many symbols the
+ * row wrapped to four or five rows and became the TALLEST tile on the page, dragging row 3 — and with
+ * it the whole grid — past the viewport. Two rows, columns flowing sideways, and the overflow scrolls
+ * WITHIN the tile. The page still never scrolls sideways. */
+.hm3__cell--quotes .lf-quoterow__cards {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, 1fr);
+  grid-auto-columns: minmax(9rem, 1fr);
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.hm3__cell--quotes .lf-quote { min-width: 0; }
+
+/* §12ho2-9 — the donut block FILLS the tile and centres vertically beside its (capped) legend, rather
+ * than hugging the top and leaving a band of nothing below. */
+.hm3__donut { flex: 1 1 auto; display: flex; align-items: center; min-width: 0; min-height: 0; }
 /* The donut sits BESIDE its legend — that is the ratified reading (§12ho1-5). Left to wrap, it
  * stacked the legend UNDER the ring in a 4-column tile and the tile doubled in height. */
 .hm3__donut .lf-donut { flex-wrap: nowrap; width: 100%; gap: var(--space-4); }
 .hm3__donut .lf-donut__legend { min-width: 0; }
 
 /* ---- Movers: two PAIRS, four tight columns (D-024 — never interchanged). ----------------- */
+/* §12ho2-9 — the movers columns FILL the tile. They used to pack to the top and leave a dead band of
+ * empty card beneath them. The four lists stretch, and each list spreads its rows over the height it
+ * is given, so the tile has content edge to edge rather than a third of it doing nothing. */
 .hm3__movers {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  align-content: stretch;
   gap: var(--space-4);
 }
-.hm3__moverlist { min-width: 0; }
+.hm3__moverlist {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.hm3__moverrows {
+  flex: 1 1 auto;
+  justify-content: space-evenly;
+}
+
 .hm3__moverhead {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-12);
@@ -212,6 +259,26 @@
 .hm3__moverpct--up { color: var(--gain); }
 .hm3__moverpct--down { color: var(--loss); }
 
+/* ---- News tile (§12ho2-7): a labelled Briefing line + Top headlines. --------------------- */
+.hm3__newsbody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.hm3__briefblock { flex: 0 0 auto; }
+/* The two things inside the News tile are NAMED — "Briefing" and "Top headlines" are both GLOSSARY
+ * terms, and the tile previously used one of them as the title for both. */
+.hm3__sublabel {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+.hm3__newsbody .lf-newslist { flex: 1 1 auto; min-height: 0; }
+
 /* ---- Briefing: clamped so an essay never blows the row height. --------------------------- */
 .hm3__briefing {
   margin: 0;
@@ -227,36 +294,49 @@
 }
 
 /* ---- Tablet / mobile: one viewport is NOT promised below 1366 (the page may scroll). ------ */
+/* ---- Below the desktop target the page is CONTENT-height, not viewport-height. ------------
+ *
+ * §12ho2-1 — this is what was broken. The grid stayed a height-CONSTRAINED flex child
+ * (`flex: 1 1 auto; min-height: 0`) inside a full-height page, so at phone widths its rows were
+ * squeezed to a fraction of what their contents needed and the content simply bled out of the tiles:
+ * the Today's change figure printed straight through the Performance caption, the donut through the
+ * movers tile. Nothing overlapped in the TILE boxes — which is why the old guard, comparing tile
+ * boxes at one width, called it clean. It was garbage.
+ *
+ * One viewport is a DESKTOP promise (§12ho1-7). Below it, the tiles take the height they need and
+ * the shell scrolls — the single scroll region (D-100/D-101) is untouched. */
 @media (max-width: 1365px) {
   .hm3__grid {
+    flex: 0 0 auto;      /* content-height: never squeeze a row below what its tile needs */
+    min-height: auto;
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: none;
+    grid-auto-rows: auto;
   }
-  .hm3__cell { overflow: visible; }
-  .hm3__cell--networth { grid-column: 1 / span 6; grid-row: auto; }
-  .hm3__cell--change   { grid-column: 1 / span 3; grid-row: auto; }
-  .hm3__cell--review   { grid-column: 4 / span 3; grid-row: auto; }
-  .hm3__cell--alloc    { grid-column: 1 / span 2; grid-row: auto; }
-  .hm3__cell--movers   { grid-column: 3 / span 4; grid-row: auto; }
-  .hm3__cell--brief    { grid-column: 1 / span 3; grid-row: auto; }
-  .hm3__cell--quotes   { grid-column: 4 / span 3; grid-row: auto; }
-}
-@media (max-width: 899px) {
-  .hm3__grid { grid-template-columns: 1fr; }
-  .hm3__cell { grid-column: 1 !important; }
-  .hm3__twohead { grid-template-columns: 1fr; }
-  .hm3__movers { grid-template-columns: repeat(2, 1fr); }
+  .hm3__cell {
+    grid-row: auto;
+    overflow: visible;
+  }
+  .hm3__cell--networth { grid-column: 1 / span 6; }
+  .hm3__cell--change   { grid-column: 1 / span 3; }
+  .hm3__cell--review   { grid-column: 4 / span 3; }
+  .hm3__cell--alloc    { grid-column: 1 / span 2; }
+  .hm3__cell--movers   { grid-column: 3 / span 4; }
+  .hm3__cell--brief    { grid-column: 1 / span 3; }
+  .hm3__cell--quotes   { grid-column: 4 / span 3; }
+  /* The charts stop being bottom-anchored decoration and just sit under their figure. */
+  .hm3__spark { margin-top: var(--space-2); }
+  .hm3__cell--networth > .lf-summaryhead:nth-of-type(2) { margin-top: var(--space-2); }
 }
 
-/* Per-item staleness is preserved in the summary (Guarantee 3) — the summary never presents a stale
- * figure as fresh. The stale COUNT itself belongs to the chrome StaleBanner; Home shows no second
- * count and re-fetches nothing (§2 — one fetch site). */
-.hm3__stale {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-12);
-  line-height: var(--line-12);
-  color: var(--text-tertiary);
+/* ---- Phone: ONE column, in the ratified grid's reading order (which is the source order). ---- */
+@media (max-width: 899px) {
+  .hm3__grid { grid-template-columns: 1fr; }
+  .hm3__cell { grid-column: 1 / -1 !important; }
+  /* A tile that summarises two pages stacks its two headers rather than halving a 320px row. */
+  .hm3__twohead { grid-template-columns: 1fr; gap: var(--space-2); }
+  .hm3__movers { grid-template-columns: repeat(2, 1fr); }
+  .hm3__donut { display: block; }
+  .hm3__donut .lf-donut { flex-wrap: wrap; }
+  .hm3__cell--quotes .lf-quote { max-width: none; }
 }

@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import {
   AllocationDonut,
   NewsList,
@@ -6,7 +8,6 @@ import {
   ReviewCard,
   Sparkline,
   SummaryHead,
-  SummaryLink,
 } from "../components/ui";
 import "./home-grid.css";
 
@@ -34,12 +35,18 @@ const SPARK_PERF = [
 
 // The donut's palette is the component's own categorical identity palette — a caller never
 // picks colours. Values are served decimal strings (D-105); the component derives the shares.
+// EIGHT classes on purpose: the real dataset has more than the legend can list, which is the whole
+// point of the §12ho1-7 cap. A specimen fed tidy demo data proves nothing (that is how the first gate
+// flattered the design — §12ho1-7).
 const ALLOCATION = [
   { label: "Equity", value: "496839.20" },
+  { label: "Property", value: "180000.00" },
   { label: "Fixed deposit", value: "112266.60" },
   { label: "Bond", value: "78029.20" },
   { label: "Cash", value: "57327.60" },
   { label: "Crypto", value: "51754.08" },
+  { label: "Retirement", value: "42500.00" },
+  { label: "Mutual fund", value: "18500.00" },
 ];
 
 // Both movers PAIRS (D-024) — never interchanged. Contribution-weighted pair is Portfolio's;
@@ -96,10 +103,15 @@ const HEADLINES = [
 // Served decimal strings — no thousands separators (the component formats; the caller never does).
 // Three fit the tile at 1366 without clipping; the last is STALE on purpose — per-item staleness is
 // preserved in every compact summary (Guarantee 3), so the mockup must show that state, not hide it.
+// Six, so the row WRAPS to two (§12ho2-6). One is stale on purpose: per-item staleness is preserved
+// in every compact summary (Guarantee 3), so the specimen must show that state, not hide it.
 const QUOTES = [
   { symbol: "VWRA", name: "Vanguard FTSE All-World", price: "128.4500", changePct: "0.42", currency: "USD", isStale: false, asOf: "2026-07-14T01:12:00Z" },
   { symbol: "NVDA", name: "NVIDIA", price: "1204.3000", changePct: "2.41", currency: "USD", isStale: false, asOf: "2026-07-14T01:12:00Z" },
+  { symbol: "D05", name: "DBS Group", price: "39.6100", changePct: "0.79", currency: "SGD", isStale: false, asOf: "2026-07-14T01:12:00Z" },
   { symbol: "BTC", name: "Bitcoin", price: "66084.9000", changePct: "-0.50", currency: "USD", isStale: true, asOf: "2026-07-13T18:02:00Z" },
+  { symbol: "AAPL", name: "Apple", price: "188.5200", changePct: "-0.53", currency: "USD", isStale: false, asOf: "2026-07-14T01:12:00Z" },
+  { symbol: "MSFT", name: "Microsoft", price: "406.5000", changePct: "0.10", currency: "USD", isStale: false, asOf: "2026-07-14T01:12:00Z" },
 ];
 
 const BRIEFING =
@@ -131,7 +143,7 @@ export function HomeMockupFull() {
   return (
     <div className="hm3 hm3--full">
       <div className="hm3__pagehead">
-        <PageHeader title="Home" subtitle="Your summary — tap any card for the full picture" />
+        <PageHeader title="Home" subtitle="Your summary — the ↗ on any card opens the full view." />
       </div>
 
       <div className="hm3__grid">
@@ -153,12 +165,9 @@ export function HomeMockupFull() {
               <dd>420,000.00</dd>
             </div>
           </dl>
-          {/* The sparkline is PORTFOLIO's series (D-035/§9-8), so it names its own canonical page:
-            * a caption + its own ↗, rather than a second competing title in the header. */}
-          <div className="hm3__sparkcap">
-            <span className="hm3__sparklabel">Performance</span>
-            <SummaryLink to="#/portfolio" destination="Portfolio" />
-          </div>
+          {/* The sparkline is PORTFOLIO's series (D-035/§9-8) — the tile summarises two pages, so it
+            * carries two ↗. A real SummaryHead, not a page-local caption (§12ho2-5). */}
+          <SummaryHead title="Performance" to="#/portfolio" destination="Portfolio" whole />
           <div className="hm3__spark">
             <Sparkline points={SPARK_PERF} tone="up" aria-label="Performance trend" />
           </div>
@@ -185,7 +194,19 @@ export function HomeMockupFull() {
         <section className="lf-card hm3__cell hm3__cell--alloc">
           <SummaryHead title="Allocation by class" to="#/portfolio" destination="Portfolio" whole />
           <div className="hm3__donut">
-            <AllocationDonut segments={ALLOCATION} aria-label="Allocation by class" />
+            {/* §12ho1-7: the legend lists the 5 largest classes; the RING still draws every one, and
+              * the overflow row states a count — never an invented "Other" share. */}
+            <AllocationDonut
+              segments={ALLOCATION}
+              legendMax={5}
+              legendMore={(n) => (
+                <Link className="lf-donut__morelink" to="#/portfolio" aria-label={`${n} more classes on Portfolio`}>
+                  +{n} more
+                  <ArrowUpRight aria-hidden="true" focusable="false" />
+                </Link>
+              )}
+              aria-label="Allocation by class"
+            />
           </div>
         </section>
 
@@ -203,20 +224,25 @@ export function HomeMockupFull() {
           </div>
         </section>
 
-        {/* R3 · briefing + headlines. */}
+        {/* R3 · NEWS (§12ho2-7) — the tile was titled "Briefing", which mislabelled the headlines
+          * that make up most of it. Both terms are used verbatim, for the two things they name. */}
         <section className="lf-card hm3__cell hm3__cell--brief">
-          <SummaryHead title="Briefing" to="#/news" destination="News" whole />
-          <p className="hm3__briefing">{BRIEFING}</p>
-          <NewsList items={HEADLINES} showSymbols />
+          <SummaryHead title="News" to="#/news" destination="News" whole />
+          <div className="hm3__newsbody">
+            <div className="hm3__briefblock">
+              <h3 className="hm3__sublabel">Briefing</h3>
+              <p className="hm3__briefing">{BRIEFING}</p>
+            </div>
+            <h3 className="hm3__sublabel">Top headlines</h3>
+            <NewsList items={HEADLINES} showSymbols clampLines={1} />
+          </div>
         </section>
 
-        {/* R3 · quotes — one compact row. QuoteCardRow renders its OWN head ("Quotes" + the source
-          * select), so the tile does not add a second title; it adds only the corner ↗. Giving the
-          * component a proper SummaryHead is a PROPOSED amendment listed at the gate — not
-          * improvised into ui/ here. */}
+        {/* R3 · quotes — the row now carries the STANDARD SummaryHead (title · source select as
+          * trailing meta · ↗), the §5 amendment the owner approved (§12ho1-5), and its cards WRAP to
+          * fill the tile rather than sitting in one row above a dead band (§12ho2-6). */}
         <section className="lf-card hm3__cell hm3__cell--quotes">
-          <SummaryLink to="#/markets" destination="Markets" />
-          <QuoteCardRow quotes={QUOTES} source="holdings" />
+          <QuoteCardRow quotes={QUOTES} source="holdings" summary={{ to: "#/markets", destination: "Markets" }} />
         </section>
       </div>
     </div>

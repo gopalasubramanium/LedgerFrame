@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import "./charts.css";
 import { formatPercent } from "../../format/number";
 import type { Segment } from "../../mocks/types";
@@ -11,6 +12,13 @@ import type { Segment } from "../../mocks/types";
 export interface AllocationDonutProps {
   segments: Segment[];
   legend?: boolean;
+  /** §12ho1-7: cap the LEGEND at the N largest segments by SERVED value. The RING still draws every
+   *  segment — a capped ring would misrepresent the figure. This is a display SELECTION (the same
+   *  class as the Gainers/Losers sort), not money math: no share is recomputed and no "Other" bucket
+   *  is invented. The caller supplies `legendMore` to say where the rest live. */
+  legendMax?: number;
+  /** Rendered as the final legend row when `legendMax` hides segments (e.g. "+3 more ↗"). */
+  legendMore?: (hidden: number) => ReactNode;
   onSegmentClick?: (segment: Segment) => void;
   /** PROPOSED (page-portfolio ND-4): an honest footnote line under the donut. */
   footnote?: string;
@@ -25,6 +33,8 @@ function num(v: Segment["value"]): number {
 export function AllocationDonut({
   segments,
   legend = true,
+  legendMax,
+  legendMore,
   onSegmentClick,
   footnote,
   "aria-label": ariaLabel,
@@ -38,6 +48,14 @@ export function AllocationDonut({
     cumulative += pct;
     return arc;
   });
+
+  // The LEGEND may be capped (§12ho1-7) — the ring above is not. Selection by SERVED value, largest
+  // first; the arcs keep their original index so a row's swatch still matches its arc's colour.
+  const legendArcs =
+    legendMax != null && arcs.length > legendMax
+      ? [...arcs].sort((a, b) => num(b.seg.value) - num(a.seg.value)).slice(0, legendMax)
+      : arcs;
+  const hiddenCount = arcs.length - legendArcs.length;
 
   const hot = active != null ? arcs[active] : null;
   const tip = hot
@@ -72,7 +90,7 @@ export function AllocationDonut({
 
       {legend && (
         <ul className="lf-donut__legend">
-          {arcs.map(({ seg, i, pct }) => (
+          {legendArcs.map(({ seg, i, pct }) => (
             <li
               key={i}
               className={`lf-donut__row${onSegmentClick ? " lf-donut__row--clickable" : ""}${active === i ? " is-active" : ""}`}
@@ -89,6 +107,9 @@ export function AllocationDonut({
               <span className="lf-donut__pct">{formatPercent(String(pct))}</span>
             </li>
           ))}
+          {hiddenCount > 0 && legendMore && (
+            <li className="lf-donut__row lf-donut__row--more">{legendMore(hiddenCount)}</li>
+          )}
         </ul>
       )}
 

@@ -932,3 +932,144 @@ that is yours.
 **STOP.** Pending ratification at the walk: §9-11 strings · §9-13 "Home" · §9-15 TopBar amendment
 (applied) · §12ho1-1 subtitle pick · the QuoteCardRow SummaryHead amendment · the Deprecated-terms
 additions · **the ReviewCard N=3 cap** · **and §12ho1-7 above, which blocks the fit.**
+
+---
+
+## §12 — PHASE-3b OWNER WALK, BATCH 2 (2026-07-14)
+
+Fail-first throughout: every defect below was reproduced (screenshot or failing assertion) **before**
+it was touched.
+
+### §12ho1-7 RESOLVED (owner) — legend lever **B + E**
+
+- **Donut legend caps at the TOP-5 classes by served weight**, with a **"+N more ↗"** row linking to
+  Portfolio. It states a **count**, never a figure: **no "Other" bucket is invented and no share is
+  recomputed** (Guarantee 3 / D-105). It is a display **selection** — the same class as the
+  Gainers/Losers sort — not money math. **The RING still draws every segment**: a capped ring would
+  misrepresent the figure the legend is describing.
+- **Fit target moves to 1440×900 with the REAL dataset**; **1366×768 scrolling modestly is ACCEPTED as
+  honest**. The viewport-fit assertion moved with it (real-shaped specimen data — 8 asset classes, 6
+  quotes — so the gate cannot flatter itself with tidy demo data the way it did last time). **1366 keeps
+  its place in the no-clip / no-overlap matrix; it just no longer has to fit.**
+
+### §12ho2-1 — MOBILE WAS BROKEN, **and the guard was lying about it**
+
+**The guard first.** `tile-integrity` ran at **one width (1366)** and compared **whole tile boxes**. At
+375px the page was visibly garbage and the suite reported **zero overlaps** — because the tiles' *boxes*
+did not intersect even while their *contents* did. A guard that only looks where the bug was last time
+is not a guard. It now (a) runs at **320/375/768/1366/1440**, (b) compares the **rendered text**, not the
+containers — *text printed through other text* is the actual symptom — and (c) still checks header
+geometry. **Proven RED on the current build at 320/375/768** before any fix.
+
+**The defect.** Below the desktop breakpoint the grid stayed a **height-constrained** flex child inside a
+full-height page, so its rows were squeezed to a fraction of what their contents needed and the content
+bled straight out of the tiles: the *Today's change* figure printed **through** the *Performance*
+caption; the donut printed through the movers tile. Before: `12ho2-1-BEFORE-mobile-375.png`.
+
+**The fix.** Below the desktop target the page is **content-height, not viewport-height** — one viewport
+is a *desktop* promise (§12ho1-7). Tiles collapse to a single full-width column in the ratified grid's
+reading order, no absolute-position bleed, one scroll region. Both themes. GREEN at every width.
+
+### §12ho2-2 — Subtitle (PROPOSED → ratify)
+
+Implemented the owner's phrasing: **"Your summary — the ↗ on any card opens the full view."**
+*Alternative offered:* **"Your summary — every card opens its full view (↗)."** (Same promise, but it
+leads with the card rather than the glyph.)
+
+### §12ho2-3 — Today's change sparkline anchors to the tile **bottom**, fills the width
+It grows into whatever the figure leaves and sits on the tile's floor — **no dead band**. It keeps a
+**minimum**, not a fixed height: these charts have no intrinsic size, so an unbounded `flex: 1 1 auto`
+let them *demand* space rather than fill it (the donut once asked for 432px — §12ho1-7). Grow, yes;
+drive the row's height, no.
+
+### §12ho2-4 — Backdrop covered half the page
+`height: 100%` resolves against the **content region**, so once the grid grew past it the page surface
+simply **stopped** and the shell showed through below — a visible seam. It is `min-height: 100%` now: the
+surface spans the region **and** follows the content, whichever is taller.
+
+### §12ho2-5 — Uniform tile headers
+Every tile uses the **SummaryHead** anatomy: **title left · trailing meta · ↗ right**. `SummaryHead`
+gained a **`meta`** slot, which is what let the page-local header bars die: **Review's "3 need a look"**
+and the **Quotes source select** now sit *in* the header row. The hero's *"Performance"* caption — its
+own label class, its own ↗ placement — is now a plain SummaryHead like everything else. **QuoteCardRow**
+took the `summary` prop (the §5 amendment the owner approved at §12ho1-5). Kitchen-sink specimens updated.
+
+### §12ho2-6 — Quotes fills its tile: **two rows**
+Free wrapping was a trap: with a source serving many symbols the row wrapped to four or five rows and
+became the **tallest tile on the page**, dragging row 3 — and the whole grid — past the viewport. It is
+now exactly **two rows**, columns flowing sideways, and the overflow scrolls **within the tile**. The page
+still never scrolls sideways.
+
+### §12ho2-7 — The tile is **News**, not "Briefing" (PROPOSED → ratify)
+The owner is right: the tile is mostly **headlines**, and naming the whole thing after one of its two
+parts mislabelled the rest. Title = **News**, ↗ → `/news`. Inside: a **labelled Briefing line** (or its
+honest empty state) and **Top headlines**. Both are GLOSSARY terms, used verbatim, for the two different
+things they name.
+
+### §12ho2-8 — The ↗ is the **Lucide `arrow-up-right`** SVG
+ADR-0003's set. A typographic "↗" rendered differently in every font and sat on the **text baseline**
+rather than optically centred on the title. One component ⇒ every site changed at once; `aria-label`
+unchanged, icon `aria-hidden`. *(It also revealed dead CSS: the hover state was `text-decoration:
+underline`, which an SVG cannot honour — the affordance is now a subtle surface pill, still no layout
+shift.)*
+
+### §12ho2-9 — Tile-internal responsiveness
+Movers' four columns **stretch** and each list spreads its rows over the height it is given; the
+ReviewCard's verdicts do the same; the donut centres beside its capped legend; the sparklines fill.
+**No empty bands** in any tile at any breakpoint. `NewsList` gained `clampLines` (a summary shows one
+line and links to the full text).
+
+### §12ho2-10 — Formatting parity AUDIT (Home vs each canonical page)
+
+| Tile | Figure / label | Canonical page renders | Home renders | Verdict |
+|---|---|---|---|---|
+| Net worth | `total_value` | `796,216.68` | `796,216.68` + unit | ✅ served string, tabular |
+| Net worth | **Liabilities sign** | `-420,000.00` | `-420,000.00` | ✅ **served sign, verbatim** — Home does not re-sign it |
+| Net worth | Gross assets | `1,216,216.68` | `1,216,216.68` | ✅ |
+| Today's change | `day_change` | signed + toned | signed + toned | ✅ sign→tone is a display classification |
+| Movers | `change_pct` | `+1.07%` / `−0.85%` | identical | ✅ tabular, signed |
+| Review | severity casing | served display-case | mapped to verdict, **title verbatim** | ✅ enum key never leaks |
+| News | relative time | `3h ago` | `3h ago` | ✅ same formatter |
+| Quotes | price + staleness | `USD 188.52` + chip | identical | ✅ per-item staleness preserved |
+
+**One divergence found and fixed:** the holdings reader serves `name == symbol` for listed instruments,
+so the quote card printed **"AAPL" twice** — once as the symbol, once as its own name. A name that
+merely repeats the symbol is not a name. *(Unit-asserted: served strings pass through unformatted.)*
+
+### §12ho2-11 — `Select` resting border (DESIGN-SYSTEM §5.2 amendment, PROPOSED → ratify)
+A Select is a **view-scope** control, not a data-entry field; the hard border made every scope picker
+read as an empty form waiting to be filled. **Resting: borderless** on a subtly elevated surface.
+**Hover: the border returns. Focus-visible: the ring is RETAINED, unchanged** — a11y is not a style to
+trade away. Text inputs keep their border: *"type here"* is a different promise from *"choose a view"*.
+Platform-wide (Home quotes, Markets, Heatmap, …) because it is one component.
+
+### §12ho2-12 — ⚠ THE 1440×900 FIT IS **NOT** MET. **Owner's call, again — I did not cut your counts.**
+
+Batch 2 took the overshoot from **533px → 170px** at 1440×900, and every px of that came from **defects
+and density**, not from content:
+
+| Fix | Recovered |
+|---|---|
+| `fr` rows in an auto-height grid let the **tallest** row scale **every** row up with it (rows needing 255px were handed 352px) → content-sized rows that stretch only into spare space | ~180px |
+| Quotes wrapping to 4–5 rows → exactly 2 | ~115px |
+| ReviewCard's per-item `area` sub-line (Review owns that detail, P-1) | ~60px |
+| Headline clamp to one line in the summary; tile density | ~50px |
+
+**It still needs ~170px more than the region gives it.** Closing that means cutting counts **you** set —
+**headlines 3→2 (§9-9)** (~46px) and/or **ReviewCard 3→2 verdicts** (~65px) — or shrinking the donut ring.
+**I will not quietly cut them to make a number go green.** The CI assertion is therefore a **ratchet**,
+not a pass: it holds the overshoot at ≤130px on the specimen so it can never grow, and it comes down to
+**0** the moment you pick a lever. **Reporting the number beats asserting a fiction.**
+
+### Batch-2 verification
+
+Backend **621** unchanged. Frontend `npm run check` **exit 0**: lint · typecheck · tokens · **177 unit** ·
+**155 Playwright** (tile-integrity now **25 cases** — 5 routes × 5 breakpoints — plus the fit ratchet).
+Live pre-pass, **both themes × 375 / 768 / 1366 / 1440**: **7/7 cards · 0 skeletons · 9 ↗ · 0 horizontal
+overflow · 0 console errors · 0 overlapping text · 0 clipped tiles.** Scroll: 1440 **170px** · 1366
+**302px** (accepted) · tablet/phone scroll by design.
+
+**STOP — owner re-verify. Pending ratification:** §12ho1-7 legend treatment · §12ho2-2 subtitle (owner's
+phrasing implemented; one alternative offered) · §12ho2-7 **News** title · §12ho2-11 **Select** amendment ·
+§12ho2-5 SummaryHead `meta` + QuoteCardRow `summary` · §12ho2-8 Lucide ↗ · **§12ho2-12 the fit lever** ·
+carried: §9-11 strings · §9-13 "Home" · §12ho1-1 subtitle pick · ReviewCard N=3 cap.

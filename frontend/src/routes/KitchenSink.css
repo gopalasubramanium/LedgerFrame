@@ -180,8 +180,8 @@
 }
 .ks__viewportscroll { overflow-x: auto; }
 .ks__viewport {
-  width: 85.375rem;
-  height: 42.5rem;
+  width: 90rem;      /* 1440 */
+  height: 50.75rem;  /* 812 — 900 MINUS the chrome (top bar + ticker), i.e. the region the page gets */
   flex: 0 0 auto;
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-lg);

@@ -1,5 +1,6 @@
 import "./data.css";
 import { Select } from "./Select";
+import { SummaryHead } from "./SummaryLink";
 import { StalenessChip } from "./StalenessChip";
 import { formatPrice, formatSignedPercent, signOf } from "../../format/number";
 import type { DecimalString } from "../../format/number";
@@ -28,6 +29,12 @@ export interface QuoteCardRowProps {
   quotes: QuoteCardItem[];
   source: QuoteSource;
   onSourceChange?: (source: QuoteSource) => void;
+  /** §5 AMENDMENT (page-home §12ho1-5, owner-approved; §12ho2-5): when this row IS a summary tile, it
+   *  carries the standard SummaryHead — title left, the source select as trailing meta, ↗ right —
+   *  instead of a bare "Quotes" label. Without it the caller had to add a second title or a naked ↗,
+   *  which is precisely the page-local header variant the rule forbids. Omit it and the row keeps its
+   *  plain label (the gallery/non-summary use). */
+  summary?: { to: string; destination: string };
 }
 
 const SOURCE_OPTIONS = [
@@ -37,18 +44,27 @@ const SOURCE_OPTIONS = [
   { value: "watchlist", label: "Watchlist" },
 ];
 
-export function QuoteCardRow({ quotes, source, onSourceChange }: QuoteCardRowProps) {
+export function QuoteCardRow({ quotes, source, onSourceChange, summary }: QuoteCardRowProps) {
+  const select = (
+    <Select
+      value={source}
+      options={SOURCE_OPTIONS}
+      aria-label="Quote source"
+      onChange={(v) => onSourceChange?.(v as QuoteSource)}
+    />
+  );
   return (
     <div className="lf-quoterow">
-      <div className="lf-quoterow__head">
-        <span className="lf-stat__label">Quotes</span>
-        <Select
-          value={source}
-          options={SOURCE_OPTIONS}
-          aria-label="Quote source"
-          onChange={(v) => onSourceChange?.(v as QuoteSource)}
-        />
-      </div>
+      {summary ? (
+        // NOT `whole`: the header carries a Select, and nesting an interactive control inside a link
+        // is an accessibility defect.
+        <SummaryHead title="Quotes" to={summary.to} destination={summary.destination} meta={select} />
+      ) : (
+        <div className="lf-quoterow__head">
+          <span className="lf-stat__label">Quotes</span>
+          {select}
+        </div>
+      )}
       <div className="lf-quoterow__cards">
         {quotes.map((q) => {
           const sign = signOf(q.changePct);

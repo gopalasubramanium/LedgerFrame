@@ -83,3 +83,34 @@
 .lf-commit__trigger {
   text-align: left;
 }
+
+
+/* §12ho2-11 — SELECT RESTING STATE (DESIGN-SYSTEM §5.2 amendment, PROPOSED 2026-07-14).
+ *
+ * A Select is a VIEW-SCOPE control (which slice am I looking at), not a data-entry field. Wearing the
+ * same hard 1px border as a MoneyInput made every scope picker read as an empty form waiting to be
+ * filled — on Home, Markets and Heatmap alike. Resting is therefore BORDERLESS on a subtly elevated
+ * surface; hover lifts it; and the focus-visible ring is RETAINED UNCHANGED — keyboard users must
+ * still see exactly where they are, so that is not a style choice to trade away.
+ *
+ * Applies at every Select site, because it is one component. Text inputs are untouched: they keep the
+ * border, because "type here" is a different promise from "choose a view". */
+.lf-field--select {
+  border-color: transparent;
+  /* --surface, not --surface-raised: a card IS --surface-raised, so a raised select on a raised card
+   * would be invisible. This reads as a chip lifted off the card. */
+  background: var(--surface);
+  transition: background var(--motion-fast), border-color var(--motion-fast);
+}
+.lf-field--select:hover {
+  border-color: var(--border);
+}
+/* Focus is NOT negotiable (a11y): the ring stays, and it stays on the wrapper the user sees. */
+.lf-field--select:focus-within {
+  border-color: var(--border);
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.lf-field--select.lf-field--disabled {
+  background: transparent;
+}

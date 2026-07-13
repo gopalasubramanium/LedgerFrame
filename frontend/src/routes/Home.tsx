@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import "./home-grid.css";
 import {
   AllocationDonut,
@@ -13,7 +15,6 @@ import {
   Sparkline,
   StalenessChip,
   SummaryHead,
-  SummaryLink,
 } from "../components/ui";
 import type { QuoteCardItem, QuoteSource, ReviewSection, Verdict } from "../components/ui";
 import { getHomeQuoteSource } from "../api/home";
@@ -57,6 +58,8 @@ const HEADLINES_N = 3;
 // N=3 matches the ratified mockup and the §9-6/§9-9 precedent. PROPOSED — ratify at the walk.
 const REVIEW_N = 3;
 const HOLDINGS_GROUP = "My holdings";
+// §12ho1-7: the donut LEGEND lists the 5 largest classes; the ring still draws them all.
+const LEGEND_MAX = 5;
 // §9-8: the sparkline MIRRORS Portfolio's default view (window 1Y → 365d, benchmark SPY, no manual).
 // It renders `series` ONLY — no benchmark line, no client indexing. The server still computes a
 // benchmark series we do not draw; ACCEPTED and recorded (§9-8), revisit only if it ever costs.
@@ -139,7 +142,10 @@ export function Home() {
                 .filter((h) => h.is_priced && h.symbol)
                 .map((h) => ({
                   symbol: h.symbol as string,
-                  name: h.name ?? h.label ?? (h.symbol as string),
+                  // §12ho2-10: the holdings reader serves `name == symbol` for listed instruments, so
+                  // the card printed "AAPL" twice, once as the symbol and once as its own name. A
+                  // name that merely repeats the symbol is not a name — it is noise in a compact card.
+                  name: [h.name, h.label].find((n) => n && n !== h.symbol) ?? "",
                   price: h.price_display ?? h.price,
                   changePct: h.day_change_pct,
                   currency: h.currency ?? "",
@@ -162,10 +168,12 @@ export function Home() {
   // answers with a partial or unexpected payload used to throw here (`Object.entries(undefined)`) and
   // take the whole page down with it. A missing field must degrade to an honest EMPTY with a reason
   // (Guarantee 3) — never to a white screen, and never to an invented figure.
+  // A SUMMARY carries the verdict and the title — not the per-item `area` sub-line. That detail is
+  // Review's to show (P-1), and on Home it cost a third of the hero row's height for information the
+  // ↗ already leads to. The COUNT is untouched: it is served, and still reconciles with /review.
   const reviewSections: ReviewSection[] = (review?.items ?? []).slice(0, REVIEW_N).map((i) => ({
     label: i.title,
     verdict: reviewVerdict(i.severity),
-    detail: i.area,
   }));
 
   const headlines =
@@ -182,7 +190,7 @@ export function Home() {
   return (
     <div className="hm3 hm3--full">
       <div className="hm3__pagehead">
-        <PageHeader title="Home" subtitle="Your summary — tap any card for the full picture" />
+        <PageHeader title="Home" subtitle="Your summary — the ↗ on any card opens the full view." />
       </div>
 
       <div className="hm3__grid">
@@ -218,10 +226,10 @@ export function Home() {
               </>
             )}
           </Card>
-          <div className="hm3__sparkcap">
-            <span className="hm3__sparklabel">Performance</span>
-            <SummaryLink to="/portfolio" destination="Portfolio" />
-          </div>
+          {/* The sparkline is PORTFOLIO's series (D-035/§9-8), so it names its OWN canonical page —
+            * the tile summarises two, which is why it carries two ↗ (owner-approved, §12ho1-5). It is
+            * a real SummaryHead, not a page-local caption: one header anatomy everywhere (§12ho2-5). */}
+          <SummaryHead title="Performance" to="/portfolio" destination="Portfolio" whole />
           <div className="hm3__spark">
             <Card data={perf} onRetry={reload}>
               {(p) =>
@@ -309,7 +317,22 @@ export function Home() {
                     reason="No priced holdings — allocation appears once a holding has a value."
                   />
                 ) : (
-                  <AllocationDonut segments={segments} legend aria-label="Allocation by class" />
+                  <AllocationDonut
+                    segments={segments}
+                    legend
+                    // §12ho1-7 (owner: lever B): the legend lists the FIVE largest classes by served
+                    // value; the ring still draws every one. The overflow row states a COUNT and links
+                    // to the page that owns the full breakdown — it invents no "Other" figure and
+                    // recomputes no share (Guarantee 3, D-105).
+                    legendMax={LEGEND_MAX}
+                    legendMore={(n) => (
+                      <Link className="lf-donut__morelink" to="/portfolio" aria-label={`${n} more classes on Portfolio`}>
+                        +{n} more
+                        <ArrowUpRight aria-hidden="true" focusable="false" />
+                      </Link>
+                    )}
+                    aria-label="Allocation by class"
+                  />
                 );
               }}
             </Card>
@@ -353,51 +376,57 @@ export function Home() {
           </div>
         </section>
 
-        {/* R3 · Briefing + top headlines (canonical: News). The briefing body is PAGE-LOCAL (§9-16 —
-          * 2nd occurrence; extraction at the 3rd). */}
-        <section className="lf-card hm3__cell hm3__cell--brief" data-card="briefing">
-          <SummaryHead
-            title={<GlossaryTerm term="term-briefing">Briefing</GlossaryTerm>}
-            to="/news"
-            destination="News"
-          />
-          <Card data={briefing} onRetry={reload}>
-            {(b) =>
-              b.text ? (
-                <p className="hm3__briefing">{b.text}</p>
-              ) : (
-                <EmptyState
-                  message="No briefing yet."
-                  reason="The briefing is built from your own served figures — it appears once there is data to summarise."
-                />
-              )
-            }
-          </Card>
-          <Card data={news} onRetry={reload}>
-            {(n) =>
-              n.no_egress ? (
-                <EmptyState
-                  message="No headlines right now."
-                  reason="No-egress is on — the app made no outbound call, so nothing was retrieved."
-                />
-              ) : headlines.length === 0 ? (
-                <EmptyState
-                  message="No headlines right now."
-                  reason="None were retrieved for your holdings — headlines are retrieved, never invented."
-                />
-              ) : (
-                <NewsList items={headlines} showSymbols />
-              )
-            }
-          </Card>
+        {/* R3 · NEWS (§12ho2-7). The tile was titled "Briefing", but most of what it shows is
+          * HEADLINES — the title named one part and mislabelled the rest. It is now the News tile,
+          * and the Briefing is a LABELLED line inside it. Both terms are GLOSSARY terms, used
+          * verbatim, for the two different things they actually name. Canonical: News. The briefing
+          * body stays PAGE-LOCAL (§9-16 — 2nd occurrence; extraction at the 3rd). */}
+        <section className="lf-card hm3__cell hm3__cell--brief" data-card="news">
+          <SummaryHead title="News" to="/news" destination="News" whole />
+          <div className="hm3__newsbody">
+            <div className="hm3__briefblock">
+              <h3 className="hm3__sublabel">
+                <GlossaryTerm term="term-briefing">Briefing</GlossaryTerm>
+              </h3>
+              <Card data={briefing} onRetry={reload}>
+                {(b) =>
+                  b.text ? (
+                    <p className="hm3__briefing">{b.text}</p>
+                  ) : (
+                    <EmptyState
+                      message="No briefing yet."
+                      reason="The briefing is built from your own served figures — it appears once there is data to summarise."
+                    />
+                  )
+                }
+              </Card>
+            </div>
+            <h3 className="hm3__sublabel">Top headlines</h3>
+            <Card data={news} onRetry={reload}>
+              {(n) =>
+                n.no_egress ? (
+                  <EmptyState
+                    message="No headlines right now."
+                    reason="No-egress is on — the app made no outbound call, so nothing was retrieved."
+                  />
+                ) : headlines.length === 0 ? (
+                  <EmptyState
+                    message="No headlines right now."
+                    reason="None were retrieved for your holdings — headlines are retrieved, never invented."
+                  />
+                ) : (
+                  <NewsList items={headlines} showSymbols clampLines={1} />
+                )
+              }
+            </Card>
+          </div>
         </section>
 
-        {/* R3 · compact quote cards, one row, source select (D-046/D-052). QuoteCardRow renders its
-          * OWN head (the title + the source select), so this tile adds only the corner ↗ — a second
-          * title would be a duplicate. Giving the component a SummaryHead is a PROPOSED §5 amendment
-          * (§12ho1-5), ratified at the walk; it is NOT improvised into ui/ here. */}
+        {/* R3 · compact quote cards + source select (D-046/D-052). The row now carries the STANDARD
+          * SummaryHead — title left, the source select as trailing meta, ↗ right (the §5 amendment
+          * the owner approved at §12ho1-5, applied in ui/ at §12ho2-5). The tile no longer bolts a
+          * naked ↗ onto the corner. */}
         <section className="lf-card hm3__cell hm3__cell--quotes" data-card="quotes">
-          <SummaryLink to="/markets" destination="Markets" />
           <Card data={quotes} onRetry={reload}>
             {(qs) =>
               qs.length === 0 ? (
@@ -406,7 +435,12 @@ export function Home() {
                   reason="This source has nothing to quote yet — pick another source, or add a holding or watchlist item."
                 />
               ) : (
-                <QuoteCardRow quotes={qs} source={source as QuoteSource} onSourceChange={setSource} />
+                <QuoteCardRow
+                  quotes={qs}
+                  source={source as QuoteSource}
+                  onSourceChange={setSource}
+                  summary={{ to: "/markets", destination: "Markets" }}
+                />
               )
             }
           </Card>

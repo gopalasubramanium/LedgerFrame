@@ -270,3 +270,18 @@
   font-family: var(--font-ui);
   white-space: nowrap;
 }
+
+/* §12ho1-7: the "+N more ↗" legend row — where the classes the legend does not list actually live.
+ * It states a COUNT, never a figure: no "Other" share is invented (Guarantee 3). */
+.lf-donut__row--more { color: var(--text-secondary); }
+.lf-donut__row--more .lf-donut__morelink {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: var(--font-size-13);
+}
+.lf-donut__row--more .lf-donut__morelink:hover { text-decoration: underline; }
+.lf-donut__row--more .lf-donut__morelink svg { width: var(--font-size-13); height: var(--font-size-13); }

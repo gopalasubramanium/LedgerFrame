@@ -18,6 +18,10 @@ export interface NewsListItem {
 
 export interface NewsListProps {
   items: NewsListItem[];
+  /** §12ho2-9: clamp each headline to N lines. A SUMMARY (Home) shows one line and links to the page
+   *  that owns the full text; the News page itself clamps nothing. Nothing is hidden — the headline is
+   *  ellipsised and the ↗ says where the rest lives. */
+  clampLines?: number;
   /** Show per-symbol links to InstrumentDetail (grouped News); off for the scoped instrument view. */
   showSymbols?: boolean;
   emptyMessage?: string;
@@ -29,10 +33,11 @@ export function NewsList({
   showSymbols = false,
   emptyMessage = "No recent news",
   emptyReason = "No headlines right now.",
+  clampLines,
 }: NewsListProps) {
   if (items.length === 0) return <EmptyState message={emptyMessage} reason={emptyReason} />;
   return (
-    <ul className="lf-newslist">
+    <ul className={`lf-newslist${clampLines ? ` lf-newslist--clamp-${clampLines}` : ""}`}>
       {items.map((n, i) => (
         <li className="lf-newslist__item" key={`${n.url ?? n.headline}-${i}`}>
           {n.url ? (

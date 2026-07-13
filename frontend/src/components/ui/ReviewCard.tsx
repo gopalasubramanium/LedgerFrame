@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import "./structure.css";
 
 // Summary-with-link on Home / Net worth; canonical body on Review (DESIGN-SYSTEM
@@ -22,19 +23,21 @@ export interface ReviewCardProps {
 export function ReviewCard({ sections, attention, link }: ReviewCardProps) {
   return (
     <section className="lf-review" aria-label="Review">
-      <div className="lf-review__head">
-        <h2 className="lf-review__title">Review</h2>
-        {/* §12ho1-2: the ONE linked-summary affordance — the corner ↗, top-right. (Was a footer text
-          * link "Review →", a fourth variant of the same idea.) An <a> rather than a router Link, so
-          * the component stays router-agnostic; `href` is the hash route its callers already pass. */}
-        <a className="lf-summarylink" data-summarylink href={link.href} aria-label={link.label} title={link.label}>
-          <span className="lf-summarylink__glyph" aria-hidden="true">↗</span>
-        </a>
+      {/* §12ho2-5: the SAME header anatomy as every other summary tile — title left, trailing meta,
+        * ↗ right. This card used to invent its own bar (its own title type, its own attention chip
+        * floating beside the link), which is exactly the page-local variant the rule forbids. The
+        * attention count is now the header's `meta`. An <a>, not a router Link, so the component
+        * stays router-agnostic; `href` is the hash route its callers already pass. */}
+      <div className="lf-summaryhead lf-review__head">
+        <h2 className="lf-summaryhead__title">Review</h2>
         {attention > 0 && (
-          <span className="lf-review__attention">
+          <span className="lf-summaryhead__meta lf-review__attention">
             {attention} need{attention === 1 ? "s" : ""} a look
           </span>
         )}
+        <a className="lf-summarylink" data-summarylink href={link.href} aria-label={link.label} title={link.label}>
+          <ArrowUpRight className="lf-summarylink__glyph" aria-hidden="true" focusable="false" />
+        </a>
       </div>
 
       {sections.map((s) => (

@@ -47,6 +47,13 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # repo avoids home-directory permission problems (a separate system account can't
 # read an app installed under /home/<you>/). Override with --service-user for an
 # isolated account, but then install the app to a shared path like /opt.
+# GATE A7 / RD-4 — the Node floor, stated ONCE and taken from the toolchain itself (vite's
+# `engines.node`, mirrored in frontend/package.json). This script used to claim Node 18, which the
+# toolchain cannot actually run: vite refuses below 20.19. A stated minimum we never checked is the
+# same defect class as a fabricated figure.
+NODE_MIN_MAJOR=20
+NODE_MIN_DISPLAY="20.19+ (or 22.12+)"
+
 RUN_USER="${SUDO_USER:-$USER}"
 SERVICE_USER="${SERVICE_USER:-}"
 SET_USER=false
@@ -260,10 +267,12 @@ if [[ "$INSTALL_DEPS" == true && "$PKG" == "apt" ]]; then
   NODE_CMD="$(command -v node || command -v nodejs || true)"
   if [[ -n "$NODE_CMD" ]]; then
     NODE_MAJOR="$("$NODE_CMD" -v 2>/dev/null | sed 's/[^0-9.]//g' | cut -d. -f1)"
-    [[ "${NODE_MAJOR:-0}" -lt 18 ]] && warn "Node $("$NODE_CMD" -v) is old (<18); will use the prebuilt dashboard."
+    if [[ "${NODE_MAJOR:-0}" -lt "$NODE_MIN_MAJOR" ]]; then
+      warn "Node $("$NODE_CMD" -v) is below the toolchain's floor (needs $NODE_MIN_DISPLAY); will use the prebuilt dashboard."
+    fi
   fi
 elif [[ "$INSTALL_DEPS" == true ]]; then
-  warn "No apt detected — ensure curl, git, Node 18+, a C toolchain, and (optionally) age are installed."
+  warn "No apt detected — ensure curl, git, Node $NODE_MIN_DISPLAY, a C toolchain, and (optionally) age are installed."
 else
   info "Skipping system package install (--no-deps)."
 fi
@@ -378,10 +387,10 @@ if [[ "$BUILT" == false ]]; then
       warn "No committed frontend/dist to fall back to. The API runs; build the UI with:  $BUILD_CMD"
     fi
   elif [[ "$HAVE_DIST" == true ]]; then
-    # No Node 18+ to rebuild — the committed bundle is the supported no-Node path. Expected.
-    ok "Using the prebuilt dashboard (no Node 18+ for a rebuild — expected, up-to-date in the repo)."
+    # No usable Node to rebuild — the committed bundle is the supported no-Node path. Expected.
+    ok "Using the prebuilt dashboard (no Node $NODE_MIN_DISPLAY for a rebuild — expected, up-to-date in the repo)."
   else
-    warn "Dashboard not built (Node 18+ needed) and no prebuilt bundle present. Finish the UI later with:"
+    warn "Dashboard not built (Node $NODE_MIN_DISPLAY needed) and no prebuilt bundle present. Finish the UI later with:"
     warn "   $BUILD_CMD"
   fi
 fi

@@ -2,8 +2,11 @@
   "name": "ledgerframe-frontend",
   "private": true,
   "version": "0.1.0",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "type": "module",
-  "description": "LedgerFrame v2 frontend — design system + component library (from-scratch, ADR-0002).",
+  "description": "LedgerFrame v2 frontend \u2014 design system + component library (from-scratch, ADR-0002).",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

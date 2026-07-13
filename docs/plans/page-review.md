@@ -1,6 +1,8 @@
 # page-review.md — Review page build plan
 
-**Status: PLAN ONLY — owner reviews §9 before any code.** Drafted 2026-07-13 from
+**Status: §9 RESOLVED (owner one-pass, 2026-07-13) — BUILDING.** Phase 0 backend-first (ND-1 thresholds
++ D-087 signal + ND-2 rename); Phase 0a confirm-only (DateInput ratified — no §5 amendment). Drafted
+2026-07-13 from
 `TEMPLATE-page-build.md` (incl. the tooling-guard fail-first, the ⚠ verify-first divergence-flag +
 **audit-guards** additions, the vertical-single-scroll invariant, and the Reports-group worklist-shape
 note). Verify-first pass done (§10 — read what the review reader actually serves **and its honesty
@@ -242,10 +244,60 @@ render the raw enum key** (`review`/`info`) in a user string (copy hygiene).
 
 ---
 
-## 9. NEEDS DECISION — OPEN (owner resolves one-pass; nothing resolved here)
+## 9. NEEDS DECISION — RESOLVED (owner, one-pass, 2026-07-13)
 
-Each item is an ambiguity the specs do not settle. Options laid out; **I resolved none.** Items flagged
-**⚠** may need a backend delta or an owner scope call.
+All 12 items resolved in one pass. Each matched a §9 item by **number + topic**. The considered-options
+record is retained beneath.
+
+**Resolutions (owner, 2026-07-13):**
+- **ND-1 — RECONCILE IN PHASE 0 (code catches up to ratified spec).** Apply to `review.py`:
+  **`_RUNWAY_LOW_MONTHS = 3`, `_GOAL_SOON_DAYS = 180`** (D-084) and implement the **D-087 signal
+  `_OTHER_CLASS_OVERUSE_PCT = 10`** — fires when `other`-classed holdings exceed 10% of gross assets,
+  copy prompts proper reclassification, in its **OWN `try/except`** (D-059). No new decision (ratified
+  D-084/D-087). Backend tests assert the new values + the signal firing + its **isolated failure path**;
+  **fail-first** (each threshold/signal test shown RED on the old values before the edit).
+- **ND-2 — APPLY the D-030 rename.** §3b delta **`GET /review/centre → GET /review`**, backend-first,
+  regenerate `API-CONTRACT.json` + `docs/openapi.json` **same commit**, drift green. The page consumes
+  **`/review`**. Grep the frontend for any `review/centre` reference.
+- **ND-3 — (a) BY-CONSTRUCTION ACCEPTED.** Both endpoints derive from `review_report`; **`ReviewCard`
+  stays on `/portfolio/review`**. An acceptance criterion **+ a test DEMONSTRATE (not prose)** that Net
+  worth's ReviewCard attention count **==** the Review page's attention count, **live**.
+- **ND-4 — DISPLAY, NEUTRAL.** Severity renders as a **served-verbatim string in a NEUTRAL chip** — **no
+  semantic colour mapping** (semantic-only-colour rule; `info`/`review` are not gain/loss/fresh/stale).
+  Severity also **orders items within a section** (higher first, as served). **No hardcoded severity
+  list anywhere.**
+- **ND-5 — (a).** **Mark-reviewed (`ReviewLog`) is the ONLY acknowledgement in v2.** Per-signal
+  acknowledge/dismiss → **ROADMAP** as a new R-item (one line, noting it implies a **contract delta +
+  state model**). **No ack affordance on items.**
+- **ND-6 — YES, rotation-eligible** (D-044 explicit).
+- **ND-7 — NAVIGATION MAP SANCTIONED.** A frontend **`area → route` map (navigation only, not vocabulary
+  copy)**; every target is that area's **canonical page** (D-038). An **unrecognised area renders the
+  item WITHOUT a link** — never a guessed route. Test: every served `area` maps or **honestly no-links**.
+- **ND-8 — COMPOSE RATIFIED.** **`Dialog` + `TextInput` (note) + the ratified `DateInput`
+  (next-review date)**, `[S]`-gated as served (`POST /review/log` `require_auth`). *(DateInput exists in
+  the ratified §5.1 inventory → no §5 amendment; if it had not, STOP.)* Success → **toast + history
+  refresh**.
+- **ND-9 — SPEC-ONLY.** The D-059 table lives in the plan/spec, **never in UI** (constant names are
+  implementation notes — copy hygiene). Plain-language **`[Help]` copy may describe** thresholds. **R-15
+  parked; NO config UI.**
+- **ND-10 — DECLINED** (not deferred): export is **Reports territory** (Net worth ND-14 / Pricing Health
+  ND-12 precedent).
+- **ND-11 — ADD PROPOSED:** GLOSSARY **"Mark reviewed"** + **"Severity"** (served values noted), ratify
+  at the walk (News ND-9 pattern). Empty-state copy stays verbatim **"Nothing needs a look right now."**
+  (allowed as body copy, D-030).
+- **ND-12 — HOUSEHOLD-ONLY confirmed** (readers take no `entity_id`); logged for the Accounts milestone
+  (no selector).
+
+**Build sequence:** **Phase 0 backend-first** (ND-1 values + D-087 signal + ND-2 rename; contract regen
+same commit; fail-first for the new threshold/signal tests) → **Phase 0a confirm-only** at
+`/kitchen-sink` (ratified composition; DateInput exists — no §5 amendment) → **Phase 1** assembly
+(worklist: verdict header + attention body + Mark-reviewed + history) → **Phase 2** (ND-3 reconciliation
+test + ND-7 area-map test + `POST /review/log` request-body assertion + overflow/single-scroll) →
+**Phase 3a** scripted pre-pass **GREEN**. STOP after the pre-pass report for the owner walk.
+
+---
+
+**Considered options (draft record — the resolutions above are authoritative).**
 
 - **ND-1 — Threshold code↔spec divergence. ⚠ BEHAVIOR GAP (D-084/D-087).** `review.py` serves
   **`_RUNWAY_LOW_MONTHS = 6`** and **`_GOAL_SOON_DAYS = 90`**; **D-084** set them to **3 / 180**, and

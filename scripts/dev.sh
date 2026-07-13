@@ -11,6 +11,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
 DEV_DATA="${LEDGERFRAME_DEV_DATA_DIR:-$HOME/.local/share/ledgerframe-dev}"
 
 # 1) First run: create a dev .env with safe local defaults (never /mnt).

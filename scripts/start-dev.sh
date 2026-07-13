@@ -5,7 +5,9 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 export LEDGERFRAME_ENV=development
-export LEDGERFRAME_DATA_DIR="${LEDGERFRAME_DATA_DIR:-$REPO_DIR/data}"
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
+export LEDGERFRAME_DATA_DIR="$(lf_data_dir)"
 mkdir -p "$LEDGERFRAME_DATA_DIR"
 # shellcheck disable=SC1091
 [[ -f .venv/bin/activate ]] && source .venv/bin/activate

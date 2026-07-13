@@ -50,7 +50,9 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_USER="${SUDO_USER:-$USER}"
 SERVICE_USER="${SERVICE_USER:-}"
 SET_USER=false
-DATA_DIR="${LEDGERFRAME_DATA_DIR:-}"
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
+DATA_DIR="${LEDGERFRAME_DATA_DIR-}"   # empty = "ask me"; the DEFAULT comes from the resolver
 ENABLE_KIOSK=""; ENABLE_VOICE=""; DEMO_MODE=""; ENABLE_LAN=""
 ASSUME_YES=false; DRY_RUN=false; INSTALL_DEPS=true
 SET_KIOSK=false; SET_VOICE=false; SET_DEMO=false; SET_DATA=false; SET_LAN=false
@@ -125,7 +127,7 @@ suggest_data_dir() {
     local m
     m="$(lsblk -rno MOUNTPOINT,TRAN 2>/dev/null | awk '$2=="usb" && $1!="" {print $1; exit}')"
     [[ -n "$m" ]] && { echo "$m/ledgerframe-data"; return; }
-    echo "/mnt/ledgerframe-data"
+    echo "$LF_DEFAULT_DATA_DIR"   # the ONE documented default (scripts/lib/datadir.sh)
   else
     echo "$REPO_DIR/data"
   fi

@@ -4,7 +4,9 @@
 set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
-DATA_DIR="${LEDGERFRAME_DATA_DIR:-$REPO_DIR/data}"
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
+DATA_DIR="$(lf_data_dir)"   # was $REPO_DIR/data — a DESTRUCTIVE script with its own idea of "where"
 DB="$DATA_DIR/db/ledgerframe.db"
 read -rp "This deletes $DB and re-seeds demo data. Continue? [y/N] " ans
 [[ "$ans" =~ ^[Yy]$ ]] || { echo "aborted"; exit 0; }

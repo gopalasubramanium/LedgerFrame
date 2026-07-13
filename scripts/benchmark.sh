@@ -5,7 +5,9 @@
 set -uo pipefail
 API_URL="http://127.0.0.1:${LEDGERFRAME_API_PORT:-8321}"
 HAILO_URL="${LEDGERFRAME_HAILO_BASE_URL:-http://127.0.0.1:8000}"
-DATA_DIR="${LEDGERFRAME_DATA_DIR:-/mnt/ledgerframe-data}"
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
+DATA_DIR="$(lf_data_dir)"
 
 hdr() { printf '\n\033[1;36m%s\033[0m\n' "$*"; }
 

@@ -85,12 +85,17 @@ if owner_sh "command -v npm >/dev/null 2>&1" && [[ -d frontend ]]; then
     && log "dashboard rebuilt" || log "WARN: dashboard rebuild failed (using committed build)"
 fi
 
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
 log "applying database migrations…"
 # Resolve the data dir so migrations target the same DB the service uses (the
 # installer records it in admin.env; fall back to .env, then the app default).
 MIG_DATA_DIR=""
 [[ -r /etc/ledgerframe/admin.env ]] && MIG_DATA_DIR="$(. /etc/ledgerframe/admin.env 2>/dev/null; echo "${DATA_DIR:-}")"
-[[ -z "$MIG_DATA_DIR" ]] && MIG_DATA_DIR="$(sed -n 's/^LEDGERFRAME_DATA_DIR=//p' "$REPO_DIR/.env" 2>/dev/null | head -1 | tr -d '"')"
+# The installer's admin.env still wins (it records what the SERVICE actually uses); everything
+# below it now goes through the one shared resolver instead of a private sed. This script's sed was
+# the ONLY .env-aware resolution in the whole repo — which is exactly why the others were wrong.
+[[ -z "$MIG_DATA_DIR" ]] && MIG_DATA_DIR="$(lf_data_dir)"
 owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; ${MIG_DATA_DIR:+LEDGERFRAME_DATA_DIR='$MIG_DATA_DIR'} python scripts/db_migrate.py" \
   && log "migrations applied" || log "migrations skipped (schema ensured on service startup)"
 

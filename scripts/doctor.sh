@@ -5,7 +5,9 @@
 set -uo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DATA_DIR="${LEDGERFRAME_DATA_DIR:-/mnt/ledgerframe-data}"
+# shellcheck source=lib/datadir.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/datadir.sh"   # the ONE data-dir answer (release-readiness Part B/1)
+DATA_DIR="$(lf_data_dir)"
 HAILO_URL="${LEDGERFRAME_HAILO_BASE_URL:-http://127.0.0.1:8000}"
 API_URL="http://127.0.0.1:${LEDGERFRAME_API_PORT:-8321}"
 

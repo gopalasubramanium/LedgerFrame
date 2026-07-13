@@ -156,15 +156,17 @@ The constant **names** are **reconciled verbatim** against
 `_CORP_ACTION_RECENT_DAYS` (:30); two previously-proposed names were corrected to
 the real constants (`_INSURANCE_SOON_DAYS`, `_CORP_ACTION_RECENT_DAYS`).
 
-**Value provenance (honest audit trail):** the legacy code values are
+**Value provenance (honest audit trail):** the legacy code values were
 `_LIQUID_THIN_PCT = 15.0`, `_GOAL_SOON_DAYS = 90`, `_OBLIGATION_SOON_DAYS = 30`,
 `_INSURANCE_SOON_DAYS = 30`, `_RUNWAY_LOW_MONTHS = 6`, `_CORP_ACTION_RECENT_DAYS
-= 45`. In **D-084 the owner set two defaults away from the code**:
-`_RUNWAY_LOW_MONTHS = 3` (was 6) and `_GOAL_SOON_DAYS = 180` (was 90). These two
-are **owner-set product defaults, not code-reconciled values** — the divergence
-is deliberate and recorded here so the table and the legacy source can honestly
-disagree on exactly these two. All other values still match the code.
-`_OTHER_CLASS_OVERUSE_PCT = 10` is added by D-087 (no legacy equivalent).
+= 45`. **D-084 set two defaults away from the legacy code** (`_RUNWAY_LOW_MONTHS
+= 3`, was 6; `_GOAL_SOON_DAYS = 180`, was 90) and **D-087 added
+`_OTHER_CLASS_OVERUSE_PCT = 10`** (no legacy equivalent). **RECONCILED IN CODE
+2026-07-13 (page-review Phase 0):** `review.py` now serves the owner-set values
+(3 / 180) and implements the over-use signal — the table and the code no longer
+disagree (the earlier deliberate divergence is closed; fail-first tests pin it).
+Confidence band `<50` (`confidence.py`) and `LEDGERFRAME_STALE_AFTER_SECONDS`
+(900) are per 04-CALCULATION-ENGINE §10/§11.
 Confidence band `<50` (`confidence.py`) and `LEDGERFRAME_STALE_AFTER_SECONDS`
 (900) are per 04-CALCULATION-ENGINE §10/§11.
 

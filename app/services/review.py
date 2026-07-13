@@ -10,6 +10,7 @@ merit review* — never "you should…", never a projection, never advice.
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,12 +24,13 @@ from app.services.portfolio import value_portfolio
 from app.services.runway import runway_report
 
 _LIQUID_THIN_PCT = 15.0
-_GOAL_SOON_DAYS = 90
+_GOAL_SOON_DAYS = 180           # D-084: owner-set — a half-year's notice on an approaching goal
 _OBLIGATION_SOON_DAYS = 30
 _INSURANCE_SOON_DAYS = 30
-_RUNWAY_LOW_MONTHS = 6
+_RUNWAY_LOW_MONTHS = 3          # D-084: owner-set floor — below 3 months' recurring net burn warrants a look
 _CORP_ACTION_RECENT_DAYS = 45   # window for "corporate action recorded — verify" reminders
 _INCOMPLETE_DETAILS_MIN = 1     # D-091: manual holdings with no optional detail recorded (≥ this many surfaces)
+_OTHER_CLASS_OVERUSE_PCT = 10   # D-087: `other` is the honest escape valve, but over ~10% of gross signals reclassification
 
 # D-091: manual classes that carry meaningful optional detail; a bare value with no
 # `meta` at all is what the "incomplete details" signal flags (never a hard wall).
@@ -37,6 +39,27 @@ _DETAIL_CLASSES = frozenset({"fixed_deposit", "bond", "property", "retirement", 
 
 def _item(area: str, title: str, severity: str = "review") -> dict:
     return {"area": area, "title": title, "severity": severity}
+
+
+def _other_class_overuse_item(val) -> dict | None:
+    """D-087 — an item when `other`-classed holdings exceed the over-use threshold, else None.
+    Pure (a function of the valuation) so its guard can be exercised in isolation (D-059)."""
+    gross = sum((h.market_value_base for h in val.holdings if h.market_value_base > 0), Decimal(0))
+    if gross <= 0:
+        return None
+    other_sum = sum(
+        (h.market_value_base for h in val.holdings if h.market_value_base > 0
+         and (h.asset_class.value if hasattr(h.asset_class, "value") else str(h.asset_class)) == "other"),
+        Decimal(0),
+    )
+    pct = float(other_sum / gross * Decimal(100))
+    if pct > _OTHER_CLASS_OVERUSE_PCT:
+        return _item(
+            "data",
+            f"'Other'-classed holdings are {pct:.0f}% of assets (over {_OTHER_CLASS_OVERUSE_PCT}%) — "
+            f"reclassify to a specific type",
+        )
+    return None
 
 
 async def review_report(session: AsyncSession) -> dict:
@@ -188,6 +211,15 @@ async def review_report(session: AsyncSession) -> dict:
                 f"{misplaced} instrument{'s' if misplaced != 1 else ''} carry an expense ratio on a "
                 f"non-fund class — review (expense ratios apply to funds/ETFs only)",
             ))
+    except Exception:  # noqa: BLE001
+        pass
+
+    # D-087: `other`-class over-use — reporting only, own guard (D-059).
+    try:
+        oval = await value_portfolio(session, base)
+        ov = _other_class_overuse_item(oval)
+        if ov:
+            items.append(ov)
     except Exception:  # noqa: BLE001
         pass
 

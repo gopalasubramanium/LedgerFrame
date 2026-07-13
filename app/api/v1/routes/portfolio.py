@@ -903,9 +903,10 @@ async def review(session: AsyncSession = Depends(get_db)) -> dict:
     return await review_report(session)
 
 
-@router.get("/review/centre")
-async def review_centre_ep(session: AsyncSession = Depends(get_db)) -> dict:
-    """Review Centre (W1) — one consolidated verdict per section. Reporting only."""
+@router.get("/review")
+async def review_page_ep(session: AsyncSession = Depends(get_db)) -> dict:
+    """Review (D-030 — "Review Centre" retired to "Review") — one consolidated verdict per
+    section + the attention list. Reporting only."""
     from app.services.review import review_centre
 
     return await review_centre(session)

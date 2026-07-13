@@ -5,7 +5,7 @@ from __future__ import annotations
 
 
 async def test_review_centre_has_all_sections(app_client):
-    d = (await app_client.get("/api/v1/review/centre")).json()
+    d = (await app_client.get("/api/v1/review")).json()
     assert {"trust", "policy", "liquidity", "goals", "changed"} <= set(d["sections"])
     assert "attention" in d and "disclaimer" in d
     assert d["sections"]["trust"]["confidence"] >= 0
@@ -35,7 +35,7 @@ async def test_recent_split_surfaces_corporate_verify_item(app_client):
         "quantity": 0, "price": 2, "currency": "USD"})   # 2:1 split (ratio in price)
     assert r.status_code == 200
 
-    attention = (await app_client.get("/api/v1/review/centre")).json()["attention"]
+    attention = (await app_client.get("/api/v1/review")).json()["attention"]
     corp = [a for a in attention if a["area"] == "corporate"]
     assert corp, "expected a corporate-action verify item"
     assert "SPLITCO" in corp[0]["title"] and "verify" in corp[0]["title"].lower()

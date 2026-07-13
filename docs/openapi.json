@@ -11654,10 +11654,10 @@
         ]
       }
     },
-    "/api/v1/review/centre": {
+    "/api/v1/review": {
       "get": {
-        "description": "Review Centre (W1) \u2014 one consolidated verdict per section. Reporting only.",
-        "operationId": "review_centre_ep_api_v1_review_centre_get",
+        "description": "Review (D-030 \u2014 \"Review Centre\" retired to \"Review\") \u2014 one consolidated verdict per\nsection + the attention list. Reporting only.",
+        "operationId": "review_page_ep_api_v1_review_get",
         "parameters": [
           {
             "in": "header",
@@ -11698,7 +11698,7 @@
               "application/json": {
                 "schema": {
                   "additionalProperties": true,
-                  "title": "Response Review Centre Ep Api V1 Review Centre Get",
+                  "title": "Response Review Page Ep Api V1 Review Get",
                   "type": "object"
                 }
               }
@@ -11716,7 +11716,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Review Centre Ep",
+        "summary": "Review Page Ep",
         "tags": [
           "portfolio"
         ]

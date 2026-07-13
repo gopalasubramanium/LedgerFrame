@@ -22,6 +22,21 @@ set -uo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
+# --- flags -------------------------------------------------------------------
+#   --no-backup   Proceed WITHOUT a fresh backup. Migrations are FORWARD-ONLY and there is NO
+#                 supported downgrade (release-readiness RD-6), so this is a real choice: you are
+#                 giving up your only way back. You have to say it out loud.
+LF_NO_BACKUP=""
+for arg in "$@"; do
+  case "$arg" in
+    --no-backup) LF_NO_BACKUP=1 ;;
+    -h|--help)   sed -n '1,20p' "$0"; exit 0 ;;
+  esac
+done
+export LF_NO_BACKUP
+# shellcheck source=lib/backup_gate.sh
+source "$REPO_DIR/scripts/lib/backup_gate.sh"
+
 # --- who runs what -----------------------------------------------------------
 SUDO=sudo
 OWNER="$(id -un)"
@@ -67,8 +82,15 @@ run_owner git config --global --add safe.directory "$REPO_DIR" >/dev/null 2>&1 |
 BRANCH="$(run_owner git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null | tail -n1 | tr -dc 'A-Za-z0-9._/-')"
 [[ "$BRANCH" == "HEAD" || -z "$BRANCH" ]] && BRANCH=main
 
+# GATE A6 / RD-6 — no migration without a way back.
+# This line used to be `backup.sh && log "created" || log "skipped"`: it TRIED to back up, SWALLOWED
+# the failure, and MIGRATED ANYWAY. With forward-only migrations and no supported downgrade, the
+# backup IS the rollback story — so a failure here now STOPS the update instead of being logged.
 log "backing up database first…"
-owner_sh "cd '$REPO_DIR' && ./scripts/backup.sh" >/dev/null 2>&1 && log "backup created" || log "backup skipped"
+owner_sh "cd '$REPO_DIR' && ./scripts/backup.sh" >/dev/null 2>&1 && log "backup created" || log "backup FAILED"
+if ! lf_require_fresh_backup; then
+  fail "aborting: no fresh backup. Run ./scripts/backup.sh, or re-run with --no-backup to proceed anyway."
+fi
 
 log "fetching latest ($BRANCH)…"
 run_owner git -C "$REPO_DIR" fetch origin "$BRANCH" || fail "git fetch failed (network?)"

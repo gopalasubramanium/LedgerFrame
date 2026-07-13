@@ -75,6 +75,10 @@ async def app_client():
     # an earlier test switched the data source (the provider is a process singleton).
     # This keeps each test's demo seeding + provider behaviour isolated.
     os.environ["LEDGERFRAME_MARKET_PROVIDER"] = "mock"
+    # The suite WANTS the seeded demo fixture, so it asks for it explicitly. It used to arrive as a
+    # side-effect of `provider == mock` — the same accident that seeded a stranger's first boot
+    # (RD-8 / Gate A4). Wanting it in tests is fine; getting it without asking was the bug.
+    os.environ["LEDGERFRAME_DEMO_SEED"] = "true"
     os.environ.pop("LEDGERFRAME_MARKET_API_KEY", None)
     reload_settings()
     reset_provider()

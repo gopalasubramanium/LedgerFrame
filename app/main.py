@@ -112,8 +112,11 @@ async def lifespan(app: FastAPI):
 
     run_migrations(log=log.info)
 
-    # Seed demo data when in demo/mock mode and the DB is empty.
-    if settings.is_demo:
+    # Seed the demo portfolio ONLY when it was explicitly asked for (RD-8 / Gate A4). This used to
+    # key off `settings.is_demo` — i.e. market_provider == "mock", which is the SHIPPED DEFAULT — so a
+    # clean first boot handed a stranger a synthetic net worth. Mock PRICES and a seeded PORTFOLIO are
+    # different decisions; only one of them invents the user's money.
+    if settings.demo_seed:
         from app.seed.demo import seed_demo_data
 
         async with get_sessionmaker()() as session:

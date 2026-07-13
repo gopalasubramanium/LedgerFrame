@@ -57,6 +57,15 @@ class Settings(BaseSettings):
 
     # --- Market data ---
     market_provider: str = "mock"
+    # RD-8 / Gate A4 — SEEDING A DEMO PORTFOLIO IS ITS OWN DECISION, and it defaults to NO.
+    #
+    # It used to ride on `is_demo` (market_provider == "mock"), and `.env.example` ships "mock" — so a
+    # stranger's very first boot filled their brand-new appliance with synthetic holdings they never
+    # asked for. Two different things had been conflated:
+    #   * mock PRICES  — "I have no market-data key, quote me deterministic numbers"
+    #   * seeded ROWS  — "invent a person's net worth and put it in my database"
+    # Only the second is a lie about the user's money. `--demo-mode` is now the only way to ask for it.
+    demo_seed: bool = False
     stale_after_seconds: int = 900
     market_api_key: str = ""
     # Zerodha Kite (read-only market data). Two values; env/secret only, never the DB.

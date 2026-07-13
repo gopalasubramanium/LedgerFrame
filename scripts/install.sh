@@ -323,6 +323,10 @@ else
   sed -i "s|^LEDGERFRAME_DATA_DIR=.*|LEDGERFRAME_DATA_DIR=$DATA_DIR|" "$REPO_DIR/.env"
   sed -i "s|^LEDGERFRAME_VOICE_ENABLED=.*|LEDGERFRAME_VOICE_ENABLED=$ENABLE_VOICE|" "$REPO_DIR/.env"
   [[ "$DEMO_MODE" == false ]] && sed -i "s|^LEDGERFRAME_MARKET_PROVIDER=.*|LEDGERFRAME_MARKET_PROVIDER=csv|" "$REPO_DIR/.env"
+  # RD-8 / Gate A4 — --demo-mode is the ONE way to ask for a synthetic portfolio. It used to arrive as
+  # a side-effect of the mock provider, so a clean install handed the user a net worth they never
+  # entered. The wizard asks; nothing else seeds.
+  sed -i "s|^LEDGERFRAME_DEMO_SEED=.*|LEDGERFRAME_DEMO_SEED=$DEMO_MODE|" "$REPO_DIR/.env"
   chmod 600 "$REPO_DIR/.env"
   ok "Created .env with a freshly generated secret key."
 fi

@@ -420,7 +420,7 @@ export function Markets() {
                   </p>
                 </>
               ) : (
-                <EmptyState message="No indices" reason="The Global reader returned no index groups." />
+                <EmptyState message="No indices" reason="No index groups came back." />
               );
             }}
           </CardBody>
@@ -466,7 +466,7 @@ export function Markets() {
                   stickyHeader
                 />
               ) : (
-                <EmptyState message="No instruments" reason="The markets reader returned no instruments." />
+                <EmptyState message="No instruments" reason="No instruments came back." />
               )
             }
           </CardBody>
@@ -707,7 +707,7 @@ function CardBody<T>({
     return (
       <EmptyState
         message="Couldn't load this section"
-        reason="The reader is unreachable — values are withheld, never guessed."
+        reason="We couldn't reach the source of these figures — they're held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
       />
     );

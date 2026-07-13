@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import "./Home.css";
 import {
   AllocationDonut,
@@ -11,6 +10,7 @@ import {
   QuoteCardRow,
   ReviewCard,
   Skeleton,
+  SummaryHead,
   StalenessChip,
   TrendStat,
 } from "../components/ui";
@@ -189,12 +189,12 @@ export function Home() {
   if (layout === null)
     return (
       <div className="hm2">
-        <PageHeader title="Home" subtitle="Your summary — every figure is owned by the page it links to" />
+        <PageHeader title="Home" subtitle="Your summary — tap any card for the full picture" />
         <section className="hm2__card lf-card">
           <div className="lf-card__body">
             <EmptyState
               message="Couldn't load your Home layout"
-              reason="The settings reader is unreachable — rather than guess a layout, Home shows nothing."
+              reason="We couldn't reach your settings — rather than guess a layout, Home shows nothing."
               action={<button type="button" className="lf-btn" onClick={loadPrefs}>Retry</button>}
             />
           </div>
@@ -207,17 +207,16 @@ export function Home() {
     <div className="hm2">
       <PageHeader
         title="Home"
-        subtitle="Your summary — every figure is owned by the page it links to"
+        subtitle="Your summary — tap any card for the full picture"
       />
 
       {/* 1 — Headline: Net worth + Today's change (canonical: Net worth). */}
       <section className="hm2__card lf-card" data-card="headline">
-        <div className="lf-card__head">
-          <h2 className="lf-card__title">
-            <GlossaryTerm term="term-net-worth">Net worth</GlossaryTerm>
-          </h2>
-          <Link className="hm2__link" to="/net-worth">Net worth</Link>
-        </div>
+        <SummaryHead
+          title={<GlossaryTerm term="term-net-worth">Net worth</GlossaryTerm>}
+          to="/net-worth"
+          destination="Net worth"
+        />
         <div className="lf-card__body">
           <Card data={summary} onRetry={reload}>
             {(s) => (
@@ -233,7 +232,7 @@ export function Home() {
                   />
                 </div>
                 <p className="hm2__note">
-                  <GlossaryTerm term="term-todays-change">Today&rsquo;s change</GlossaryTerm> — canonical on Net worth.
+                  <GlossaryTerm term="term-todays-change">Today&rsquo;s change</GlossaryTerm> — full detail on Net worth.
                   {s.has_stale ? <> · <StalenessChip isStale asOf="" /> {s.stale_count} stale</> : null}
                 </p>
               </>
@@ -246,10 +245,7 @@ export function Home() {
         <>
           {/* 2 — Performance sparkline (canonical: Portfolio). Series only, no benchmark (§9-8). */}
           <section className="hm2__card lf-card" data-card="performance">
-            <div className="lf-card__head">
-              <h2 className="lf-card__title">Performance</h2>
-              <Link className="hm2__link" to="/portfolio">Portfolio</Link>
-            </div>
+            <SummaryHead title="Performance" to="/portfolio" destination="Portfolio" whole />
             <div className="lf-card__body">
               <Card data={perf} onRetry={reload}>
                 {(p) =>
@@ -270,10 +266,7 @@ export function Home() {
 
           {/* 3 — ONE allocation donut, by class (§9-5) (canonical: Portfolio). */}
           <section className="hm2__card lf-card" data-card="allocation">
-            <div className="lf-card__head">
-              <h2 className="lf-card__title">Allocation by class</h2>
-              <Link className="hm2__link" to="/portfolio">Portfolio</Link>
-            </div>
+            <SummaryHead title="Allocation by class" to="/portfolio" destination="Portfolio" whole />
             <div className="lf-card__body">
               <Card data={summary} onRetry={reload}>
                 {(s) => {
@@ -293,12 +286,11 @@ export function Home() {
 
           {/* 4 — BOTH movers pairs (§9-6). The two pairs are NEVER interchanged (D-024). */}
           <section className="hm2__card lf-card" data-card="movers">
-            <div className="lf-card__head">
-              <h2 className="lf-card__title">Movers</h2>
-              <span className="hm2__links">
-                <Link className="hm2__link" to="/portfolio">Portfolio</Link>
-                <Link className="hm2__link" to="/markets">Markets</Link>
-              </span>
+            {/* Movers summarises TWO canonical pages, so it carries one ↗ per destination — the
+              * header cannot be a single whole-header target without hiding one of them. */}
+            <div className="hm2__moverhead2">
+              <SummaryHead title="Contributors / Detractors" to="/portfolio" destination="Portfolio" whole />
+              <SummaryHead title="Gainers / Losers" to="/markets" destination="Markets" whole />
             </div>
             <div className="lf-card__body">
               <Card data={summary} onRetry={reload}>
@@ -346,12 +338,11 @@ export function Home() {
 
       {/* 6 — Briefing summary (+ headlines in Full). Canonical: News. Briefing is PAGE-LOCAL (§9-16). */}
       <section className="hm2__card lf-card" data-card="briefing">
-        <div className="lf-card__head">
-          <h2 className="lf-card__title">
-            <GlossaryTerm term="term-briefing">Briefing</GlossaryTerm>
-          </h2>
-          <Link className="hm2__link" to="/news">News</Link>
-        </div>
+        <SummaryHead
+          title={<GlossaryTerm term="term-briefing">Briefing</GlossaryTerm>}
+          to="/news"
+          destination="News"
+        />
         <div className="lf-card__body">
           <Card data={briefing} onRetry={reload}>
             {(b) =>
@@ -381,10 +372,7 @@ export function Home() {
       {/* 7 — Compact quote cards, one row, source select (D-046/D-052). */}
       {full ? (
         <section className="hm2__card lf-card" data-card="quotes">
-          <div className="lf-card__head">
-            <h2 className="lf-card__title">Quotes</h2>
-            <Link className="hm2__link" to="/markets">Markets</Link>
-          </div>
+          <SummaryHead title="Quotes" to="/markets" destination="Markets" whole />
           <div className="lf-card__body">
             <Card data={quotes} onRetry={reload}>
               {(qs) =>
@@ -451,7 +439,7 @@ function Card<T>({
     return (
       <EmptyState
         message="Couldn't load this summary"
-        reason="Its reader is unreachable — the figure is withheld, never guessed."
+        reason="We couldn't reach the source of this figure — it's held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
       />
     );

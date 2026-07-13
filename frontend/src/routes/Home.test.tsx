@@ -192,5 +192,5 @@ test("an unreachable widget reader withholds the figure and offers a retry — i
   renderPage();
   const errs = await screen.findAllByText("Couldn't load this summary");
   expect(errs.length).toBeGreaterThan(0);
-  expect(screen.getAllByText(/withheld, never guessed/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/held back rather than guessed/).length).toBeGreaterThan(0);
 });

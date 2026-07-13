@@ -24,6 +24,12 @@ export function ReviewCard({ sections, attention, link }: ReviewCardProps) {
     <section className="lf-review" aria-label="Review">
       <div className="lf-review__head">
         <h2 className="lf-review__title">Review</h2>
+        {/* §12ho1-2: the ONE linked-summary affordance — the corner ↗, top-right. (Was a footer text
+          * link "Review →", a fourth variant of the same idea.) An <a> rather than a router Link, so
+          * the component stays router-agnostic; `href` is the hash route its callers already pass. */}
+        <a className="lf-summarylink" data-summarylink href={link.href} aria-label={link.label} title={link.label}>
+          <span className="lf-summarylink__glyph" aria-hidden="true">↗</span>
+        </a>
         {attention > 0 && (
           <span className="lf-review__attention">
             {attention} need{attention === 1 ? "s" : ""} a look
@@ -44,9 +50,6 @@ export function ReviewCard({ sections, attention, link }: ReviewCardProps) {
         </div>
       ))}
 
-      <a className="lf-review__link" href={link.href}>
-        {link.label} →
-      </a>
     </section>
   );
 }

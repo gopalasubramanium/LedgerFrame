@@ -13,6 +13,7 @@ import {
   Sparkline,
   StalenessChip,
   TrendStat,
+  SummaryHead,
 } from "../components/ui";
 import type { Column, ReviewSection, Verdict } from "../components/ui";
 import type { PricePoint } from "../mocks/types";
@@ -275,10 +276,7 @@ export function NetWorth() {
       {/* Summarises (P-1, never recomputes): Portfolio headline + performance sparkline; ReviewCard. */}
       <div className="nw__summaries">
         <section className="nw__card lf-card" data-card="portfolio-summary">
-          <div className="nw__cardhead">
-            <h2 className="nw__h2">Portfolio</h2>
-            <Link className="nw__link" to="/portfolio">Portfolio ↗</Link>
-          </div>
+          <SummaryHead title="Portfolio" to="/portfolio" destination="Portfolio" whole />
           <div className="lf-card__body">
             <CardBody data={summary} onRetry={reload}>
               {(s) => {
@@ -335,7 +333,7 @@ function CardBody<T>({
     return (
       <EmptyState
         message="Couldn't load this section"
-        reason="The reader is unreachable — values are withheld, never guessed."
+        reason="We couldn't reach the source of these figures — they're held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
       />
     );

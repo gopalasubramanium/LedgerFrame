@@ -330,7 +330,7 @@ function CardBody<T>({ data, lines = 4, onRetry, children }: {
   if (data === undefined) return <Skeleton lines={lines} />;
   if (data === null)
     return (
-      <EmptyState message="Couldn't load this section" reason="The reader is unreachable — values are withheld, never guessed."
+      <EmptyState message="Couldn't load this section" reason="We couldn't reach the source of these figures — they're held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined} />
     );
   return <>{children(data)}</>;

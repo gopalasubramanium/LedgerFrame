@@ -13,6 +13,7 @@ import {
   StalenessChip,
   TextInput,
   useToast,
+  SummaryHead,
 } from "../components/ui";
 import type { PricePoint } from "../mocks/types";
 import {
@@ -128,7 +129,7 @@ export function InstrumentDetail() {
         subtitle={
           meta?.name
             ? `${meta.name} — a scoped view; canonical on Markets & Portfolio`
-            : "A scoped view; canonical on Markets & Portfolio"
+            : "A focused view — full detail on Markets & Portfolio"
         }
         actions={
           <>
@@ -151,7 +152,7 @@ export function InstrumentDetail() {
       />
 
       {loading ? (
-        <EmptyState message="Loading…" reason="Fetching from the market & portfolio readers." />
+        <EmptyState message="Loading…" reason="Fetching the latest market and portfolio data." />
       ) : error ? (
         <EmptyState
           message="Couldn't load this instrument"
@@ -162,10 +163,7 @@ export function InstrumentDetail() {
         <>
           {/* Quote — the canonical Markets reader, scoped. Unpriced → "—" + reason. */}
           <section className="ins__section lf-card ins__quote">
-            <div className="ins__cardhead">
-              <h2 className="ins__h2">Quote</h2>
-              <Link className="ins__link" to="/markets">Markets ↗</Link>
-            </div>
+            <SummaryHead title="Quote" to="/markets" destination="Markets" whole />
             <div className="lf-card__body">
               <div className="ins__price">
                 {quote?.price != null ? (
@@ -245,12 +243,8 @@ export function InstrumentDetail() {
 
           {/* Position if held — the canonical holdings reader, scoped (ND-1, P-3). */}
           <section className="ins__section lf-card">
-            {/* D-100 companion: the canonical-home cross-link lives in the card
-                HEADER, top-right (the News pattern), for every summary-with-link card. */}
-            <div className="ins__cardhead">
-              <h2 className="ins__h2">Your position</h2>
-              <Link className="ins__link" to="/holdings">Holdings ↗</Link>
-            </div>
+            {/* §12ho1-2: the one linked-summary affordance — the corner ↗, top-right. */}
+            <SummaryHead title="Your position" to="/holdings" destination="Holdings" whole />
             {position ? (
               <dl className="ins__facts lf-card__body">
                 <Fact label="Quantity" num value={position.quantity != null ? String(position.quantity) : "—"} />
@@ -287,10 +281,7 @@ export function InstrumentDetail() {
 
           {/* News — scoped reader (D-037, P-3). Caps at ~5 visible; scrolls internally. */}
           <section className="ins__section lf-card">
-            <div className="ins__cardhead">
-              <h2 className="ins__h2">News</h2>
-              <Link className="ins__link" to="/news">News ↗</Link>
-            </div>
+            <SummaryHead title="News" to="/news" destination="News" whole />
             <div className="lf-card__body">
               {/* Extracted shared NewsList (page-news ND-5). Scoped view → no per-symbol links. */}
               <NewsList items={news} emptyMessage="No recent news" emptyReason="No provider or feed headlines mention this instrument." />

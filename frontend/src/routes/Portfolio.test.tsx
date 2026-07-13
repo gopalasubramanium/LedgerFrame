@@ -188,6 +188,7 @@ test("Costs card shows two separate blocks, never a blended total (D-048)", asyn
   const ongoing = screen.getByText("Ongoing cost (expense ratio)");
   expect(recorded).toBeTruthy();
   expect(ongoing).toBeTruthy();
-  // Cross-link to the Reports page.
-  expect(within(document.body).getAllByText(/Reports ↗|Report ↗/).length).toBeGreaterThan(0);
+  // Cross-link to the Reports page — now the ONE linked-summary affordance: the corner ↗, whose
+  // accessible name is its destination (page-home §12ho1-2). The text-link variant is retired.
+  expect(within(document.body).getAllByLabelText(/Reports/).length).toBeGreaterThan(0);
 });

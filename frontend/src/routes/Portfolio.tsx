@@ -13,6 +13,8 @@ import {
   StalenessChip,
   Switch,
   TrendStat,
+  SummaryHead,
+  SummaryLink,
 } from "../components/ui";
 import type { Column, SortState } from "../components/ui";
 import type { Segment } from "../mocks/types";
@@ -384,10 +386,7 @@ export function Portfolio() {
 
       {/* Costs (D-048) — recorded fees vs ongoing cost, TWO blocks, never blended. */}
       <section className="pf__card lf-card" data-card="costs">
-        <div className="pf__cardhead">
-          <h2 className="pf__h2">Costs</h2>
-          <Link className="pf__link" to="/reports">Reports ↗</Link>
-        </div>
+        <SummaryHead title="Costs" to="/reports" destination="Reports" whole />
         <div className="lf-card__body">
           <CardBody data={cost} lines={3} onRetry={reload}>
             {(c) => (
@@ -423,7 +422,7 @@ function RealisedTile({ realised }: { realised: RealisedResp | null | undefined 
     <div className="pf__railtile">
       <TrendStat label={label} value={value} tone={realised ? signOf(realised.base_realised_total_current_fx) : undefined} />
       {/* D-100 header-arrow, inside the tile, to the full report on Reports. */}
-      <Link className="pf__tilelink" to="/reports" aria-label="Realised P/L report" title="Realised P/L report">↗</Link>
+      <SummaryLink to="/reports" destination="Realised P/L report" />
     </div>
   );
 }
@@ -504,7 +503,7 @@ function CardBody<T>({
     return (
       <EmptyState
         message="Couldn't load this section"
-        reason="The reader is unreachable — values are withheld, never guessed."
+        reason="We couldn't reach the source of these figures — they're held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
       />
     );

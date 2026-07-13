@@ -13,6 +13,7 @@ import {
   TextInput,
   TrendStat,
   useToast,
+  SummaryLink,
 } from "../components/ui";
 import type { Column } from "../components/ui";
 import { CircleCheck } from "../icons";
@@ -138,7 +139,7 @@ export function Review() {
                 <div className="rv__rail" data-card="rail">
                   <div className="rv__railtile">
                     <TrendStat label="Net worth" value={`${p.base_currency} ${formatMoney(p.net_worth)}`} />
-                    <Link className="rv__tilelink" to="/net-worth" aria-label="Net worth" title="Net worth">↗</Link>
+                    <SummaryLink to="/net-worth" destination="Net worth" />
                   </div>
                   <TrendStat label="Today's change" value={formatSignedMoney(p.sections.changed.day_change)} tone={signOf(p.sections.changed.day_change)} />
                   <TrendStat label="Data confidence" value={String(p.sections.trust.confidence)} unit="/100" />
@@ -246,7 +247,7 @@ function CardBody<T>({
     return (
       <EmptyState
         message="Couldn't load this section"
-        reason="The reader is unreachable — values are withheld, never guessed."
+        reason="We couldn't reach the source of these figures — they're held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
       />
     );

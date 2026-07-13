@@ -160,7 +160,7 @@ export function Heatmap() {
 
       <p className="hm__help">
         <GlossaryTerm term="term-heatmap">Heatmap</GlossaryTerm> — a visualisation of your holdings.
-        Reporting only; every figure comes from the canonical readers.
+        Reporting only — every figure comes straight from your own data.
       </p>
     </div>
   );
@@ -181,7 +181,7 @@ function CardBody<T>({
     return (
       <EmptyState
         message="Couldn't load your holdings"
-        reason="The reader is unreachable — values are withheld, never guessed."
+        reason="We couldn't reach the source of these figures — they're held back rather than guessed."
         action={onRetry ? <button type="button" className="lf-btn" onClick={onRetry}>Retry</button> : undefined}
       />
     );

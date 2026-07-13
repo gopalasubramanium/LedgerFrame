@@ -89,6 +89,7 @@
 
 /* ReviewCard (DESIGN-SYSTEM §5.4) */
 .lf-review {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -248,4 +249,57 @@
 }
 .lf-iconbtn--primary:hover {
   border-color: var(--accent);
+}
+
+/* Linked-summary affordance (DESIGN-SYSTEM §5 RULE, page-home §12ho1-2) — the corner ↗, top-right of
+ * a summary tile. It is the ONLY way a summary points at the page that owns its figure: titles are
+ * never text links, and there are no page-local variants. Hover/focus change colour + outline only —
+ * never size or position, so nothing shifts. */
+.lf-summaryhead {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-right: var(--space-5); /* reserve the corner so a long title never collides with the ↗ */
+}
+.lf-summaryhead__title {
+  margin: 0;
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  min-width: 0;
+}
+.lf-summaryhead--whole {
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-sm);
+}
+.lf-summarylink {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  border-radius: var(--radius-sm);
+}
+.lf-summaryhead--whole .lf-summarylink__glyph {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--accent);
+}
+.lf-summarylink:hover,
+.lf-summaryhead--whole:hover .lf-summarylink__glyph {
+  text-decoration: underline;
+}
+.lf-summarylink:focus-visible,
+.lf-summaryhead--whole:focus-visible {
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }

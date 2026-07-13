@@ -38,6 +38,14 @@ mid-build.
   **implementation note** (`server-side`, an internal enum, an endpoint/table name)
   **never** appears in a **user-facing string** — only in code comments / plan docs.
   User copy is plain language; every shown term matches GLOSSARY.
+- **LAYOUT GEOMETRY IS SPECIFIED IN THE PLAN, BEFORE ASSEMBLY — a widget list is not a layout
+  (page-home §12ho1-3).** For **Overview / composed** pages, the plan must carry a **grid map** (column
+  structure per breakpoint), the **density / viewport target** (e.g. *"Full fits one viewport at
+  ≥1366×768 with the demo dataset"*), and the **visual hierarchy** (what leads, by size and placement).
+  **The owner approves the geometry BEFORE assembly.** page-home is the motivating case: §9 resolved
+  *which* widgets Home shows and in *what order*, the build passed every test and the pre-pass — and the
+  page still **failed its purpose**, because "an at-a-glance snapshot" is a **geometry** requirement a
+  widget list cannot express. A stacked column of correct cards is a correct list and a wrong page.
 - **A GLOSSARY term ships to the SPEC, not just the popover data (page-heatmap §13-1).** The glossary
   has **two stores** — `docs/specs/GLOSSARY.md` (canonical; the file CLAUDE.md's hard rule names) and
   `frontend/src/mocks/glossary.ts` (what `[Help]` renders). page-heatmap added a term to the **second

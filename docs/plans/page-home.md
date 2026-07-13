@@ -500,3 +500,167 @@ curl -X PUT http://127.0.0.1:8321/api/v1/settings \
 **STOP for the Phase-3b owner walk (judgment items) — I do NOT self-certify.** Ratifications pending at
 the walk: the **§9-1 label + its Deprecated-terms entry**, the **§9-11 empty-state strings**, the
 **§9-13 GLOSSARY "Home"** term, the **§9-15 TopBar amendment**, and the **layout default (`full`)**.
+
+---
+
+## 12. PHASE-3b OWNER WALK — BATCH 1 (2026-07-13)
+
+**Owner verdict: the Home layout FAILS its purpose** — a no-scroll, at-a-glance snapshot. Plus one copy
+defect and one design-language deviation. **§12ho1-1 and §12ho1-2 are DONE in this batch. §12ho1-3 is a
+PROPOSAL ONLY — HARD STOP for owner approval before any layout code.**
+
+### §12ho1-1 — Subtitle copy defect (governance-speak in user copy) — DONE, ratify the pick
+
+**The defect.** Home's subtitle — *"every figure is owned by the page it links to"* — is **internal
+governance language** (P-1/D-038) leaked into **user copy**. Those words are how *we* talk about the
+architecture; they are not how the product talks to the person reading it.
+
+**Owner's three candidates** (implemented **(a)**; **all three listed for ratification at re-verify**):
+- **(a) "Your summary — tap any card for the full picture"** ← **IMPLEMENTED (PROPOSED)**
+- (b) "Your wealth at a glance"
+- (c) *(no subtitle)*
+
+**It was never one slip — the defect CLASS was live in 11 files.** The app-wide grep ("canonical",
+"owned", "reader") found **16 user strings**. The honest **intent stays** everywhere; only the wording
+becomes plain:
+
+| Before (governance-speak) | After (user-plain, same honesty) | Where |
+|---|---|---|
+| "The reader is unreachable — values are withheld, never guessed." | "We couldn't reach the source of these figures — they're held back rather than guessed." | Heatmap · NetWorth · Portfolio · PricingHealth · Markets · News · Review |
+| "Its reader is unreachable — the figure is withheld, never guessed." | "We couldn't reach the source of this figure — it's held back rather than guessed." | Home |
+| "The settings reader is unreachable — rather than guess a layout, Home shows nothing." | "We couldn't reach your settings — rather than guess a layout, Home shows nothing." | Home |
+| "Today's change — **canonical on** Net worth." | "Today's change — **full detail on** Net worth." | Home legend *(the owner's named example)* |
+| "A scoped view; **canonical on** Markets & Portfolio" | "A focused view — **full detail on** Markets & Portfolio" | InstrumentDetail |
+| "Fetching from the market & portfolio **readers**." | "Fetching the latest market and portfolio data." | InstrumentDetail |
+| "Fetching from the pricing **reader**." | "Fetching the latest prices." | Holdings |
+| "The Global **reader** returned no index groups." / "The markets **reader** returned no instruments." | "No index groups came back." / "No instruments came back." | Markets |
+| "Reporting only; every figure comes from the **canonical readers**." | "Reporting only — every figure comes straight from your own data." | Heatmap |
+| "The pricing **reader** is unreachable. Values are not shown rather than guessed." | "We couldn't reach the price source. Values are left out rather than guessed." | KitchenSink |
+
+**Guarded, not just fixed** (the *"one truth in two stores needs a guard"* lesson generalised): a new
+**CI-unit copy-hygiene guard** — `tests/unit/test_copy_hygiene.py` — fails if `canonical`, `reader(s)`
+or `owned by` appears in **any** user-facing string in `routes/` or `components/ui/` (code comments,
+where the vocabulary belongs, are ignored). **Fail-first: RED on 11 files** before the fix, green after.
+
+### §12ho1-2 — Linked-summary affordance: CONFORM + CODIFY — DONE, ratify the rule
+
+**The deviation.** Home's text-links-below-titles were a **fourth** variant of one idea. The grep found
+the affordance had drifted into **four** forms:
+
+| Variant | Where |
+|---|---|
+| a **text link** in the header row (no ↗) | **Home** (7 cards) — the deviation the owner caught |
+| "Portfolio ↗" as a **text link with a glyph** | Net worth · Portfolio (Costs) · Instrument Detail (×3) |
+| a **bare corner glyph** | Review tile · Portfolio (Realised P/L tile) |
+| a **footer text link**, "Review →" | **ReviewCard** (a ratified *component* — so it shipped everywhere it is used) |
+
+**(a) + (c) CONFORMED — all four, app-wide (§11-4: never fix only the instance you found).** One
+affordance now: **the corner ↗, top-right of the tile**. New shared components
+`ui/SummaryLink` + `ui/SummaryHead`. Titles are no longer links anywhere. Every ↗ is a **real link**
+(keyboard focusable, Enter activates) whose **`aria-label` names the destination** — the glyph is
+decorative. **`whole`** makes the entire header the click target for **pure-summary** tiles; a header
+carrying a **[Help]** popover deliberately does **not** use it, because nesting an interactive element
+inside a link is an accessibility defect (that is why the owner scoped it to *"where the tile is a pure
+summary"*). Hover/focus change colour + outline only ⇒ **no layout shift**. *Movers carries **two** ↗ —
+it summarises two canonical pages, and a single whole-header target would hide one of them.*
+
+**(b) CODIFIED (PROPOSED → ratify at re-verify).** DESIGN-SYSTEM §5 gains the **RULE**: *"A linked
+summary carries the corner ↗ affordance top-right of the tile; titles are not text links; no
+page-local variants."* Codified at the **3rd recurrence**, exactly per the centralization rule.
+
+**Fail-first:** the pre-pass asserts **0 text-link variants**, **≥5 ↗ affordances**, **every ↗ carries an
+`aria-label`**, and the first is **keyboard-focusable** — RED before (0 affordances, 7 text links), GREEN
+after (**0 text links · 8 ↗ · 8 with aria-label**).
+
+### §12ho1-3 — Layout rework (no-scroll snapshot) — **STEP 1: PROPOSAL ONLY. AWAITING OWNER APPROVAL.**
+
+**The diagnosis, stated plainly.** §9 resolved *which* widgets Home shows (D-046) and *in what order*
+(§9-10). It never specified a **geometry**. So the build did the only thing a widget list can produce:
+**a single stacked column of correct cards** — which passed every test and the pre-pass, and still
+**fails the page's purpose**. *A widget list is not a layout.* (Folded into TEMPLATE now — see below.)
+
+**Target (owner's intent): Full fits ONE viewport at ≥1366×768 with the demo dataset — no scrolling.**
+Hierarchy = **attention first** (Today's change, ReviewCard), achieved by **SIZE and PLACEMENT only**.
+The D-046 set is **fixed**; there is **no dynamic reordering** (that is R-19, parked).
+
+#### Grid map — **Full**, ≥1366 (12 columns × 3 rows, no half-empty rows)
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ H1 "Home"   ·   subtitle                                                (page header) │
+├───────────────────────────────┬───────────────────────────────┬──────────────────────┤
+│ HEADLINE  (cols 1-5)          │ PERFORMANCE (cols 6-9)        │ REVIEW  (cols 10-12) │  R1
+│ ┌───────────────────────────┐ │ sparkline, full-bleed         │ attention count LEAD │  ~34vh
+│ │ Net worth       [?]    ↗  │ │                        ↗      │ verdict rows      ↗  │
+│ │  S$ 1,234,567.00          │ │                               │ (the second "lead"   │
+│ │ ─────────────────────────  │ │                               │  by placement)      │
+│ │ Today's change  [?]       │ │                               │                      │
+│ │  +S$ 2,140.55  (+0.42%)   │ │                               │                      │
+│ │  ← THE LEAD: largest type │ │                               │                      │
+│ └───────────────────────────┘ │                               │                      │
+├───────────────────────────────┼───────────────────────────────┴──────────────────────┤
+│ ALLOCATION (cols 1-4)         │ MOVERS  (cols 5-12)                                  │  R2
+│ donut + legend           ↗    │ 4 lists × N=3, in ONE row of four columns:            │  ~30vh
+│                               │ Contributors │ Detractors │ Gainers │ Losers          │
+│                               │        ↗ Portfolio        │      ↗ Markets           │
+├───────────────────────────────┴──────────────────────────────┬───────────────────────┤
+│ BRIEFING + HEADLINES  (cols 1-8)                             │ QUOTES  (cols 9-12)   │  R3
+│ briefing text (clamped 3 lines) + 3 headlines           ↗    │ source select    ↗    │  ~30vh
+│                                                              │ compact cards, wrap    │
+└──────────────────────────────────────────────────────────────┴───────────────────────┘
+```
+
+- **The lead is Today's change**, not Net worth: largest type in the headline block, gain/loss toned.
+  Net worth sits above it as the anchor figure. **ReviewCard is the second lead** — top-right, the
+  strongest corner after the headline, with its attention count as the block's largest element.
+- **[Help]** stays inline with its term (Net worth, Today's change, Briefing — §9-12). **↗** sits
+  top-right of **every** tile (§12ho1-2). Neither moves at any breakpoint.
+- **No half-empty rows:** each row is fully packed; the three row heights sum to ~94vh + header.
+
+#### Behaviour by width
+
+| Width | Grid | Notes |
+|---|---|---|
+| **≥1920** | same 12-col map | tiles grow; type scale unchanged (no stretched figures); max page width caps so lines stay readable |
+| **1440×900** | same 12-col map | the comfortable case — most headroom; **fits one viewport** |
+| **1366×768** | same 12-col map, **compact density** | **the hard target.** Movers → N=3 (already), briefing clamped to 3 lines, quote row scrolls *within its own tile* if the source is long |
+| **tablet (900–1365)** | **6-col, 4 rows** | headline (6) · performance+review (3+3) · allocation+movers (2+4) · briefing+quotes (3+3). **One viewport is NOT promised here** — the page may scroll |
+| **mobile (<900)** | **1-col stack** | D-046 order, single scroll region. No grid gymnastics |
+| **Simple (all widths)** | **centred single column**, max ~46rem | headline + ReviewCard + briefing, calm, generous spacing. **No grid.** |
+
+#### Honesty note on the target — read this before approving
+
+**I will not shrink content below legibility to win the fit.** At **1366×768** the three-row map fits
+**with the demo dataset** only because Movers is N=3 and the briefing is line-clamped. If, at your real
+dataset, honest content cannot fit legibly, the correct outcome is **Full scrolls a little** — not
+6px type or a truncated figure. If that happens I will say so rather than quietly shrink; the
+alternative levers (all owner calls, none taken here) would be: drop Movers to N=2, or move Quotes
+below the fold as the one scrollable tile.
+
+**Also note:** the single-scroll invariant (D-100/D-101) holds in every case — the shell owns the one
+scroll region; no tile scrolls the page.
+
+#### Step 2 (ONLY after your approval)
+
+Implement the approved grid; the pre-pass gains a **viewport-fit assertion for Full at 1366×768 and
+1440×900** on demo data (`document.scrollHeight <= innerHeight`), alongside the existing
+overflow/single-scroll/console checks across **both layouts × both themes × all breakpoints**.
+
+### Process fix — folded NOW, not at close
+
+`TEMPLATE-page-build.md` gains a governing rule for **Overview/composed** pages: **layout geometry (grid
+map, density, viewport target) is specified in the plan and owner-approved BEFORE assembly — a widget
+list is not a layout.** page-home §12ho1-3 is cited as the motivating case.
+
+### Batch-1 verification
+
+Backend **620** · ruff clean on touched files. Frontend `npm run check` **exit 0**: lint · typecheck ·
+tokens · **179 unit** · **129 Playwright**. **Live pre-pass GREEN** — governance-speak in Home's copy:
+**[]** · legacy text links: **0** · ↗ affordances: **8**, all with `aria-label` · both layouts × both
+themes × 320/375/900/1366 · **0 console errors**.
+
+**STOP — §12ho1-3 Step 2 is NOT built.** Awaiting the owner's approval of the wireframe above.
+
+**Pending ratification at re-verify (carried + new):** §9-1 label + Deprecated-terms entry · §9-11
+empty-state strings · §9-13 "Home" · §9-15 TopBar amendment · the `full` default · **§12ho1-1 subtitle
+pick (a/b/c)** · **§12ho1-2 codified affordance rule** · **§12ho1-3 approved grid**.

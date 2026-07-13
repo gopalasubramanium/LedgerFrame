@@ -91,6 +91,24 @@ test.describe.serial("home pre-pass (live)", () => {
       expect(homeStale, "the stale count Home shows is the SERVED one").toContain(String(pageSummary!.stale_count));
     }
 
+    // PART 4b: §12ho1-1 — NO governance-speak in the rendered copy; §12ho1-2 — every linked summary
+    // carries the corner ↗ affordance (no page-local text-link variants). ---------------------------
+    const copy = (await page.locator(".hm2").innerText()).replace(/\s+/g, " ");
+    const leaks = ["canonical", "owned by", "the reader", "readers"].filter((w) => copy.toLowerCase().includes(w));
+    console.log("PART 4b — governance-speak in Home's copy:", JSON.stringify(leaks));
+    expect(leaks, "no internal governance vocabulary in user copy (§12ho1-1)").toEqual([]);
+
+    const textLinks = await page.locator(".hm2__link").count();
+    const arrows = await page.locator(".hm2 .lf-summarylink").count();
+    const labelled = await page.locator(".hm2 .lf-summarylink[aria-label]").count();
+    console.log("PART 4b — legacy text links:", textLinks, "| ↗ affordances:", arrows, "| with aria-label:", labelled);
+    expect(textLinks, "no text-link variants remain (§12ho1-2)").toBe(0);
+    expect(arrows, "every linked summary carries the ↗ affordance").toBeGreaterThanOrEqual(5);
+    expect(labelled, "each ↗ names its destination for screen readers").toBe(arrows);
+    // Keyboard-operable: the affordance is a real link, focusable.
+    await page.locator(".hm2 .lf-summarylink").first().focus();
+    expect(await page.evaluate(() => document.activeElement?.classList.contains("lf-summarylink")), "the ↗ is keyboard focusable").toBe(true);
+
     // PART 5: D-024 — both movers pairs, under their OWN labels, never interchanged ----------------
     for (const label of ["Contributors — today", "Detractors — today", "Gainers — today", "Losers — today"]) {
       await expect(page.getByText(label, { exact: true }), `${label} is present`).toBeVisible();

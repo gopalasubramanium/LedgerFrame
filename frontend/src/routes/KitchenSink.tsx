@@ -440,7 +440,7 @@ export function KitchenSink() {
           <Specimen label="Error">
             <EmptyState
               message="Couldn't load holdings"
-              reason="The pricing reader is unreachable. Values are not shown rather than guessed."
+              reason="We couldn't reach the price source. Values are left out rather than guessed."
               action={<button type="button" className="lf-btn">Retry</button>}
             />
           </Specimen>

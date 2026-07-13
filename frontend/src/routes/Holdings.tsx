@@ -365,7 +365,7 @@ export function Holdings() {
       <div className="hold__section">
         <h2 className="hold__h2">Holdings</h2>
         {loading ? (
-          <EmptyState message="Loading holdings…" reason="Fetching from the pricing reader." />
+          <EmptyState message="Loading holdings…" reason="Fetching the latest prices." />
         ) : error ? (
           <EmptyState
             message="Couldn't load holdings"

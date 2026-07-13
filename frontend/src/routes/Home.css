@@ -10,12 +10,12 @@
 
 .hm2__card { min-width: 0; } /* a card may shrink — never force the page to scroll sideways */
 
-.hm2__link {
-  font-size: var(--font-size-13);
-  color: var(--text-secondary);
+/* Movers summarises two canonical pages → two ↗ headers side by side (§12ho1-2). */
+.hm2__moverhead2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-5);
 }
-.hm2__link:hover { color: var(--text-primary); }
-.hm2__links { display: flex; gap: var(--space-4); }
 
 /* Headline: the KPI tiles share one grid, so no wrapper resizes a tile. */
 .hm2__kpis {

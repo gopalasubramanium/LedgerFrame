@@ -329,7 +329,7 @@ AI-fallback signal (D-070); the normative validation contract (D-071).
 
 | ID | Feature | Verdict | Notes |
 |----|---------|---------|-------|
-| D-046 | Home | SIMPLIFY | Fixed set of linked summary widgets: Net worth + Today's change lines, perf sparkline, one allocation donut, both movers summaries, ReviewCard, briefing summary + top headlines, compact quote cards (one row, source select). Dropped: top-holdings widget; the 3 separate market rows. Simple layout = headline + ReviewCard + briefing; Full = the set above. |
+| D-046 | Home | SIMPLIFY | **AMENDED 2026-07-13 (see D-046 AMENDMENT — Home has ONE layout; page-home §12ho1-6).** Fixed set of linked summary widgets: Net worth + Today's change lines, perf sparkline, one allocation donut, both movers summaries, ReviewCard, briefing summary + top headlines, compact quote cards (one row, source select). Dropped: top-holdings widget; the 3 separate market rows. ~~Simple layout = headline + ReviewCard + briefing; Full = the set above.~~ **RETIRED — one layout: the ratified grid (§12ho1-5).** |
 | D-047 | Ticker strip | KEEP (scoped) | **Home Full layout only** — never Simple, never other pages. Grounds: wall-appliance identity (D-017/D-040/D-044). |
 | D-048 | Portfolio page | KEEP | Stat rail = D-032 analytics figures; donuts gain by-tag view; Contributors/Detractors labels; Costs card never blends recorded fees with ongoing cost; not-Sharpe disclaimer. |
 | D-049 | Holdings + editor + add flow | KEEP (reshaped) | Instrument picker (D-012), merger type (D-019), all vocab from `/refdata` (the 6-value TXN_ASSET_CLASSES subset dies), import preview→commit + unresolved-symbol review queue, soft-delete + 10s undo + purge-deleted [PIN]. **AddAssetWizard folds into one Add flow** (branch: listed instrument vs manual asset; per-type meta kept, whitelisted). |
@@ -693,6 +693,23 @@ clarifying notes recorded in the guide.
   return therefore requires deliberate re-entry, not ambient authority. This settles
   the page-holdings §9 follow-up (purge-PIN→session binding): the binding is
   **deliberately none**. Recorded in SECURITY-BASELINE §3.
+
+- **D-046 AMENDMENT — Home has ONE layout; the Simple layout is RETIRED** (owner,
+  2026-07-13; **page-home §12ho1-6**). Supersedes D-046's *"Simple layout = headline +
+  ReviewCard + briefing; Full = the set above"*: Home ships a **single** composition — the
+  **ratified grid** of page-home §12ho1-5 (12 columns × 3 rows; Today's change leads by size;
+  Review takes the strongest corner; row heights sized to content; fits 1366×768). Grounds
+  (owner, verbatim in the plan): **one strong layout beats two half-maintained ones.** The
+  **widget set is unchanged** and still FIXED (R-19 stays parked) — only the *choice between two
+  layouts* dies. Consequences, all shipped in the same batch: the `home_layout` settings key, its
+  default and its served vocabulary are **REMOVED from the contract** (keeping them would leave a
+  **write-only key** — exactly the D-078 defect recorded against the rotation keys); **"Home
+  layout: Simple / Full"** moves to GLOSSARY's Deprecated terms; page-home §9-1/§9-2/§9-3 (the
+  label, the interim control, the default) stand as **history, superseded**. D-040's *"rotating to
+  Home uses the configured layout"* is now trivially satisfied: there is one.
+  **§12ho1-5 CONTENT WIDENING (owner-approved, same pass):** the hero tile also shows **Gross
+  assets / Liabilities** — figures D-046 did not list, but which their canonical page (Net worth)
+  **does** show, so P-1's *"a summary adds no figure its canonical page lacks"* holds.
 
 - **D-047 AMENDMENT — TickerStrip promoted to the global chrome footer** (owner,
   2026-07-11; page-chrome §11-17; **RATIFIED 2026-07-11**). Supersedes the original

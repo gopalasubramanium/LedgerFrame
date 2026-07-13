@@ -230,7 +230,8 @@ one exception — it is a print artifact (D-038), not a template page.
 | **Settings** | Sectioned/tabbed configuration or content pages in the System group. | Settings, Help, Legal |
 
 Notes:
-- **Home** (Overview) additionally branches on Home layout (Simple/Full, D-040/D-046).
+- **Home** (Overview) has **ONE layout** — the ratified grid (D-046 AMENDMENT, page-home
+  §12ho1-5/§12ho1-6). *(It branched on Simple/Full until the Simple layout was removed.)*
 - **Reports Pack** (`/reports/pack`) uses a dedicated **print layout**, not one of
   the four — it is the sanctioned artifact (D-038/D-061).
 - Every template opens with **PageHeader** (§5) and routes empty regions through

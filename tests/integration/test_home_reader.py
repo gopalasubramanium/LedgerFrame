@@ -2,9 +2,14 @@
 """page-home Phase 0 (§9-3, §9-4, §9-7) — the Home contract deltas.
 
 FAIL-FIRST: every test here was RED before the Phase-0 commit —
-* `home_layout` / `home_quote_source` were not allow-listed, so a PUT was **silently ignored**
-  (the writer `continue`s past unknown keys and returns `applied={}`) and the read served no default;
+* `home_quote_source` was not allow-listed, so a PUT was **silently ignored** (the writer
+  `continue`s past unknown keys and returns `applied={}`) and the read served no default;
 * `GET /dashboard/home` returned **200** with the legacy v1 aggregate.
+
+§12ho1-6 (owner, 2026-07-13) REMOVED the Simple layout: Home ships ONE layout, the ratified grid.
+So `home_layout` is **gone from the allow-list, the defaults, and the served vocabulary** — keeping it
+would leave exactly the WRITE-ONLY key D-078 forbids (the same class we just recorded against the
+rotation keys). The tests below flipped with it: key-accepted became key-REJECTED.
 """
 
 from __future__ import annotations
@@ -16,19 +21,29 @@ import pytest
 
 
 async def test_settings_serve_the_home_defaults(app_client):
-    """A fresh install has a DEFAULT layout + quote source — served, never guessed by the client."""
+    """A fresh install has a DEFAULT quote source — served, never guessed by the client."""
     d = (await app_client.get("/api/v1/settings")).json()
-    assert d["defaults"]["home_layout"] == "full"  # §9-3 owner default
     assert d["defaults"]["home_quote_source"] == "holdings"  # §9-7 owner default
 
 
+# --- §12ho1-6: the Simple layout is REMOVED; `home_layout` is retired from the contract ---------
+
+
 @pytest.mark.parametrize("value", ["simple", "full"])
-async def test_home_layout_is_writable_and_read_back(app_client, value):
+async def test_home_layout_is_no_longer_a_settable_key(app_client, value):
+    """Home has ONE layout (§12ho1-6), so there is nothing for this key to choose. It must not
+    linger as a write-only key (D-078): a PUT is REFUSED, not silently swallowed."""
     r = await app_client.put("/api/v1/settings", json={"values": {"home_layout": value}})
-    assert r.status_code == 200
-    assert r.json()["applied"]["home_layout"] == value  # RED before: silently dropped
+    assert r.status_code == 400, "home_layout is retired — writing it must be an honest refusal"
+
+
+async def test_home_layout_is_neither_served_nor_stored(app_client):
+    """Shape-discriminating (the Review lesson): a 400 alone could be an accident. The key must be
+    absent from the served defaults AND the served vocabularies — no client can read a layout."""
     d = (await app_client.get("/api/v1/settings")).json()
-    assert d["stored"]["home_layout"] == value
+    assert "home_layout" not in d["defaults"]
+    assert "home_layouts" not in d["defaults"]
+    assert "home_layout" not in d["stored"]
 
 
 async def test_home_quote_source_is_writable_and_read_back(app_client):

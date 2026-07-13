@@ -31,18 +31,16 @@ _ALLOWED_KEYS = {
     # - first_run_complete: server-persisted flag (D-078 precedent) — set on the
     #   checklist's complete OR dismiss, so it never re-nags across browsers.
     "timezone", "first_run_complete",
-    # Home (page-home §9-3/§9-7). SERVER-persisted, not per-device: D-078 lists Home layout as a
-    # settings row precisely because "it defines what rotation shows" — a kiosk must survive a
-    # browser wipe. The quote-source choice rides the same posture (§9-7).
-    "home_layout", "home_quote_source",
+    # Home (page-home §9-7). SERVER-persisted, not per-device (D-078's kiosk posture: it must
+    # survive a browser wipe). NOTE: `home_layout` was here until §12ho1-6 removed the Simple
+    # layout — Home ships ONE layout, so a layout key would store a choice nothing can make. A
+    # write-only key is the very thing D-078 forbids, so it is GONE, not left as dead surface.
+    "home_quote_source",
 }
 
-#: Home layout (D-046/D-040). The vocabulary is Simple/Full — page-home §9-1 RETIRED "Expert".
-HOME_LAYOUTS = ("simple", "full")
 #: Home quote-card sources (D-046/D-052) — the ratified view-scope options, each with a real reader.
 HOME_QUOTE_SOURCES = ("markets", "holdings", "global", "watchlist")
-#: Fresh-install defaults (page-home §9-3/§9-7, owner 2026-07-13).
-HOME_LAYOUT_DEFAULT = "full"
+#: Fresh-install default (page-home §9-7, owner 2026-07-13).
 HOME_QUOTE_SOURCE_DEFAULT = "holdings"
 
 
@@ -62,11 +60,9 @@ async def get_settings_endpoint(session: AsyncSession = Depends(get_db)) -> dict
             "ai_enabled": s.ai_enabled,
             "voice_enabled": s.voice_enabled,
             "demo_mode": s.is_demo,
-            # page-home §9-3/§9-7: the fresh-install Home defaults are SERVED, so the frontend never
-            # has to guess a layout or a quote source (and never carries a vocabulary copy — D-005).
-            "home_layout": HOME_LAYOUT_DEFAULT,
+            # page-home §9-7: the fresh-install quote source is SERVED, so the frontend never has to
+            # guess it — and never carries a vocabulary copy (D-005).
             "home_quote_source": HOME_QUOTE_SOURCE_DEFAULT,
-            "home_layouts": list(HOME_LAYOUTS),
             "home_quote_sources": list(HOME_QUOTE_SOURCES),
         },
     }
@@ -89,17 +85,20 @@ async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(
 
         if patch.values["timezone"] not in available_timezones():
             raise HTTPException(400, "timezone must be a valid IANA timezone name")
-    # page-home §9-3/§9-7 — the backend is the validation truth here too: an unrecognised layout or
-    # quote source is an honest 400, never silently coerced to a default. ("expert" is refused: the
-    # Simple/Expert vocabulary was RETIRED by §9-1.)
-    if "home_layout" in patch.values and patch.values["home_layout"] not in HOME_LAYOUTS:
-        raise HTTPException(400, f"home_layout must be one of {list(HOME_LAYOUTS)}")
+    # page-home §9-7 — the backend is the validation truth here too: an unrecognised quote source is
+    # an honest 400, never silently coerced to a default.
     if "home_quote_source" in patch.values and patch.values["home_quote_source"] not in HOME_QUOTE_SOURCES:
         raise HTTPException(400, f"home_quote_source must be one of {list(HOME_QUOTE_SOURCES)}")
+    # An unknown key is REFUSED, not skipped. It used to `continue` here — which is exactly why a PUT
+    # of the (then unlisted) `home_layout` looked like it worked and changed nothing (page-home Phase
+    # 0). A write surface that accepts a key it does not store is lying to its caller, and it hid a
+    # real bug for a whole build. Retiring `home_layout` (§12ho1-6) would have re-armed that trap, so
+    # the trap goes instead.
+    unknown = sorted(set(patch.values) - _ALLOWED_KEYS)
+    if unknown:
+        raise HTTPException(400, f"unknown setting key(s): {unknown}")
     applied = {}
     for key, value in patch.values.items():
-        if key not in _ALLOWED_KEYS:
-            continue
         row = (await session.execute(select(Setting).where(Setting.key == key))).scalars().first()
         if row:
             row.value = value

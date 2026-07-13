@@ -136,8 +136,9 @@ Reports and Pricing Health enter the sidebar in v2 (previously orphaned, D-041).
   behaviour survives a browser wipe. localStorage is not a store for rotation.
 - The **top-bar rotation toggle stays** (D-044/D-066).
 - **Rotation skips pages that error or are empty** (D-044).
-- Rotating to Home uses the **configured Home layout** — one setting, no special
-  case (D-040).
+- Rotating to Home just shows **Home** — there is **one layout** (D-046 AMENDMENT,
+  page-home §12ho1-6), so there is no layout for rotation to configure. *(This line
+  read "uses the configured Home layout" while two layouts existed.)*
 
 ---
 
@@ -175,10 +176,11 @@ Shows the user's holdings + world indices (both from the frozen contract:
 marquee halts under reduced motion (then static + manually scrollable); it is hidden
 entirely under lock (D-002). **Home Full no longer duplicates it in-page.**
 
-Detail level is scoped to Home (D-040): Settings control "Home layout: Simple /
-Full"; the global top-bar Simple/Expert toggle is removed as an app-wide control
-(the Detail-level toggle leaves the top bar per D-066, but only Home branches on
-it).
+**There is no Home-layout control** (D-046 AMENDMENT, page-home §12ho1-6): the
+**Simple** layout was removed, so Home has ONE composition — the ratified grid — and
+nothing to switch between. The top-bar Detail toggle was already removed (page-home
+§9-15), and the `home_layout` setting is retired from the contract rather than left as
+a write-only key (D-078). *(D-040 scoped a Detail level to Home; nothing branches now.)*
 
 ---
 

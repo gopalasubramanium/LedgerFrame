@@ -28,13 +28,19 @@ test.describe.serial("review pre-pass (live)", () => {
     console.log("PART 1 — attention rows:", rowCount);
     expect(rowCount, "attention list populated").toBeGreaterThan(0);
 
-    // PART 2: neutral severity chip (served verbatim) + area links (ND-4/ND-7) ----------------------
+    // PART 2: SEMANTIC severity chip (served verbatim, display-cased) + area links (§12rv1-4/5, ND-7) --
     const chip = page.locator('[data-card="attention"] .rv__chip').first();
     const chipText = (await chip.innerText()).trim();
-    console.log("PART 2 — first severity chip:", chipText);
-    expect(["review", "info"], "severity rendered verbatim").toContain(chipText);
-    // A known area links to its canonical page (data → /pricing-health, which IS built).
-    const dataLink = page.locator('[data-card="attention"] a', { hasText: "data" }).first();
+    const chipClass = (await chip.getAttribute("class")) ?? "";
+    console.log("PART 2 — first severity chip:", chipText, "· class:", chipClass);
+    // §12rv1-5 — the served value is display-cased, rendered verbatim (no raw enum key).
+    expect(["Review", "Info"], "severity rendered verbatim (display-cased)").toContain(chipText);
+    // §12rv1-4 — the chip carries a semantic tone class per severity (Review → attention, Info → neutral).
+    expect(chipClass, "chip carries a semantic tone class").toMatch(/rv__chip--(attention|neutral)/);
+    if (chipText === "Review") expect(chipClass, "Review → attention token").toContain("rv__chip--attention");
+    if (chipText === "Info") expect(chipClass, "Info → neutral").toContain("rv__chip--neutral");
+    // A known area links to its canonical page (Data → /pricing-health, which IS built).
+    const dataLink = page.locator('[data-card="attention"] a', { hasText: "Data" }).first();
     if (await dataLink.count()) {
       expect(await dataLink.getAttribute("href"), "area links to its canonical page").toContain("/");
     }
@@ -47,7 +53,7 @@ test.describe.serial("review pre-pass (live)", () => {
     // DOM: the Review summary rail shows the same count.
     const pageDom = await page.evaluate(() => {
       const tiles = [...document.querySelectorAll('[data-card="rail"] .lf-stat')];
-      const t = tiles.find((x) => x.querySelector(".lf-stat__label")?.textContent === "Needs a look");
+      const t = tiles.find((x) => x.querySelector(".lf-stat__label")?.textContent === "Attention"); // §12rv1-7
       return t ? Number(t.querySelector(".lf-stat__value")?.textContent) : -1;
     });
     // DOM: Net worth's ReviewCard shows the same count.
@@ -80,6 +86,21 @@ test.describe.serial("review pre-pass (live)", () => {
 
     // PART 5: [Help] on Review -----------------------------------------------------------------------
     expect(await page.locator('[data-card="attention"] .lf-term').count(), "Review [Help]").toBeGreaterThan(0);
+
+    // PART 5b: retired label gone (§12rv1-7) + Mark reviewed icon (§12rv1-1) + history cap (§12rv1-6) --
+    // The retired "Needs a look" label appears nowhere as a LABEL (body copy "what needs a look" is OK).
+    expect(await page.getByText("Needs a look", { exact: true }).count(), "retired label gone").toBe(0);
+    // The summary tile + history column read "Attention".
+    expect(await page.getByText("Attention", { exact: true }).count(), "'Attention' label present").toBeGreaterThan(0);
+    // Mark reviewed keeps its text AND carries an icon.
+    const markBtn = page.getByRole("button", { name: "Mark reviewed" });
+    expect(await markBtn.locator("svg").count(), "Mark reviewed icon (text label kept)").toBeGreaterThan(0);
+    // §12rv1-6 — the history table is BOUNDED (the DataTable worklist cap), scrolling internally.
+    const histMaxH = await page.locator('[data-card="history"] .lf-table__scroll').first().evaluate(
+      (el) => getComputedStyle(el).maxHeight,
+    );
+    console.log("PART 5b — history table max-height:", histMaxH);
+    expect(histMaxH, "history table caps (worklist standard)").not.toBe("none");
 
     // PART 6: nothing stuck in skeleton ------------------------------------------------------------
     await expect(page.locator(".lf-skeleton"), "no card stuck in skeleton").toHaveCount(0);

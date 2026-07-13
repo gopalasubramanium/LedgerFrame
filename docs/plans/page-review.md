@@ -1,7 +1,9 @@
 # page-review.md — Review page build plan
 
-**Status: §9 RESOLVED — Phases 0/0a/1/2/3a DONE, Phase-3b owner walk PENDING (2026-07-13).** Pre-pass
-GREEN; build record §11. Drafted 2026-07-13 from
+**Status: §9 RESOLVED — Phases 0/0a/1/2/3a DONE; Phase-3b owner walk IN-PROGRESS — BATCH 1 (§12rv1-1..7)
+FIXED + pre-pass GREEN, awaiting owner LIVE re-verify (2026-07-13).** Ratifications pending at re-verify:
+Mark-reviewed icon (§12rv1-1), severity semantic colours (§12rv1-4), and the PROPOSED GLOSSARY
+Mark-reviewed + Severity terms (ND-11). Pre-pass GREEN; build record §11, walk record §12. Drafted 2026-07-13 from
 `TEMPLATE-page-build.md` (incl. the tooling-guard fail-first, the ⚠ verify-first divergence-flag +
 **audit-guards** additions, the vertical-single-scroll invariant, and the Reports-group worklist-shape
 note). Verify-first pass done (§10 — read what the review reader actually serves **and its honesty
@@ -419,3 +421,72 @@ typecheck/lint/tokens/build green; **live pre-pass GREEN**, 0 console errors. **
 owner walk (judgment items) — I do NOT self-certify.** Phase 3b: each finding → a numbered `§*` entry,
 fail-first, geometry fixes fail-first; the **Mark reviewed + Severity GLOSSARY terms ratify at the walk**
 (ND-11); owner closes the page.
+
+---
+
+## 12. PHASE-3b OWNER WALK — BATCH 1 (§12rv1-1..7, 2026-07-13)
+
+Owner walk findings, each fail-first (owner-visible defect reproduced before the fix; every visual fix
+ships its own pre-pass assertion in THIS batch). Two OWNER PICKs were taken before writing copy:
+**§12rv1-3 → "Today" for 0, else "N days ago"**; **§12rv1-7 → "Attention"**. **Pending owner LIVE
+re-verify / ratification:** §12rv1-1 icon, §12rv1-4 colours, and the PROPOSED GLOSSARY terms (ND-11).
+**I do NOT self-certify.**
+
+- **§12rv1-1 — Mark-reviewed icon (PROPOSED, ratify at re-verify).** The page's one `[S]`-gated write
+  gained a Lucide `CircleCheck` icon **beside its KEPT text label** (icon-only DECLINED — WCAG-AA /
+  clarity baseline). Composition of the ratified `lf-btn--primary` (no new component); icon added to the
+  ADR-0003 `icons.ts` vocabulary. **Pre-pass asserts** the Mark-reviewed button carries an `svg` AND the
+  "Mark reviewed" text. Unit test: button keeps text + carries an icon.
+- **§12rv1-2 — Auto-mark-reviewed DECLINED → ROADMAP R-29.** Auto-recording a review on full-scroll +
+  navigate-away declined for v2: (a) `POST /review/log` is `require_auth` `[S]` — a gated write must not
+  fire silently; (b) a recorded review is a deliberate `ReviewLog` attestation (GLOSSARY), scroll-past is
+  not review; (c) it would pollute Review history. Recorded as **ROADMAP R-29** ("implicit 'seen' state
+  for Review attention items — a separate concept from Mark-reviewed; needs its own concept, auth
+  posture, contract delta + state model, and a plan file"), distinct from per-signal ack/dismiss (ND-5).
+  **No build now.**
+- **§12rv1-3 — Relative-time copy (OWNER PICK: "Today"/"N days ago").** ONE shared day-granular formatter
+  `relativeDays` (`format/time.ts`): `0 → "Today"`, `1 → "1 day ago"` (singular), `N → "N days ago"`.
+  `relativeTime` (the ISO-timestamp formatter) routes its ≥24h branch through it — so the wording is
+  identical everywhere it renders: the Review "Last reviewed" tile (was `"0d ago"`) **and** the NewsList
+  meta line (§11-4, was `"Nd ago"`). Unit-tested 0/1/N pluralization + that `relativeTime`'s day branch
+  reuses the shared copy. **Verified live: "Last reviewed: Today"** (days_ago 0).
+- **§12rv1-4 — Severity semantic colour (ND-4 REVERSAL, PROPOSED, ratify at re-verify).** The neutral
+  chip is reversed — severity **is** semantic. The chip maps the served value to a ratified tone with a
+  **NEUTRAL fallback** for any unknown severity (no hardcoded severity list, no invented colour):
+  **`Review` → the EXISTING `--attention` token** (`#b45309` / `#fbbf24`), **`Info` → neutral**. HARD
+  GATE cleared — the ratified token set already carries `--attention` (no token amendment). **Pre-pass
+  asserts** the chip carries `rv__chip--attention` for `Review` and `rv__chip--neutral` for `Info`; unit
+  test asserts the tone class per severity. **Verified live** (amber "Review" chips, neutral "Info").
+- **§12rv1-5 — Display casing served, backend-first (D-105 precedent).** `review.py` now serves
+  **display-cased** `area`/`severity` labels (`Review`/`Info`, `Data`/`Liquidity`/`Estate`…) via a
+  `_title` helper applied at the serialization boundary; the **count reconciliation (ND-3) is computed on
+  the RAW severity BEFORE casing**, so it is unchanged. Contract **SHAPE unchanged** → no regen (drift
+  clean). The frontend renders **verbatim** (D-005), **no CSS text-transform** (D-104); `AREA_ROUTE` /
+  severity-order / `"ok"`-empty lookups + `NetWorth.reviewVerdict` case-normalise so nothing couples to
+  casing. **Fail-first:** a dedicated backend test (`test_review_serves_display_cased_labels`) + the
+  updated area/severity assertions (test_review / _centre / estate / insurance) are **RED on the pre-fix
+  reader** (proven by git-stash: `1 failed`) and green after. **Net worth's ReviewCard reflects the fix**
+  (same reader — verified live, reconciliation 4==4==4). PROPOSED GLOSSARY Severity value casing updated.
+- **§12rv1-6 — History table: cap, no search/pagination.** The DataTable **worklist cap** (`--table-max-h`,
+  60vh) already bounds both the attention and history tables — they scroll internally, the page keeps ONE
+  scroll region. **Pre-pass asserts** the history `.lf-table__scroll` max-height is bounded (live: 432px).
+  Search + pagination **DECLINED (not deferred):** the reader serves ≤24 rows — bounded, under the D-094
+  client-side threshold; revisit only if the served cap changes. The honest "Showing the last 24 recorded
+  reviews." legend is kept.
+- **§12rv1-7 — Retired label "Needs a look" (D-030 defect) → OWNER PICK "Attention".** The summary tile
+  label and the history column header used the retired label; both now read **"Attention"**
+  (GLOSSARY-consistent). Frontend grep confirmed only those two label instances. **Body copy** ("What
+  needs a look …" subtitle, "Review — what needs a look" section heading, ReviewCard's "N need a look")
+  is sanctioned per D-030 — left as-is. **Fail-first:** a unit copy test asserts the retired label is
+  gone + "Attention" present; the pre-pass's OWN stale `"Needs a look"` tile selector went RED on the
+  rename (caught + fixed in the same batch).
+
+**Verification (Batch 1):** backend **501** (incl. the new display-casing test) · ruff · contract drift
+clean (shape unchanged); frontend **158 unit** (+5: relativeDays 0/1/N + relativeTime reuse, chip tone,
+retired-label, Mark-reviewed icon, relative-time tile) + **117 Playwright** · typecheck/lint/tokens/build
+green; **live pre-pass GREEN** — 5 attention rows
+· `Review`+`rv__chip--attention` · reconciliation **4 == 4 == 4** (page DOM + Net-worth ReviewCard) ·
+Mark-reviewed round-trip (history 0→2) · retired label gone + icon present · history cap 432px · single
+scroll region · 0 overflow 320/375/900/1366 × both themes · **0 console errors**. ROADMAP R-29 added;
+GLOSSARY Severity value casing updated. **STOP for the owner LIVE re-verify (§12rv1-1 icon, §12rv1-4
+colours, ND-11 GLOSSARY terms pending ratification) — I do NOT self-certify.**

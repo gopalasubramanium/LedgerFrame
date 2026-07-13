@@ -33,6 +33,7 @@ export {
   Upload,
   Download,
   Plus,
+  CircleCheck,
   // Status
   TriangleAlert,
 } from "lucide-react";

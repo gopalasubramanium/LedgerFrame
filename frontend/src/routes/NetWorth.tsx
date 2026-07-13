@@ -60,8 +60,10 @@ const RUNWAY_BASIS =
   "Basis: liquid assets ÷ recurring monthly net burn (recurring expenses − income), at today's FX; one-off obligations excluded.";
 
 function reviewVerdict(severity: string): Verdict {
-  if (severity === "review") return "attention";
-  if (severity === "info") return "info";
+  // §12rv1-5 — the reader now serves display-cased severity ("Review"/"Info"); normalise before mapping.
+  const s = severity.toLowerCase();
+  if (s === "review") return "attention";
+  if (s === "info") return "info";
   return "ok";
 }
 

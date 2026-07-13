@@ -791,7 +791,23 @@ single scroll, 0 overflow × both themes, 0 console errors). **146 unit + 105 Pl
 - **Recorded for later:** feed management deferred to the **Settings plan** (ND-6); **`GET /news`
   unconsumed** → tech-debt line (ND-7); D-051 region-link divergence noted (ND-3, no mapping invented).
 
-## REVIEW — Phases 0/0a/1/2/3a DONE; Phase-3b owner walk PENDING (2026-07-13)
+## REVIEW — Phase-3b owner walk BATCH 1 FIXED + pre-pass GREEN; awaiting owner LIVE re-verify (2026-07-13)
+
+**Phase-3b Batch 1 (§12rv1-1..7) fixed + pre-pass GREEN — STOP for the owner live re-verify (not
+self-certified).** Two OWNER PICKs taken: relative-time → **"Today"/"N days ago"**; retired-label
+replacement → **"Attention"**. Findings: **rv1-1** Mark-reviewed gains a `CircleCheck` icon + kept text
+(PROPOSED); **rv1-2** auto-mark-reviewed DECLINED → **ROADMAP R-29** (implicit "seen" state, own plan);
+**rv1-3** ONE shared `relativeDays` formatter app-wide (Review tile + NewsList §11-4), 0/1/N unit-tested;
+**rv1-4** severity is SEMANTIC (ND-4 REVERSAL, PROPOSED) — `Review`→`--attention` token, `Info`→neutral,
+neutral fallback, no invented colour; **rv1-5** backend serves **display-cased** area/severity (D-105
+precedent) — count on raw, shape unchanged (no regen), frontend verbatim + case-normalised lookups, Net
+worth ReviewCard reflects it; **rv1-6** history DataTable worklist cap confirmed (search/pagination
+DECLINED, ≤24 rows); **rv1-7** retired "Needs a look" label → "Attention" (body copy kept, D-030). Full
+record: **`page-review.md` §12**. Backend **501** · frontend **158 unit + 117 Playwright** · pre-pass GREEN
+(reconciliation 4==4==4, 0 overflow both themes, 0 console errors). **Pending owner ratification:** rv1-1
+icon, rv1-4 colours, ND-11 GLOSSARY terms.
+
+## REVIEW — Phases 0/0a/1/2/3a DONE (2026-07-13)
 
 **`/review` is built + pre-pass green; awaiting the owner acceptance walk.** Planning-group page (worklist
 template); canonical home for review verdicts + attention + Mark-reviewed/history + the D-059 threshold

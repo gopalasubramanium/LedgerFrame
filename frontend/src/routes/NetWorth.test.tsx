@@ -77,9 +77,10 @@ vi.mock("../api/net-worth", () => ({
   getInsurance: vi.fn(async () => ({ ok: true, data: { base_currency: "SGD", count: 0, total_cash_value: 0 } })),
   getReview: vi.fn(async () => ({
     ok: true,
+    // §12rv1-5 — the shared review reader serves display-cased severity ("Review"/"Info").
     data: { as_of: "2026-07-11", count: 1, items: [
-      { area: "data", title: "7 holdings have stale prices — refresh", severity: "review" },
-      { area: "data", title: "4 holdings have incomplete details", severity: "info" },
+      { area: "Data", title: "7 holdings have stale prices — refresh", severity: "Review" },
+      { area: "Data", title: "4 holdings have incomplete details", severity: "Info" },
     ] },
   })),
 }));

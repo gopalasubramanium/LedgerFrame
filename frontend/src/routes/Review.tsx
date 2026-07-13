@@ -15,7 +15,9 @@ import {
   useToast,
 } from "../components/ui";
 import type { Column } from "../components/ui";
+import { CircleCheck } from "../icons";
 import { formatMoney, formatSignedMoney, signOf } from "../format/number";
+import { relativeDays } from "../format/time";
 import { getReviewHistory, getReviewPage, markReviewed } from "../api/review";
 import type { ReviewAttentionItem, ReviewHistoryResp, ReviewPageResp } from "../api/review";
 
@@ -25,7 +27,8 @@ import type { ReviewAttentionItem, ReviewHistoryResp, ReviewPageResp } from "../
 // threshold logic (D-059 thresholds are backend-owned). Reporting only, never advice.
 
 // ND-7: a navigation-only area→canonical-page map. An unrecognised area (incl. "ok") renders WITHOUT a
-// link — never a guessed route. Some targets are not built yet (honest NotBuilt fallback).
+// link — never a guessed route. Some targets are not built yet (honest NotBuilt fallback). Keys are the
+// canonical enum; the served area is display-cased (§12rv1-5), so we normalise before lookup.
 const AREA_ROUTE: Record<string, string> = {
   policy: "/policy",
   data: "/pricing-health",
@@ -41,6 +44,12 @@ const AREA_ROUTE: Record<string, string> = {
 // ND-4: severity orders items within the list, higher first (review before info). Only display
 // ordering of served values — never a hardcoded severity list rendered as copy.
 const SEV_ORDER: Record<string, number> = { review: 0, info: 1 };
+
+// §12rv1-4 (ND-4 REVERSAL) — severity is SEMANTIC: map the served value to a ratified tone. "Review"
+// → the attention/warning token; "Info" → neutral. Mapped by served value (case-normalised) with a
+// NEUTRAL fallback for any unknown severity — no hardcoded severity list, no invented colour.
+const SEV_TONE: Record<string, "attention" | "neutral"> = { review: "attention", info: "neutral" };
+const sevKey = (s: string) => s.toLowerCase();
 
 export function Review() {
   const toast = useToast();
@@ -68,9 +77,9 @@ export function Review() {
   // severity (stable). The single served "ok" item is treated as the honest empty state.
   const attention = useMemo<ReviewAttentionItem[]>(() => {
     const items = page?.attention ?? [];
-    return [...items].sort((a, b) => (SEV_ORDER[a.severity] ?? 2) - (SEV_ORDER[b.severity] ?? 2));
+    return [...items].sort((a, b) => (SEV_ORDER[sevKey(a.severity)] ?? 2) - (SEV_ORDER[sevKey(b.severity)] ?? 2));
   }, [page]);
-  const isEmptySignal = attention.length === 1 && attention[0].area === "ok";
+  const isEmptySignal = attention.length === 1 && attention[0].area.toLowerCase() === "ok";
 
   const onSave = useCallback(async () => {
     setSaving(true);
@@ -88,13 +97,22 @@ export function Review() {
   }, [note, nextDate, toast, reload]);
 
   const attnColumns: Column<ReviewAttentionItem>[] = [
-    { key: "severity", label: "Severity", render: (r) => <span className="rv__chip">{r.severity}</span> },
+    {
+      key: "severity",
+      label: "Severity",
+      // §12rv1-4 — served value verbatim (D-005) inside a chip carrying its semantic tone class.
+      render: (r) => (
+        <span className={`rv__chip rv__chip--${SEV_TONE[sevKey(r.severity)] ?? "neutral"}`}>{r.severity}</span>
+      ),
+    },
     { key: "title", label: "Item", render: (r) => r.title },
     {
       key: "area",
       label: "Area",
-      render: (r) =>
-        AREA_ROUTE[r.area] ? <Link to={AREA_ROUTE[r.area]}>{r.area}</Link> : <span className="rv__area">{r.area}</span>,
+      render: (r) => {
+        const route = AREA_ROUTE[r.area.toLowerCase()];
+        return route ? <Link to={route}>{r.area}</Link> : <span className="rv__area">{r.area}</span>;
+      },
     },
   ];
 
@@ -104,7 +122,8 @@ export function Review() {
         title="Review"
         subtitle="What needs a look — reporting only, not advice or a required action"
         actions={
-          <button type="button" className="lf-btn lf-btn--primary" onClick={() => { setNote(""); setNextDate(""); setDialogOpen(true); }}>
+          <button type="button" className="lf-btn lf-btn--primary rv__markbtn" onClick={() => { setNote(""); setNextDate(""); setDialogOpen(true); }}>
+            <CircleCheck className="rv__markicon" aria-hidden />
             Mark reviewed
           </button>
         }
@@ -123,10 +142,10 @@ export function Review() {
                   </div>
                   <TrendStat label="Today's change" value={formatSignedMoney(p.sections.changed.day_change)} tone={signOf(p.sections.changed.day_change)} />
                   <TrendStat label="Data confidence" value={String(p.sections.trust.confidence)} unit="/100" />
-                  <TrendStat label="Needs a look" value={String(p.attention_count)} />
+                  <TrendStat label="Attention" value={String(p.attention_count)} />
                   <TrendStat
                     label="Last reviewed"
-                    value={p.last_review ? `${p.last_review.days_ago}d ago` : "Never"}
+                    value={p.last_review ? relativeDays(p.last_review.days_ago) : "Never"}
                   />
                 </div>
                 {p.last_review?.next_review_date ? (
@@ -167,7 +186,7 @@ export function Review() {
                       { key: "reviewed_at", label: "Date", render: (r) => r.reviewed_at },
                       { key: "net_worth", label: "Net worth", align: "right", render: (r) => `${r.base_currency} ${formatMoney(r.net_worth)}` },
                       { key: "confidence", label: "Confidence", align: "right", render: (r) => `${r.confidence}/100` },
-                      { key: "attention_count", label: "Needs a look", align: "right", render: (r) => String(r.attention_count) },
+                      { key: "attention_count", label: "Attention", align: "right", render: (r) => String(r.attention_count) },
                       { key: "note", label: "Note", truncate: true, render: (r) => r.note ?? "—" },
                     ]}
                     rows={h.history}

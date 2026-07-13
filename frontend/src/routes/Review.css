@@ -48,7 +48,8 @@
   text-decoration: underline;
 }
 
-/* Severity chip — NEUTRAL (ND-4): served string, no semantic colour (info/review are not gain/loss). */
+/* Severity chip (§12rv1-4, ND-4 REVERSAL) — severity is SEMANTIC: the tone class carries a ratified
+   token. "Review" → attention/warning; "Info" (and any unknown) → neutral. Served value verbatim. */
 .rv__chip {
   display: inline-flex;
   align-items: center;
@@ -60,9 +61,28 @@
   color: var(--text-secondary);
   white-space: nowrap;
 }
+.rv__chip--attention {
+  border-color: var(--attention);
+  color: var(--attention);
+}
 .rv__area {
   color: var(--text-tertiary);
 }
+
+/* Mark reviewed — the page's one [S]-gated write; icon + KEPT text label (§12rv1-1, WCAG-AA). */
+.rv__markbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.rv__markicon {
+  width: var(--icon-size, 1em);
+  height: var(--icon-size, 1em);
+}
+
+/* History table cap (§12rv1-6) — the DataTable worklist standard (--table-max-h, 60vh) bounds both
+   the attention and history tables so they scroll internally; the page keeps ONE scroll region.
+   Search + pagination are DECLINED (the reader serves ≤24 rows — bounded, under the D-094 threshold). */
 
 /* Mark-reviewed dialog fields. */
 .rv__field {

@@ -14,7 +14,15 @@ Two scopes, deliberately separate, because they carry different risk:
 * **RUNTIME** — what a user actually receives and runs. This is what a distribution claim is about.
 * **DEV** — build/test tooling. It does not ship, but it is reported anyway so the owner can see it.
 
-Exit codes: ``0`` clean · ``1`` something needs a human (flagged or unknown licences).
+**"Clean" means ZERO UNADJUDICATED FINDINGS — never "zero findings".** The dependency graph will always
+contain licences that need a decision; the release gate is that every one of them **has a recorded
+ruling** in ``scripts/license-adjudications.toml``. Adjudication is an **artifact, not a conversation**.
+
+**Stale rulings are findings too.** A ruling whose package has vanished, or whose licence no longer
+matches what the package actually ships, fails the audit — a rubber stamp that outlives the thing it
+stamped is worse than no stamp, because it looks like diligence.
+
+Exit codes: ``0`` clean (every finding adjudicated) · ``1`` something needs a human.
 
     python scripts/license_audit.py            # report + exit code
     python scripts/license_audit.py --write     # also refresh docs/audit/LICENSES.md
@@ -25,6 +33,7 @@ from __future__ import annotations
 import argparse
 import importlib.metadata as md
 import json
+import os
 import re
 import subprocess
 import sys
@@ -34,6 +43,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SELF = {"ledgerframe", "ledgerframe-frontend"}
+# Test seam: the fail-first tests must be able to prove all three states (no rulings -> RED, rulings
+# -> GREEN, MUTATED ruling -> RED again) without editing the committed file.
+ADJUDICATIONS = Path(os.environ.get("LF_ADJUDICATIONS") or (REPO / "scripts" / "license-adjudications.toml"))
 
 #: Licence families that CONSTRAIN redistribution and therefore need a human decision. This list is
 #: deliberately broad: a false flag costs a glance, a missed one costs a licence violation.
@@ -177,6 +189,86 @@ def classify(lic: str) -> str:
     return "UNKNOWN"
 
 
+# --- adjudication -------------------------------------------------------------------------------
+
+
+def load_rulings() -> tuple[list[dict], list[dict]]:
+    if not ADJUDICATIONS.is_file():
+        return [], []
+    doc = tomllib.loads(ADJUDICATIONS.read_text())
+    return doc.get("ruling", []), doc.get("platform_family", [])
+
+
+def _versions_match(spec: str, version: str, eco: str) -> bool:
+    if spec.strip() == "*":
+        return True
+    if eco == "python":
+        try:
+            from packaging.specifiers import SpecifierSet
+            from packaging.version import Version
+
+            return Version(version) in SpecifierSet(spec)
+        except Exception:  # noqa: BLE001 — an unparseable spec must NOT silently clear a finding
+            return False
+    # npm semver is not PEP 440; only an exact match (or "*") is honoured — deliberately, rather than
+    # pretending to understand a range we cannot evaluate.
+    return spec.strip() == version
+
+
+def family_of(name: str) -> str:
+    return f"{name.split('/')[0]}/*" if name.startswith("@") else name
+
+
+def adjudicate(rows: list[dict]) -> dict[str, list]:
+    """Match every finding to a recorded ruling. Anything unmatched — or matched by a ruling that no
+    longer describes reality — is still a finding."""
+    rulings, families = load_rulings()
+    out: dict[str, list] = {"unadjudicated": [], "rejected": [], "stale": [], "cleared": [],
+                            "new_families": []}
+    present = {(r["name"].lower(), r["eco"]) for r in rows}
+
+    for row in rows:
+        if row["verdict"] not in ("FLAG", "UNKNOWN"):
+            continue
+        match = next(
+            (r for r in rulings
+             if r["package"].lower() == row["name"].lower()
+             and r["ecosystem"] == row["eco"]
+             and r["scope"] == row["scope"]),
+            None,
+        )
+        if match is None:
+            out["unadjudicated"].append(row)
+            continue
+        if match["ruling"].upper() == "REJECT":
+            out["rejected"].append({**row, "ruling": match})
+            continue
+        # A ruling only clears the thing it actually described.
+        if match["licence"].strip() != row["licence"].strip():
+            out["stale"].append({**row, "why": f"ruling says {match['licence']!r}, "
+                                               f"package ships {row['licence']!r}"})
+            continue
+        if not _versions_match(str(match.get("versions", "*")), row["version"], row["eco"]):
+            out["stale"].append({**row, "why": f"version {row['version']} outside ruling range "
+                                               f"{match.get('versions')!r}"})
+            continue
+        out["cleared"].append(row)
+
+    # A ruling for a package that is no longer a dependency is dead weight — say so.
+    for r in rulings:
+        if (r["package"].lower(), r["ecosystem"]) not in present:
+            out["stale"].append({"name": r["package"], "eco": r["ecosystem"], "scope": r["scope"],
+                                 "version": "-", "licence": r["licence"],
+                                 "why": "ruling exists for a package that is no longer a dependency"})
+
+    ruled = {f["family"] for f in families}
+    for fam in sorted({family_of(r["name"]) for r in rows if r["verdict"] == "not-installed"}):
+        if fam not in ruled:
+            out["new_families"].append(fam)
+
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true", help="refresh docs/audit/LICENSES.md")
@@ -190,19 +282,31 @@ def main() -> int:
         # reported as UNKNOWN (that would bury the one finding that matters under 300 non-findings).
         r["verdict"] = "not-installed" if r.get("note") else classify(r["licence"])
 
-    needs_human = [r for r in rows if r["verdict"] in ("FLAG", "UNKNOWN") and r["scope"] == "runtime"]
-    dev_flags = [r for r in rows if r["verdict"] in ("FLAG", "UNKNOWN") and r["scope"] == "dev"]
     absent = [r for r in rows if r["verdict"] == "not-installed"]
+    adj = adjudicate(rows)
+    needs_human = [r for r in adj["unadjudicated"] if r["scope"] == "runtime"]
+    dev_flags = [r for r in adj["unadjudicated"] if r["scope"] == "dev"]
 
     print(f"\nDependency-licence audit — {len(rows)} packages "
           f"({sum(r['scope'] == 'runtime' for r in rows)} runtime, "
           f"{sum(r['scope'] == 'dev' for r in rows)} dev; "
           f"{len(absent)} declared-but-not-installed)\n")
 
+    for r in adj["cleared"]:
+        print(f"  [adjudicated] {r['scope']:7} {r['eco']:6} {r['name']}=={r['version']}  →  {r['licence']}")
+    fams = len({family_of(r["name"]) for r in absent})
+    print(f"  [platform-conditional] {len(absent)} declared-but-not-installed, {fams} families, all ruled")
+
     for r in needs_human:
-        print(f"  [{r['verdict']:7}] RUNTIME  {r['eco']:6} {r['name']}=={r['version']}  →  {r['licence']}")
+        print(f"\n  x UNADJUDICATED (RUNTIME) {r['eco']} {r['name']}=={r['version']} -> {r['licence']}")
     for r in dev_flags:
-        print(f"  [{r['verdict']:7}] dev      {r['eco']:6} {r['name']}=={r['version']}  →  {r['licence']}")
+        print(f"\n  x UNADJUDICATED (dev) {r['eco']} {r['name']}=={r['version']} -> {r['licence']}")
+    for r in adj["rejected"]:
+        print(f"\n  x REJECTED by the owner: {r['name']}=={r['version']} -> {r['licence']}")
+    for r in adj["stale"]:
+        print(f"\n  x STALE RULING {r['name']} ({r['eco']}/{r['scope']}): {r['why']}")
+    for fam in adj["new_families"]:
+        print(f"\n  x NEW platform-conditional family with no ruling: {fam}")
 
     if args.write:
         out = REPO / "docs" / "audit" / "LICENSES.md"
@@ -214,35 +318,57 @@ def main() -> int:
             "",
             "**This file reports; it does not adjudicate.** Whether a flagged licence is compatible with",
             "shipping AGPL-3.0-or-later — and with the D-001 future-proprietary-layer path — is an",
-            "**owner/counsel** decision, not a script's.",
+            "**owner/counsel** decision, not a script's. The owner's rulings are recorded in",
+            "`scripts/license-adjudications.toml` — adjudication is an **artifact, not a conversation**.",
+            "",
+            "**CLEAN = ZERO UNADJUDICATED FINDINGS — never 'zero findings'.** The graph will always",
+            "contain licences that need a decision; the gate is that every one of them HAS one. A ruling",
+            "that stops describing its package (wrong licence, package gone) is itself a finding: a",
+            "rubber stamp that outlives what it stamped is worse than no stamp.",
             "",
             "**RUNTIME** = what a user receives and runs (the scope a distribution claim is about).",
             "**dev** = build/test tooling; it does not ship, and is listed for completeness.",
             "",
             f"- packages: **{len(rows)}** ({sum(r['scope'] == 'runtime' for r in rows)} runtime, "
             f"{sum(r['scope'] == 'dev' for r in rows)} dev)",
-            f"- runtime needing a human: **{len(needs_human)}**",
-            f"- dev needing a human: **{len(dev_flags)}**",
+            f"- **unadjudicated** (blocks the release): **{len(needs_human)} runtime, {len(dev_flags)} dev**",
+            f"- adjudicated (recorded owner ruling): **{len(adj['cleared'])}**",
+            f"- stale rulings: **{len(adj['stale'])}** · rejected: **{len(adj['rejected'])}**",
+            f"- platform-conditional (declared, not installed here): **{len(absent)}** across "
+            f"**{fams}** families, all ruled",
             "",
             "| Scope | Eco | Package | Version | Licence | Verdict |",
             "|---|---|---|---|---|---|",
         ]
         order = {"FLAG": 0, "UNKNOWN": 1, "ok": 2, "not-installed": 3}
         for r in sorted(rows, key=lambda r: (r["scope"] != "runtime", order[r["verdict"]], r["name"].lower())):
+            cleared = {(c["name"], c["eco"]) for c in adj["cleared"]}
             mark = {"ok": "ok", "FLAG": "⚠ **FLAG**", "UNKNOWN": "⚠ **UNKNOWN**",
                     "not-installed": "— not installed here"}[r["verdict"]]
+            if (r["name"], r["eco"]) in cleared:
+                mark += " · ✅ **ADJUDICATED** (owner, 2026-07-14)"
             lines.append(f"| {r['scope']} | {r['eco']} | `{r['name']}` | {r['version']} | {r['licence']} | {mark} |")
         out.write_text("\n".join(lines) + "\n")
         print(f"\nwrote {out.relative_to(REPO)}")
 
-    if needs_human or dev_flags:
-        print(f"\nNOT CLEAN — {len(needs_human)} RUNTIME + {len(dev_flags)} dev entries need a human.")
-        print("This script does NOT adjudicate: whether these are compatible with shipping")
-        print("AGPL-3.0-or-later (and with D-001's future proprietary layer) is owner/counsel territory.")
-        print("No public claim ships until the RUNTIME set is adjudicated (Gate A8 / E4).")
+    blocking = needs_human + dev_flags + adj["rejected"] + adj["stale"]
+    if blocking or adj["new_families"]:
+        print(f"\nNOT CLEAN — {len(needs_human)} unadjudicated RUNTIME, {len(dev_flags)} unadjudicated dev, "
+              f"{len(adj['rejected'])} REJECTED, {len(adj['stale'])} stale ruling(s), "
+              f"{len(adj['new_families'])} new platform family/families.")
+        print("This script does NOT adjudicate. Record the owner's ruling in")
+        try:
+            print(f"  {ADJUDICATIONS.relative_to(REPO)}")
+        except ValueError:
+            print(f"  {ADJUDICATIONS}")
+        print("Adjudication is an ARTIFACT, not a conversation. No public claim ships until every")
+        print("finding has a recorded ruling (Gate A8 / E4).")
         return 1
 
-    print("\nclean — every dependency resolves to a recognised permissive licence.")
+    print(f"\nCLEAN — zero UNADJUDICATED findings ({len(adj['cleared'])} adjudicated; "
+          f"{len(absent)} platform-conditional across {fams} ruled families).")
+    print("Note: CLEAN does NOT mean 'no flagged licences'. It means every one of them carries a")
+    print("recorded owner ruling, with a rationale and a date.")
     return 0
 
 

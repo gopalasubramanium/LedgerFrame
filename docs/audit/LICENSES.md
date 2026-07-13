@@ -5,18 +5,26 @@ never hand-edit. E4 re-runs it against the final public set.*
 
 **This file reports; it does not adjudicate.** Whether a flagged licence is compatible with
 shipping AGPL-3.0-or-later — and with the D-001 future-proprietary-layer path — is an
-**owner/counsel** decision, not a script's.
+**owner/counsel** decision, not a script's. The owner's rulings are recorded in
+`scripts/license-adjudications.toml` — adjudication is an **artifact, not a conversation**.
+
+**CLEAN = ZERO UNADJUDICATED FINDINGS — never 'zero findings'.** The graph will always
+contain licences that need a decision; the gate is that every one of them HAS one. A ruling
+that stops describing its package (wrong licence, package gone) is itself a finding: a
+rubber stamp that outlives what it stamped is worse than no stamp.
 
 **RUNTIME** = what a user receives and runs (the scope a distribution claim is about).
 **dev** = build/test tooling; it does not ship, and is listed for completeness.
 
 - packages: **381** (41 runtime, 340 dev)
-- runtime needing a human: **1**
-- dev needing a human: **3**
+- **unadjudicated** (blocks the release): **0 runtime, 0 dev**
+- adjudicated (recorded owner ruling): **4**
+- stale rulings: **0** · rejected: **0**
+- platform-conditional (declared, not installed here): **70** across **21** families, all ruled
 
 | Scope | Eco | Package | Version | Licence | Verdict |
 |---|---|---|---|---|---|
-| runtime | python | `certifi` | 2026.6.17 | Mozilla Public License 2.0 (MPL 2.0) | ⚠ **FLAG** |
+| runtime | python | `certifi` | 2026.6.17 | Mozilla Public License 2.0 (MPL 2.0) | ⚠ **FLAG** · ✅ **ADJUDICATED** (owner, 2026-07-14) |
 | runtime | python | `aiosqlite` | 0.22.1 | MIT License | ok |
 | runtime | python | `alembic` | 1.18.5 | MIT | ok |
 | runtime | python | `annotated-doc` | 0.0.4 | MIT | ok |
@@ -57,9 +65,9 @@ shipping AGPL-3.0-or-later — and with the D-001 future-proprietary-layer path 
 | runtime | python | `typing_extensions` | 4.16.0 | PSF-2.0 | ok |
 | runtime | python | `tzlocal` | 5.4.4 | MIT | ok |
 | runtime | python | `uvicorn` | 0.51.0 | BSD-3-Clause | ok |
-| dev | python | `pathspec` | 1.1.1 | Mozilla Public License 2.0 (MPL 2.0) | ⚠ **FLAG** |
-| dev | npm | `argparse` | 2.0.1 | Python-2.0 | ⚠ **UNKNOWN** |
-| dev | npm | `caniuse-lite` | 1.0.30001803 | CC-BY-4.0 | ⚠ **UNKNOWN** |
+| dev | python | `pathspec` | 1.1.1 | Mozilla Public License 2.0 (MPL 2.0) | ⚠ **FLAG** · ✅ **ADJUDICATED** (owner, 2026-07-14) |
+| dev | npm | `argparse` | 2.0.1 | Python-2.0 | ⚠ **UNKNOWN** · ✅ **ADJUDICATED** (owner, 2026-07-14) |
+| dev | npm | `caniuse-lite` | 1.0.30001803 | CC-BY-4.0 | ⚠ **UNKNOWN** · ✅ **ADJUDICATED** (owner, 2026-07-14) |
 | dev | npm | `@adobe/css-tools` | 4.5.0 | MIT | ok |
 | dev | npm | `@asamuzakjp/css-color` | 3.2.0 | MIT | ok |
 | dev | npm | `@babel/code-frame` | 7.29.7 | MIT | ok |

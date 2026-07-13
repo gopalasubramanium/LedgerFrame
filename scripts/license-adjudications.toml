@@ -1,0 +1,286 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# LICENCE ADJUDICATIONS — the owner's recorded rulings on dependency-licence findings.
+# release-readiness Gate A8 (RD-2). Read by `scripts/license_audit.py`.
+#
+# WHY THIS FILE EXISTS
+# -------------------
+# The audit used to end with "1 runtime finding needs a human" and exit 1 — and then a human said
+# something in a chat window and everyone moved on. **Adjudication is an ARTIFACT, not a
+# conversation.** A finding is cleared only when a ruling for it is written down here, with who
+# decided it, when, and why.
+#
+# "CLEAN" MEANS **ZERO UNADJUDICATED FINDINGS** — never "zero findings". The dependency graph will
+# always contain licences that need a decision; the release gate is that every one of them HAS one.
+#
+# STALE RULINGS ARE FINDINGS TOO. The audit fails if a ruling's package is gone, or if its licence no
+# longer matches what the package actually ships. A rubber stamp that outlives the thing it stamped is
+# worse than no stamp: it looks like diligence. (Mutate `licence` below and the audit goes red — there
+# is a test that proves exactly that.)
+#
+# FORMAT: TOML, not YAML — `tomllib` is in the standard library, so recording a decision does not cost
+# the project a new dependency (and an ADR) to parse it.
+#
+# ⚖ These are OPERATIONAL ALIGNMENT decisions by the owner. They are **not legal counsel.** The
+#   runtime MPL-2.0 ruling below is flagged for optional counsel confirmation alongside the CLA.
+
+# =====================================================================================
+# RULINGS — one per flagged package.
+#   package / ecosystem / scope  → what it matches
+#   licence                      → what the package must STILL be, or the ruling is stale
+#   versions                     → "*" = any; python accepts a PEP 440 specifier (e.g. ">=2024")
+#   ruling                       → ACCEPT | REJECT      (REJECT always blocks)
+# =====================================================================================
+
+[[ruling]]
+package = "certifi"
+ecosystem = "python"
+scope = "runtime"
+licence = "Mozilla Public License 2.0 (MPL 2.0)"
+versions = "*"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = """
+The only RUNTIME finding, and the only one that touches what a user actually receives.
+
+ACCEPTED: certifi is an UNMODIFIED dependency. MPL-2.0 is FILE-LEVEL weak copyleft — its obligations
+attach to the MPL-licensed files themselves, not to the work that merely uses them — and §3.3 grants
+explicit compatibility with GPL-family Secondary Licences, which is the family we ship under
+(AGPL-3.0-or-later). It is not vendored, and a SOURCE release does not redistribute it: the user's own
+package manager fetches it.
+
+Operational alignment decision, NOT legal counsel. Flagged for optional counsel confirmation alongside
+the CLA (RD-2).
+"""
+
+[[ruling]]
+package = "pathspec"
+ecosystem = "python"
+scope = "dev"
+licence = "Mozilla Public License 2.0 (MPL 2.0)"
+versions = "*"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = """
+DEV-ONLY — build/test tooling. It is not part of the distributed product: a user neither receives nor
+runs it. Recorded, not shipped.
+"""
+
+[[ruling]]
+package = "argparse"
+ecosystem = "npm"
+scope = "dev"
+licence = "Python-2.0"
+versions = "*"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = """
+DEV-ONLY. (An npm package under the Python licence is odd enough to have been worth flagging, which is
+the point of flagging unknowns rather than guessing at them.) Not part of the distributed product.
+"""
+
+[[ruling]]
+package = "caniuse-lite"
+ecosystem = "npm"
+scope = "dev"
+licence = "CC-BY-4.0"
+versions = "*"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = """
+DEV-ONLY — a browser-support DATA table used at build time, under a content licence rather than a code
+licence. Not part of the distributed product. `versions = "*"`: this package republishes constantly and
+pinning it would make the ruling stale by design.
+"""
+
+# =====================================================================================
+# PLATFORM-CONDITIONAL, UNVERIFIABLE-LOCAL
+#
+# Packages npm DECLARES (as optional per-platform binaries and optional peers) but did NOT install on
+# this machine. They are not present, not built, and not shipped from here — but they are also not
+# nothing, so they are neither dropped (a lie) nor lumped in with the real findings (which would bury
+# the one that matters under 70 that do not).
+#
+# `upstream_licence` was **read from the npm registry**, not assumed — the whole reason this category
+# is called "unverifiable-LOCAL" is that the manifests are absent locally, and guessing at them would
+# be precisely the fabrication this project refuses.
+#
+# The audit fails if a NEW family appears here without a ruling.
+# =====================================================================================
+
+[[platform_family]]
+family = "@esbuild/*"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Per-platform build binaries (25 declared). MIT. Not installed here; not shipped."
+
+[[platform_family]]
+family = "@rollup/*"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Per-platform build binaries (24 declared). MIT. Not installed here; not shipped."
+
+[[platform_family]]
+family = "lightningcss"
+upstream_licence = "MPL-2.0"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = """
+The ONE non-permissive licence in this category, which is exactly why the category is enumerated rather
+than waved through. An OPTIONAL peer of the build toolchain: not installed, not built, and not shipped.
+Same MPL-2.0 reasoning as certifi, and it does not even reach the product.
+"""
+
+[[platform_family]]
+family = "less"
+upstream_licence = "Apache-2.0"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional CSS-preprocessor peer of vite. Permissive. Not installed; not shipped."
+
+[[platform_family]]
+family = "terser"
+upstream_licence = "BSD-2-Clause"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional minifier peer of vite. Permissive. Not installed; not shipped."
+
+[[platform_family]]
+family = "yaml"
+upstream_licence = "ISC"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional peer. Permissive. Not installed; not shipped."
+
+[[platform_family]]
+family = "@edge-runtime/*"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional vitest peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "@types/*"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional type-only peers. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "@vitest/*"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional vitest peers. MIT. Not installed; not shipped."
+
+# Single-package optional peers of vite / vitest — all MIT per the registry.
+[[platform_family]]
+family = "bufferutil"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional ws peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "canvas"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional jsdom peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "fsevents"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "macOS-only file watcher. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "happy-dom"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional vitest DOM peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "jiti"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional loader peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "msw"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional mocking peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "sass"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional CSS-preprocessor peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "sass-embedded"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional CSS-preprocessor peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "stylus"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional CSS-preprocessor peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "sugarss"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional CSS-preprocessor peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "tsx"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional TS loader peer. MIT. Not installed; not shipped."
+
+[[platform_family]]
+family = "utf-8-validate"
+upstream_licence = "MIT"
+ruling = "ACCEPT"
+decided_by = "owner"
+date = "2026-07-14"
+rationale = "Optional ws peer. MIT. Not installed; not shipped."

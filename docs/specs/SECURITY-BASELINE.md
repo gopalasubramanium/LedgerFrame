@@ -325,3 +325,26 @@ propagates past that retry — **a refusal is not a transient error to retry.**
 **Fail-first:** every test in `tests/integration/test_egress_guard.py` was **RED against the unguarded
 build with a live provider configured** — the client was constructed and the call went out — and green
 only once the gate landed. Tests that were never red would not have been evidence of anything.
+
+
+---
+
+## Dependency-licence adjudication (release-readiness Gate A8 / RD-2)
+
+**"Clean" means ZERO UNADJUDICATED FINDINGS — it does NOT mean "zero findings".**
+
+The dependency graph (381 packages, full transitive) will always contain licences that need a human
+decision. The release gate is not that they are absent; it is that **every one of them carries a
+recorded ruling** — who decided, when, and why — in `scripts/license-adjudications.toml`.
+**Adjudication is an artifact, not a conversation.**
+
+`scripts/license_audit.py` fails on:
+- any flagged/unknown licence with **no recorded ruling**;
+- any ruling the owner marked **REJECT**;
+- any **STALE** ruling — the package's licence has changed, its version is outside the ruling's range,
+  or the package is no longer a dependency at all. *A rubber stamp that outlives what it stamped is
+  worse than no stamp: it looks like diligence.*
+- any **new platform-conditional family** (declared-but-not-installed packages) without a ruling.
+
+**E4 re-runs this same mechanism against the final public set** — not a re-read of the Gate-A result,
+because the final set may differ and a ruling may have gone stale in between.

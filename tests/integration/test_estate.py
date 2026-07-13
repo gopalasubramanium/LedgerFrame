@@ -7,7 +7,7 @@ from __future__ import annotations
 async def test_estate_readiness_and_review_signals(app_client):
     # Default: no will → a neutral "No will recorded" review item.
     rev = (await app_client.get("/api/v1/portfolio/review")).json()
-    assert any(i["area"] == "estate" and "No will" in i["title"] for i in rev["items"])
+    assert any(i["area"] == "Estate" and "No will" in i["title"] for i in rev["items"])
 
     c = (await app_client.post("/api/v1/estate/contacts",
                                json={"name": "Spouse", "relationship": "spouse",
@@ -28,6 +28,6 @@ async def test_estate_readiness_and_review_signals(app_client):
 
     # Review now flags the missing document and no longer "No will".
     rev = (await app_client.get("/api/v1/portfolio/review")).json()
-    ests = [i["title"] for i in rev["items"] if i["area"] == "estate"]
+    ests = [i["title"] for i in rev["items"] if i["area"] == "Estate"]
     assert any("missing" in t for t in ests)
     assert not any("No will" in t for t in ests)

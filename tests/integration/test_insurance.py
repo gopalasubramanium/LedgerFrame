@@ -26,7 +26,7 @@ async def test_insurance_crud_totals_and_renewal_reminder(app_client):
 
     # Renewal surfaces in the review feed as a neutral reminder.
     rev = (await app_client.get("/api/v1/portfolio/review")).json()
-    assert any(i["area"] == "insurance" for i in rev["items"])
+    assert any(i["area"] == "Insurance" for i in rev["items"])
 
     # Edit → cover updates; a required field (currency) can't be nulled.
     await app_client.patch(f"/api/v1/insurance/{pid}", json={

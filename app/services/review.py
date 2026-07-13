@@ -41,6 +41,13 @@ def _item(area: str, title: str, severity: str = "review") -> dict:
     return {"area": area, "title": title, "severity": severity}
 
 
+def _title(s: str) -> str:
+    """Display-case a served enum key ('review' → 'Review', 'data' → 'Data'). §12rv1-5 (D-105
+    precedent): the reader serves display-cased labels — the frontend renders them verbatim (D-005,
+    never a raw enum key, no CSS text-transform). Contract SHAPE unchanged."""
+    return s[:1].upper() + s[1:] if s else s
+
+
 def _other_class_overuse_item(val) -> dict | None:
     """D-087 — an item when `other`-classed holdings exceed the over-use threshold, else None.
     Pure (a function of the valuation) so its guard can be exercised in isolation (D-059)."""
@@ -226,9 +233,14 @@ async def review_report(session: AsyncSession) -> dict:
     if not items:
         items.append(_item("ok", "Nothing needs a look right now.", severity="info"))
 
+    # §12rv1-5 — the count reconciliation (ND-3) is computed on the RAW severity BEFORE display-casing,
+    # so it is unaffected; then area + severity are display-cased for the served labels.
+    count = sum(1 for i in items if i["severity"] == "review")
+    items = [{**i, "area": _title(i["area"]), "severity": _title(i["severity"])} for i in items]
+
     return {
         "as_of": today.isoformat(),
-        "count": sum(1 for i in items if i["severity"] == "review"),
+        "count": count,
         "items": items,
         "disclaimer": "Items to review — reporting only, not advice or a required action.",
     }

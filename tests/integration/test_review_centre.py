@@ -36,6 +36,6 @@ async def test_recent_split_surfaces_corporate_verify_item(app_client):
     assert r.status_code == 200
 
     attention = (await app_client.get("/api/v1/review")).json()["attention"]
-    corp = [a for a in attention if a["area"] == "corporate"]
+    corp = [a for a in attention if a["area"] == "Corporate"]   # §12rv1-5: display-cased
     assert corp, "expected a corporate-action verify item"
     assert "SPLITCO" in corp[0]["title"] and "verify" in corp[0]["title"].lower()

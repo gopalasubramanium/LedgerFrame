@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from "react";
 import "./charts.css";
 import type { TreemapNode } from "../../mocks/types";
 
@@ -10,6 +10,16 @@ export interface TreemapProps {
   /** House squarified layout (the only supported mode). */
   squarified?: boolean;
   "aria-label"?: string;
+}
+
+// page-heatmap ND-7 (§5 amendment, PROPOSED): a tile carrying `href` becomes a
+// keyboard-operable link (focusable, Enter native + Space handled) to its entity
+// (D-098). Focus/hover use outline + inset shadow only — NO layout shift.
+function activateOnSpace(e: ReactKeyboardEvent<HTMLAnchorElement>): void {
+  if (e.key === " " || e.key === "Spacebar") {
+    e.preventDefault();
+    e.currentTarget.click();
+  }
 }
 
 interface Rect { x: number; y: number; w: number; h: number; }
@@ -141,6 +151,32 @@ export function Treemap({ nodes, "aria-label": ariaLabel }: TreemapProps) {
           ) : null,
         )}
       </div>
+      {/* ND-7: interactive layer — one keyboard-operable link per tile that carries an href.
+       * It overlays the svg exactly (percentage-positioned), so pointer + keyboard both land on
+       * the right tile; the accessible name is the tile's label. Absent href ⇒ no link rendered. */}
+      {tiles.some((t) => t.node.href) ? (
+        <div className="lf-treemap__links">
+          {tiles.map((t, i) =>
+            t.node.href ? (
+              <a
+                key={i}
+                className="lf-treemap__link"
+                href={t.node.href}
+                aria-label={t.node.label}
+                onKeyDown={activateOnSpace}
+                style={
+                  {
+                    "--tx": `${(t.x / W) * 100}%`,
+                    "--ty": `${(t.y / H) * 100}%`,
+                    "--tw": `${(t.w / W) * 100}%`,
+                    "--th": `${(t.h / H) * 100}%`,
+                  } as CSSProperties
+                }
+              />
+            ) : null,
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -105,6 +105,10 @@ export interface TreemapNode {
   /** Day-move magnitude in percent (unsigned); drives fill intensity. When
    *  absent, the tile renders at full intensity. */
   magnitudePct?: number;
+  /** page-heatmap ND-7 (§5 amendment): optional per-tile link target (e.g.
+   *  "#/instrument/AAPL", D-098). When set, the tile becomes a keyboard-operable
+   *  link (focusable, Enter/Space activate); absent ⇒ the tile is non-interactive. */
+  href?: string;
 }
 
 export interface PricePoint {

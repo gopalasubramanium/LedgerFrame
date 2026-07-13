@@ -534,6 +534,13 @@ export function KitchenSink() {
           <Specimen label="Magnitude scale — soft tint near 0%, full intensity at ≥5% (amended 2026-07-10)">
             <Treemap nodes={TREEMAP_SCALE_SAMPLES} squarified aria-label="Treemap magnitude scale" />
           </Specimen>
+          <Specimen label="Treemap click-through (PROPOSED, page-heatmap ND-7) — Tab to focus a tile, Enter/Space opens it; hover/focus shows a ring with NO layout shift">
+            <Treemap
+              nodes={TREEMAP_NODES.map((n) => ({ ...n, href: `#/instrument/${encodeURIComponent(n.label)}` }))}
+              squarified
+              aria-label="Interactive holdings heatmap — each tile links to its instrument"
+            />
+          </Specimen>
         </div>
       </Section>
 

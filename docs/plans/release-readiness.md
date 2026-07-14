@@ -1,24 +1,50 @@
 # release-readiness.md — defining the finish line
 
-**Status: GATE A CLOSED · GATE B CLOSED (owner-ratified 2026-07-14) · GATES C–F DORMANT.**
+**Status: 🟢 RELEASE INTENT DECLARED (owner, 2026-07-14). GATE A CLOSED (+ A9–A11 addendum) · GATE B
+CLOSED (owner-ratified) · GATES C–F ACTIVE.**
 
-> ## ⚠ RD-9 AMENDMENT — TIMING (owner, 2026-07-14). **The public release is DEFERRED.**
+> ## ✅ RD-9 TIMING AMENDMENT 2 (owner, 2026-07-14) — **RELEASE INTENT DECLARED. Gates C–F REACTIVATE.**
 >
-> **v2.0 does not ship until the full page queue completes.** This checklist is therefore **NOT an
-> active countdown** — it becomes a set of **STANDING GATES**.
+> **SUPERSEDES Amendment 1 (the deferral), which is preserved verbatim below — a superseded ruling is
+> struck through, never deleted.**
 >
-> - **Gates C–F remain derived and DORMANT.** No page is started from this plan.
-> - **E2 (secret/PII scan) and E4 (licence adjudication) re-run against the FINAL set at actual release
+> **v2.0 proceeds NOW on the RD-9(b) scope: the built set + a visible roadmap.** The checklist is an
+> **ACTIVE COUNTDOWN** again.
+>
+> - **Gates C–F are LIVE.** C3/D/E/F execute per the checklist.
+> - **Legal and Help are RELEASE-BLOCKING and JUMP THE QUEUE** — the gate did not move, the deadline
+>   arrived. (This restores the ORIGINAL RD-9 resolution; Amendment 1's B12 re-ordering is reverted.)
+> - **The Planning group moves POST-RELEASE.** Policy's plan is DRAFTED and **PARKED AT §9** — 21 items
+>   await the owner's one-pass at resumption. **⚠ Its findings must be RE-VERIFIED at resumption if
+>   interim code changes touch them** (three already did — see the A9–A11 addendum).
+> - **E2 (secret/PII scan) and E4 (licence adjudication) still run against the FINAL set** — that is now
+>   imminent, not hypothetical. A scan of something other than what ships is not a scan.
+> - **D3 tags `v2.0.0` at the moment of publication, not before.**
+>
+> **What this changes about Gates A and B:** nothing — except that **Gate A gains an addendum (A9–A11)**,
+> three release-set defects surfaced by the page-policy verify-first pass. They ship in Review/API
+> **regardless of the parked Policy page**, because they are defects in code that **is** in the release
+> set. *(The RD-9 SCOPE ruling — v2.0 = the built set + a visible roadmap — has never changed. Amendment 1
+> moved the TIMING; Amendment 2 moves it back and declares intent.)*
+
+> ## ~~⚠ RD-9 AMENDMENT 1 — TIMING (owner, 2026-07-14). The public release is DEFERRED.~~
+> ### **SUPERSEDED by Amendment 2 (above), 2026-07-14. Preserved for history — do not act on it.**
+>
+> ~~**v2.0 does not ship until the full page queue completes.** This checklist is therefore **NOT an
+> active countdown** — it becomes a set of **STANDING GATES**.~~
+>
+> - ~~**Gates C–F remain derived and DORMANT.** No page is started from this plan.~~
+> - ~~**E2 (secret/PII scan) and E4 (licence adjudication) re-run against the FINAL set at actual release
 >   time** — not now. A scan of something other than what ships is not a scan, and a licence ruling can
->   go stale.
-> - **D3 tags `v2.0.0` only at that point.**
-> - **Legal and Help REMAIN release-blocking** whenever release intent is declared. Deferring the
->   release moves the deadline; it does not remove the gate.
+>   go stale.~~
+> - ~~**D3 tags `v2.0.0` only at that point.**~~
+> - ~~**Legal and Help REMAIN release-blocking** whenever release intent is declared. Deferring the
+>   release moves the deadline; it does not remove the gate.~~
 >
-> **What this changes about Gate A and B:** nothing. Everything in them was a **defect fix or a true
+> ~~**What this changes about Gate A and B:** nothing. Everything in them was a **defect fix or a true
 > statement**, and neither expires because the release date moved. *(The original RD-9 resolution — v2.0
 > = the built set + a visible roadmap — is preserved below; the SCOPE ruling stands, only the TIMING is
-> amended.)*
+> amended.)*~~
 Two **decision-independent defects** were fixed immediately (Part B — see §2A): the **data-dir
 divergence** and the **Guarantee-5 egress gap**. Nothing else in §3 has been started.
 
@@ -31,8 +57,9 @@ the owner in one pass, and a **STOP** before anything is built.
 **from those decisions once they are made**. **The definition of "release" is the owner's.** This plan
 surfaces options and decides nothing.
 
-**It does NOT pause the page queue.** Policy is next and runs in parallel. This plan defines the finish
-line; it does not move it.
+**It does NOT pause the page queue.** *(Superseded by RD-9 Amendment 2: with release intent declared, this
+plan now **leads** the queue — **Legal and Help jump it**, and the **Planning group moves post-release**.
+Policy is drafted and **parked at §9**. The plan defines the finish line; the owner moved the date to it.)*
 
 > ⚠ **The single biggest finding, up front.** The repo is **already licensed AGPL-3.0-or-later** — in
 > `pyproject.toml:7` and in an **SPDX header on every Python file** — but **there is no `LICENSE` file**
@@ -353,6 +380,21 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | A7 | **✅ DONE** — Node pinned (`engines` + `.nvmrc`), and a **false claim removed** [per RD-4] | 🤖 | `install.sh` told users **"Node 18+"** — **already false**: vite's floor is `^20.19 \|\| >=22.12`. Following our own instructions would have left them unable to build. Floor now quoted **from vite itself** and pinned by test. **3 RED** |
 | A8 | **✅ DONE — CLEAN (zero UNADJUDICATED findings)** [per RD-2] | 🤖 audit → 🧑 **OWNER** rules | `scripts/license_audit.py` walked **381 packages** (§1-1f had only ever read the ~16 **direct** ones). **"Clean" means ZERO UNADJUDICATED FINDINGS — never "zero findings":** the graph still contains copyleft, and every instance of it now carries a **recorded owner ruling** in `scripts/license-adjudications.toml` — **adjudication is an artifact, not a conversation.** Owner rulings (2026-07-14, all ACCEPT): **`certifi` MPL-2.0 (RUNTIME)** — unmodified dependency, file-level weak copyleft, §3.3 GPL-family Secondary-Licenses compatibility, not vendored, a source release does not redistribute it; *operational alignment, **not legal counsel** — flagged for optional counsel confirmation alongside the CLA*. **`pathspec` MPL-2.0, `argparse` Python-2.0, `caniuse-lite` CC-BY-4.0** — **dev-only**, not part of the distributed product. **70 platform-conditional** packages (declared-but-not-installed) across **21 ruled families**; upstream licences **read from the registry, not assumed** — one of them (`lightningcss`, MPL-2.0) is a real finding inside the category, which is why it is enumerated rather than waved through. **Stale rulings are findings too.** **Fail-first, three states proven:** RED with no rulings · GREEN with them · **RED again when a ruling's `licence` is mutated** — a rubber stamp that outlives what it stamped is worse than no stamp. **E4 re-runs the SAME mechanism against the final public set.** |
 
+### GATE A — ADDENDUM (owner-approved 2026-07-14) — three release-set defects from `page-policy.md` §10
+
+The **Policy PAGE is parked post-release**, but these three defects are in **`services/policy.py` /
+`services/review.py` / the API** — code that **IS** in the release set and that **Review already ships**.
+A parked page does not park its engine's defects. Each was **fail-first** and shipped in **one commit**.
+
+| # | Item | Who | Notes |
+|---|---|---|---|
+| A9 | **✅ DONE** — `bucket` must reference its dimension's **master**; unknown bucket → **400** with honest detail | 🤖 | **RED first: a garbage bucket was ACCEPTED — `assert 200 == 400`.** `replace_targets` validated the DIMENSION but stored `bucket` as **free text** (`bucket[:40]`) — a **free-text enum on a categorical field**, which CLAUDE.md's hard rule forbids; it silently inflated `coverage_pct` with a bucket no holding can match. **A `MasterSelect` cannot close a hole an API token can still drive.** Masters: AssetClass (13) · the currency master · REGIONS (6, D-083). Buckets are stored in the **master's spelling**, so `"sgd"` can never enter as a second `SGD`. ⚠ **Recorded, not papered over: MASTER-DATA §3 describes a currency master TABLE with `is_base_eligible`; no such table exists in code** — `SUPPORTED_CURRENCIES` (`config.py:18`) is the de-facto master and is what A9 validates against. Spec-vs-code divergence → owner. |
+| A10 | **✅ DONE** — a drift **verdict** computed off **stale/low-confidence** prices can no longer present as **fresh** | 🤖 | **RED first: `KeyError: 'stale_inputs'`** — a stale-priced fixture produced a confident *"is OVER its band"* verdict with **nothing to flag it**. `compute_drift` surfaced **zero** staleness/confidence. **Guarantee 3 does NOT exempt a verdict just because it is DERIVED.** Now consumes the **same rules every other reader honours** (stale priced holding; the `<50` band, PRODUCT-SPEC §5). **Served (PROPOSED — 🛑 OWNER ratifies wording):** `/policy/drift` + `stale_inputs`, `low_confidence_inputs`, `inputs_stale`, `inputs_note`; `/review` `sections.policy` + `stale_inputs`, `inputs_stale` — **from the SAME reader, so the two cannot disagree** (pinned by test). Figures are still **shown**, never hidden. ⚠ **The guard found a REAL thing in the SHIPPED demo fixture** (a manually-valued holding below the confidence band) — the first test asserted the convenient fiction and was **corrected to assert what is true**. **No new Review attention item** (the existing stale-prices signal already covers it; a second would double-report) — owner may rule otherwise. |
+| A11 | **✅ DONE** — **ONE weight derivation**: policy drift reads Portfolio's canonical `allocation()` | 🤖 | **COST CALL: consolidation was LIGHT — no STOP.** The only blocker was that `region` was derived inside policy's private loop rather than being an attribute; exposing `HoldingValue.region` made all three dimensions ordinary allocation keys. **Fail-first, honest answer: the equality test was GREEN today** — the two paths agreed *by coincidence of identical rules*; the divergence was **LATENT, not active**. **An assertion never seen to fail is not a guard**, so it was **proven to fire** (the A8 mutation precedent): perturbing **only** Portfolio's canonical `allocation()` took it **RED — `assert 4.4 == 3.3 ± 0.1`** (Policy said 4.4%, Portfolio said 3.3%); perturbation reverted. Also added **`PortfolioValuation.gross_assets()`** — the **ONE denominator** every weight divides by (liabilities excluded by construction: *a mortgage cannot distort a weight*, D-033), now also read by `/portfolio/summary`. `_bucket_of` **deleted**. ⚠ **NOT DONE (scope, recorded):** the gross-assets sum is still hand-spelled in **~8 other readers** (analytics, review, news, ai/tools, worker, briefing, planning, seed) — all applying the same rule today. `gross_assets()` is the home to converge them on; that sweep is a **separate change**, not smuggled in. |
+
+**All three are recorded as `§10-A9/A10/A11` entries on `docs/plans/page-policy.md`**, so the parked plan
+stays truthful about which of its findings are already fixed.
+
 ### GATE B — ✅ **CLOSED 2026-07-14** (owner-ratified) — documentation synchronisation
 
 | # | Item | Who | Notes |
@@ -370,7 +412,8 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | B11 | **✅ DONE** — ROADMAP R-24 revisit-at-packaged note | 🤖 | Verified present. |
 | B12 | **✅ DONE (Amendment 1)** — CURRENT.md NEXT **reverted to natural order**: Policy · Cash flow · … | 🤖 | Legal/Help return to their natural late position and **remain release-blocking whenever release intent is declared**. |
 
-### GATE C — ⏸ **DORMANT** (RD-9 AMENDMENT) — Legal + Help pages *(🚫 still release-blocking whenever release intent is declared; they no longer jump the queue)*
+### GATE C — 🟢 **ACTIVE** (RD-9 AMENDMENT 2 — release intent declared) — Legal + Help pages
+*(🚫 RELEASE-BLOCKING, and they **JUMP THE QUEUE**. Each is built via `TEMPLATE-page-build.md` — **PLAN-ONLY FIRST**, per the standing rule that nothing is built without a plan file.)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -378,7 +421,7 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | C2 | 🚫 **Help page** — same [per RD-9] | 🤖 build → 🛑 **OWNER** ratifies all copy | The `[Help]` popovers already ship across built pages and point at a page that **does not exist** |
 | C3 | Nav: the remaining unbuilt pages are **hidden or honestly labelled** — **no dead links in the shipped build** [per RD-9] | 🤖 | They render `NotBuilt` today. Fail-first: a test that **no nav entry in the release build leads to `NotBuilt`** |
 
-### ⏸ DORMANT — GATE D — Identity & versioning *(only once the shipped surface is final)*
+### 🟢 ACTIVE — GATE D — Identity & versioning *(runs once the shipped surface is final — i.e. after Gate C)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -386,7 +429,7 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | D2 | 🛑 **`CHANGELOG.md` (Keep-a-Changelog); the inaugural entry MUST declare the version RESET from the inherited v1 lineage** [per RD-5] | 🧑 **OWNER** validates | *Historical honesty — not a silent renumber.* |
 | D3 | **Tag `v2.0.0`** — **at the moment of public release, not before** [per RD-5] | 🤖 | |
 
-### ⏸ DORMANT — GATE E — Public hygiene *(runs LAST, against the ACTUAL final public set)*
+### 🟢 ACTIVE — GATE E — Public hygiene *(runs LAST, against the ACTUAL final public set)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -395,7 +438,7 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | E3 | 🛑 **Publication data cleaning** — anything E2 surfaces | 🧑 **OWNER** | Includes the standing note that publishing the repo publishes the **author email** in every commit (§1-5d) — **irreversible once mirrored** |
 | E4 | Re-run **the SAME adjudication mechanism** against the FINAL public set — **clean = ZERO UNADJUDICATED FINDINGS** (never "zero findings") [per RD-2] | 🤖 → 🧑 **OWNER** rules anything new | Not a re-read of the Gate-A result: the final set may differ, and any **new** finding — or any ruling that has gone **stale** — blocks. **No public claim ships until it is clean by that definition.** |
 
-### ⏸ DORMANT — GATE F — Public ingestion
+### 🟢 ACTIVE — GATE F — Public ingestion
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -405,6 +448,15 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 
 ---
 
-**STOP — the owner reviews this matrix before any Gate-A3 onward item is executed.**
-Nothing in Gates A3–F has been started. The page queue is unaffected: **Legal and Help now lead it**
-[per RD-9], and Policy follows.
+**RELEASE INTENT IS DECLARED (RD-9 Amendment 2, owner 2026-07-14) — Gates C–F are LIVE.**
+
+**Execution order from here:** **Gate-A addendum (A9–A11) ✅ DONE** → **Legal (plan-only first)** →
+**Help (plan-only first)** → **C3 · D · E · F** per the checklist above.
+
+**Post-release queue (unblocked only after F1):** **Policy** *(plan DRAFTED, **PARKED AT §9** — 21 items
+await the owner's one-pass; **its findings must be re-verified at resumption if interim code changes touch
+them** — A9/A10/A11 already did)* · Cash flow · Scenarios · Insurance · Estate · Accounts · Reports + Pack
+· Settings. **The AI-surfaces milestone remains deferred intact** (D-067/D-068).
+
+**Still outstanding and owner-only:** the **CLA counsel review before the first external merge** (B2) — a
+CLA cannot be applied retroactively, and publishing the repo (F1) is what starts that clock.

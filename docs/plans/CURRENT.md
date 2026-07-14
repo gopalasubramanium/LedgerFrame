@@ -908,50 +908,57 @@ widget is a linked summary of the canonical page's reader (P-1/D-038). Shipped:
 
 ## NEXT
 
-1. **Release-readiness — `docs/plans/release-readiness.md`: §2 RESOLVED · GATE A CLOSED · GATE B CLOSED
-   (owner-ratified 2026-07-14). Gates C–F DORMANT — the public release is DEFERRED until the page queue
-   completes (RD-9 AMENDMENT). It is now a set of STANDING GATES, not a countdown. Shipped: `LICENSE`
-   (byte-exact AGPL-3.0, SHA-pinned) · `NOTICE` · `SECURITY.md` · `.github/SUPPORT.md` · README as an
-   install guide · SECURITY-BASELINE DISTRIBUTION posture. Defects fixed along the way: the data-dir
-   divergence, the Guarantee-5 egress gap, the demo-seeds-by-default first boot, `update.sh` migrating
-   without a backup, an unrunnable Node claim. **Outstanding, owner-only: CLA counsel review before the
-   first external merge** (a CLA cannot be applied retroactively).** Audit done (§1, verify-first with file:line). **It does NOT pause the
-   page queue** — Policy runs in parallel. Headline findings for the owner: the repo **already declares
-   AGPL-3.0-or-later** in `pyproject.toml:7` and an SPDX header on **every** file — but there is **no
-   `LICENSE` file**, so RD-2 is a *confirm-or-change*, not a blank page; the **version is incoherent**
-   (backend `3.24.0`, frontend `0.1.0`, product "v2", no tags, no changelog); the **`.env` data-dir
-   contract is honoured by the app but not by the bash scripts**, whose defaults **disagree with each
-   other** (the Review-close gotcha is a **class**, not a one-off); and **no-egress (Guarantee 5) is not
-   consulted anywhere in the price / FX / AI paths** — only in news/briefing/version-check. 10 decisions
-   (RD-1..RD-10); a conditional gated checklist follows once they land.
-   *(Original framing, owner 2026-07-13.)*
-   **Define "first public release" BEFORE the remaining-page count is read as a release date:** source vs
-   packaged distribution; **license**; **R-24 disposition** (first-boot license-acceptance gate — build
-   now vs parked); **upgrade / migration policy**; a **distribution-facing security pass** (the D-001
-   posture is LAN/VPN, never internet — the release framing must state this explicitly). Plan file only;
-   **no build**.
+> ## 🟢 RELEASE INTENT DECLARED (owner, 2026-07-14) — RD-9 **TIMING AMENDMENT 2**, superseding Amendment 1.
+> **v2.0 proceeds NOW** on the RD-9(b) scope (**the built set + a visible roadmap**). **Gates C–F REACTIVATE.**
+> **Legal and Help are release-blocking and JUMP THE QUEUE.** **The Planning group moves POST-RELEASE.**
+> *(Amendment 1 — the deferral — is preserved struck-through in `release-readiness.md`, not deleted.)*
 
-2. **Planning group — Policy first (`docs/plans/page-policy.md`, PLAN ONLY).**
-   *(RD-9 AMENDMENT, owner 2026-07-14: the public release is **DEFERRED until the full page queue
-   completes**, so Legal/Help no longer jump the queue — they return to their natural late position.
-   **They REMAIN release-blocking whenever release intent is declared**; the deadline moved, the gate
-   did not. The release-readiness checklist is now a set of **STANDING GATES**, not a countdown.)*
+1. **Gate-A ADDENDUM (A9–A11) — ✅ DONE 2026-07-14.** Three **release-set** defects surfaced by the
+   page-policy verify-first pass. The Policy PAGE is parked, but these are defects in
+   `services/policy.py` / `services/review.py` / the API — **code that IS in the release set and that
+   Review already ships**. *A parked page does not park its engine's defects.* Each fail-first, one commit:
+   - **A9** — `bucket` must reference its dimension's **master** (RED: a garbage bucket was accepted,
+     `assert 200 == 400`). ⚠ Surfaced: **MASTER-DATA §3's currency-master TABLE does not exist in code**;
+     `SUPPORTED_CURRENCIES` is the de-facto master. Spec-vs-code divergence → owner.
+   - **A10** — a drift **verdict** off **stale/low-confidence** prices can no longer present as **fresh**
+     (RED: `KeyError: 'stale_inputs'`). Served fields + copy are **PROPOSED — 🛑 owner ratifies the wording**.
+     ⚠ The guard found a **real** low-confidence holding in the **shipped demo fixture**.
+   - **A11** — **ONE weight derivation**: policy drift now reads Portfolio's canonical `allocation()`.
+     Cost call: **LIGHT, no STOP**. The equality test was **GREEN today** (the divergence was *latent*), so
+     it was **proven to fire** by perturbing the canonical path → **RED, `4.4 vs 3.3`**.
 
-Then the existing queue:
-3. **Remaining Planning-group pages** (Policy · Cash flow · Scenarios · Insurance · Estate), **Accounts**
-   (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it, Portfolio
-   defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live here),
-   **Reports + Reports Pack**, **Settings**, **Help**, **Legal** — each via `TEMPLATE-page-build.md`.
-   **AI-surfaces milestone remains deferred intact** (D-067/D-068).
-4. **Help copy task** (for the Help page plan, or a Holdings help section) —
-   surface the new GLOSSARY corporate-actions canon as in-app [Help] copy:
-   **Rights issue** = Buy at rights price; **Buyback** = Sell at offer price
-   (existing types, no special form); **Ticker / name change** supported (name
-   edits preserve history); **De-merger / Spin-off** parked (ROADMAP R-7). Remaining
-   API-CONTRACT delta-table renames still to apply per page: Realised P/L / Ongoing-cost
-   (D-026/D-029), route-rename redirects (D-022/D-056). (Review D-030 rename now applied.)
-5. **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab,
-   separate from design tokens.
+2. **Legal page — `docs/plans/page-legal.md` (PLAN-ONLY FIRST).** Release-blocking (Gate C1). Surfaces the
+   licence (`LICENSE` shipped at Gate B1) + the disclaimers + the Product Guarantees. **Owner ratifies all
+   copy.** Built via `TEMPLATE-page-build.md`; nothing is built without the plan file.
+
+3. **Help page — `docs/plans/page-help.md` (PLAN-ONLY FIRST).** Release-blocking (Gate C2) — the `[Help]`
+   popovers **already ship across built pages and point at a page that does not exist**. A **SCOPE-NOTES**
+   section is already recorded in that file (the `[Help]` retrofit ruling). **Owner ratifies all copy.**
+
+4. **Gates C3 / D / E / F** per `release-readiness.md`: no dead nav links in the shipped build (C3) → one
+   product version + CHANGELOG + tag (D) → public staging branch, **secret/PII scan and licence
+   adjudication against the FINAL set** (E) → publish + release notes (F).
+
+## POST-RELEASE QUEUE *(unblocked only after Gate F1)*
+
+- **Policy** — `docs/plans/page-policy.md` is **DRAFTED and PARKED AT §9**: **21 items await the owner's
+  one-pass at resumption**. ⚠ **Its findings must be RE-VERIFIED at resumption if interim code changes
+  touch them** — **A9/A10/A11 already did** (§9-5, §9-7 and §9-4 are now **fixed in code**; the §10 record
+  is annotated accordingly).
+- **Cash flow · Scenarios · Insurance · Estate** (the rest of the Planning group).
+- **Accounts** (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it,
+  Portfolio defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live here).
+- **Reports + Reports Pack · Settings.**
+- **AI-surfaces milestone remains DEFERRED INTACT** (D-067/D-068).
+- **Help copy task** — surface the GLOSSARY corporate-actions canon as in-app `[Help]` copy: **Rights
+  issue** = Buy at rights price; **Buyback** = Sell at offer price (existing types, no special form);
+  **Ticker / name change** supported (name edits preserve history); **De-merger / Spin-off** parked (R-7).
+- **Remaining API-CONTRACT delta-table renames**, per page: Realised P/L / Ongoing-cost (D-026/D-029),
+  route-rename redirects (D-022/D-056). *(Review's D-030 rename is applied.)*
+- **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab, separate from tokens.
+
+**Outstanding, owner-only (not moveable):** the **CLA counsel review before the first external merge**
+(Gate B2) — a CLA **cannot be applied retroactively**, and **publishing the repo (F1) starts that clock**.
 
 ## Needs decision
 

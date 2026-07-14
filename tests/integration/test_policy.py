@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from decimal import Decimal
+
+import pytest
 
 from app.services import policy as policy_svc
 from app.services.portfolio import HoldingValue, PortfolioValuation

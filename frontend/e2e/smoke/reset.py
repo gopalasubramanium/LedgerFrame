@@ -30,12 +30,13 @@ def main() -> None:
     text = ENV.read_text()
 
     # Snapshot the LEDGERFRAME_* lines once (the pristine baseline); restore each run.
-    lf_lines = [l for l in text.splitlines() if l.startswith("LEDGERFRAME_")]
+    lf_lines = [ln for ln in text.splitlines() if ln.startswith("LEDGERFRAME_")]
     if not SNAPSHOT.exists():
         SNAPSHOT.write_text("\n".join(lf_lines) + "\n")
         print(f"[reset] snapshotted {len(lf_lines)} LEDGERFRAME_* lines → {SNAPSHOT.name}")
     else:
-        snap = {l.split("=", 1)[0]: l.split("=", 1)[1] for l in SNAPSHOT.read_text().splitlines() if "=" in l}
+        snap = {ln.split("=", 1)[0]: ln.split("=", 1)[1]
+                for ln in SNAPSHOT.read_text().splitlines() if "=" in ln}
         for k, v in snap.items():
             text = re.sub(rf"^{re.escape(k)}=.*$", f"{k}={v}", text, flags=re.M)
         ENV.write_text(text)

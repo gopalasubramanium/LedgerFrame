@@ -1,8 +1,19 @@
 # page-policy — build plan (PLAN ONLY — nothing is built)
 
-**Status: DRAFT, §9 OPEN.** Drafted 2026-07-14 from `TEMPLATE-page-build.md`. The **verify-first pass
+**Status: DRAFT · ⏸ PARKED AT §9 · POST-RELEASE (RD-9 Timing Amendment 2, owner 2026-07-14).**
+
+> **The PAGE is parked; three of its findings were NOT.** Release intent was declared, so the Planning
+> group moves post-release — but **A9/A10/A11** (this plan's §10-8, §10-7 and §10-4) were defects in the
+> **release-set engine** that Review already ships, and the owner approved them as a **Gate-A addendum**.
+> They are **fixed, fail-first** — see **§10-A**. *A parked page does not park its engine's defects.*
+>
+> **At resumption:** **21 §9 items await the owner's one-pass — three are now CLOSED or narrowed
+> (§9-4, §9-7 closed; §9-5 narrowed to a copy ratification).** ⚠ **Every remaining finding must be
+> RE-VERIFIED if interim code changes touched it** — three already did.
+
+Drafted 2026-07-14 from `TEMPLATE-page-build.md`. The **verify-first pass
 (D-019) is done** — §10 records what the policy engine **actually serves and what it actually guards**,
-with `file:line` cites. **Nothing is built.** Every ambiguity is in **§9**; the owner resolves them
+with `file:line` cites. **The PAGE is not built.** Every ambiguity is in **§9**; the owner resolves them
 **one-pass**. **I resolved none.**
 
 Policy is the **Planning** group's keystone: IA §2 — `/policy`, Planning, *"Canonical home for
@@ -714,3 +725,52 @@ cited on it** (see §6).
 (`models:437-464`). So `?entity_id` compares **one entity's actual allocation against the HOUSEHOLD's
 targets**. **Review calls `compute_drift(session)` with no entity** (`review.py:283`) ⇒ household.
 → **§9-21** (propose household-only; the §7 reconciliation depends on Policy and Review sharing inputs).
+
+---
+
+## 10-A. GATE-A ADDENDUM — findings FIXED PRE-RELEASE (owner-approved 2026-07-14)
+
+**Why these shipped while the page is parked.** RD-9 Timing Amendment 2 declared release intent: the
+**Policy PAGE moves post-release**, but three of this plan's §10 findings are defects in
+`services/policy.py` / `services/review.py` / the API — **code that IS in the release set and that Review
+already ships**. *A parked page does not park its engine's defects.* The owner approved them as a **Gate-A
+addendum**; each was **fail-first** and shipped in **one commit**.
+
+**⚠ Standing rule for resumption:** this plan's §9/§10 was written against the code as of 2026-07-14.
+**Any finding must be RE-VERIFIED at resumption if interim code changes touch it.** Three now have.
+
+| Gate | This plan's finding | Status now |
+|------|---------------------|------------|
+| **A9** | **§10-8 / §9-7** — `bucket` was a **free-text enum** on the write path | ✅ **FIXED.** `master_buckets(dimension)` is the one place the bucket vocabulary is named (AssetClass · the currency master · the six D-083 REGIONS). Unknown bucket → **400**, naming both the offender and the master. Buckets store in the **master's spelling** (`"sgd"` cannot enter as a second `SGD`). **RED first: `assert 200 == 400`** — a garbage bucket was accepted. **§9-7 is CLOSED.** |
+| **A10** | **§10-7 / §9-5** — a **verdict** derived from **stale** prices presented as **fresh** | ✅ **FIXED (fields + copy PROPOSED — owner ratifies the wording).** `/policy/drift` now serves `stale_inputs`, `low_confidence_inputs`, `inputs_stale`, `inputs_note`; `/review` `sections.policy` serves `stale_inputs`, `inputs_stale` — **from the same reader**, so they cannot disagree (pinned by test). Figures are still **shown**, never hidden. **RED first: `KeyError: 'stale_inputs'`.** **§9-5's *whether* is settled; its *wording* is still owner's** — it stays on the §9 one-pass list as a **copy ratification**, not an open design question. |
+| **A11** | **§10-4 / §9-4** — `actual_pct` was a **second code path** for Portfolio's allocation weight | ✅ **FIXED — resolved as §9-4 option (a), "same figure".** Drift now reads `val.allocation(...)`; `HoldingValue.region` makes region an ordinary allocation key; `PortfolioValuation.gross_assets()` is the **ONE denominator**; `_bucket_of` deleted. **Cost call: LIGHT — no STOP.** **Fail-first, honest: the equality test was GREEN today** (the two paths agreed *by coincidence*; the divergence was **latent**), so it was **proven to fire** by perturbing the canonical path → **RED: `assert 4.4 == 3.3 ± 0.1`**. **§9-4 is CLOSED** — but its *consequence* is still live: **the weight columns now legitimately carry a canonical-home link to Portfolio (D-100)**, which §2 left conditional on this ruling. |
+
+### What this changes about the rest of the plan
+
+- **§9 is now 21 items with three resolved and one narrowed** — §9-4 and §9-7 are **CLOSED**; §9-5 narrows
+  from *"should we flag it?"* to *"ratify the wording."* **The owner's one-pass is over the remainder.**
+- **§2's conditional Portfolio link is now unblocked** (it was gated on §9-4).
+- **§3b shrinks:** the `bucket`-validation and stale-annotation rows are **delivered**. The rows that
+  remain open are **§9-3** (serve `gross_assets`, drop/relabel the net `total_value`), **§9-6** (D-105
+  money display strings), **§9-17** (a concentration-row identifier for D-098 linking), and the
+  **doc-only** §9-9 (API-CONTRACT.md `present` rows).
+- **§10-5b is UNCHANGED and still live** — the payload still serves the **net** `total_value` beside
+  **gross**-denominated weights. A11 gave the denominator **one home** (`gross_assets()`); it did **not**
+  serve it. **The reconciliation defect is still armed for whoever builds the page.**
+
+### New findings recorded while fixing (not resolved here)
+
+- ⚠ **The currency master TABLE does not exist.** MASTER-DATA §3 describes a currency master with
+  `is_base_eligible`. **There is no such table in code.** `SUPPORTED_CURRENCIES` (`app/core/config.py:18`,
+  9 values) is the de-facto master — it is what `/settings` serves and what `base_currency` is already
+  validated against, so **A9 validates against it**. This is a **spec-vs-code divergence for the owner**,
+  and it also touches **§5** (this plan's vocabulary table cites MASTER-DATA §3 for the currency
+  dimension) and **§9-14**. *Recorded, not papered over.*
+- ⚠ **The gross-assets sum is hand-spelled in ~8 other readers** (analytics, review, news, ai/tools,
+  worker, briefing, planning, seed). They all apply the same rule **today**. `gross_assets()` is now the
+  home to converge them on; that sweep is a **separate change**, deliberately not smuggled into A11.
+- ⚠ **The A10 guard found a real defect in the SHIPPED demo fixture** — a manually-valued holding scoring
+  below the low-confidence band, so the demo's drift verdict genuinely rests on an input we do not fully
+  trust. The first version of the test asserted the convenient fiction (`inputs_stale is False`) and was
+  **corrected to assert what is true**. *The fixture was not "wrong" — the verdict was simply never honest
+  about it before.*

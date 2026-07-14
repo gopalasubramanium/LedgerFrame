@@ -60,5 +60,5 @@ async def test_attribution_csv_export(app_client):
     assert "attachment" in r.headers.get("content-disposition", "")
     lines = r.text.strip().splitlines()
     assert lines[0] == "holding,symbol,asset_class,sector,contribution_pct"
-    assert any("Residual (income, realised, closed)" in l for l in lines)  # quoted (has commas)
-    assert any(l.startswith("Headline return") for l in lines)
+    assert any("Residual (income, realised, closed)" in line for line in lines)  # quoted (has commas)
+    assert any(line.startswith("Headline return") for line in lines)

@@ -1,0 +1,112 @@
+/* Policy — canonical home for investment-policy intent + drift.
+   Tokens only (no raw values). Semantic-only colour: the band status carries its meaning in a
+   LABEL, never in colour alone (§9-16). */
+
+.pol__card {
+  margin-bottom: var(--space-4);
+}
+
+/* The A10 input-quality flag lives in the card HEADER, beside the title — it qualifies the whole
+   verdict, not one row. */
+.pol__inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+}
+.pol__inputsnote {
+  color: var(--text-secondary);
+}
+
+.pol__coverage {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.pol__muted {
+  color: var(--text-tertiary);
+}
+.pol__num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.pol__subtitle {
+  margin: 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-primary);
+}
+.pol__untargeted {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+}
+.pol__untargetedlist,
+.pol__conc {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.pol__untargetedlist li,
+.pol__conc li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;                 /* never forces horizontal scroll at 320px */
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+.pol__untargetedlist li > span:first-child,
+.pol__concname {
+  flex: 1 1 10rem;
+  min-width: 0;                    /* a long name truncates rather than escaping its row */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Protected disclaimer (D-055) — always visible, never de-emphasised into invisibility. */
+.pol__disclaimer {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  color: var(--text-tertiary);
+}
+
+/* Editor */
+.pol__editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.pol__metarow {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.pol__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 12rem;
+}
+.pol__field > span {
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.pol__edittable {
+  width: 100%;
+}
+.pol__editnote {
+  margin: 0;
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+}

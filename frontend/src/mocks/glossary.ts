@@ -8,6 +8,43 @@ export interface GlossaryEntry {
 }
 
 export const GLOSSARY: Record<string, GlossaryEntry> = {
+  // Policy (page-policy §9-14). Added to docs/specs/GLOSSARY.md FIRST, then here — the two-store
+  // rule (page-heatmap §13-1); tests/unit/test_glossary_parity.py polices the spellings.
+  "term-policy-investment": {
+    term: "Policy (investment)",
+    definition:
+      "Your own target allocation, bands and optional concentration limit. Distinct from an insurance policy — the nav label \"Policy\" always means this one.",
+  },
+  "term-target": {
+    term: "Target",
+    definition:
+      "The share of gross assets you intend to hold in a bucket. Your own number — the platform never sets, suggests or judges it.",
+  },
+  "term-band": {
+    term: "Band",
+    definition:
+      "The tolerance either side of a target, within which a bucket counts as In band. Set per target, or inherited from the policy's default band.",
+  },
+  "term-out-of-band": {
+    term: "Out of band",
+    definition:
+      "The actual share sits outside the target's band — over or under. It reports a distance, and never a trade instruction. Over and under are flagged the same way: both simply need a look.",
+  },
+  "term-gap-to-target": {
+    term: "Gap to target",
+    definition:
+      "The distance from a target, in base currency: actual value minus target value. Positive means above target. A statement of distance, never an instruction to trade.",
+  },
+  "term-untargeted": {
+    term: "Untargeted",
+    definition:
+      "A bucket you hold but your policy does not mention. Shown honestly rather than hidden — an unmentioned holding is not a zero.",
+  },
+  "term-coverage": {
+    term: "Coverage",
+    definition:
+      "How much of a dimension your targets add up to. Under 100% is a legitimate policy, not an error — it means your policy deliberately does not speak for the rest.",
+  },
   "term-net-worth": {
     term: "Net worth",
     definition:

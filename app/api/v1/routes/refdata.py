@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.core.config import SUPPORTED_CURRENCIES
 from app.models import AssetClass, TxnType
 from app.schemas.common import EntitlementStatus, ValuationMethod
 from app.services.accounts import ACCOUNT_KINDS
@@ -111,8 +112,13 @@ _TXN_APPLICABILITY: dict[str, list[str]] = {
 async def refdata() -> dict[str, list[dict[str, str]]]:
     """Every fixed vocabulary, keyed by id, each as `{value, label}` pairs so the UI
     renders served DISPLAY LABELS and never hardcodes a mapping (D-005; item 3b).
-    Extensible masters (currency, institution, sector, tag) are served by their own
-    endpoints, not here."""
+    Extensible masters (institution, sector, tag) are served by their own endpoints, not here.
+
+    **`currency` IS served here** (MASTER-DATA §3 AMENDMENT 2026-07-14): the currency master is the
+    fixed code constant ``SUPPORTED_CURRENCIES`` — the reference TABLE the spec used to describe was
+    never built — so currency is a **fixed vocabulary** and belongs on `/refdata` like any other
+    (D-005: the frontend carries zero vocabulary copies). It is what a policy `currency` bucket is
+    validated against (Gate A9), so the picker and the validator now read the SAME list."""
     raw = {
         "txn_type": _values(TxnType),
         "asset_class": _values(AssetClass),
@@ -131,6 +137,7 @@ async def refdata() -> dict[str, list[dict[str, str]]]:
         "valuation_method": _values(ValuationMethod),
         "entitlement": _values(EntitlementStatus),
         "policy_dimension": _POLICY_DIMENSION,
+        "currency": list(SUPPORTED_CURRENCIES),
         "region": _REGION,
         "cost_basis_method": _COST_BASIS_METHOD,
         "account_kind": list(ACCOUNT_KINDS),

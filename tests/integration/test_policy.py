@@ -304,3 +304,20 @@ async def test_default_band_pct_is_five(app_client):
     value in the same batch as the spec edit (the D-084 rule) — a spec edit alone leaves the code
     free to silently disagree."""
     assert (await app_client.get("/api/v1/policy")).json()["default_band_pct"] == 5.0
+
+
+async def test_refdata_serves_the_currency_master(app_client):
+    """The `currency` bucket picker and the A9 validator must read the SAME list.
+
+    MASTER-DATA §3 (amended 2026-07-14): the currency master is the fixed constant
+    SUPPORTED_CURRENCIES — the table the spec used to describe was never built — so currency is a
+    FIXED vocabulary and belongs on /refdata (D-005: the frontend carries zero vocabulary copies).
+    """
+    from app.core.config import SUPPORTED_CURRENCIES
+    from app.services.policy import master_buckets
+
+    vocabs = (await app_client.get("/api/v1/refdata")).json()
+    served = [o["value"] for o in vocabs["currency"]]
+    assert served == list(SUPPORTED_CURRENCIES)
+    # The picker's options and the write path's validator cannot drift apart.
+    assert tuple(served) == master_buckets("currency")

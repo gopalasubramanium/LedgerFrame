@@ -11485,7 +11485,7 @@
     },
     "/api/v1/refdata": {
       "get": {
-        "description": "Every fixed vocabulary, keyed by id, each as `{value, label}` pairs so the UI\nrenders served DISPLAY LABELS and never hardcodes a mapping (D-005; item 3b).\nExtensible masters (currency, institution, sector, tag) are served by their own\nendpoints, not here.",
+        "description": "Every fixed vocabulary, keyed by id, each as `{value, label}` pairs so the UI\nrenders served DISPLAY LABELS and never hardcodes a mapping (D-005; item 3b).\nExtensible masters (institution, sector, tag) are served by their own endpoints, not here.\n\n**`currency` IS served here** (MASTER-DATA \u00a73 AMENDMENT 2026-07-14): the currency master is the\nfixed code constant ``SUPPORTED_CURRENCIES`` \u2014 the reference TABLE the spec used to describe was\nnever built \u2014 so currency is a **fixed vocabulary** and belongs on `/refdata` like any other\n(D-005: the frontend carries zero vocabulary copies). It is what a policy `currency` bucket is\nvalidated against (Gate A9), so the picker and the validator now read the SAME list.",
         "operationId": "refdata_api_v1_refdata_get",
         "parameters": [
           {

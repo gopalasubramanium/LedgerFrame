@@ -8,6 +8,7 @@ import { Markets } from "./routes/Markets";
 import { Heatmap } from "./routes/Heatmap";
 import { News } from "./routes/News";
 import { Review } from "./routes/Review";
+import { Policy } from "./routes/Policy";
 import { PricingHealth } from "./routes/PricingHealth";
 import { InstrumentDetail } from "./routes/InstrumentDetail";
 import { Home } from "./routes/Home";
@@ -37,6 +38,7 @@ export function AppRoutes() {
         <Route path="/heatmap" element={<Heatmap />} />
               <Route path="/news" element={<News />} />
               <Route path="/review" element={<Review />} />
+              <Route path="/policy" element={<Policy />} />
               <Route path="/instrument/:symbol" element={<InstrumentDetail />} />
               <Route path="/pricing-health" element={<PricingHealth />} />
               {/* Route redirects (D-042/D-022/D-056). */}

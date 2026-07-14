@@ -117,3 +117,38 @@ hole.
 
 **When it is done:** as its **own change**, with an assertion that **every currently-served key survives**
 the typing. Until then the status quo (untyped, value-pinned) blocks nothing.
+
+## Card-header anatomy — `.lf-card__header` styles nothing (flagged at page-cash-flow Phase 0a, owner 2026-07-15)
+
+**`.lf-card__header` has NO CSS RULE.** `.lf-card` and `.lf-card__body` are ratified (D-100), but the card
+**header** is not: **Policy uses `.lf-card__header`, and it styles nothing** — its staleness chip falls
+under the title by accident, not by design. Meanwhile every other page that needs a card header has
+**invented its own** (`.nw__cardhead` on Net worth, Pricing Health's, News's, and now `.cf__head` on Cash
+flow).
+
+**The page-local header treatments EXCEED the centralization threshold** (the rule that extracted
+`Segmented`, `StatusChip` and `Button`: *per-instance copies of a standard are the defect*).
+
+**Consolidate onto a `SummaryHead`-derived anatomy — as its OWN task, NOT as a rider on any page build.**
+The reason it is not folded into a page: **Policy is an ACCEPTED page**, and centralising the header would
+**change its rendered geometry**. That is a deliberate, owner-visible change with its own before/after —
+not something to smuggle into an unrelated build. *(It was deliberately left un-fixed at the page-cash-flow
+geometry gate for exactly this reason.)*
+
+## e2e flake — one unreproduced failure (2026-07-15, pre-Phase-0a run)
+
+**A full Playwright run reported `1 failed · 177 passed`; the immediate re-run was clean (`178 passed`),
+and every subsequent run has been clean.**
+
+⚠ **THE TEST NAME WAS NOT CAPTURED — recorded honestly rather than guessed.** The failing spec's name was
+not printed by the filter used on that run, `test-results/` was empty by the time it was checked, and
+inventing a plausible name would be worse than admitting the gap. **The gap is itself the finding: a flake
+with no name cannot be hunted.**
+
+**Posture: A FLAKE IS A LATENT RACE UNTIL PROVEN OTHERWISE.** It is not "just a flake" — it is a defect
+whose trigger has not been identified yet. **Recurrence promotes this to a defect** and it gets a name, a
+reproduction and a fix.
+
+**Tooling note earned here:** a full-suite run must **capture the failing test's identity** (keep the
+reporter output / `test-results/`) — not just the pass/fail counts. A failure you cannot name is a failure
+you cannot chase.

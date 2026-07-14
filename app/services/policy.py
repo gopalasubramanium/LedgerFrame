@@ -18,17 +18,36 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.config import get_settings
+from app.core.config import SUPPORTED_CURRENCIES, get_settings
 
 # D-083: region is the six-bucket model (India · Singapore · US · Europe · APAC · Other), derived
-# server-side from listing_country. The canonical derivation lives in app.core.regions and is
-# re-exported here so the policy region dimension and the served HoldingView.region use the SAME
-# function (page-heatmap §10-9 — reconciled from the legacy 3-bucket + "Global").
-from app.core.regions import region_of  # re-exported for policy._bucket_of + importers
-from app.models import InvestmentPolicy, PolicyTarget
+# server-side from listing_country. The canonical derivation lives in app.core.regions.
+from app.core.regions import REGIONS, region_of
+from app.models import AssetClass, InvestmentPolicy, PolicyTarget
 from app.services.portfolio import value_portfolio
 
 DIMENSIONS = ("asset_class", "currency", "region")
+
+#: The attribute on a HoldingValue that each policy dimension buckets by. This is what makes the
+#: drift weights read through Portfolio's canonical ``allocation()`` rather than a second loop
+#: (Gate A11 / P-1 / D-038) — one derivation of an allocation weight, not two that happen to agree.
+DIMENSION_ATTR = {"asset_class": "asset_class", "currency": "native_currency", "region": "region"}
+
+
+def master_buckets(dimension: str) -> tuple[str, ...]:
+    """The MASTER-DATA vocabulary a dimension's ``bucket`` must come from (Gate A9).
+
+    ``bucket`` is a **categorical field**, so it references a master — never free text
+    (CLAUDE.md hard rule; D-005). The masters are the ones the rest of the app already
+    serves: AssetClass (13), the currency master, and the six D-083 regions.
+    """
+    if dimension == "asset_class":
+        return tuple(a.value for a in AssetClass)
+    if dimension == "currency":
+        return tuple(SUPPORTED_CURRENCIES)
+    if dimension == "region":
+        return tuple(REGIONS)
+    raise ValueError(f"unknown dimension '{dimension}'")
 
 
 def _q(v: Decimal, dp: int = 2) -> float:
@@ -174,6 +193,14 @@ async def replace_targets(session: AsyncSession, targets: list[dict]) -> Investm
             raise ValueError(f"unknown dimension '{dim}'")
         if not bucket:
             raise ValueError("bucket is required")
+        # A9: the bucket must exist in the dimension's master. Matched case-insensitively and
+        # stored in the MASTER's spelling, so "sgd" can never enter as a second SGD bucket.
+        allowed = master_buckets(dim)
+        canonical = next((b for b in allowed if b.lower() == bucket.lower()), None)
+        if canonical is None:
+            raise ValueError(
+                f"unknown {dim} bucket '{bucket}' — must be one of: {', '.join(allowed)}")
+        bucket = canonical
         key = (dim, bucket.lower())
         if key in seen:
             raise ValueError(f"duplicate target {dim}/{bucket}")

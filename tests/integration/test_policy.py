@@ -70,3 +70,45 @@ async def test_clear_concentration_limit(app_client):
     assert cleared.json()["max_position_pct"] is None
     d = (await app_client.get("/api/v1/policy/drift")).json()
     assert d["concentration"] == []
+
+
+# --------------------------------------------------------------------------- #
+# Gate A9 — `bucket` is a CATEGORICAL field: it must reference MASTER-DATA.
+# Before this gate the write path validated the DIMENSION but stored `bucket` as
+# free text (`bucket[:40]`), so a garbage bucket was ACCEPTED — a free-text enum,
+# which CLAUDE.md's hard rule forbids. A MasterSelect in the UI cannot close a hole
+# an API token can still drive. (page-policy §10-8)
+# --------------------------------------------------------------------------- #
+
+
+async def test_bucket_must_come_from_the_dimension_master(app_client):
+    # asset_class: not in the AssetClass master.
+    bad = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "zzz", "target_pct": 10}]})
+    assert bad.status_code == 400
+    detail = bad.json()["detail"]
+    assert "zzz" in detail and "equity" in detail  # honest: names the offender AND the master
+
+    # region: not one of the six D-083 buckets.
+    bad_region = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "region", "bucket": "Mars", "target_pct": 10}]})
+    assert bad_region.status_code == 400 and "Mars" in bad_region.json()["detail"]
+
+    # currency: not in the currency master.
+    bad_ccy = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "currency", "bucket": "XYZ", "target_pct": 10}]})
+    assert bad_ccy.status_code == 400 and "XYZ" in bad_ccy.json()["detail"]
+
+
+async def test_valid_buckets_pass_and_are_stored_in_the_master_spelling(app_client):
+    ok = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 30},
+        {"dimension": "region", "bucket": "India", "target_pct": 20},
+        {"dimension": "currency", "bucket": "sgd", "target_pct": 50},
+    ]})
+    assert ok.status_code == 200
+    by_dim = {t["dimension"]: t["bucket"] for t in ok.json()["targets"]}
+    assert by_dim["asset_class"] == "equity"
+    assert by_dim["region"] == "India"
+    # Canonicalised to the master's spelling — "sgd" cannot enter as a second SGD bucket.
+    assert by_dim["currency"] == "SGD"

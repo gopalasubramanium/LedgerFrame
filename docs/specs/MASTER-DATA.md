@@ -143,44 +143,97 @@ how they are assigned.
 
 ## 3. Currency master (D-006)
 
-A reference master, not a plain enum, because it carries a flag.
+> ### ⚠ AMENDED 2026-07-14 (owner) — **the currency master is `SUPPORTED_CURRENCIES`, a code constant. There is no currency TABLE.**
+>
+> **The spec follows the verified code. The table described below was never built.**
+>
+> This section previously specified a **reference table** (`code` PK + `is_base_eligible` column)
+> seeded with **22 codes**. **No such table exists** — not in `app/models/`, not in any migration.
+> The divergence was found by the **page-policy verify-first pass** (§10-10) while auditing where
+> a policy `bucket` on the `currency` dimension must draw its vocabulary from, and it was closed
+> by **Gate A9**, which had to validate against something real.
+>
+> **The canonical currency master is `SUPPORTED_CURRENCIES`** — `app/core/config.py:18`:
+>
+> ```python
+> SUPPORTED_CURRENCIES = ["SGD", "USD", "INR", "EUR", "GBP", "JPY", "AUD", "CNY", "HKD"]
+> ```
+>
+> **Nine codes.** It is not a shadow list: it is what `/settings` already **serves**
+> (`supported_currencies`, `settings.py:58`), what `base_currency` is already **validated against**
+> (`settings.py:78`, `config.py:115`), and — since **A9** — what a **policy `currency` bucket** is
+> validated against (`services/policy.py`, `master_buckets("currency")`). One vocabulary, three
+> consumers, no second list.
+>
+> **`is_base_eligible` restated against the constant.** The flag was a **column on a table that does
+> not exist**. Its semantics are preserved by the constant itself: **every one of the 9 codes is
+> base-eligible**, because `SUPPORTED_CURRENCIES` *is* the base-currency vocabulary
+> (`config.py:115` rejects any base currency outside it). The `false` tier — a wider
+> **transaction-only** set — **does not exist in v2**. The distinction the flag drew is therefore
+> **real but currently degenerate**: base-eligible set == transaction set == the 9 codes.
+>
+> **Future delta (deliberate, not parked as an R-item):** if multi-currency expansion ever needs a
+> genuine transaction-only tier, **that is the moment to build the real table** with
+> `is_base_eligible` as a column, re-splitting the two sets. It is a **deliberate future delta**,
+> recorded here in one line rather than as a ROADMAP item — because it is a **consequence of a
+> product decision not yet made**, not a parked piece of work. **R-2** (user-requestable transaction
+> currencies, FX-validated) is the decision that would trigger it.
+>
+> **Superseded text is preserved below, struck through.** A spec that quietly rewrites itself is
+> worse than one that shows its corrections.
 
-| Column | Meaning |
-|--------|---------|
-| `code` | ISO-4217 alpha-3 (e.g. SGD, USD). PK. |
-| `is_base_eligible` | Boolean. `true` = usable as **base/reporting** currency; the wider set (`false` too) is valid only as a **transaction** currency. |
+**FX-translatability rule (governing, D-006) — STILL IN FORCE:** *a currency may exist in the
+master only if the FX service can translate it.* Any candidate that the FX service cannot translate
+is not admitted. The 9 `SUPPORTED_CURRENCIES` satisfy this by definition — the engine's comment at
+`config.py:17` states exactly that (*"Currencies the engine knows how to convert and display"*).
 
-**FX-translatability rule (governing, D-006):** *a currency may exist in the
-master only if the FX service can translate it.* Any candidate that the FX
-service cannot translate is not admitted.
+**Base-currency picker** draws from `SUPPORTED_CURRENCIES` (Settings → base currency). Transaction
+and holding currency fields draw from the **same 9** — there is no wider tier in v2.
 
-**Base-currency picker** draws from `is_base_eligible = true` only
-(Settings → base currency). Transaction/holding currency fields draw from the
-full master.
+**FX-translatability validation is operational, not a static list.** The FX service holds no
+hard-coded translatable set: `ecb_fx._RATES` is loaded at runtime from the ECB daily reference feed
+(`ecb_fx.py:24,71-73`) and `fx.py` triangulates cross rates through USD with ECB as fallback
+(`fx.py:51`). So D-006's rule is enforced **at admission time against the live FX service**, not by
+a code constant — which is precisely why admitting a 10th currency is a **plan-file change**, not a
+list edit.
 
-**Seed (DEF-1, extracted).** The seed is the **union** of three divergent legacy
-lists, deduplicated (`HKD` appears twice in the PortfolioEditor list):
+**ROADMAP (R-2, D-006):** user-requestable transaction currencies, FX-validated. **This is the
+decision that would build the real table** (see the amendment note above).
 
-| Group | Codes | `is_base_eligible` | Source |
-|-------|-------|--------------------|--------|
-| Base-eligible (`config.SUPPORTED_CURRENCIES`, 9) | `SGD, USD, INR, EUR, GBP, JPY, AUD, CNY, HKD` | **true** | `config.py:18` |
-| + adds from `refdata.ts CURRENCIES` (14) | `CAD, CHF, AED, MYR, THB` | false | `refdata.ts:8` |
-| + adds from PortfolioEditor inline (21 unique) | `KRW, TWD, SEK, NOK, DKK, ZAR, BRL, NZD` | false | `PortfolioEditor.tsx:22` |
+---
 
-**Full seed = 22 unique codes**, `is_base_eligible = true` for exactly the 9
-`SUPPORTED_CURRENCIES`, `false` for the other 13.
+### ~~Superseded (pre-2026-07-14): the currency TABLE that was never built~~
 
-**FX-translatability validation is operational, not a static list.** The FX
-service holds no hard-coded translatable set: `ecb_fx._RATES` is loaded at
-runtime from the ECB daily reference feed (`ecb_fx.py:24,71-73`) and `fx.py`
-triangulates cross rates through USD with ECB as fallback (`fx.py:51`). So D-006's
-rule is enforced **at admission time against the live FX service**, not by a code
-constant. The 9 base-eligible codes are FX-supported by definition
-(`config.SUPPORTED_CURRENCIES`); the 13 wider codes must be confirmed
-translatable when the currency master is seeded (any that the FX service cannot
-translate are dropped per D-006, not carried).
+> ~~A reference master, not a plain enum, because it carries a flag.~~
+>
+> | ~~Column~~ | ~~Meaning~~ |
+> |--------|---------|
+> | ~~`code`~~ | ~~ISO-4217 alpha-3 (e.g. SGD, USD). PK.~~ |
+> | ~~`is_base_eligible`~~ | ~~Boolean. `true` = usable as **base/reporting** currency; the wider set (`false` too) is valid only as a **transaction** currency.~~ |
+>
+> ~~**Base-currency picker** draws from `is_base_eligible = true` only (Settings → base currency).
+> Transaction/holding currency fields draw from the full master.~~
+>
+> ~~**Seed (DEF-1, extracted).** The seed is the **union** of three divergent legacy lists,
+> deduplicated (`HKD` appears twice in the PortfolioEditor list):~~
+>
+> | ~~Group~~ | ~~Codes~~ | ~~`is_base_eligible`~~ | ~~Source~~ |
+> |-------|-------|--------------------|--------|
+> | ~~Base-eligible (`config.SUPPORTED_CURRENCIES`, 9)~~ | ~~`SGD, USD, INR, EUR, GBP, JPY, AUD, CNY, HKD`~~ | ~~**true**~~ | ~~`config.py:18`~~ |
+> | ~~+ adds from `refdata.ts CURRENCIES` (14)~~ | ~~`CAD, CHF, AED, MYR, THB`~~ | ~~false~~ | ~~`refdata.ts:8`~~ |
+> | ~~+ adds from PortfolioEditor inline (21 unique)~~ | ~~`KRW, TWD, SEK, NOK, DKK, ZAR, BRL, NZD`~~ | ~~false~~ | ~~`PortfolioEditor.tsx:22`~~ |
+>
+> ~~**Full seed = 22 unique codes**, `is_base_eligible = true` for exactly the 9
+> `SUPPORTED_CURRENCIES`, `false` for the other 13.~~
+>
+> ~~The 13 wider codes must be confirmed translatable when the currency master is seeded (any that
+> the FX service cannot translate are dropped per D-006, not carried).~~
 
-**ROADMAP (R-2, D-006):** user-requestable transaction currencies, FX-validated.
+**Why the seed never happened, honestly:** the 13 extra codes came from **two frontend lists**
+(`refdata.ts`, `PortfolioEditor.tsx`) that **D-005 retired** — the frontend's inline vocabularies are
+gone, and with them the only source that ever claimed those currencies. Nothing in the backend has
+ever supported them. Recording the seed as "pending" would have been the fiction; the **9** are what
+the engine can actually convert and display.
 
 ---
 
@@ -286,9 +339,10 @@ verbatim with no casing transform**. The **demo seed** writes display-cased tags
 (`Core`/`Dividend`/`Speculative`) directly, **bypassing the cleaner** — a
 sanctioned demo-only cosmetic exception.
 
-**Currency (§3)** is a reference master too, but seed-managed under the
-FX-translatability rule rather than freely user-added in v2 (user-requestable
-additions are ROADMAP R-2).
+**Currency (§3)** is **not a table** — it is the code constant `SUPPORTED_CURRENCIES`
+(§3 AMENDMENT 2026-07-14). It is neither user-extensible nor seed-managed: adding a
+currency is a **code + plan-file change** gated on the FX-translatability rule
+(user-requestable additions are ROADMAP R-2).
 
 ---
 
@@ -305,9 +359,12 @@ Each extensible master needs an admin surface. Common requirements:
 - **Tag** — create, rename (**cascades** to every tagged holding), **dedupe/merge**
   for case and whitespace variants. Enforce case-insensitive uniqueness and the
   16-per-holding cap at write time.
-- **Currency** — view the master and each row's `is_base_eligible`; the
-  base-currency picker is restricted to eligible rows. New transaction
-  currencies are gated behind the FX-translatability rule (and are ROADMAP R-2).
+- **Currency** — **NO admin screen** (§3 AMENDMENT 2026-07-14). Currency is a **code
+  constant**, not an extensible master, so it belongs with the fixed vocabularies below,
+  not here: there are no rows to view, rename or merge, and no `is_base_eligible` column
+  to display (all 9 codes are base-eligible). Settings shows the **base-currency picker**
+  over `SUPPORTED_CURRENCIES`, and that is the entire surface. New transaction currencies
+  stay gated behind the FX-translatability rule (ROADMAP R-2).
 
 Fixed vocabularies (§2) have **no admin screen** — they are code-defined and
 change only by code + migration.
@@ -322,7 +379,7 @@ change only by code + migration.
 | Legacy free-text country values → ISO2 | Map to ISO-3166 alpha-2 with a **manual review list for unmappables — no silent best-guess.** | D-007 |
 | `instruments.asset_category` (free text) | **Dropped.** Migration first moves surviving `asset_category` values **into tags**, then drops the column. | D-009 |
 | Tag variants | **Dedupe/merge pass** for case and whitespace variants before enforcing case-insensitive uniqueness. | D-011 |
-| Currency lists | Collapse the 3 divergent lists into the one master (§3), each member FX-validated. | D-006 |
+| Currency lists | **DONE, differently than planned (§3 AMENDMENT 2026-07-14).** The 3 divergent lists did collapse to **one** — but the survivor is the backend constant **`SUPPORTED_CURRENCIES` (9)**, not a new 22-row table: **D-005 retired the two frontend lists** that were the only source of the extra 13 codes. One vocabulary, FX-validated by definition. **No migration is owed.** | D-006 / D-005 |
 | Instrument symbol entry | Free-text symbol entry replaced by an **instrument picker** (typeahead + provider search); explicit "create new instrument" path replaces silent auto-creation; `_get_or_create_instrument` side effects removed from GET paths. | D-012 |
 | Bulk imports | Same resolution logic with a **review queue for unresolved symbols** — imports never silently auto-create instruments. | D-012 |
 | Account entity assignment | Migration assigns every existing account to a default entity (schema already present, 02 §3 rev. `entities`). | 02 §2.2 |
@@ -464,10 +521,13 @@ recorded here beside the other per-class field rules.
 §(a), `docs/audit/DECISIONS.md`, and the **legacy v1 source**
 (`~/Documents/github/LedgerFrame`, read-only) for the DEF backfill:
 
-- DEF-1 currency union — `app/core/config.py:18` (`SUPPORTED_CURRENCIES`, 9,
-  base-eligible); `frontend/src/lib/refdata.ts:8` (`CURRENCIES`, 14);
-  `frontend/src/components/PortfolioEditor.tsx:22` (inline list, 21 unique);
-  FX-translatability behaviour `app/services/ecb_fx.py:24,71-73`, `app/services/fx.py:51`.
+- DEF-1 currency union — **CLOSED by the §3 AMENDMENT (2026-07-14): there is no union and no
+  table.** The canonical master is `app/core/config.py:18` (`SUPPORTED_CURRENCIES`, **9**, all
+  base-eligible), verified as the list `/settings` serves and `base_currency` + the A9 policy-bucket
+  validator both check against. The two frontend sources this union was drawn from —
+  `frontend/src/lib/refdata.ts:8` and `frontend/src/components/PortfolioEditor.tsx:22` — were
+  **retired by D-005** and no longer exist. FX-translatability behaviour is unchanged:
+  `app/services/ecb_fx.py:24,71-73`, `app/services/fx.py:51`.
 - DEF-3 `ACCOUNT_KINDS` — `app/services/accounts.py:24`.
 - DEF-4 `POLICY_TYPES` / `FREQUENCIES` — `app/services/insurance.py:23-25`.
 - DEF-5 `DOC_CATEGORIES` / `CONTACT_ROLES` (+ `WILL_STATUSES`, `DOC_STATUSES`

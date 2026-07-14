@@ -1,31 +1,64 @@
 # release-readiness.md — defining the finish line
 
-**Status: 🟢 RELEASE INTENT DECLARED (owner, 2026-07-14). GATE A CLOSED (+ A9–A11 addendum) · GATE B
-CLOSED (owner-ratified) · GATES C–F ACTIVE.**
+**Status: ⏸ GATES C–F STANDING/DORMANT. GATE A CLOSED (+ A9–A11 addendum) · GATE B CLOSED
+(owner-ratified). RELEASE REQUIRES FULL COMPLETION (RD-9 Amendment 3, owner 2026-07-14).**
 
-> ## ✅ RD-9 TIMING AMENDMENT 2 (owner, 2026-07-14) — **RELEASE INTENT DECLARED. Gates C–F REACTIVATE.**
+> ## ⚠ RD-9 TIMING AMENDMENT 3 (owner, 2026-07-14) — **RELEASE = FULL COMPLETION. Gates C–F return to STANDING/DORMANT.**
 >
-> **SUPERSEDES Amendment 1 (the deferral), which is preserved verbatim below — a superseded ruling is
-> struck through, never deleted.**
+> **SUPERSEDES Amendment 2, which is preserved struck through below.** A superseded ruling is struck
+> through, never deleted.
 >
-> **v2.0 proceeds NOW on the RD-9(b) scope: the built set + a visible roadmap.** The checklist is an
-> **ACTIVE COUNTDOWN** again.
+> ### The owner CORRECTS the release gate. Recorded verbatim:
 >
-> - **Gates C–F are LIVE.** C3/D/E/F execute per the checklist.
-> - **Legal and Help are RELEASE-BLOCKING and JUMP THE QUEUE** — the gate did not move, the deadline
->   arrived. (This restores the ORIGINAL RD-9 resolution; Amendment 1's B12 re-ordering is reverted.)
-> - **The Planning group moves POST-RELEASE.** Policy's plan is DRAFTED and **PARKED AT §9** — 21 items
->   await the owner's one-pass at resumption. **⚠ Its findings must be RE-VERIFIED at resumption if
->   interim code changes touch them** (three already did — see the A9–A11 addendum).
-> - **E2 (secret/PII scan) and E4 (licence adjudication) still run against the FINAL set** — that is now
->   imminent, not hypothetical. A scan of something other than what ships is not a scan.
-> - **D3 tags `v2.0.0` at the moment of publication, not before.**
+> > **NO public release before ALL of** — Help, Legal, Policy, Cash flow, Scenarios, Insurance, Estate,
+> > Accounts, Reports (+ Pack), Settings, the **AI-surfaces milestone** (D-067/D-068/R-22), and
+> > **Voice**.
 >
-> **What this changes about Gates A and B:** nothing — except that **Gate A gains an addendum (A9–A11)**,
-> three release-set defects surfaced by the page-policy verify-first pass. They ship in Review/API
-> **regardless of the parked Policy page**, because they are defects in code that **is** in the release
-> set. *(The RD-9 SCOPE ruling — v2.0 = the built set + a visible roadmap — has never changed. Amendment 1
-> moved the TIMING; Amendment 2 moves it back and declares intent.)*
+> **This is a SCOPE correction, not a timing slip.** RD-9's original resolution **(b)** — *"v2.0 = the
+> built set + a visible roadmap; unbuilt Planning pages are bypassed for launch"* — **is overturned.**
+> v2.0 now means **the whole product**, not the built subset with the rest on a roadmap.
+>
+> - **Gates C–F return to STANDING / DORMANT.** They **reactivate only when the full set above is
+>   OWNER-ACCEPTED**. Nothing is started from them.
+> - **Legal and Help no longer jump the queue.** They are still **release-blocking** — every page is,
+>   now — and they return to **merit order** in the queue (`CURRENT.md` NEXT).
+> - **The Planning group returns to the FRONT of the queue.** **Policy resumes first** (its §9 one-pass).
+> - **E2 (secret/PII scan) and E4 (licence adjudication) run against the FINAL set** — which is now a
+>   much later, much larger set. A scan of something other than what ships is not a scan.
+> - **D3 tags `v2.0.0`** only after the full set is accepted **and** Gates C–F clear.
+>
+> ### ⚠ **Voice is NEW SCOPE. No spec exists.**
+>
+> **Voice has been named as a release-scope gate, and it is the only item in that list with no
+> definition anywhere** — no spec, no decision, no plan file, no ROADMAP entry before today. It is
+> recorded as **ROADMAP R-32 — DEFINITION PENDING (owner)**, and it **requires an owner definition and
+> its own milestone plan before the release gate can even be EVALUATED against it.**
+> **No Voice behaviour has been invented here.** *(A `voice` extra — vosk/sounddevice — exists in
+> `pyproject.toml` and `install.sh` offers it, but nothing in the specs says what Voice IS. That is an
+> installer option, not a definition, and it is not treated as one.)*
+>
+> **What this changes about Gates A and B:** nothing. Both stay CLOSED. **Gate A's A9–A11 addendum stands
+> and was correct to ship** — those were defects in release-set code that Review already ships, and they
+> would have been defects under any release scope.
+
+> ## ~~✅ RD-9 TIMING AMENDMENT 2 (owner, 2026-07-14) — RELEASE INTENT DECLARED. Gates C–F REACTIVATE.~~
+> ### **SUPERSEDED by Amendment 3 (above), 2026-07-14. Preserved for history — do not act on it.**
+>
+> ~~**SUPERSEDES Amendment 1 (the deferral), which is preserved verbatim below.**~~
+>
+> ~~**v2.0 proceeds NOW on the RD-9(b) scope: the built set + a visible roadmap.** The checklist is an
+> **ACTIVE COUNTDOWN** again.~~
+>
+> - ~~**Gates C–F are LIVE.** C3/D/E/F execute per the checklist.~~
+> - ~~**Legal and Help are RELEASE-BLOCKING and JUMP THE QUEUE** — the gate did not move, the deadline
+>   arrived. (This restores the ORIGINAL RD-9 resolution; Amendment 1's B12 re-ordering is reverted.)~~
+> - ~~**The Planning group moves POST-RELEASE.** Policy's plan is DRAFTED and **PARKED AT §9**.~~
+> - ~~**E2 and E4 still run against the FINAL set** — that is now imminent, not hypothetical.~~
+> - ~~**D3 tags `v2.0.0` at the moment of publication, not before.**~~
+>
+> ~~**What this changes about Gates A and B:** nothing — except that **Gate A gains an addendum
+> (A9–A11)**, three release-set defects surfaced by the page-policy verify-first pass.~~ *(The A9–A11
+> addendum SURVIVES Amendment 3 — see above. Only the timing/queue rulings are struck.)*
 
 > ## ~~⚠ RD-9 AMENDMENT 1 — TIMING (owner, 2026-07-14). The public release is DEFERRED.~~
 > ### **SUPERSEDED by Amendment 2 (above), 2026-07-14. Preserved for history — do not act on it.**
@@ -57,9 +90,10 @@ the owner in one pass, and a **STOP** before anything is built.
 **from those decisions once they are made**. **The definition of "release" is the owner's.** This plan
 surfaces options and decides nothing.
 
-**It does NOT pause the page queue.** *(Superseded by RD-9 Amendment 2: with release intent declared, this
-plan now **leads** the queue — **Legal and Help jump it**, and the **Planning group moves post-release**.
-Policy is drafted and **parked at §9**. The plan defines the finish line; the owner moved the date to it.)*
+**It does NOT pause the page queue.** *(Current ruling — **RD-9 Amendment 3**: the release gate is **FULL
+COMPLETION**, so this plan **does not lead the queue and does not schedule it**. Gates C–F are **dormant**
+until the owner accepts the full set. The work order is `CURRENT.md` NEXT — **Policy resumes first**. The
+plan defines the finish line; it does not move it, and it no longer pretends to be near it.)*
 
 > ⚠ **The single biggest finding, up front.** The repo is **already licensed AGPL-3.0-or-later** — in
 > `pyproject.toml:7` and in an **SPDX header on every Python file** — but **there is no `LICENSE` file**
@@ -198,7 +232,7 @@ matched to its §2 item by **number and topic** before recording — no guesses.
 | **RD-6** | Upgrade / migration | **Forward-only.** Downgrade paths **explicitly unsupported**. `update.sh` must **abort unless it detects a fresh DB backup**, or is given an explicit `--no-backup` override. State the policy in the README. |
 | **RD-7** | Disclosure + support | `SECURITY.md` pointing to **security@ledgerframe.org**. **A mailbox-verification gate is MANDATORY *before* SECURITY.md ships claiming that address** — *an unmonitored disclosure inbox is the same defect class as an untested "tested-on" claim*. GitHub Issues **enabled**, with a visible disclaimer defining support boundaries and response expectations. **The Guarantee-5 egress gap is a CRITICAL RELEASE-BLOCKER** → fixed now (Part B/2). |
 | **RD-8** | Demo data | **Default first boot is EMPTY.** The installer wizard prompts explicitly; **`--demo-mode` is the only opt-in** for mock portfolios. `.env.example` must be adjusted so that **the default mock price provider no longer implies pre-seeded portfolio rows** — today `is_demo` (provider == mock) *is* the seed trigger (`app/main.py:114-123`), and those two things must be **decoupled**. |
-| **RD-9** | Scope vs remaining pages | **(b) v2.0 = the built set + a visible roadmap.** Unbuilt **Planning** pages are bypassed for launch. **Legal and Help are ELEVATED TO RELEASE-BLOCKING and jump the queue** (to prevent shipping dead interface links) → `CURRENT.md` NEXT becomes **Legal · Help · then the residual Planning pages**. **Settings is unblocked.** To maintain strict **D-078** compliance, the **write-only rotation keys are REMOVED from the codebase pre-release** via a **backend-first contract delta (spec regenerated in the same commit)**, reintroduced only when functional rotation UI ships. |
+| **RD-9** ⚠ **OVERTURNED 2026-07-14 by TIMING AMENDMENT 3 — the resolution below is HISTORY, not the ruling in force. The release gate is now FULL COMPLETION (every page + AI surfaces + Voice); no page is "bypassed for launch". Read the amendment at the top of this file.** | Scope vs remaining pages | ~~**(b) v2.0 = the built set + a visible roadmap.**~~ Unbuilt **Planning** pages are bypassed for launch. **Legal and Help are ELEVATED TO RELEASE-BLOCKING and jump the queue** (to prevent shipping dead interface links) → `CURRENT.md` NEXT becomes **Legal · Help · then the residual Planning pages**. **Settings is unblocked.** To maintain strict **D-078** compliance, the **write-only rotation keys are REMOVED from the codebase pre-release** via a **backend-first contract delta (spec regenerated in the same commit)**, reintroduced only when functional rotation UI ships. |
 | **RD-10** | Publication hygiene | **Publication isolation.** The working repo stays **private**. `v2.0.0` is published as a **clean public repository**. **`docs/specs/` (the six core specs) IS included** as authoritative architectural documentation. **`docs/plans/` and `docs/evidence/` are excluded entirely.** A mandatory publication-hygiene step runs an **automated secret / PII scan across the public staging branch**. |
 
 ### Part B — the two DECISION-INDEPENDENT defects: **FIXED** (they were defects under every option)
@@ -412,8 +446,8 @@ stays truthful about which of its findings are already fixed.
 | B11 | **✅ DONE** — ROADMAP R-24 revisit-at-packaged note | 🤖 | Verified present. |
 | B12 | **✅ DONE (Amendment 1)** — CURRENT.md NEXT **reverted to natural order**: Policy · Cash flow · … | 🤖 | Legal/Help return to their natural late position and **remain release-blocking whenever release intent is declared**. |
 
-### GATE C — 🟢 **ACTIVE** (RD-9 AMENDMENT 2 — release intent declared) — Legal + Help pages
-*(🚫 RELEASE-BLOCKING, and they **JUMP THE QUEUE**. Each is built via `TEMPLATE-page-build.md` — **PLAN-ONLY FIRST**, per the standing rule that nothing is built without a plan file.)*
+### GATE C — ⏸ **STANDING / DORMANT** (RD-9 AMENDMENT 3) — Legal + Help pages
+*(🚫 still RELEASE-BLOCKING — but so is **every** page now, so they **no longer jump the queue**; they return to **merit order**. Reactivates only when the FULL set is owner-accepted. Each is built via `TEMPLATE-page-build.md` — **PLAN-ONLY FIRST**.)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -421,7 +455,7 @@ stays truthful about which of its findings are already fixed.
 | C2 | 🚫 **Help page** — same [per RD-9] | 🤖 build → 🛑 **OWNER** ratifies all copy | The `[Help]` popovers already ship across built pages and point at a page that **does not exist** |
 | C3 | Nav: the remaining unbuilt pages are **hidden or honestly labelled** — **no dead links in the shipped build** [per RD-9] | 🤖 | They render `NotBuilt` today. Fail-first: a test that **no nav entry in the release build leads to `NotBuilt`** |
 
-### 🟢 ACTIVE — GATE D — Identity & versioning *(runs once the shipped surface is final — i.e. after Gate C)*
+### ⏸ STANDING / DORMANT — GATE D — Identity & versioning *(runs only once the shipped surface is final — i.e. after the FULL set is owner-accepted)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -429,7 +463,7 @@ stays truthful about which of its findings are already fixed.
 | D2 | 🛑 **`CHANGELOG.md` (Keep-a-Changelog); the inaugural entry MUST declare the version RESET from the inherited v1 lineage** [per RD-5] | 🧑 **OWNER** validates | *Historical honesty — not a silent renumber.* |
 | D3 | **Tag `v2.0.0`** — **at the moment of public release, not before** [per RD-5] | 🤖 | |
 
-### 🟢 ACTIVE — GATE E — Public hygiene *(runs LAST, against the ACTUAL final public set)*
+### ⏸ STANDING / DORMANT — GATE E — Public hygiene *(runs LAST, against the ACTUAL final public set)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -438,7 +472,7 @@ stays truthful about which of its findings are already fixed.
 | E3 | 🛑 **Publication data cleaning** — anything E2 surfaces | 🧑 **OWNER** | Includes the standing note that publishing the repo publishes the **author email** in every commit (§1-5d) — **irreversible once mirrored** |
 | E4 | Re-run **the SAME adjudication mechanism** against the FINAL public set — **clean = ZERO UNADJUDICATED FINDINGS** (never "zero findings") [per RD-2] | 🤖 → 🧑 **OWNER** rules anything new | Not a re-read of the Gate-A result: the final set may differ, and any **new** finding — or any ruling that has gone **stale** — blocks. **No public claim ships until it is clean by that definition.** |
 
-### 🟢 ACTIVE — GATE F — Public ingestion
+### ⏸ STANDING / DORMANT — GATE F — Public ingestion
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -448,15 +482,19 @@ stays truthful about which of its findings are already fixed.
 
 ---
 
-**RELEASE INTENT IS DECLARED (RD-9 Amendment 2, owner 2026-07-14) — Gates C–F are LIVE.**
+**STOP — RELEASE REQUIRES FULL COMPLETION (RD-9 Amendment 3, owner 2026-07-14). Gates C–F are DORMANT.**
 
-**Execution order from here:** **Gate-A addendum (A9–A11) ✅ DONE** → **Legal (plan-only first)** →
-**Help (plan-only first)** → **C3 · D · E · F** per the checklist above.
+**Nothing in Gates C–F is started.** They **reactivate only when the owner has ACCEPTED the full set:**
+Help · Legal · Policy · Cash flow · Scenarios · Insurance · Estate · Accounts · Reports (+ Pack) ·
+Settings · the **AI-surfaces milestone** (D-067/D-068/R-22) · **Voice**.
 
-**Post-release queue (unblocked only after F1):** **Policy** *(plan DRAFTED, **PARKED AT §9** — 21 items
-await the owner's one-pass; **its findings must be re-verified at resumption if interim code changes touch
-them** — A9/A10/A11 already did)* · Cash flow · Scenarios · Insurance · Estate · Accounts · Reports + Pack
-· Settings. **The AI-surfaces milestone remains deferred intact** (D-067/D-068).
+**⚠ Voice cannot be evaluated as a gate yet — it has no definition** (ROADMAP **R-32**, DEFINITION
+PENDING). It needs an **owner definition + its own milestone plan** before this gate can be measured
+against it. **No Voice behaviour is assumed here.**
+
+**The work order lives in `CURRENT.md` NEXT** (merit order, Policy first). This plan defines the finish
+line; it does not schedule the work.
 
 **Still outstanding and owner-only:** the **CLA counsel review before the first external merge** (B2) — a
-CLA cannot be applied retroactively, and publishing the repo (F1) is what starts that clock.
+CLA cannot be applied retroactively, and publishing the repo (F1) is what starts that clock. Amendment 3
+moves that clock **later**, not away.

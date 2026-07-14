@@ -908,57 +908,59 @@ widget is a linked summary of the canonical page's reader (P-1/D-038). Shipped:
 
 ## NEXT
 
-> ## 🟢 RELEASE INTENT DECLARED (owner, 2026-07-14) — RD-9 **TIMING AMENDMENT 2**, superseding Amendment 1.
-> **v2.0 proceeds NOW** on the RD-9(b) scope (**the built set + a visible roadmap**). **Gates C–F REACTIVATE.**
-> **Legal and Help are release-blocking and JUMP THE QUEUE.** **The Planning group moves POST-RELEASE.**
-> *(Amendment 1 — the deferral — is preserved struck-through in `release-readiness.md`, not deleted.)*
+> ## ⚠ RD-9 **TIMING AMENDMENT 3** (owner, 2026-07-14) — **RELEASE = FULL COMPLETION.** Supersedes Amendment 2.
+> **NO public release before ALL of:** Help · Legal · Policy · Cash flow · Scenarios · Insurance · Estate ·
+> Accounts · Reports (+ Pack) · Settings · the **AI-surfaces milestone** (D-067/D-068/R-22) · **Voice**.
+> **Gates C–F return to STANDING/DORMANT** — they reactivate only when that full set is **owner-accepted**.
+> RD-9's original **(b)** ruling (*ship the built set + a roadmap*) is **OVERTURNED**; Legal and Help
+> **no longer jump the queue** (every page is release-blocking now, so merit order is restored).
+> ⚠ **Voice is NEW SCOPE with NO definition** — ROADMAP **R-32, DEFINITION PENDING (owner)**. It needs an
+> owner definition + its own milestone plan before the release gate can be evaluated against it.
+> **No Voice behaviour has been invented.** *(Amendments 1 and 2 are preserved struck-through in
+> `release-readiness.md` — a superseded ruling is struck through, never deleted.)*
 
-1. **Gate-A ADDENDUM (A9–A11) — ✅ DONE 2026-07-14.** Three **release-set** defects surfaced by the
-   page-policy verify-first pass. The Policy PAGE is parked, but these are defects in
-   `services/policy.py` / `services/review.py` / the API — **code that IS in the release set and that
-   Review already ships**. *A parked page does not park its engine's defects.* Each fail-first, one commit:
-   - **A9** — `bucket` must reference its dimension's **master** (RED: a garbage bucket was accepted,
-     `assert 200 == 400`). ⚠ Surfaced: **MASTER-DATA §3's currency-master TABLE does not exist in code**;
-     `SUPPORTED_CURRENCIES` is the de-facto master. Spec-vs-code divergence → owner.
-   - **A10** — a drift **verdict** off **stale/low-confidence** prices can no longer present as **fresh**
-     (RED: `KeyError: 'stale_inputs'`). Served fields + copy are **PROPOSED — 🛑 owner ratifies the wording**.
-     ⚠ The guard found a **real** low-confidence holding in the **shipped demo fixture**.
-   - **A11** — **ONE weight derivation**: policy drift now reads Portfolio's canonical `allocation()`.
-     Cost call: **LIGHT, no STOP**. The equality test was **GREEN today** (the divergence was *latent*), so
-     it was **proven to fire** by perturbing the canonical path → **RED, `4.4 vs 3.3`**.
+**Merit order (the release gate no longer reorders the queue):**
 
-2. **Legal page — `docs/plans/page-legal.md` (PLAN-ONLY FIRST).** Release-blocking (Gate C1). Surfaces the
-   licence (`LICENSE` shipped at Gate B1) + the disclaimers + the Product Guarantees. **Owner ratifies all
-   copy.** Built via `TEMPLATE-page-build.md`; nothing is built without the plan file.
+1. **Policy — RESUME.** `docs/plans/page-policy.md` is DRAFTED and **PARKED AT §9**: the **§9 one-pass
+   (21 items)** is the next task. **3 are already resolved or narrowed by §10-A** — **§9-4 CLOSED** (A11:
+   one weight derivation), **§9-7 CLOSED** (A9: bucket master validation), **§9-5 NARROWED** to a copy
+   ratification (A10) — **and that copy is now RATIFIED** (below), so **§9-5 is CLOSED too**.
+   ⚠ **Re-verify any remaining §9/§10 finding whose code changed since 2026-07-14.**
+2. **Cash flow · Scenarios · Insurance · Estate** — the rest of the Planning group.
+3. **Accounts** (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it,
+   Portfolio defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live
+   here) · **Reports (+ Pack)** · **Settings**.
+4. **Help · Legal** — still release-blocking; **plan-only first**, each via `TEMPLATE-page-build.md`.
+   `docs/plans/page-help.md` already carries its **SCOPE-NOTES** (the `[Help]` retrofit ruling, SN-1).
+5. **AI-surfaces milestone** (D-067/D-068/R-22) · **Voice** — **Voice only AFTER the owner defines it**
+   (R-32). A milestone cannot be planned against an undefined capability.
+6. **Release gates C → F**, then **tag `v2.0.0`** (Gate D3) — only once the full set is owner-accepted.
 
-3. **Help page — `docs/plans/page-help.md` (PLAN-ONLY FIRST).** Release-blocking (Gate C2) — the `[Help]`
-   popovers **already ship across built pages and point at a page that does not exist**. A **SCOPE-NOTES**
-   section is already recorded in that file (the `[Help]` retrofit ruling). **Owner ratifies all copy.**
+**Standing, owner-only (not moveable):** the **CLA counsel review before the first external merge**
+(Gate B2). A CLA **cannot be applied retroactively**; publishing the repo (F1) starts that clock —
+Amendment 3 moves that clock **later**, not away.
 
-4. **Gates C3 / D / E / F** per `release-readiness.md`: no dead nav links in the shipped build (C3) → one
-   product version + CHANGELOG + tag (D) → public staging branch, **secret/PII scan and licence
-   adjudication against the FINAL set** (E) → publish + release notes (F).
+## OWNER RATIFICATIONS (2026-07-14)
 
-## POST-RELEASE QUEUE *(unblocked only after Gate F1)*
-
-- **Policy** — `docs/plans/page-policy.md` is **DRAFTED and PARKED AT §9**: **21 items await the owner's
-  one-pass at resumption**. ⚠ **Its findings must be RE-VERIFIED at resumption if interim code changes
-  touch them** — **A9/A10/A11 already did** (§9-5, §9-7 and §9-4 are now **fixed in code**; the §10 record
-  is annotated accordingly).
-- **Cash flow · Scenarios · Insurance · Estate** (the rest of the Planning group).
-- **Accounts** (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it,
-  Portfolio defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live here).
-- **Reports + Reports Pack · Settings.**
-- **AI-surfaces milestone remains DEFERRED INTACT** (D-067/D-068).
-- **Help copy task** — surface the GLOSSARY corporate-actions canon as in-app `[Help]` copy: **Rights
-  issue** = Buy at rights price; **Buyback** = Sell at offer price (existing types, no special form);
-  **Ticker / name change** supported (name edits preserve history); **De-merger / Spin-off** parked (R-7).
-- **Remaining API-CONTRACT delta-table renames**, per page: Realised P/L / Ongoing-cost (D-026/D-029),
-  route-rename redirects (D-022/D-056). *(Review's D-030 rename is applied.)*
-- **Ratify authored DEF-2/DEF-6 vocabularies** (MASTER-DATA §2/§6) — data vocab, separate from tokens.
-
-**Outstanding, owner-only (not moveable):** the **CLA counsel review before the first external merge**
-(Gate B2) — a CLA **cannot be applied retroactively**, and **publishing the repo (F1) starts that clock**.
+- **A10 wording — RATIFIED AS PROPOSED.** The served copy stands verbatim:
+  **"1 holding is low-confidence — these figures may not reflect current values."**
+  The served fields are ratified with it: **`stale_inputs`, `low_confidence_inputs`, `inputs_stale`,
+  `inputs_note`** (on `/policy/drift`; `stale_inputs` + `inputs_stale` on `/review` `sections.policy`,
+  from the **same reader**, so the two cannot disagree).
+  **Judgment call CONFIRMED: NO second Review attention item.** *Rationale, recorded:* the existing
+  **stale-prices signal already covers that surface** — a second item would **double-report one fact**,
+  and an attention list that says the same thing twice teaches the user to discount all of it. The
+  annotation rides the **verdict** instead of becoming a competing row. **This closes page-policy §9-5.**
+- **Currency-master divergence — RESOLVED, option (a): the SPEC follows the verified CODE.**
+  **MASTER-DATA §3 is AMENDED**: **`SUPPORTED_CURRENCIES`** (`app/core/config.py:18`, **9 codes**) is
+  documented as **the canonical currency master**. **The reference TABLE it described was never built** —
+  the amendment says so plainly rather than leaving a spec that describes a fiction.
+  **`is_base_eligible` is restated against the constant:** all 9 codes are base-eligible, so the flag's
+  distinction is **real but currently degenerate** (base set == transaction set). **Note recorded:** if
+  multi-currency expansion ever needs a genuine transaction-only tier, **building the real table is a
+  deliberate future delta** — one line in the amendment, **no R-item** (it is a consequence of a product
+  decision not yet made, not a parked piece of work; **R-2** is the decision that would trigger it).
+  Superseded §3 text is **struck through, preserved**.
 
 ## Needs decision
 

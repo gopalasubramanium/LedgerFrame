@@ -618,3 +618,62 @@ region**; the section header carrying **title + its total + the add action on on
 
 **Also pending ratification:** the `Button` extraction + both migrations · the empty-state copy (9-8) ·
 the goal-delete warning copy (9-7c) · the GLOSSARY additions (9-12) · the §9-6 validation strings.
+
+---
+
+## 13. BUILD RECORD — Phases 1 → 3a (2026-07-15)
+
+**Geometry gate PASSED** (owner, 2026-07-15) — the §9-10 three-stacked-sections layout was ratified from the
+specimen and assembly proceeded.
+
+**Phase 1 — assembly.** GLOSSARY **first**, then the popover store (5 terms; parity guard green). Per-row
+CRUD (one `Dialog` per record, `RowMenu` → Edit/Delete), the runway **summarised** from Net worth's served
+reader via `SummaryHead`, three empty states, `ConfirmDialog` for deletes with the **live orphan warning**.
+Route + nav wired — **Net worth's "Edit obligations →" is no longer a dead link** (Gate C3).
+
+**Phase 2 — tests (10 frontend + the backend suite), every guard PROVEN RED on the defect it exists to catch.**
+
+| Guard | Mutation → RED |
+|---|---|
+| **D-057 — a `once` obligation has NO monthly rate** | rendering `?? "0.00"` instead of the em dash → **`expected '0.00' to be '—'`** |
+| **§9-2 — per-row CRUD, not bulk** | making the editor always `POST` instead of `PATCH`-ing the row → **`expected 'POST' to be 'PATCH'`** |
+
+Also pinned: served money rendered **verbatim**; a basis-less goal shows **"—", never 0%**; an **orphaned**
+contribution shows **"—"**, never a fabricated goal name; the **protected D-057 copy** is on the page; the
+request **body** equals the intended record; the served validation error renders **in place** with the
+dialog **open**; all three empty states. `/cash-flow` added to the **overflow · single-scroll · shared-shell
+· themed-link** cross-page guards.
+
+**Phase 3a — pre-pass GREEN on a live reset instance.** Empty states → full CRUD round-trip against the real
+PIN-gated write path → **D-057 verified LIVE** (a **100,000/month** contribution did **not** move the runway;
+the one-off tax bill is **absent from the burn**) → the runway summary **==** Net worth's served figure →
+`DELETE` of a missing id is an honest **404** → geometry clean at 320/375/900/1366 × both themes →
+**0 console errors**.
+
+### Three of my own mistakes, recorded
+
+1. **My test assertions were sloppy, not the page.** `"18,400.00"` **contains** the substring `"0.00"`, so
+   *"the row must not contain 0.00"* failed on a **correct** page; and *"House deposit"* appears in **both**
+   the goals table and the contributions "Towards" cell, so a page-wide query silently measured the **wrong
+   table**. Both were rewritten to assert **the specific cell in the specific section**.
+2. **A real copy bug, caught by a test:** the goal-delete warning rendered *"**1 contribution point** at this
+   goal"* — I pluralised the noun and not the verb. Fixed to *"1 contribution **points** … it keeps its
+   record but loses the link"*.
+3. ⚠ **The pre-pass raced a progressively-loaded card — the very race the template warns about (§12-8).** I
+   asserted as soon as the runway card was *"visible"*, but a card's **header** is visible while its **body**
+   is still loading, so it read back just `"Cash runway"` and failed **on a page that was fine**. Fixed to
+   **wait the card out of its skeleton** first. *(And the pre-pass was **not idempotent**: `reset.py` clears
+   settings and the PIN but **not** these records, so a second run's "empty state" claim was false. It now
+   **establishes its own precondition** — a pre-pass that only works once is not a pre-pass.)*
+
+### For the walk — pending ratification
+
+The `Button` extraction + both migrations · the **empty-state copy** (9-8) · the **goal-delete warning copy**
+(9-7c) · the **5 GLOSSARY terms** (9-12) · the **§9-6 validation strings** · the **first sanctioned use of
+`StatusChip` positive/negative** on the runway status (9-11).
+
+**Noted, not fixed:** `Next due` / `Target date` render the **served ISO date** (`2026-09-30`) rather than a
+formatted date. D-105 covers **money**, not dates, so this is a **copy/polish judgement for the owner**, not
+a defect — raised rather than silently changed.
+
+**Phase 3b (owner acceptance walk) is the gate. Nothing here is self-certified.**

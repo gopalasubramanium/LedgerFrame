@@ -8,6 +8,33 @@ export interface GlossaryEntry {
 }
 
 export const GLOSSARY: Record<string, GlossaryEntry> = {
+  // Cash flow (page-cash-flow §9-12). Added to docs/specs/GLOSSARY.md FIRST, then here — the
+  // two-store rule; tests/unit/test_glossary_parity.py polices the spellings.
+  "term-net-monthly-burn": {
+    term: "Net monthly burn",
+    definition:
+      "Recurring expenses minus recurring income, per month. One-off obligations are excluded — a one-off is lumpy, not a steady burn.",
+  },
+  "term-monthly-equivalent": {
+    term: "Monthly equivalent",
+    definition:
+      "A recurring amount expressed as a per-month rate (quarterly ÷ 3, annual ÷ 12). A one-off has no monthly equivalent — it shows an em dash, never 0.",
+  },
+  "term-next-12-months": {
+    term: "Next 12 months",
+    definition:
+      "The total of your recorded outflows falling due in the next twelve months, including one-offs. Income is not netted off it.",
+  },
+  "term-planned-cash-out": {
+    term: "Planned cash out",
+    definition:
+      "Recurring expenses plus planned contributions, per month. It does not change the Cash runway — a contribution builds wealth, it isn't consumption.",
+  },
+  "term-goal-progress": {
+    term: "Progress (goal)",
+    definition:
+      "How far the goal's basis (net worth or liquid assets) has come against its target. A goal with no basis has no progress — it shows an em dash, never 0%. A fact against your target, never a forecast.",
+  },
   // Policy (page-policy §9-14). Added to docs/specs/GLOSSARY.md FIRST, then here — the two-store
   // rule (page-heatmap §13-1); tests/unit/test_glossary_parity.py polices the spellings.
   "term-concentration": {

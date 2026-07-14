@@ -178,6 +178,11 @@ Home shows one summary of each, linked to its canonical page.
 | **Goal** | A target amount with a basis (net_worth / liquid / none); progress computed live. |
 | **Obligation** | A recurring or one-off future cash flow (expense / income); feeds runway + next-12-months total. `once` obligations are **excluded from recurring burn** (protected semantics, D-057). |
 | **Contribution** | A recorded plan (invest / withdraw / prepay); shown as monthly-equivalent; **does not reduce runway** (protected semantics, D-057). |
+| **Net monthly burn** | Recurring expenses − recurring income, per month. **`once` obligations are excluded** — a one-off is lumpy, not a steady burn (protected semantics, D-057). Canonical on **Net worth** (it drives Cash runway). *(PROPOSED 2026-07-15, page-cash-flow §9-12 — ratify at the walk.)* **[Help]** |
+| **Monthly equivalent** | A recurring amount expressed as a per-month rate (quarterly ÷ 3, annual ÷ 12). A **`once`** item has **no** monthly equivalent — it shows "—", never 0: excluded from the burn is not the same as free. *(PROPOSED 2026-07-15 — ratify at the walk.)* **[Help]** |
+| **Next 12 months** | The total of your recorded **outflows** falling due in the next twelve months, including one-offs. Income is not netted off it. *(PROPOSED 2026-07-15 — ratify at the walk.)* **[Help]** |
+| **Planned cash out** | Recurring expenses **plus** planned contributions, per month — a fuller picture of money leaving your accounts. It **does not change the Cash runway** (a contribution builds wealth; it isn't consumption — D-057). *(PROPOSED 2026-07-15 — ratify at the walk.)* **[Help]** |
+| **Progress (goal)** | How far the goal's **basis** (net worth or liquid assets) has come against its target. A goal with **no basis** has **no progress** — it shows "—", never 0%. A fact against your target, **never a forecast** (Guarantee 3). *(PROPOSED 2026-07-15 — ratify at the walk.)* **[Help]** |
 | **Scenario** | A deterministic "what-if" shock on today's values — a **scenario, never a forecast** (protected copy, D-058). |
 | **Cash flow** | The planning page holding Goals, Obligations, and Contributions (renamed from "Planning", D-056). It sits inside the **Planning** nav group. |
 

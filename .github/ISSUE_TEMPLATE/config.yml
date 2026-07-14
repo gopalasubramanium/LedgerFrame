@@ -1,0 +1,11 @@
+# RATIFIED + SHIPPED 2026-07-14 (release-readiness Gate B10). Links resolve: SECURITY.md shipped at B8.
+blank_issues_enabled: true
+contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/OWNER/REPO/blob/main/SECURITY.md
+    about: >
+      Do NOT open a public issue for a security bug. Email security@ledgerframe.org.
+  - name: 📋 Read this before opening an issue (support boundaries)
+    url: https://github.com/OWNER/REPO/blob/main/.github/SUPPORT.md
+    about: >
+      Single-maintainer project. No SLA. Bugs with a clear reproduction get fixed first.

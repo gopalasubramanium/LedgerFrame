@@ -908,8 +908,14 @@ widget is a linked summary of the canonical page's reader (P-1/D-038). Shipped:
 
 ## NEXT
 
-1. **Release-readiness — `docs/plans/release-readiness.md` DRAFTED 2026-07-14; ⏸ STOP at §2 (NEEDS
-   DECISION), owner one pass.** Audit done (§1, verify-first with file:line). **It does NOT pause the
+1. **Release-readiness — `docs/plans/release-readiness.md`: §2 RESOLVED · GATE A CLOSED · GATE B CLOSED
+   (owner-ratified 2026-07-14). Gates C–F DORMANT — the public release is DEFERRED until the page queue
+   completes (RD-9 AMENDMENT). It is now a set of STANDING GATES, not a countdown. Shipped: `LICENSE`
+   (byte-exact AGPL-3.0, SHA-pinned) · `NOTICE` · `SECURITY.md` · `.github/SUPPORT.md` · README as an
+   install guide · SECURITY-BASELINE DISTRIBUTION posture. Defects fixed along the way: the data-dir
+   divergence, the Guarantee-5 egress gap, the demo-seeds-by-default first boot, `update.sh` migrating
+   without a backup, an unrunnable Node claim. **Outstanding, owner-only: CLA counsel review before the
+   first external merge** (a CLA cannot be applied retroactively).** Audit done (§1, verify-first with file:line). **It does NOT pause the
    page queue** — Policy runs in parallel. Headline findings for the owner: the repo **already declares
    AGPL-3.0-or-later** in `pyproject.toml:7` and an SPDX header on **every** file — but there is **no
    `LICENSE` file**, so RD-2 is a *confirm-or-change*, not a blank page; the **version is incoherent**
@@ -925,18 +931,14 @@ widget is a linked summary of the canonical page's reader (P-1/D-038). Shipped:
    posture is LAN/VPN, never internet — the release framing must state this explicitly). Plan file only;
    **no build**.
 
-2. 🚫 **Legal page — RELEASE-BLOCKING, jumps the queue** (release-readiness **RD-9**, owner 2026-07-14).
-   v2.0 ships the built set + a visible roadmap, so the shipped build must contain **no dead interface
-   links** — and a licensed release wants a licence surface. Blocked on the root `LICENSE` file
-   (RD-2): the page cannot present a licence that does not exist. Via `TEMPLATE-page-build.md`.
-3. 🚫 **Help page — RELEASE-BLOCKING, jumps the queue** (RD-9). The `[Help]` popovers already ship
-   across every built page and point at a page that **does not exist**.
-4. **Planning group — Policy (`docs/plans/page-policy.md`, PLAN ONLY).** *(Was next; deferred behind
-   Legal/Help by RD-9. **Settings is unblocked** — and the write-only rotation keys are REMOVED
-   pre-release per RD-9/D-078, reintroduced only when rotation UI ships.)*
+2. **Planning group — Policy first (`docs/plans/page-policy.md`, PLAN ONLY).**
+   *(RD-9 AMENDMENT, owner 2026-07-14: the public release is **DEFERRED until the full page queue
+   completes**, so Legal/Help no longer jump the queue — they return to their natural late position.
+   **They REMAIN release-blocking whenever release intent is declared**; the deadline moved, the gate
+   did not. The release-readiness checklist is now a set of **STANDING GATES**, not a countdown.)*
 
 Then the existing queue:
-5. **Remaining Planning-group pages** (Policy · Cash flow · Scenarios · Insurance · Estate), **Accounts**
+3. **Remaining Planning-group pages** (Policy · Cash flow · Scenarios · Insurance · Estate), **Accounts**
    (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it, Portfolio
    defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live here),
    **Reports + Reports Pack**, **Settings**, **Help**, **Legal** — each via `TEMPLATE-page-build.md`.

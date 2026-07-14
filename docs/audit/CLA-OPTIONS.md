@@ -1,6 +1,31 @@
 # CLA options — a factual memo (release-readiness Gate B2 / RD-2)
 
-**Status: MEMO. 🛑 STOP — the owner selects, with counsel.**
+**Status: SELECTION MADE (owner, 2026-07-14). The memo below is preserved as the considered options.**
+
+## ✅ OWNER SELECTION — 2026-07-14
+
+| | Selected |
+|---|---|
+| **Instrument** | **Apache-style ICLA + CCLA** (individual *and* corporate — the pair, not the individual alone) |
+| **Enforcement** | **CLA-assistant-style bot**, blocking on PRs |
+| **Gate** | **PRE-FIRST-EXTERNAL-MERGE.** Not a release gate — a *contribution* gate. |
+
+**Recorded verbatim, at the owner's instruction:**
+
+> "Counsel deliberately deferred by the owner; the CLA and this selection MUST receive counsel review
+> before the first external contribution merges. A CLA cannot be applied retroactively."
+
+**What automation may now do:** fill the standard Apache ICLA/CCLA texts with the project and owner
+names. **What it may not do:** author, alter, or ship CLA terms. The filled documents carry a 🛑 **owner
+STOP before shipping** — the RD-2 bar stands, narrowed only to mechanical name-filling.
+
+**Why the "cannot be applied retroactively" line is load-bearing:** the moment an outside patch merges
+under AGPL alone, that patch is *not* covered, and the D-001 dual-licence path closes for it — not by
+anyone's decision, but by default. **The deadline is the first external merge, and it is not moveable.**
+
+---
+
+*(The considered options are preserved below, unchanged.)*
 
 > ⚠ **NO CLA TEXT IS DRAFTED HERE, AND NONE WILL BE.** RD-2 bars automation from drafting or shipping
 > CLA text, and that bar **remains in force** under the 2026-07-14 authorship amendment (which converted
@@ -100,5 +125,9 @@ merged. **It is not a lighter-weight CLA. It is a different instrument that solv
 
 ---
 
-**🛑 STOP — owner + counsel. No CLA text exists in this repository, and none will be authored by
-automation.**
+**Selection made 2026-07-14 (see the top of this file). No CLA text exists in this repository, and none
+will be AUTHORED by automation — the bar narrows only to mechanically filling the standard Apache
+ICLA/CCLA texts with the project and owner names, behind an owner STOP.**
+
+**🛑 COUNSEL REVIEW REMAINS OUTSTANDING, BY THE OWNER'S DELIBERATE CHOICE, AND IT HAS A DEADLINE: THE
+FIRST EXTERNAL CONTRIBUTION MERGE.** A CLA cannot be applied retroactively.

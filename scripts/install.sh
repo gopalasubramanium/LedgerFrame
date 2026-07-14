@@ -191,7 +191,29 @@ fi
 if [[ "$SET_LAN" == false ]]; then
   ask_yn "Allow access from OTHER devices on your network (phone/laptop)? Off = this device only." "n" && ENABLE_LAN=true || ENABLE_LAN=false
 fi
-[[ "$ENABLE_LAN" == true ]] && warn "LAN access is on — set a PIN in Settings right after install so others can't change your data."
+# --- GATE B9 / RD-7 — the set-a-PIN step (owner stance: document-plus-prompt) -------------------
+# The wizard never used to OFFER a PIN. It warned you AFTER you chose LAN, and on a loopback-only box
+# it said nothing at all — so the default install had none, and nobody was ever ASKED. On loopback the
+# convenience is defensible (the ADR says so); the SILENCE was not.
+#
+#   * we ASK, and we RECOMMEND (default yes)
+#   * on loopback you may SKIP — and the warning is PRINTED, not buried
+#   * with LAN on, a PIN is REQUIRED. That is a gate, not a prompt. (The backend enforces it
+#     independently — app/api/deps.py — because a question in a shell script is not a security control.)
+PIN_REQUIRED=false
+SET_A_PIN=false
+SKIP_PIN_WARNING=""
+if [[ "$ENABLE_LAN" == true ]]; then
+  PIN_REQUIRED=true
+  SET_A_PIN=true
+  warn "LAN access is on, so a PIN is REQUIRED — other devices on your network can reach this app."
+elif [[ "$INTERACTIVE" == true ]]; then
+  if ask_yn "Set a PIN now? (recommended — it's the only thing protecting your figures)" "y"; then
+    SET_A_PIN=true
+  else
+    SKIP_PIN_WARNING="No PIN set. This device only (loopback): anyone with access to THIS machine can open LedgerFrame and see your net worth. You can set one later in Settings — and you MUST set one before enabling LAN access."
+  fi
+fi
 # The API binds to localhost unless LAN access was explicitly chosen.
 API_HOST=127.0.0.1
 [[ "$ENABLE_LAN" == true ]] && API_HOST=0.0.0.0
@@ -362,11 +384,39 @@ else
 fi
 ok "Backend installed."
 
+# --- GATE B9 — apply the PIN chosen in the wizard --------------------------------------------------
+if [[ "$SET_A_PIN" == true && "$DRY_RUN" == false ]]; then
+  step "Set your PIN"
+  PIN_OK=false
+  for _ in 1 2 3; do
+    read -r -s -p "  Choose a PIN (at least 6 digits): " PIN1; echo
+    read -r -s -p "  Confirm it: " PIN2; echo
+    if [[ "$PIN1" != "$PIN2" ]]; then
+      warn "They don't match. Try again."
+      continue
+    fi
+    # stdin, never argv: a PIN on a command line is a PIN in `ps` and in the shell history.
+    if printf '%s' "$PIN1" | owner_sh "cd '$REPO_DIR' && { [ -f .venv/bin/activate ] && . .venv/bin/activate; }; python scripts/set_pin.py"; then
+      PIN_OK=true; ok "PIN set."
+      break
+    fi
+    warn "That PIN was refused (it must be at least 6 digits)."
+  done
+  unset PIN1 PIN2
+  if [[ "$PIN_OK" == false ]]; then
+    if [[ "$PIN_REQUIRED" == true ]]; then
+      die "LAN access needs a PIN and none was set. Re-run the installer, or install without --enable-lan."
+    fi
+    SKIP_PIN_WARNING="No PIN was set. You can set one later in Settings — and you MUST before enabling LAN access."
+  fi
+fi
+[[ -n "$SKIP_PIN_WARNING" ]] && warn "$SKIP_PIN_WARNING"
+
 # =============================================================================
 step "Prepare the dashboard (frontend)"
 BUILT=false
 BUILD_ATTEMPTED=false
-if have npm && [[ "${NODE_MAJOR:-0}" -ge 18 || -z "${NODE_MAJOR:-}" ]]; then
+if have npm && [[ "${NODE_MAJOR:-0}" -ge "$NODE_MIN_MAJOR" || -z "${NODE_MAJOR:-}" ]]; then
   BUILD_ATTEMPTED=true
   info "Building the latest dashboard from source…"
   if ( cd frontend && (npm ci --no-audit --no-fund >/dev/null 2>&1 || npm install >/dev/null 2>&1) && npm run build >/dev/null 2>&1 ); then

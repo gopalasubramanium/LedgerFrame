@@ -1,6 +1,7 @@
-<!-- PROPOSED (release-readiness Gate B5) — 🛑 owner ratifies before release.
-     Every claim below is true of THIS repo as it stands. Nothing aspirational.
-     Where something is not built yet, it says so. -->
+<!-- RATIFIED 2026-07-14 (release-readiness Gate B5, owner-signed).
+     Every claim here is true of THIS repo as it stands. Nothing aspirational.
+     Where something is not built yet, it says so. The "Tested on" table lists only
+     machines the suites have actually run clean on — a row there is a promise. -->
 
 # LedgerFrame
 
@@ -12,9 +13,23 @@ and estate readiness.
 **It reports; it does not act.** It never executes trades, never advises, and never fabricates a
 number. If it cannot get a figure, it shows an em dash and tells you why.
 
-**Your data stays on your machine.** No cloud account, no telemetry, no sign-up. With **no-egress** on,
-the device makes **zero** outbound network calls — enforced at the one place an HTTP client can be
-created, not by convention.
+**Your data lives on your machine.** No cloud account, no telemetry, no sign-up. Nothing is stored
+anywhere but your own disk.
+
+*What LEAVES the device is a separate question, and it is yours to answer.* Prices, news and AI each
+require a provider you choose and configure — and a remote AI provider, by definition, sends figures
+off-device (the app says so at the point you enable one). **With no-egress on, none of that happens:
+the device makes ZERO outbound calls.**
+
+---
+
+## Posture: yours, not ours
+
+**Privacy, network egress, and exposure are your choice — the platform imposes no posture of its own.**
+Its job is to honour the posture you choose, faithfully. Some choices are enforced **structurally and
+absolutely**: **no-egress means ZERO outbound calls**, enforced at a single choke point a provider
+*physically cannot bypass*. Others are delivered **best-effort, and say so plainly.** You are never left
+guessing which kind you are relying on.
 
 ---
 
@@ -58,12 +73,13 @@ default, and you can see exactly what it would do without doing it:
 
 ### Tested on
 
-<!-- 🛑 OWNER FILLS THIS — see docs/audit/TESTED-ON.template.md.
-     A row here is a promise. Do not add one that has not actually run the suites clean. -->
+| OS | Arch | Python | Node | Suites clean |
+|---|---|---|---|---|
+| Zorin OS 18.1 (Ubuntu-based) | x86-64 | 3.12.3 | 24.14.0 | 2026-07-14 |
 
-**Not yet filled in.** It will list only the operating systems and architectures on which the full test
-suites have actually been run clean. We would rather say *"we don't know"* than name a platform we have
-not tried.
+**That is the whole list, and it is the whole claim.** Other platforms may well work — including other
+Ubuntu derivatives — but **we have not run the suites on them, so we do not say that we have.** If you
+run it somewhere else successfully, tell us and it will be added once it has been verified.
 
 ---
 

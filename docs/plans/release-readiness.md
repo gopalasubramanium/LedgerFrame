@@ -1,7 +1,24 @@
 # release-readiness.md — defining the finish line
 
-**Status: §2 RESOLVED (owner, one pass, 2026-07-14). §3 checklist DERIVED below — NOT executed.
-STOP for the owner's review of the tracking matrix.**
+**Status: GATE A CLOSED · GATE B CLOSED (owner-ratified 2026-07-14) · GATES C–F DORMANT.**
+
+> ## ⚠ RD-9 AMENDMENT — TIMING (owner, 2026-07-14). **The public release is DEFERRED.**
+>
+> **v2.0 does not ship until the full page queue completes.** This checklist is therefore **NOT an
+> active countdown** — it becomes a set of **STANDING GATES**.
+>
+> - **Gates C–F remain derived and DORMANT.** No page is started from this plan.
+> - **E2 (secret/PII scan) and E4 (licence adjudication) re-run against the FINAL set at actual release
+>   time** — not now. A scan of something other than what ships is not a scan, and a licence ruling can
+>   go stale.
+> - **D3 tags `v2.0.0` only at that point.**
+> - **Legal and Help REMAIN release-blocking** whenever release intent is declared. Deferring the
+>   release moves the deadline; it does not remove the gate.
+>
+> **What this changes about Gate A and B:** nothing. Everything in them was a **defect fix or a true
+> statement**, and neither expires because the release date moved. *(The original RD-9 resolution — v2.0
+> = the built set + a visible roadmap — is preserved below; the SCOPE ruling stands, only the TIMING is
+> amended.)*
 Two **decision-independent defects** were fixed immediately (Part B — see §2A): the **data-dir
 divergence** and the **Guarantee-5 egress gap**. Nothing else in §3 has been started.
 
@@ -336,24 +353,24 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | A7 | **✅ DONE** — Node pinned (`engines` + `.nvmrc`), and a **false claim removed** [per RD-4] | 🤖 | `install.sh` told users **"Node 18+"** — **already false**: vite's floor is `^20.19 \|\| >=22.12`. Following our own instructions would have left them unable to build. Floor now quoted **from vite itself** and pinned by test. **3 RED** |
 | A8 | **✅ DONE — CLEAN (zero UNADJUDICATED findings)** [per RD-2] | 🤖 audit → 🧑 **OWNER** rules | `scripts/license_audit.py` walked **381 packages** (§1-1f had only ever read the ~16 **direct** ones). **"Clean" means ZERO UNADJUDICATED FINDINGS — never "zero findings":** the graph still contains copyleft, and every instance of it now carries a **recorded owner ruling** in `scripts/license-adjudications.toml` — **adjudication is an artifact, not a conversation.** Owner rulings (2026-07-14, all ACCEPT): **`certifi` MPL-2.0 (RUNTIME)** — unmodified dependency, file-level weak copyleft, §3.3 GPL-family Secondary-Licenses compatibility, not vendored, a source release does not redistribute it; *operational alignment, **not legal counsel** — flagged for optional counsel confirmation alongside the CLA*. **`pathspec` MPL-2.0, `argparse` Python-2.0, `caniuse-lite` CC-BY-4.0** — **dev-only**, not part of the distributed product. **70 platform-conditional** packages (declared-but-not-installed) across **21 ruled families**; upstream licences **read from the registry, not assumed** — one of them (`lightningcss`, MPL-2.0) is a real finding inside the category, which is why it is enumerated rather than waved through. **Stale rulings are findings too.** **Fail-first, three states proven:** RED with no rulings · GREEN with them · **RED again when a ruling's `licence` is mutated** — a rubber stamp that outlives what it stamped is worse than no stamp. **E4 re-runs the SAME mechanism against the final public set.** |
 
-### GATE B — Documentation synchronisation *(the code is now true; make the words true)*
+### GATE B — ✅ **CLOSED 2026-07-14** (owner-ratified) — documentation synchronisation
 
 | # | Item | Who | Notes |
 |---|---|---|---|
-| B1 | **✅ DRAFTED — 🛑 owner sign-off** — `LICENSE` at the root: **BYTE-EXACT canonical AGPL-3.0** [per RD-2] | 🤖 file → 🧑 **OWNER** signs | Text fetched from **gnu.org** and cross-checked **word-for-word against SPDX** (they differ only in whitespace + `http`→`https`); **SHA-256 pinned by test** — edit a single space and CI fails. **Headers and file agree, drift in EITHER direction** (test). ⚠ **LICENSE kept PRISTINE**, so the copyright placeholder `[OWNER NAME] [YEAR]` lives in **NOTICE** — see the STOP note. |
-| B2 | **✅ MEMO ONLY — 🛑 owner + counsel** — `docs/audit/CLA-OPTIONS.md` [per RD-2] | 🧑 **OWNER-AUTHORED (NOT converted)** | **NO CLA TEXT DRAFTED, AND NONE WILL BE.** The memo covers: individual **and entity** CLAs (an individual-only CLA is a common gap — employers usually own work done on their time); what a CLA grants (the **relicensing clause is the entire point** for RD-2/D-001); **DCO explicitly NOT a CLA** — provenance only, **no relicensing grant, so it does NOT serve the dual-licence intent**; bot-enforced vs manual hookup. **Nothing to discard — no CLA text was ever produced.** |
-| B3 | **✅ DONE** — frontend `license` field [per RD-2] | 🤖 | Was **absent** (`private: true`, no licence). Now `AGPL-3.0-or-later`, agreeing with the root LICENSE. |
-| B4 | **✅ DRAFTED — 🛑 owner ratifies** — `NOTICE`, **GENERATED from A8's adjudicated output** [per RD-2] | 🤖 → 🛑 | `python scripts/license_audit.py --notice`. Lists the **41 RUNTIME** dependencies (a NOTICE is about what a user *receives*; 340 dev tools would bury that). Adjudicated licences are **marked** so a reader sees the copyleft was **decided on, not overlooked**. Carries the copyright placeholder. |
-| B5 | **✅ DRAFTED — 🛑 owner ratifies** — README rewritten as a **stranger's install guide** [per RD-1a] | 🤖 **draft-PROPOSED** (amended) → 🛑 | Covers `install.sh`, the **single data-dir answer** (A1), backup/restore/move-my-data, the **forward-only + backup-first** upgrade policy (A6), the **Node pin** (A7), and the **empty-by-default first boot** (A4). **Every claim is true of the current repo**; what is not built says so. ⚠ It links to `SECURITY.md`, which **does not exist until B8 ships** — see the STOP note. |
-| B6 | **✅ TEMPLATE ONLY — 🛑 owner fills + signs** — `docs/audit/TESTED-ON.template.md` [per RD-4] | 🧑 **OWNER-AUTHORED (NOT converted)** | **Automation deliberately left the table EMPTY.** It could have written a plausible platform list in a second, and **every row would have been a claim nobody had checked**. Defines what \"clean\" means per row, and bars any CI-backed wording until CI exists. |
-| B7 | 🚫🛑 **OPEN — owner only**: create **security@ledgerframe.org**, send a test mail, **CONFIRM RECEIPT** [per RD-7] | 🧑 **OWNER** | **B8 is blocked behind this.** *An unmonitored disclosure inbox is the same defect class as an untested \"tested-on\" claim.* |
-| B8 | **✅ DRAFTED — 🛑 BLOCKED behind B7** — `docs/audit/SECURITY.md.PROPOSED` [per RD-7] | 🤖 **draft-PROPOSED** (amended) → 🛑 | **Deliberately NOT at the repo root and NOT named `SECURITY.md`** — publishing it would make a live public promise that the address is monitored. Contains: the address, **no-SLA stated plainly**, the scope note (several \"vulnerabilities\" are documented design decisions — *restating one is not a finding; showing it is worse than documented very much is*), and the **Guarantee-5 outbound-call inventory** pointer. |
-| B9 | **✅ DRAFTED — 🛑 owner ratifies the posture** — SECURITY-BASELINE **DISTRIBUTION column** | 🤖 → 🛑 | All 9 accepted gaps restated for the **stranger** case. The framing: *the gap does not change — **who carries the risk** does.* **Gap 7 carries the owner's stance (DOCUMENT-PLUS-PROMPT):** loopback default documented · wizard gains an **encouraged, skippable** set-a-PIN step · **LAN keeps the HARD PIN requirement**. ⚠ **The wizard prompt is a CODE change** — built fail-first **after** ratification, not now. |
-| B10 | **✅ DRAFTED — 🛑 owner ratifies** — `docs/audit/ISSUES-DISCLAIMER.PROPOSED.md` [per RD-7] | 🤖 **draft-PROPOSED** (amended) → 🛑 | Long form (pinned issue) + short form (issue-template header). States plainly: **no SLA**, not every issue actioned — *and you will be told, not left waiting*. Routes **wrong-number bugs to the top** (the product's central promise) and security **away from the tracker**. ⚠ Links to `SECURITY.md` — **do not publish before B8**, or it sends someone holding a vulnerability to a 404. |
-| B11 | **✅ DONE** — ROADMAP: R-24 revisit-at-packaged note [per RD-3] | 🤖 | Applied with the RD recording. **Verified present**, not assumed. |
-| B12 | **✅ DONE** — CURRENT.md NEXT reordered: **Legal · Help · residual Planning** [per RD-9] | 🤖 | Applied with the RD recording. **Verified present**, not assumed. |
+| B1 | **✅ SIGNED 2026-07-14** — `LICENSE`, byte-exact canonical AGPL-3.0 (option **a**) | 🧑 owner signed | Fetched from gnu.org, cross-checked word-for-word against SPDX. **SHA-256 pinned by test.** Headers ↔ file agree, drift either way fails. **Copyright lives in NOTICE** — LICENSE stays pristine. |
+| B2 | **✅ SELECTED 2026-07-14** — **Apache-style ICLA + CCLA**, **CLA-assistant-style bot**, gate = **PRE-FIRST-EXTERNAL-MERGE** | 🧑 owner | **No CLA text authored by automation** (bar stands; narrowed only to mechanical name-filling behind an owner STOP). ⚠ **Recorded verbatim:** *"Counsel deliberately deferred by the owner; the CLA and this selection MUST receive counsel review before the first external contribution merges. A CLA cannot be applied retroactively."* **This is the one outstanding item, and its deadline is not moveable.** |
+| B3 | **✅ DONE** — frontend `license` = `AGPL-3.0-or-later` | 🤖 | Was absent. |
+| B4 | **✅ RATIFIED** — `NOTICE`, generated from A8's adjudicated output; copyright **© 2026 Gopala Subramanium** | 🤖 → 🛑 signed | 41 runtime deps; adjudicated licences marked. Copyright pinned in the generator so a regenerate cannot drop it. |
+| B5 | **✅ SIGNED 2026-07-14** — README as a stranger's install guide (+ Amendment 2) | 🤖 draft → 🛑 signed | ⚠ **Amendment 2 surfaced a CONFLICT, reported not softened:** the README claimed *"Your data stays on your machine"* unconditionally, while the app's own AI provider warns *"sends data off-device"*. **The overclaim was corrected; Guarantee 5's absolute language was NOT touched.** |
+| B6 | **✅ ONE ROW, owner-supplied 2026-07-14** — **Zorin OS 18.1 (Ubuntu-based) · x86-64 · Py 3.12.3 · Node 24.14.0** | 🧑 owner | **Automation did not enumerate platforms and refused to.** Recorded as *what the machine is*, not rounded up to "Ubuntu 24.04". Standing rule: a row is added only on a personally verified clean run. |
+| B7 | **✅ CLOSED 2026-07-14** — security@ledgerframe.org live; owner sent **and received** the verification mail | 🧑 owner | This is what unblocked B8 and B10. |
+| B8 | **✅ SHIPPED 2026-07-14** — `/SECURITY.md` (+ Amendment 2) | 🤖 draft → 🛑 signed | Could not ship before B7. README's link **resolves in the same commit**. |
+| B9 | **✅ RATIFIED 2026-07-14** — SECURITY-BASELINE **DISTRIBUTION** section (+ Amendment 2 intro) | 🛑 signed | **AUTHORIZED CODE CHANGE BUILT:** `install.sh` gains an **encouraged, skippable** set-a-PIN step. **7 tests RED first.** Skip on loopback prints the documented warning; **LAN keeps the HARD PIN gate** (backend `deps.py` tests untouched, still green — a question in a shell script is not a security control). |
+| B10 | **✅ SHIPPED 2026-07-14** — `.github/SUPPORT.md` + issue-template config | 🤖 draft → 🛑 signed | Links resolve now that B8 has shipped. |
+| B11 | **✅ DONE** — ROADMAP R-24 revisit-at-packaged note | 🤖 | Verified present. |
+| B12 | **✅ DONE (Amendment 1)** — CURRENT.md NEXT **reverted to natural order**: Policy · Cash flow · … | 🤖 | Legal/Help return to their natural late position and **remain release-blocking whenever release intent is declared**. |
 
-### GATE C — Legal + Help pages *(🚫 release-blocking — they jump the queue)*
+### GATE C — ⏸ **DORMANT** (RD-9 AMENDMENT) — Legal + Help pages *(🚫 still release-blocking whenever release intent is declared; they no longer jump the queue)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -361,7 +378,7 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | C2 | 🚫 **Help page** — same [per RD-9] | 🤖 build → 🛑 **OWNER** ratifies all copy | The `[Help]` popovers already ship across built pages and point at a page that **does not exist** |
 | C3 | Nav: the remaining unbuilt pages are **hidden or honestly labelled** — **no dead links in the shipped build** [per RD-9] | 🤖 | They render `NotBuilt` today. Fail-first: a test that **no nav entry in the release build leads to `NotBuilt`** |
 
-### GATE D — Identity & versioning *(only once the shipped surface is final)*
+### ⏸ DORMANT — GATE D — Identity & versioning *(only once the shipped surface is final)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -369,7 +386,7 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | D2 | 🛑 **`CHANGELOG.md` (Keep-a-Changelog); the inaugural entry MUST declare the version RESET from the inherited v1 lineage** [per RD-5] | 🧑 **OWNER** validates | *Historical honesty — not a silent renumber.* |
 | D3 | **Tag `v2.0.0`** — **at the moment of public release, not before** [per RD-5] | 🤖 | |
 
-### GATE E — Public hygiene *(runs LAST, against the ACTUAL final public set)*
+### ⏸ DORMANT — GATE E — Public hygiene *(runs LAST, against the ACTUAL final public set)*
 
 | # | Item | Who | Notes |
 |---|---|---|---|
@@ -378,7 +395,7 @@ does not pass without explicit owner sign-off. 🚫 **RELEASE-BLOCKER**.
 | E3 | 🛑 **Publication data cleaning** — anything E2 surfaces | 🧑 **OWNER** | Includes the standing note that publishing the repo publishes the **author email** in every commit (§1-5d) — **irreversible once mirrored** |
 | E4 | Re-run **the SAME adjudication mechanism** against the FINAL public set — **clean = ZERO UNADJUDICATED FINDINGS** (never "zero findings") [per RD-2] | 🤖 → 🧑 **OWNER** rules anything new | Not a re-read of the Gate-A result: the final set may differ, and any **new** finding — or any ruling that has gone **stale** — blocks. **No public claim ships until it is clean by that definition.** |
 
-### GATE F — Public ingestion
+### ⏸ DORMANT — GATE F — Public ingestion
 
 | # | Item | Who | Notes |
 |---|---|---|---|

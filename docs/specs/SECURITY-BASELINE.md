@@ -354,7 +354,22 @@ because the final set may differ and a ruling may have gone stale in between.
 
 ## DISTRIBUTION POSTURE — the same 14 gaps, restated for STRANGERS
 
-**PROPOSED (release-readiness Gate B9 / RD-7, 2026-07-14). 🛑 Owner ratifies this posture document.**
+**RATIFIED 2026-07-14 (release-readiness Gate B9 / RD-7) — owner stance: DOCUMENT-PLUS-PROMPT.**
+
+### The governing principle
+
+**Privacy, network egress, and exposure are the USER's choice — the platform imposes no posture of its
+own.** Its job is to honour the chosen posture faithfully:
+
+- **Some choices are enforced STRUCTURALLY AND ABSOLUTELY.** **No-egress means ZERO outbound calls**,
+  enforced at a **single choke point a provider physically cannot bypass** (see *Guarantee 5 — the
+  outbound-call inventory*). **This is not weakened by anything below**, and it is not a best-effort
+  control.
+- **Others are delivered BEST-EFFORT, and say so plainly.** Every row in the table below is one of
+  those, and the column exists so that nobody has to guess which kind they are relying on.
+
+**That distinction is the whole point of this section.** A user who thinks a best-effort control is
+absolute has been misled by us, even if every individual sentence was true.
 
 **The table above is a PERSONAL-deployment document.** Every "Accept (ADR)" in it is rational for *one
 person, on their own loopback, behind their own VPN*. **None of those rationales stop being true when a

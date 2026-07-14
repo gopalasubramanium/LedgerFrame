@@ -1,19 +1,22 @@
-<!-- ============================================================================
-     PROPOSED — release-readiness Gate B8. 🛑 NOT SHIPPED.
-
-     This file is deliberately NOT at the repo root, and it is deliberately not
-     called SECURITY.md. Publishing it would make a live, public promise that
-     security@ledgerframe.org is monitored — and that has not been verified yet.
-
-     IT IS BLOCKED BEHIND B7: the mailbox must be created, a test mail sent, and
-     RECEIPT CONFIRMED BY THE OWNER. Only then does this move to /SECURITY.md.
-
-     The owner's own framing, and it is right: an unmonitored disclosure inbox
-     is the same defect class as an untested "tested-on" claim. It tells someone
-     holding a vulnerability that a door exists, and the door goes nowhere.
-     ============================================================================ -->
+<!-- RATIFIED + SHIPPED 2026-07-14 (release-readiness Gate B8).
+     B7 CLOSED: security@ledgerframe.org is live; the owner sent and received the
+     verification mail on 2026-07-14. This file could not ship before that — an
+     unmonitored disclosure inbox is the same defect class as an untested
+     "tested-on" claim: it tells someone holding a vulnerability that a door
+     exists, and the door goes nowhere. -->
 
 # Security Policy
+
+## Posture: yours, not ours
+
+**Privacy, network egress, and exposure are the user's choice — the platform imposes no posture of its
+own.** Its job is to honour the chosen posture faithfully. Some choices are enforced **structurally and
+absolutely**: **no-egress means ZERO outbound calls**, enforced at a single choke point a provider
+*physically cannot bypass*. Others are delivered **best-effort, and say so plainly.**
+
+This matters for what you should report. **A best-effort control behaving best-effort is not a bug.
+An ABSOLUTE control that turns out not to be absolute is the most serious bug this project can have** —
+and Guarantee 5 is absolute whenever it is enabled.
 
 ## Reporting a vulnerability
 
@@ -69,6 +72,3 @@ is maintained in
 ## Supported versions
 
 Only the **latest release** receives security fixes. There is no long-term-support branch.
-
-<!-- 🛑 OWNER RATIFIES THIS COPY. It does not ship until:
-       B7 — the mailbox exists, a test mail has been sent, and receipt is CONFIRMED by the owner. -->

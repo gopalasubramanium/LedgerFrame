@@ -1,10 +1,16 @@
 # "Tested on" — TEMPLATE (release-readiness Gate B6 / RD-4)
 
-**Status: TEMPLATE. 🛑 The OWNER fills this in and signs it. Automation must not.**
+**Status: ONE ROW RECORDED (owner, 2026-07-14). The rule below is STANDING — it governs every future row.**
 
-> ⚠ **AUTOMATION HAS DELIBERATELY LEFT THIS EMPTY.** Not because it could not guess — it could have
-> written "Debian 12, Ubuntu 24.04, Raspberry Pi OS, x86-64, arm64" in a second, and every row would
-> have *looked* right. **Every one of them would have been a claim nobody had checked.**
+⚠ **The row that is here is the row that was actually run.** The machine is **Zorin OS 18.1**, an
+Ubuntu derivative — it is recorded as *what it is*, not rounded up to "Ubuntu 24.04", because a row here
+is a promise about a specific platform. Automation offered to write a plausible list; the owner supplied
+the one true entry instead.
+
+> ⚠ **AUTOMATION DID NOT WRITE THE TABLE, AND MUST NOT.** It could have produced "Debian 12, Ubuntu
+> 24.04, Raspberry Pi OS, x86-64, arm64" in a second, and every row would have *looked* right.
+> **Every one of them would have been a claim nobody had checked.** The single row below came from the
+> owner, about a machine the suites actually ran clean on.
 >
 > **A "tested on" row is a promise.** RD-4 asks for the **narrowest TRUE claim**, and a platform list
 > the project cannot back is the same defect class as a fabricated figure: a number we never ran,
@@ -36,8 +42,7 @@ user one question. Putting it in wrongly costs them a broken install and their t
 
 | OS + version | Architecture | Python | Node | Suites clean (date) | Verified by |
 |---|---|---|---|---|---|
-| [OS AND VERSION] | [x86-64 / arm64 / …] | [3.x] | [20.19+ / 22.12+ / …] | [YYYY-MM-DD] | [OWNER] |
-| | | | | | |
+| Zorin OS 18.1 (Ubuntu-based) | x86-64 | 3.12.3 | 24.14.0 | 2026-07-14 | owner |
 | | | | | | |
 
 ---

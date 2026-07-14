@@ -318,9 +318,40 @@ Review** — §9-11 rules whether this page may even *display* it, and it may **
 
 ---
 
-## 9. NEEDS DECISION
+## 9. NEEDS DECISION — ✅ **RESOLVED, OWNER ONE-PASS 2026-07-15**
 
-*Everything the specs under-specify. **I resolved none.** Build starts on **none** of these while open.*
+**All 15 items are ruled. Build is unblocked through Phase 0a — then it STOPS at the geometry gate.**
+Rulings first; the **original questions, options and evidence are PRESERVED VERBATIM below** — a resolved
+question keeps its reasoning, or the next reader inherits a verdict with no argument.
+
+**Matched by NUMBER AND TOPIC before recording — all 15 agree; no mismatch, no STOP.**
+
+| # | Topic | ✅ RULING (owner, 2026-07-15) |
+|---|-------|------------------------------|
+| **9-1** | The two §0 D-057 invariants are untested | **PIN BOTH — fail-first, Phase 0, BEFORE any UI touches these services.** (a) adding a contribution leaves **`runway_months` unchanged**; (b) a **`once`** obligation contributes **0** to `net_monthly_burn` **but still appears** in the 12-month total. **Each seen RED against a deliberately broken implementation.** |
+| **9-2** | Editor shape | **PER-ROW CRUD.** One `Dialog` per record; `RowMenu` → Edit / Delete. **No bulk replace, no contract change.** Policy's **grid / validation / scroll PATTERNS carry over; its SHAPE does not.** |
+| **9-3** | Runway summary | **SHOWN** — the **served `runway_report`, rendered verbatim**, with a **D-100 canonical-home link to Net worth**. Pinned by a **live identity test**: this page's figures **==** Net worth's, from the **same reader**. |
+| **9-4** | Per-row monthly-equivalent | **§3b RESHAPE — serve `monthly_equivalent` (+ `_display`) per row** on `/obligations` and `/contributions`. **Factors applied SERVER-SIDE.** Fail-first. |
+| **9-5** | D-105 scope | **§3b — `*_display` served across ALL FOUR readers** (`format_money_display` already exists), **rendered verbatim**. |
+| **9-6** | Validation copy + unvalidated currency | **Phase 0, AT THE SOURCE:** plain-language `detail` (**no raw tuples**) **+ `currency` validated ∈ the master → 400** on **all three** writers — **the A9 defect class, closed here too.** Strings **PROPOSED → walk.** **App-wide grep** for remaining raw-tuple details. |
+| **9-7** | Deletion | **(a) `ConfirmDialog` (destructive)**, ambient PIN session, **no second prompt**. **Soft-delete + undo DECLINED for these resources — rationale recorded: they are trivially re-creatable rows. Undo parity tracks RISK (Holdings' transaction-bearing records), not affordance-for-its-own-sake.** **(b) §3b: `DELETE` of a missing id → honest 404** (200-ok-for-nothing is **RED today**). **(c) Goal delete WARNS with the LIVE contribution count** — *"N contributions point at this goal — they keep their records but lose the link"* (copy **PROPOSED**); an **orphaned `target_goal_id` renders "—", never a guessed route.** |
+| **9-8** | Three empty states | **Per-list `EmptyState`** with a **reason + a way forward** (copy **PROPOSED → walk**). **NO first-run checklist step.** |
+| **9-9** | Contract docs | **Nine `present` rows** in `API-CONTRACT.md`. **Doc-only.** |
+| **9-10** | ⚠ **GEOMETRY RULING** | **THREE STACKED SECTIONS — Obligations · Contributions · Goals — + the 9-3 runway summary card.** Each table **internally capped/scrolled** (`--table-max-h`); **ONE page scroll region.** **GATE: Phase 0a ships a STATIC layout specimen at `/kitchen-sink`** (real-shaped data **incl. long lists**, **inside the real shell**, **both themes**). **STOP after Phase 0a for the owner's screenshot ratification BEFORE Phase 1 assembly.** |
+| **9-11** | Goal-soon + runway status | **`days_to_target` displayed as a served FACT** (*"in N days"*). **NO "soon" flag here** — Review owns the threshold; **no Family-A constant is shown or editable on this page.** **The runway `StatusChip` MAY use `positive`/`negative`** — **ratified as the FIRST sanctioned use** (a cash fact implies no trade). **Policy's bar on those tones stands unchanged.** |
+| **9-12** | GLOSSARY gaps | **Add: Net monthly burn · Monthly equivalent · Next 12 months · Planned cash out · Progress (goal).** **`docs/specs/GLOSSARY.md` FIRST**, then `mocks/glossary.ts` (parity guard). **PROPOSED → walk.** |
+| **9-13** | Icon+label button (3rd occurrence) | **EXTRACT IT** — the **§12po3-1 trigger** fires. A `ui/` component + **DESIGN-SYSTEM amendment**, with **Review AND Policy MIGRATED onto it**, kitchen-sink specimen. **Ratify at walk.** |
+| **9-14** | Export | **DECLINED** — the **Reports Pack** (D-061) is the home. |
+| **9-15** | Entity scope | **HOUSEHOLD-ONLY by construction; no param added.** Per-entity planning → **ROADMAP** one-liner. |
+
+**Execution order (owner):** **Phase 0** (9-1 **first**, then 9-4 · 9-5 · 9-6 · 9-7b · 9-9) → **Phase 0a**
+(9-13 extraction + migrations; the 9-10 static specimen) → **STOP for the geometry ratification.**
+**Phases 1–3a proceed only after it.**
+
+---
+
+### The original questions, options and evidence — PRESERVED
+
 
 | # | Item | Why it blocks / what's needed | Proposed resolution (for owner to approve) |
 |---|------|-------------------------------|---------------------------------------------|

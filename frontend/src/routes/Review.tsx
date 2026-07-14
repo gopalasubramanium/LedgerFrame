@@ -14,8 +14,9 @@ import {
   TrendStat,
   useToast,
   SummaryLink,
+  StatusChip,
 } from "../components/ui";
-import type { Column } from "../components/ui";
+import type { Column, StatusChipTone } from "../components/ui";
 import { CircleCheck } from "../icons";
 import { formatMoney, formatSignedMoney, signOf } from "../format/number";
 import { relativeDays } from "../format/time";
@@ -49,7 +50,7 @@ const SEV_ORDER: Record<string, number> = { review: 0, info: 1 };
 // §12rv1-4 (ND-4 REVERSAL) — severity is SEMANTIC: map the served value to a ratified tone. "Review"
 // → the attention/warning token; "Info" → neutral. Mapped by served value (case-normalised) with a
 // NEUTRAL fallback for any unknown severity — no hardcoded severity list, no invented colour.
-const SEV_TONE: Record<string, "attention" | "neutral"> = { review: "attention", info: "neutral" };
+const SEV_TONE: Record<string, StatusChipTone> = { review: "attention", info: "neutral" };
 const sevKey = (s: string) => s.toLowerCase();
 
 export function Review() {
@@ -103,7 +104,7 @@ export function Review() {
       label: "Severity",
       // §12rv1-4 — served value verbatim (D-005) inside a chip carrying its semantic tone class.
       render: (r) => (
-        <span className={`rv__chip rv__chip--${SEV_TONE[sevKey(r.severity)] ?? "neutral"}`}>{r.severity}</span>
+        <StatusChip label={r.severity} tone={SEV_TONE[sevKey(r.severity)] ?? "neutral"} />
       ),
     },
     { key: "title", label: "Item", render: (r) => r.title },

@@ -39,6 +39,7 @@ import {
   Skeleton,
   StaleBanner,
   StalenessChip,
+  StatusChip,
   TextInput,
   TickerStrip,
   TopBar,
@@ -365,6 +366,36 @@ export function KitchenSink() {
             </Specimen>
             <Specimen label="StalenessChip · fresh (renders nothing)">
               <StalenessChip isStale={false} asOf={PROV_FRESH.asOf} />
+            </Specimen>
+          </div>
+
+          {/* StatusChip (§5.3 AMENDMENT — PROPOSED, page-policy §9-15; ratify at the walk).
+              THE status/severity chip, extracted at the 3rd recurrence of the same page-local
+              pattern (ph__chip · rv__chip · the policy band chip) per the centralization rule.
+              Both page-local copies are MIGRATED onto it — none remains. */}
+          <div className="ks__row">
+            <Specimen label="StatusChip · neutral">
+              <StatusChip label="In band" />
+            </Specimen>
+            <Specimen label="StatusChip · attention (amber)">
+              <StatusChip label="Over" tone="attention" />
+            </Specimen>
+            <Specimen label="StatusChip · attention · under (SAME tone as over)">
+              <StatusChip label="Under" tone="attention" />
+            </Specimen>
+            <Specimen label="StatusChip · with count">
+              <StatusChip label="Delayed" tone="attention" count={3} />
+            </Specimen>
+          </div>
+          <div className="ks__row">
+            <Specimen label="StatusChip · positive (Pricing Health only — NOT Policy)">
+              <StatusChip label="Fresh" tone="positive" />
+            </Specimen>
+            <Specimen label="StatusChip · negative (Pricing Health only — NOT Policy)">
+              <StatusChip label="Unavailable" tone="negative" />
+            </Specimen>
+            <Specimen label="StatusChip · long label (must not overflow its box)">
+              <StatusChip label="Not sector-classified (non-equity)" tone="neutral" />
             </Specimen>
           </div>
         </div>

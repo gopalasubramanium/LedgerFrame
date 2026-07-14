@@ -72,10 +72,10 @@ test("attention items render a SEMANTIC severity chip (served verbatim + tone cl
   expect(within(table).getAllByText("Review").length).toBeGreaterThan(0);
   expect(within(table).getAllByText("Info").length).toBeGreaterThan(0);
   // §12rv1-4 — the chip carries a semantic tone class: Review → attention, Info → neutral.
-  const reviewChip = within(table).getAllByText("Review")[0].closest(".rv__chip") as HTMLElement;
-  expect(reviewChip.className).toContain("rv__chip--attention");
-  const infoChip = within(table).getAllByText("Info")[0].closest(".rv__chip") as HTMLElement;
-  expect(infoChip.className).toContain("rv__chip--neutral");
+  const reviewChip = within(table).getAllByText("Review")[0].closest(".lf-statuschip") as HTMLElement;
+  expect(reviewChip.className).toContain("lf-statuschip--attention");
+  const infoChip = within(table).getAllByText("Info")[0].closest(".lf-statuschip") as HTMLElement;
+  expect(infoChip.className).toContain("lf-statuschip--neutral");
   // review-first ordering: the first body row is a 'Review' item, not the served-first 'Info' one.
   const firstRow = table.querySelector("tbody tr") as HTMLElement;
   expect(within(firstRow).getByText("Review")).toBeTruthy();

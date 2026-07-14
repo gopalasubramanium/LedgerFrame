@@ -63,3 +63,32 @@
 .lf-stale__glyph {
   font-weight: var(--weight-semibold);
 }
+
+/* StatusChip — THE status/severity chip (DESIGN-SYSTEM §5.3 amendment, page-policy §9-15).
+   Extracted at the 3rd recurrence (ph__chip · rv__chip · the policy band chip); both page-local
+   copies are migrated onto it. The LABEL always carries the meaning — colour is never the sole
+   signal (WCAG 1.4.1). Tones are semantic tokens only (DESIGN-SYSTEM §1: semantic-only colour). */
+.lf-statuschip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+/* Neutral = "this is a fact, not a flag". */
+.lf-statuschip--neutral  { color: var(--text-tertiary); }
+/* Attention = "this needs a look" — amber. On Policy this carries BOTH `over` AND `under`: an
+   out-of-band bucket needs a look in either direction, and gain/loss colouring would VALUE the gap
+   ("over = bad"), which is the nearest a colour can come to implying a trade (D-055, §9-16). */
+.lf-statuschip--attention { color: var(--attention); border-color: var(--attention); }
+/* positive/negative exist for surfaces where the state genuinely IS good/bad (Pricing Health:
+   Fresh vs Unavailable). Policy MUST NOT use them (§9-16). */
+.lf-statuschip--positive { color: var(--gain); border-color: var(--gain); }
+.lf-statuschip--negative { color: var(--loss); border-color: var(--loss); }
+
+.lf-statuschip__count { color: var(--text-tertiary); }

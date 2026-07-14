@@ -53,23 +53,7 @@
   color: var(--text-primary);
 }
 
-/* Chips: served label + a semantic tone (colour is never the sole signal — label always shown). */
-.ph__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-12);
-  line-height: var(--line-12);
-  white-space: nowrap;
-  color: var(--text-secondary);
-}
-.ph__chip--ok { color: var(--gain); border-color: var(--gain); }
-.ph__chip--warn { color: var(--attention); border-color: var(--attention); }
-.ph__chip--bad { color: var(--loss); border-color: var(--loss); }
-.ph__chip--neutral { color: var(--text-tertiary); }
+/* Chips migrated to the ratified StatusChip (page-policy §9-15) — no page-local copy remains. */
 
 .ph__conf {
   display: inline-flex;

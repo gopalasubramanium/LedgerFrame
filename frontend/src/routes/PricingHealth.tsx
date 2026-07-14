@@ -14,8 +14,9 @@ import {
   Skeleton,
   TrendStat,
   useToast,
+  StatusChip,
 } from "../components/ui";
-import type { Column } from "../components/ui";
+import type { Column, StatusChipTone } from "../components/ui";
 import type { ConfidenceBand, Entitlement, HealthStatus, ValuationMethod } from "../mocks/types";
 import { useLabelFor } from "../refdata/refdata-context";
 import { invalidateStaleCount, useStaleCount } from "../state/staleCount";
@@ -38,14 +39,16 @@ import type { DuplicatesResp, PricingHealthResp, PricingRow } from "../api/prici
 
 // Semantic tone for a served status / confidence band (colour is never the sole signal — the served
 // label is always shown alongside).
-function statusTone(status: string): string {
-  if (status === "Fresh") return "ok";
-  if (status === "Unavailable" || status === "Estimated") return "bad";
+// Migrated onto the ratified StatusChip (page-policy §9-15). The TONES are unchanged — only their
+// names are now the shared vocabulary: ok -> positive, bad -> negative, warn -> attention.
+function statusTone(status: string): StatusChipTone {
+  if (status === "Fresh") return "positive";
+  if (status === "Unavailable" || status === "Estimated") return "negative";
   if (status === "Manual") return "neutral";
-  return "warn"; // Delayed / End-of-day / Cached
+  return "attention"; // Delayed / End-of-day / Cached
 }
-function bandTone(band: string): string {
-  return band === "high" ? "ok" : band === "low" ? "bad" : "warn";
+function bandTone(band: string): StatusChipTone {
+  return band === "high" ? "positive" : band === "low" ? "negative" : "attention";
 }
 
 export function PricingHealth() {
@@ -143,7 +146,7 @@ export function PricingHealth() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (r) => <span className={`ph__chip ph__chip--${statusTone(r.status)}`}>{r.status}</span>,
+      render: (r) => <StatusChip label={r.status} tone={statusTone(r.status)} />,
     },
     {
       key: "confidence",
@@ -153,7 +156,7 @@ export function PricingHealth() {
       render: (r) => (
         <span className="ph__conf">
           <span className="ph__num">{r.confidence}</span>
-          <span className={`ph__chip ph__chip--${bandTone(r.confidence_band)}`}>{r.confidence_band}</span>
+          <StatusChip label={r.confidence_band} tone={bandTone(r.confidence_band)} />
         </span>
       ),
     },
@@ -217,7 +220,7 @@ export function PricingHealth() {
                   <tbody>
                     {(["high", "medium", "low"] as const).map((b) => (
                       <tr key={b} className="lf-table__tr">
-                        <td className="lf-table__td"><span className={`ph__chip ph__chip--${bandTone(b)}`}>{b}</span></td>
+                        <td className="lf-table__td"><StatusChip label={b} tone={bandTone(b)} /></td>
                         <td className="lf-table__td lf-table__td--num">{d.confidence.by_band[b]?.count ?? 0}</td>
                         <td className="lf-table__td lf-table__td--num">{(d.confidence.by_band[b]?.value_pct ?? 0).toFixed(1)}%</td>
                       </tr>
@@ -226,7 +229,7 @@ export function PricingHealth() {
                 </table>
                 <div className="ph__statusstrip">
                   {Object.entries(d.summary).map(([status, n]) => (
-                    <span key={status} className={`ph__chip ph__chip--${statusTone(status)}`}>{status} · {n}</span>
+                    <StatusChip key={status} label={status} tone={statusTone(status)} count={n} />
                   ))}
                 </div>
                 {/* ND-1 (§12ph1-1): render the SHARED stale count the Stale banner also reads — so
@@ -282,13 +285,13 @@ export function PricingHealth() {
             <div className="ph__chain">
               <span className="ph__chainlabel">Priority chain (read-only):</span>
               {detail.priority_chain.length > 0
-                ? detail.priority_chain.map((s, i) => <span key={s} className="ph__chip ph__chip--neutral">{i + 1}. {s}</span>)
+                ? detail.priority_chain.map((s, i) => <StatusChip key={s} label={`${i + 1}. ${s}`} />)
                 : <span className="ph__note">manual — no provider chain</span>}
             </div>
             {(detail.auth_required || detail.mapping_required) && (
               <div className="ph__flags">
-                {detail.auth_required && <span className="ph__chip ph__chip--warn">Needs an API key — add in <Link to="/settings">Settings</Link></span>}
-                {detail.mapping_required && <span className="ph__chip ph__chip--warn">Needs identifier mapping</span>}
+                {detail.auth_required && <StatusChip tone="attention" label={<>Needs an API key — add in <Link to="/settings">Settings</Link></>} />}
+                {detail.mapping_required && <StatusChip tone="attention" label="Needs identifier mapping" />}
               </div>
             )}
             {detail.confidence_factors.length > 0 && (

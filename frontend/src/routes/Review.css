@@ -48,23 +48,7 @@
   text-decoration: underline;
 }
 
-/* Severity chip (§12rv1-4, ND-4 REVERSAL) — severity is SEMANTIC: the tone class carries a ratified
-   token. "Review" → attention/warning; "Info" (and any unknown) → neutral. Served value verbatim. */
-.rv__chip {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-12);
-  line-height: var(--line-12);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-.rv__chip--attention {
-  border-color: var(--attention);
-  color: var(--attention);
-}
+/* Severity chip migrated to the ratified StatusChip (page-policy §9-15) — no page-local copy remains. */
 .rv__area {
   color: var(--text-tertiary);
 }

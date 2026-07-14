@@ -18,7 +18,13 @@ from app.services.planning import (
     RECURRENCES,
     goals_report,
     obligations_report,
+    validate_currency,
 )
+
+
+def _spoken(values) -> str:
+    """A vocabulary as the USER reads it — never a raw Python tuple (§12po1-6, page-cash-flow 9-6)."""
+    return ", ".join(str(v).replace("_", " ") for v in values)
 
 router = APIRouter()
 
@@ -44,12 +50,25 @@ class ObligationIn(BaseModel):
 
 def _check_kind(kind: str) -> None:
     if kind not in OBLIGATION_KINDS:
-        raise HTTPException(400, f"kind must be one of {OBLIGATION_KINDS}")
+        raise HTTPException(400, f"An obligation is either an expense or income — not '{kind}'.")
+
+
+def _check_basis(basis: str) -> None:
+    if basis not in GOAL_BASES:
+        raise HTTPException(400, f"'{basis}' is not a goal basis — choose one of: {_spoken(GOAL_BASES)}.")
+
+
+def _check_recurrence(rec: str) -> None:
+    if rec not in RECURRENCES:
+        raise HTTPException(400, f"'{rec}' is not a recurrence — choose one of: {_spoken(RECURRENCES)}.")
 
 
 def _norm_ccy(c: str | None) -> str | None:
-    c = (c or "").strip().upper()
-    return c or None
+    """9-6 — `currency` is a categorical field: it references the master, never free text."""
+    try:
+        return validate_currency(c)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 # --- goals ------------------------------------------------------------------ #
@@ -61,8 +80,7 @@ async def get_goals(session: AsyncSession = Depends(get_db)) -> dict:
 
 @router.post("/goals", dependencies=[Depends(require_auth)])
 async def create_goal(payload: GoalIn, session: AsyncSession = Depends(get_db)) -> dict:
-    if payload.basis not in GOAL_BASES:
-        raise HTTPException(400, f"basis must be one of {GOAL_BASES}")
+    _check_basis(payload.basis)
     g = Goal(name=payload.name.strip()[:80], target_amount=Decimal(str(payload.target_amount)),
              target_date=(payload.target_date or None), currency=_norm_ccy(payload.currency),
              basis=payload.basis, note=(payload.note or None))
@@ -73,8 +91,7 @@ async def create_goal(payload: GoalIn, session: AsyncSession = Depends(get_db)) 
 
 @router.patch("/goals/{goal_id}", dependencies=[Depends(require_auth)])
 async def update_goal(goal_id: int, payload: GoalIn, session: AsyncSession = Depends(get_db)) -> dict:
-    if payload.basis not in GOAL_BASES:
-        raise HTTPException(400, f"basis must be one of {GOAL_BASES}")
+    _check_basis(payload.basis)
     g = await session.get(Goal, goal_id)
     if g is None:
         raise HTTPException(404, "goal not found")
@@ -90,9 +107,12 @@ async def update_goal(goal_id: int, payload: GoalIn, session: AsyncSession = Dep
 
 @router.delete("/goals/{goal_id}", dependencies=[Depends(require_auth)])
 async def delete_goal(goal_id: int, session: AsyncSession = Depends(get_db)) -> dict:
+    # 9-7b: a missing id used to delete "successfully" (200 {"ok": true}), so the UI could not tell
+    # "deleted" from "there was nothing there" — on the platform's FIRST destructive action.
     g = await session.get(Goal, goal_id)
-    if g is not None:
-        await session.delete(g)
+    if g is None:
+        raise HTTPException(404, "That goal no longer exists.")
+    await session.delete(g)
     return {"ok": True}
 
 
@@ -105,8 +125,7 @@ async def get_obligations(session: AsyncSession = Depends(get_db)) -> dict:
 
 @router.post("/obligations", dependencies=[Depends(require_auth)])
 async def create_obligation(payload: ObligationIn, session: AsyncSession = Depends(get_db)) -> dict:
-    if payload.recurrence not in RECURRENCES:
-        raise HTTPException(400, f"recurrence must be one of {RECURRENCES}")
+    _check_recurrence(payload.recurrence)
     _check_kind(payload.kind)
     o = Obligation(name=payload.name.strip()[:80], amount=Decimal(str(payload.amount)),
                    due_date=payload.due_date, currency=_norm_ccy(payload.currency),
@@ -118,8 +137,7 @@ async def create_obligation(payload: ObligationIn, session: AsyncSession = Depen
 
 @router.patch("/obligations/{obligation_id}", dependencies=[Depends(require_auth)])
 async def update_obligation(obligation_id: int, payload: ObligationIn, session: AsyncSession = Depends(get_db)) -> dict:
-    if payload.recurrence not in RECURRENCES:
-        raise HTTPException(400, f"recurrence must be one of {RECURRENCES}")
+    _check_recurrence(payload.recurrence)
     _check_kind(payload.kind)
     o = await session.get(Obligation, obligation_id)
     if o is None:
@@ -138,8 +156,9 @@ async def update_obligation(obligation_id: int, payload: ObligationIn, session: 
 @router.delete("/obligations/{obligation_id}", dependencies=[Depends(require_auth)])
 async def delete_obligation(obligation_id: int, session: AsyncSession = Depends(get_db)) -> dict:
     o = await session.get(Obligation, obligation_id)
-    if o is not None:
-        await session.delete(o)
+    if o is None:
+        raise HTTPException(404, "That obligation no longer exists.")
+    await session.delete(o)
     return {"ok": True}
 
 
@@ -167,7 +186,10 @@ async def get_contributions(session: AsyncSession = Depends(get_db)) -> dict:
 async def add_contribution(payload: ContributionIn, session: AsyncSession = Depends(get_db)) -> dict:
     from app.services.contributions import create_contribution
 
-    res = await create_contribution(session, payload.model_dump())
+    try:
+        res = await create_contribution(session, payload.model_dump())
+    except ValueError as exc:            # 9-6 — an invalid currency is a 400, never a 500
+        raise HTTPException(400, str(exc)) from exc
     await session.commit()
     return {"ok": True, **res}
 
@@ -179,7 +201,9 @@ async def edit_contribution(cid: int, payload: ContributionIn, session: AsyncSes
     try:
         res = await update_contribution(session, cid, payload.model_dump())
     except ValueError as exc:
-        raise HTTPException(404, str(exc)) from exc
+        # "not found" is a 404; a rejected value (e.g. an unknown currency) is a 400.
+        status = 404 if "no longer exists" in str(exc) or "not found" in str(exc) else 400
+        raise HTTPException(status, str(exc)) from exc
     await session.commit()
     return {"ok": True, **res}
 
@@ -188,6 +212,9 @@ async def edit_contribution(cid: int, payload: ContributionIn, session: AsyncSes
 async def remove_contribution(cid: int, session: AsyncSession = Depends(get_db)) -> dict:
     from app.services.contributions import delete_contribution
 
-    await delete_contribution(session, cid)
+    try:
+        await delete_contribution(session, cid)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
     await session.commit()
     return {"ok": True}

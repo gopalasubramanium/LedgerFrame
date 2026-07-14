@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.money import format_money_display
 from app.models import Contribution
 from app.services import fx
 from app.services.runway import runway_report
@@ -42,9 +43,23 @@ async def _to_base(amount: Decimal, ccy: str, base: str) -> Decimal:
         return amount
 
 
+def _monthly(amount: Decimal, frequency: str) -> Decimal | None:
+    """The per-row monthly rate — SERVER-SIDE (9-4). `once` has NO monthly rate: it returns None,
+    not 0, because a served 0 would read as "this plan invests nothing per month"."""
+    if frequency == "once":
+        return None
+    factor = _FREQ_MONTHLY.get(frequency)
+    return None if factor is None else amount * factor
+
+
 def _serialize(c: Contribution) -> dict:
-    return {"id": c.id, "name": c.name, "amount": float(c.amount or 0), "currency": c.currency,
+    amount = _dec(c.amount)
+    m_eq = _monthly(amount, c.frequency)
+    return {"id": c.id, "name": c.name, "amount": float(amount),
+            "amount_display": format_money_display(amount), "currency": c.currency,
             "frequency": c.frequency, "kind": c.kind, "target_goal_id": c.target_goal_id,
+            "monthly_equivalent": None if m_eq is None else float(round(m_eq, 0)),
+            "monthly_equivalent_display": None if m_eq is None else format_money_display(m_eq),
             "start_date": c.start_date, "active": bool(c.active), "note": c.note}
 
 
@@ -54,7 +69,10 @@ def _apply(c: Contribution, data: dict) -> None:
     if "amount" in data:
         c.amount = _dec(data["amount"])
     if data.get("currency"):
-        c.currency = data["currency"].upper()[:3]
+        # 9-6 — a categorical field references the master, never free text (the A9 defect class).
+        from app.services.planning import validate_currency
+
+        c.currency = validate_currency(data["currency"]) or c.currency
     if data.get("frequency") in FREQUENCIES:
         c.frequency = data["frequency"]
     if data.get("kind") in KINDS:
@@ -89,8 +107,9 @@ async def update_contribution(session: AsyncSession, cid: int, data: dict) -> di
 
 async def delete_contribution(session: AsyncSession, cid: int) -> None:
     c = await session.get(Contribution, cid)
-    if c is not None:
-        await session.delete(c)
+    if c is None:                       # 9-7b — honest 404, never a silent "ok" for nothing
+        raise ValueError("That contribution no longer exists.")
+    await session.delete(c)
 
 
 async def contributions_report(session: AsyncSession) -> dict:
@@ -112,10 +131,14 @@ async def contributions_report(session: AsyncSession) -> dict:
         "base_currency": base,
         "contributions": [_serialize(c) for c in rows],
         "monthly_invest": float(round(monthly_invest, 0)),
+        "monthly_invest_display": format_money_display(monthly_invest),
         "monthly_withdraw": float(round(monthly_withdraw, 0)),
+        "monthly_withdraw_display": format_money_display(monthly_withdraw),
         "monthly_net_investing": float(round(monthly_invest - monthly_withdraw, 0)),
+        "monthly_net_investing_display": format_money_display(monthly_invest - monthly_withdraw),
         # A fuller liquidity picture WITHOUT changing the runway itself.
         "monthly_cash_out_with_expenses": float(round(monthly_expense + monthly_invest, 0)),
+        "monthly_cash_out_with_expenses_display": format_money_display(monthly_expense + monthly_invest),
         "disclaimer": "Recorded plans, not projections. Contributions build wealth, so they do "
                       "not reduce the cash runway; shown here as planned cash movements only.",
     }

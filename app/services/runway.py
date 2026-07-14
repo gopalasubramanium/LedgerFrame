@@ -14,6 +14,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.money import format_money_display
 from app.models import Obligation
 from app.services import fx
 from app.services.planning import MONTHLY_FACTOR, _add_months, _basis_values
@@ -64,9 +65,13 @@ async def runway_report(session: AsyncSession) -> dict:
     return {
         "base_currency": base,
         "liquid": _q(liquid, 0),
+        "liquid_display": format_money_display(liquid),
         "monthly_expense": _q(monthly_expense, 0),
+        "monthly_expense_display": format_money_display(monthly_expense),
         "monthly_income": _q(monthly_income, 0),
+        "monthly_income_display": format_money_display(monthly_income),
         "net_monthly_burn": _q(net_burn, 0),
+        "net_monthly_burn_display": format_money_display(net_burn),
         "runway_months": runway_months,
         "runway_date": runway_date,
         "status": status,

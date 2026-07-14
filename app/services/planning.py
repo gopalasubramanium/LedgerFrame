@@ -15,7 +15,8 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
+from app.core.config import SUPPORTED_CURRENCIES, get_settings
+from app.core.money import format_money_display
 from app.models import Goal, Obligation
 from app.services import fx
 from app.services.liquidity import rung_of
@@ -65,6 +66,35 @@ def _q(v: Decimal, dp: int = 0) -> float:
     return float(round(v, dp))
 
 
+def _money(v: Decimal | None) -> str | None:
+    """A SERVED money display string (D-105 scope amendment). `None` passes through, so an absent
+    figure stays honestly empty and is never a fabricated 0 (Guarantee 3)."""
+    return None if v is None else format_money_display(v)
+
+
+def monthly_equivalent(amount: Decimal, recurrence: str) -> Decimal | None:
+    """The per-row monthly rate — computed SERVER-SIDE (9-4; the frontend does no money math).
+
+    `once` returns **None**, not 0: a one-off has no monthly rate at all, and a served 0 would read
+    as "this costs nothing per month". Excluded from the burn is not the same as free (D-057).
+    """
+    factor = MONTHLY_FACTOR.get(recurrence)
+    return None if factor is None else amount * factor
+
+
+def validate_currency(code: str | None) -> str | None:
+    """`currency` is a CATEGORICAL field: it references the master, never free text (CLAUDE.md hard
+    rule; the Gate-A9 defect class). Matched case-insensitively, stored in the master's spelling."""
+    c = (code or "").strip()
+    if not c:
+        return None
+    for known in SUPPORTED_CURRENCIES:
+        if known.lower() == c.lower():
+            return known
+    raise ValueError(
+        f"'{c}' is not a currency you can use — choose one of: {', '.join(SUPPORTED_CURRENCIES)}.")
+
+
 async def goals_report(session: AsyncSession) -> dict:
     base, net_worth, liquid = await _basis_values(session)
     goals = (await session.execute(select(Goal).order_by(Goal.target_date.is_(None), Goal.target_date))).scalars().all()
@@ -77,13 +107,20 @@ async def goals_report(session: AsyncSession) -> dict:
         row = {
             "id": g.id, "name": g.name, "basis": g.basis,
             "currency": ccy, "target_amount": _q(Decimal(g.target_amount), 2),
-            "target_base": _q(target_base, 0), "target_date": g.target_date, "note": g.note,
-            "current_base": None, "progress_pct": None, "remaining_base": None, "days_to_target": None,
+            "target_amount_display": _money(Decimal(g.target_amount)),
+            "target_base": _q(target_base, 0), "target_base_display": _money(target_base),
+            "target_date": g.target_date, "note": g.note,
+            "current_base": None, "current_base_display": None,
+            "progress_pct": None,                      # a PERCENTAGE is not money — stays a number
+            "remaining_base": None, "remaining_base_display": None,
+            "days_to_target": None,
         }
         if current is not None and target_base > 0:
             row["current_base"] = _q(current, 0)
+            row["current_base_display"] = _money(current)
             row["progress_pct"] = float(round(current / target_base * 100, 1))
             row["remaining_base"] = _q(target_base - current, 0)
+            row["remaining_base_display"] = _money(target_base - current)
         td = _parse_date(g.target_date)
         if td is not None:
             row["days_to_target"] = (td - today).days
@@ -125,14 +162,21 @@ async def obligations_report(session: AsyncSession) -> dict:
         kind = getattr(o, "kind", "expense") or "expense"
         if kind == "expense":                     # only outflows count toward the total
             next_12m += amt_base * len(occ)
+        # 9-4 — the monthly rate is applied HERE, not in the browser (no client money math).
+        # `once` -> None: a one-off has no monthly rate (D-057), and 0 would read as "free".
+        m_eq = monthly_equivalent(amt_base, o.recurrence)
         rows.append({
-            "id": o.id, "name": o.name, "amount": _q(Decimal(o.amount), 2), "currency": ccy,
-            "amount_base": _q(amt_base, 0), "due_date": o.due_date, "recurrence": o.recurrence,
+            "id": o.id, "name": o.name, "amount": _q(Decimal(o.amount), 2),
+            "amount_display": _money(Decimal(o.amount)), "currency": ccy,
+            "amount_base": _q(amt_base, 0), "amount_base_display": _money(amt_base),
+            "monthly_equivalent": None if m_eq is None else _q(m_eq, 0),
+            "monthly_equivalent_display": _money(m_eq),
+            "due_date": o.due_date, "recurrence": o.recurrence,
             "kind": kind, "note": o.note, "occurrences_12m": len(occ),
             "next_due": occ[0].isoformat() if occ else o.due_date,
         })
     return {
         "base_currency": base, "obligations": rows,
-        "next_12m_total": _q(next_12m, 0),
+        "next_12m_total": _q(next_12m, 0), "next_12m_total_display": _money(next_12m),
         "disclaimer": "Known future cash flows you've entered; outflow total uses today's FX (approximate). Not advice.",
     }

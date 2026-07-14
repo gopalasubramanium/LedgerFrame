@@ -96,7 +96,7 @@ async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(
     # the trap goes instead.
     unknown = sorted(set(patch.values) - _ALLOWED_KEYS)
     if unknown:
-        raise HTTPException(400, f"unknown setting key(s): {unknown}")
+        raise HTTPException(400, f"Unknown setting: {', '.join(unknown)}.")
     applied = {}
     for key, value in patch.values.items():
         row = (await session.execute(select(Setting).where(Setting.key == key))).scalars().first()

@@ -95,7 +95,7 @@ async def portfolio_summary(entity_id: int | None = Query(default=None),
     # Gross assets (positive holdings) vs liabilities (negative), so allocation weights are a
     # share of GROSS assets and the excluded liabilities are shown as an honest served figure
     # (donut footnote), never fabricated on the client (page-portfolio ND-4; GLOSSARY).
-    gross_assets = sum((h.market_value_base for h in val.holdings if h.market_value_base > 0), ZERO)
+    gross_assets = val.gross_assets()   # the ONE denominator (A11) — same rule, one home
     liabilities = sum((h.market_value_base for h in val.holdings if h.market_value_base < 0), ZERO)
     # Cash & deposits KPI (D-054 / page-net-worth ND-3): immediately/near-term available cash =
     # the cash class + deposits (fixed_deposit). A served figure — the frontend renders the

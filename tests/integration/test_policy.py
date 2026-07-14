@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from decimal import Decimal
 
 from app.services import policy as policy_svc
@@ -181,3 +183,50 @@ async def test_drift_flags_low_confidence_inputs(session, monkeypatch):
     assert d["low_confidence_inputs"] == 1
     assert d["inputs_stale"] is True              # the verdict rests on inputs we do not trust
     assert d["inputs_note"]
+
+
+# --------------------------------------------------------------------------- #
+# Gate A11 — ONE weight derivation (P-1 / D-038).
+# Policy's per-bucket `actual_pct` for asset_class/currency IS the same figure
+# Portfolio owns as "Allocation weight" (D-033). It used to be computed by a SECOND
+# code path (a private loop in services/policy.py) that merely happened to apply the
+# same rule. This test crosses the two served payloads: a change to one that does not
+# reach the other is a P-1 violation, and it fires. (page-policy §10-4)
+# --------------------------------------------------------------------------- #
+
+
+async def test_policy_weights_are_portfolios_allocation_weights(app_client):
+    summary = (await app_client.get("/api/v1/portfolio/summary")).json()
+    gross = summary["gross_assets"]
+    assert gross > 0
+
+    # Target every class the book actually holds, so every bucket produces a drift row.
+    classes = sorted(summary["allocation_by_class"])
+    await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": c, "target_pct": 0} for c in classes]})
+
+    drift = (await app_client.get("/api/v1/policy/drift")).json()
+    rows = {r["bucket"]: r for d in drift["dimensions"] if d["dimension"] == "asset_class"
+            for r in d["rows"]}
+    assert rows, "the asset_class dimension produced no rows"
+
+    for cls, value in summary["allocation_by_class"].items():
+        expected = round(value / gross * 100, 1)          # Portfolio's canonical weight
+        assert rows[cls]["actual_pct"] == pytest.approx(expected, abs=0.1), (
+            f"{cls}: Policy says {rows[cls]['actual_pct']}%, Portfolio's allocation says {expected}%")
+
+
+async def test_policy_currency_weights_are_portfolios_allocation_weights(app_client):
+    summary = (await app_client.get("/api/v1/portfolio/summary")).json()
+    gross = summary["gross_assets"]
+
+    ccys = sorted(summary["allocation_by_currency"])
+    await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "currency", "bucket": c, "target_pct": 0} for c in ccys]})
+
+    drift = (await app_client.get("/api/v1/policy/drift")).json()
+    rows = {r["bucket"]: r for d in drift["dimensions"] if d["dimension"] == "currency"
+            for r in d["rows"]}
+    for ccy, value in summary["allocation_by_currency"].items():
+        expected = round(value / gross * 100, 1)
+        assert rows[ccy]["actual_pct"] == pytest.approx(expected, abs=0.1)

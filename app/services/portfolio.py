@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.money import ZERO, D, money, pct_change
+from app.core.regions import region_of
 from app.core.symbols import currency_for_symbol
 from app.models import Account, AssetClass, Holding, Instrument, TxnType
 from app.models import Transaction as Txn
@@ -172,6 +173,16 @@ class HoldingValue:
         prev = self.market_value_base - self.day_change_base
         return pct_change(self.market_value_base, prev) if prev else None
 
+    @property
+    def region(self) -> str:
+        """The D-083 six-bucket region, derived from `listing_country` (never stored, D-007).
+
+        Exposed as an ATTRIBUTE so region is an ``allocation()`` key like any other — which is
+        what lets the policy region dimension read through the canonical allocation reader
+        instead of re-deriving its own buckets (A11 / P-1 / D-038). One derivation of a weight.
+        """
+        return region_of(self.country)
+
 
 @dataclass
 class PortfolioValuation:
@@ -186,6 +197,16 @@ class PortfolioValuation:
     @property
     def total_return_pct(self) -> Decimal | None:
         return pct_change(self.total_value, self.cost_basis) if self.cost_basis else None
+
+    def gross_assets(self) -> Decimal:
+        """**Gross assets** — the allocation denominator (positive-value holdings only).
+
+        The ONE definition of the denominator every weight on the platform divides by, so a
+        weight and its base can never be computed by different rules (A11). Liabilities are
+        excluded by construction: a mortgage cannot distort a weight (D-033).
+        ``sum(allocation(k).values()) == gross_assets()`` for every key ``k``, by construction.
+        """
+        return sum((h.market_value_base for h in self.holdings if h.market_value_base > 0), ZERO)
 
     def allocation(self, key: str) -> dict[str, Decimal]:
         """Allocation map (base-currency value) keyed by an attribute name.

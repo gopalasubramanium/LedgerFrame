@@ -22,7 +22,7 @@ from app.core.config import SUPPORTED_CURRENCIES, get_settings
 
 # D-083: region is the six-bucket model (India · Singapore · US · Europe · APAC · Other), derived
 # server-side from listing_country. The canonical derivation lives in app.core.regions.
-from app.core.regions import REGIONS, region_of
+from app.core.regions import REGIONS
 from app.models import AssetClass, InvestmentPolicy, PolicyTarget
 from app.services.portfolio import value_portfolio
 
@@ -86,20 +86,15 @@ def policy_payload(policy: InvestmentPolicy) -> dict:
     }
 
 
-def _bucket_of(h, dim: str) -> str:
-    if dim == "asset_class":
-        return h.asset_class
-    if dim == "currency":
-        return h.native_currency
-    return region_of(h.country)
-
-
 async def compute_drift(session: AsyncSession, entity_id: int | None = None) -> dict:
     """Actual-vs-target drift + band status per dimension, plus concentration flags."""
     policy = await get_or_create_policy(session)
     base = policy.base_currency or get_settings().base_currency
     val = await value_portfolio(session, base, entity_id=entity_id)  # §4.1
-    gross = sum((h.market_value_base for h in val.holdings if h.market_value_base > 0), Decimal(0)) or Decimal(1)
+    # A11 — ONE derivation. The denominator and the per-bucket weights both come from the
+    # canonical portfolio reader, so a policy weight IS a Portfolio allocation weight (D-033)
+    # rather than a second loop that happens to agree with one (P-1/D-038).
+    gross = val.gross_assets() or Decimal(1)
     band = policy.default_band_pct
 
     targets_by_dim: dict[str, list[PolicyTarget]] = defaultdict(list)
@@ -111,10 +106,7 @@ async def compute_drift(session: AsyncSession, entity_id: int | None = None) -> 
         ts = targets_by_dim.get(dim, [])
         if not ts:
             continue
-        actual_val: dict[str, Decimal] = defaultdict(lambda: Decimal(0))
-        for h in val.holdings:
-            if h.market_value_base > 0:
-                actual_val[_bucket_of(h, dim)] += h.market_value_base
+        actual_val = val.allocation(DIMENSION_ATTR[dim])  # the canonical allocation reader
 
         rows = []
         covered = Decimal(0)

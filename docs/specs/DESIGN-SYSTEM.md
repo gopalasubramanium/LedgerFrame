@@ -303,7 +303,7 @@ props are backend-computed `Decimal` strings (never client-computed).
 | **FileInput** *(amended)* | `onChange` (FileList), `accept?`, `multiple?`, `disabled?`, `aria-label`, `label?` | The sanctioned file control (CSV import); wraps the native input internally (§6 — no raw `<input type="file">`). Click-to-browse + drag-and-drop; shows the chosen filename. **Amended 2026-07-10 (Holdings page-build §9-3).** |
 | **Select** | `value`, `onChange`, `options`, `disabled?`, `onCommit?`, `aria-label` | Generic select for **non-master view-scope / user-record** choices (e.g. QuoteCardRow source, the account picker over `/accounts`). Categorical **data** fields use MasterSelect instead. **`onCommit`** = the same commit-on-pick mode as MasterSelect (first-run F3). *(Ratified 2026-07-10; `onCommit` added 2026-07-11.)* |
 
-**INPUT FOCUS IS ONE TREATMENT (§5.1 AMENDMENT — PROPOSED 2026-07-14, page-policy §12po1-10; ratify at the re-verify).**
+**INPUT FOCUS IS ONE TREATMENT (§5.1 AMENDMENT — RATIFIED 2026-07-15, page-policy §12po1-10; platform-wide).**
 Every field wrapper (`.lf-field` — MoneyInput, PercentInput, QuantityInput, TextInput, DateInput, Select,
 MasterSelect, and any input inside a Dialog) carries **ONE `focus-visible` ring on the WRAPPER**; the inner
 control **suppresses its own**. Before this, a focused text input showed the global `:focus-visible` ring on
@@ -314,6 +314,30 @@ at (colour is never the only signal — the message is always rendered too).
 **A11Y, NON-NEGOTIABLE: this UNIFIES the ring; it never removes it.** A keyboard user must always see exactly
 where they are — the ring is only ever moved to the wrapper, never dropped. Specimens at `/kitchen-sink`:
 rest · focus · error · disabled, in both themes.
+
+**CONTAINMENT IS THE COMPONENT'S JOB (RATIFIED 2026-07-15, page-policy §12po2-1 / §13-3).** **A component
+whose height is a function of its DATA will eventually break every placement it has.** `ReviewCard` rendered
+every section it was handed: 17 attention items grew it to **1243px**, broke the Net worth row and displaced
+the **Portfolio** card beside it. Fixing the page that happened to get caught would have left the defect
+**armed at every other placement**. So a data-driven list **caps and scrolls internally at the COMPONENT**
+(the `--table-max-h` posture), and offers a **`maxItems`** cap with an honest **"+N more ↗"** to its canonical
+page — **never silent truncation** (Home had been silently dropping items). The **full list lives only on the
+canonical page** (P-1).
+
+**THE DIALOG BODY IS *THE* SCROLL CONTAINER (RATIFIED 2026-07-15, page-policy §12po2-3 / §13-4).** A table
+with its **own** scroll region nested inside a `Dialog` that already scrolls gives **two scroll regions
+fighting**: rows slide half-under the sticky header and read exactly like a **duplicated header** overlapping
+the content. **One scroll region, one sticky header block, one grid template** — so columns align across rows
+**by construction**. *Sub-rule:* sticky offsets are measured from the scroll container's **content edge**, so
+`top: 0` pins a header one **padding-length down**, leaving a gutter for content to scroll through **above**
+it — cancel the padding explicitly.
+
+**ICON + LABEL BUTTONS (page-policy §12po3-1).** An in-button icon is sized by **`--icon-size`** (`.lf-btn svg`
+— it is **already global**; a per-call-site `size` prop is a lie about what controls it) and sits on a
+**centred inline-flex row with a token gap**, so it lands on the label's optical centre instead of
+baseline-aligning against it. **The text label is always kept — an icon is never a label on its own.**
+⚠ **2nd occurrence** (Review's *Mark reviewed* · Policy's *Edit policy*), each with a page-local flex row.
+**The 3rd occurrence EXTRACTS the shared treatment** (the `Segmented` / `StatusChip` centralization rule).
 
 ### 5.2 Data display
 
@@ -353,7 +377,7 @@ fetch timing. Applies to any future chrome↔page count (stale, review-attention
 | Component | Props (surface) | Usage rules |
 |-----------|-----------------|-------------|
 | **ProvenanceBadge** | `source`, `entitlement`, `valuationMethod`, `confidence` (`{score,band}`), `asOf` | The **one** standardized badge; renders **source · freshness · confidence identically** on every number that has provenance. Wording per GLOSSARY (Source, Entitlement, Status). Canonical, fullest detail on Pricing Health. |
-| **StatusChip** *(NEW — §5 AMENDMENT **PROPOSED** 2026-07-14, page-policy §9-15; **ratify at the Policy walk**)* | `label` (**ReactNode, MANDATORY**), `tone?` (`neutral`\|`attention`\|`positive`\|`negative`), `count?`, `title?` | **THE status/severity chip.** **Extracted at the THIRD recurrence** of the same page-local pattern — Pricing Health's `ph__chip`, Review's `rv__chip`, and Policy's band chip — under the centralization rule the `Segmented` extraction set (*per-instance copies of a standard are the defect*). **Both page-local copies are MIGRATED onto it and DELETED; none remains** (grep-verified; their guards were **retargeted, not removed**, and every pre-pass is green after the migration — a behaviour-neutral swap). **The label is MANDATORY and always rendered: a chip's meaning is NEVER carried by colour alone** (WCAG 1.4.1). Tones are semantic tokens only (§1). **On Policy, `over` AND `under` BOTH render `attention` (amber), and `positive`/`negative` are FORBIDDEN** (page-policy §9-16): gain/loss colouring would *value* the gap ("over = bad"), which is the nearest a colour can come to implying a trade (D-055). ⚠ **DEVIATION FROM THE §9-15 RULING, SURFACED NOT SILENTLY RESOLVED:** the ruling said *"variants neutral / attention"* **and** *"migrate `ph__chip` … no behaviour change"* — **those two clauses conflict.** `ph__chip` has **four** tones (`ok`/`warn`/`bad`/`neutral`): Pricing Health colours **Fresh** green and **Unavailable/Estimated** red. A two-variant chip would have **silently deleted those semantics** — a real regression dressed as compliance. The chip therefore ships a **superset** (`positive`/`negative` added), Policy is barred from using them, and the migration is genuinely behaviour-preserving. **Owner ratifies the superset at the walk.** Specimens at `/kitchen-sink`: neutral · attention · attention-under · with-count · positive · negative · long-label. |
+| **StatusChip** *(NEW — §5 AMENDMENT **RATIFIED 2026-07-15**, page-policy §9-15; owner accepted the SUPERSET + both migrations)* | `label` (**ReactNode, MANDATORY**), `tone?` (`neutral`\|`attention`\|`positive`\|`negative`), `count?`, `title?` | **THE status/severity chip.** **Extracted at the THIRD recurrence** of the same page-local pattern — Pricing Health's `ph__chip`, Review's `rv__chip`, and Policy's band chip — under the centralization rule the `Segmented` extraction set (*per-instance copies of a standard are the defect*). **Both page-local copies are MIGRATED onto it and DELETED; none remains** (grep-verified; their guards were **retargeted, not removed**, and every pre-pass is green after the migration — a behaviour-neutral swap). **The label is MANDATORY and always rendered: a chip's meaning is NEVER carried by colour alone** (WCAG 1.4.1). Tones are semantic tokens only (§1). **On Policy, `over` AND `under` BOTH render `attention` (amber), and `positive`/`negative` are FORBIDDEN** (page-policy §9-16): gain/loss colouring would *value* the gap ("over = bad"), which is the nearest a colour can come to implying a trade (D-055). ⚠ **DEVIATION FROM THE §9-15 RULING, SURFACED NOT SILENTLY RESOLVED:** the ruling said *"variants neutral / attention"* **and** *"migrate `ph__chip` … no behaviour change"* — **those two clauses conflict.** `ph__chip` has **four** tones (`ok`/`warn`/`bad`/`neutral`): Pricing Health colours **Fresh** green and **Unavailable/Estimated** red. A two-variant chip would have **silently deleted those semantics** — a real regression dressed as compliance. The chip therefore ships a **superset** (`positive`/`negative` added), Policy is barred from using them, and the migration is genuinely behaviour-preserving. **Owner ratifies the superset at the walk.** Specimens at `/kitchen-sink`: neutral · attention · attention-under · with-count · positive · negative · long-label. |
 | **StalenessChip** | `isStale`, `asOf`, `staleAfter?` | Amber (`--attention`) chip for the **Stale** layer; **flags, never hides** the value. Distinct from ProvenanceBadge (which carries the full source·freshness·confidence). |
 
 ### 5.4 Structure & chrome

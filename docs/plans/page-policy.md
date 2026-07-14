@@ -1013,3 +1013,187 @@ asserting my theory of the geometry, not the geometry the owner sees.**
 **8 GLOSSARY terms** · the **D-105 scope amendment** record · the **[Help] strip** · the **§12po1-10 focus
 amendment** · **§11-5** · the **§12po1-2 button-label pick** ("Set/Edit policy" vs a single "Add/Edit
 policy") · **NEW: the Net worth `maxItems={5}` cap** and the **"+N more ↗"** affordance.
+
+---
+
+## 12c. OWNER RE-VERIFY — BATCH 3 (§12po3-1) + RATIFICATIONS CLOSED (2026-07-15)
+
+### §12po3-1 — icon-in-button sizing/alignment (Edit policy)
+
+**Fixed. And my first diagnosis was wrong — recorded, because the wrong diagnosis is the interesting part.**
+
+I assumed the pencil was **off-token** (lucide `size={16}` on a 13px button) and wrote a guard asserting
+*"icon box == the button's font-size"*. **It went RED on Review's Mark-reviewed button — the one the owner
+had already ACCEPTED.** That is the §13 failure mode again: **I was asserting a theory, not the geometry.**
+
+Measuring instead showed the truth: **`.lf-btn svg` (structure.css) already sizes every in-button icon from
+the `--icon-size` token**, so `size={16}` **never had any effect** — the icon was always 18px. The real
+defect was that **`.lf-btn` has no flex row**: an 18px icon **baseline-aligned** against 13px text, with no
+gap, so it rode high and crowded the label.
+
+**Fix (conforming, not ad hoc):** the button is a **centred `inline-flex` row with a token gap** — exactly
+the **Mark-reviewed precedent** (Review §12rv1-1). The per-call-site `size` prop is **removed** (it was a lie
+about what controlled the size), and **no local sizing rule is added**, because duplicating the global one is
+precisely the copy-paste defect the centralization rule names.
+
+**Guard:** `e2e/icon-button.spec.ts` — for **both** icon+label buttons (Review · Policy) × **both themes**:
+icon box == the **`--icon-size` token**, icon **optically centred** with the label, a **real gap**, flex row,
+and the **text label kept** (an icon is never a label on its own). **Proven RED on the real cause** (remove
+the flex row → *"icon is optically centred with the label"* fails). Screenshot: `e2e/smoke/artifacts/`.
+
+⚠ **CENTRALIZATION TRIGGER RECORDED:** this is the **2nd** icon+label button (**Review · Policy**), each with
+its own page-local flex row. **The 3rd occurrence EXTRACTS the shared treatment** (the `Segmented` /
+`StatusChip` precedent). It is **not** pre-emptively built here.
+
+⚠ **Tooling note earned here:** a mutation test run against the **hot-reloading dev server** passed on the
+mutated code because **Vite had not rebuilt yet** — the guard was measuring a **stale module**. A mutation
+proof must wait for the rebuild, or it proves nothing. *(Folded into §13.)*
+
+### RATIFICATIONS — OWNER ACCEPTED 2026-07-15 ("all fine"). CLOSE lines:
+
+| Item | Status |
+|------|--------|
+| **`StatusChip` SUPERSET** (`neutral`/`attention`/`positive`/`negative`; **Policy barred** from positive/negative) **+ BOTH migrations** (`ph__chip`, review severity chip) | ✅ **RATIFIED — CLOSED.** DESIGN-SYSTEM §5.3 PROPOSED → **RATIFIED**. The superset was the honest call: two variants would have silently deleted Pricing Health's Fresh-green / Unavailable-red semantics. |
+| **§9-13** empty-state copy (*"No policy defined. Set target allocations…"*) | ✅ **RATIFIED — CLOSED.** |
+| **§9-18** *"inherits N%"* helper treatment **+ `default_band_pct = 5`** | ✅ **RATIFIED — CLOSED.** Deviation accepted **with its rationale recorded**: `PercentInput` hardcoded `placeholder="0.00"`, so a band inheriting 3–13% displayed **"0.00"** — the field **lied about the user's own risk tolerance**. The `placeholder` prop was added **and** the explicit helper line kept, so a grey number can never be misread as a typed value. Default pinned by a same-batch code test (D-084 rule). |
+| **§9-19** *"Gap to target"* | ✅ **RATIFIED — CLOSED.** The §7 copy grep bars trade phrasings **permanently**. |
+| **§9-16** amber **both directions** (`over` **and** `under`); never gain/loss | ✅ **RATIFIED — CLOSED.** Colouring "over" as a loss would **value the gap** — the nearest a colour can come to implying a trade (D-055). |
+| **The 8 GLOSSARY terms + "Policy (investment)" disambiguation** | ✅ **RATIFIED — CLOSED.** Spec first, then the popover store; parity guard green. |
+| **D-105 SCOPE AMENDMENT** (money = served display strings **everywhere**, percentages client-side) | ✅ **RATIFIED — CLOSED** in `DECISIONS.md`. |
+| **[Help] definitions strip** | ✅ **RATIFIED — CLOSED.** (A `GlossaryTerm` may not sit inside a heading — it would replace the heading's accessible name.) |
+| **§11-5** liability bar | ✅ **RATIFIED — CLOSED.** A policy allocates **assets**; a liability target could only ever read "Under", forever. |
+| **§12po1-2** label = **state-adaptive "Set policy" / "Edit policy"** | ✅ **RATIFIED — CLOSED.** The **"Add/Edit policy"** alternative is **RETIRED**. |
+| **§12po1-6** served error strings (app-wide) | ✅ **RATIFIED — CLOSED.** |
+| **§12po1-10** input-focus amendment (**platform-wide**) | ✅ **RATIFIED — CLOSED.** DESIGN-SYSTEM §5.1 PROPOSED → **RATIFIED**. The ring is **unified, never removed**. |
+| **§12po1-11** reduced-motion rule | ✅ **RATIFIED — CLOSED.** *Reduced motion disables **movement**, never **access**.* |
+| **§12po1-8** unsatisfiable-policy validation + Coverage clarification | ✅ **RATIFIED — CLOSED.** |
+| **§12po2-1** ReviewCard containment + **Net worth `maxItems={5}`** | ✅ **RATIFIED — CLOSED.** Home stays **3**; the **component** caps the full list; the full list lives only on Review (P-1). |
+
+---
+
+## 13. RETROSPECTIVE (page-policy)
+
+### Strike-check FIRST — was any of this already a recorded lesson?
+
+**Yes. Three of the five were already written down, and they recurred anyway.** That is the finding.
+
+| Lesson | Already recorded as | Recurred here as |
+|--------|---------------------|------------------|
+| Guards can report green over a visibly broken page | **page-home §12ho2-1 / §12ho3-3** (three guards green over a broken Home) | **§12po2-3** (assertion green while an input was **clipped**); **§12po3-1** (assertion RED on an **accepted** button) |
+| Verify by **rendering**, not by tests | **Holdings retrospective** ("wired ≠ rendered ≠ accepted") | **§11-3** (D-005 "Etf" vs served "ETF"), **§12po2-2** (icon claimed, absent) |
+| A ratified vocabulary/label is **served**, never client-side | **D-005 / page-markets §12mk3-2** | **§11-3** — *third* time |
+
+**A lesson that recurs was recorded but never MECHANISED.** The folds below turn each into a **mechanism**.
+
+### §13-1 — **Assertions with teeth** *(fold into `TEMPLATE-page-build.md` §3b + §7)*
+
+For any **owner-visible** defect, the assertion must:
+**(a)** be written against the **RENDERED artefact the owner looked at** (not the DOM's opinion of it);
+**(b)** be **seen RED on that exact state** — a mutation proof, not a claim;
+**(c)** carry the **fixture that reproduces it** — *a guard whose fixture cannot express the defect is
+decoration* (a 3-item ReviewCard fixture proves nothing about the 17-item defect).
+
+**Corollary, earned twice in one milestone:** if your assertion goes **RED on something the owner has already
+ACCEPTED** (Review's Mark-reviewed button), **the assertion is wrong, not the product.** Measure before you
+assert. **Assert CONTAINMENT** ("is the thing inside its box?"), **not container scroll metrics** — a clipping
+container keeps `scrollWidth === clientWidth` while a control is cut off.
+
+### §13-2 — **A silent no-op edit is a claim, not a change** *(tooling note)*
+
+The §12po1-2 pencil was reported shipped because a **string-replace matched nothing** and failed **silently**.
+**Every scripted replace must assert its match count** (`assert s.count(old) == N`), and **no UI change is
+reported without looking at the render.** *(Applied from §12po3-1 onward — the pencil edit now asserts
+`count == 2` before writing.)*
+**Also:** a mutation proof run against the **hot-reloading dev server** can measure a **stale module** — wait
+for the rebuild, or the proof is worthless (it silently "passed" on mutated code here).
+
+### §13-3 — **A component whose height is a function of its data will break every placement** *(DESIGN-SYSTEM note)*
+
+`ReviewCard` rendered every section it was handed, so 17 attention items grew it to **1243px** and displaced
+the Portfolio card sharing its row. **Containment is the COMPONENT'S job**, not each placement's: a card
+that can be torn apart by a bad week is broken **everywhere it is used**, and fixing only the page that got
+caught leaves the defect armed at every other placement. **Cap + internal scroll + an honest "+N more ↗" to
+the canonical page** (never silent truncation — Home had been truncating silently).
+
+### §13-4 — **Two scroll regions fighting** *(DESIGN-SYSTEM: dialog/table composition rule)*
+
+**The Dialog body is THE scroll container.** A table with its **own** scroller nested inside a dialog that
+already scrolls gives two regions competing; rows slid half-under a sticky `<th>` and read exactly like a
+**duplicated header**. One scroll region, one sticky header, one grid template.
+**Sub-lesson:** sticky offsets are measured from the scroll container's **content edge** — `top: 0` pins a
+header one padding-length **down**, leaving a gutter for content to scroll through **above** it.
+
+### §13-5 — **The D-005 render check paid a THIRD time**
+
+The page title-cased bucket keys client-side and printed **"Etf"** where `/refdata` serves **"ETF"**.
+**No assertion I had written would ever have caught it — only looking at the page did.** Every served label
+is rendered **verbatim**; the frontend maps nothing.
+
+### The positives — the gate worked
+
+- **The re-verify caught TWO items I had claimed done** (§12po2-2 pencil, §12po2-3 header). That is the
+  Phase-3b gate **doing exactly its job**: *green suites are not acceptance, and "I fixed it" is not evidence.*
+- **Fail-first found real defects before the owner did:** a 184% policy accepted, a liability target that
+  could never be satisfied, a verdict presenting stale prices as fresh, `target_pct` shown to a human, and
+  three pages' links falling back to browser-default blue.
+- **Two defects generalised beyond Policy** (the page shell; the link treatment) — both are now **cross-page
+  guards**, so the eleventh page inherits them by existing.
+
+---
+
+## 14. CLOSE
+
+**Policy is DONE — owner accepted 2026-07-15.** The first page with a **write UI**, and the first to carry a
+**[S]-gated editor**. Record: **§9** (21 items, one-pass) · **§10** (verify-first) · **§10-A** (Gate-A
+addendum A9–A11) · **§11** (build) · **§12po1..3** (three walk batches) · **§13** (retrospective).
+
+---
+
+## 15. CHANGED FILES — the Policy milestone (for the wholesale re-upload)
+
+*Derived from the actual diff (`a339ee3^..HEAD`), not from memory. Screenshot artefacts excluded.*
+
+### Specs & governance (the durable record)
+
+| File | What changed |
+|------|--------------|
+| **`docs/plans/page-policy.md`** | **NEW** — the whole record: §9 (21 items, one-pass) · §10 (verify-first) · §10-A (Gate-A addendum) · §11 (build) · §12po1/2/3 (walk) · §13 (retrospective) · §14 close. |
+| **`docs/specs/DESIGN-SYSTEM.md`** | **`StatusChip`** (§5.3, **RATIFIED** — superset + both migrations) · **input-focus unification** (§5.1, **RATIFIED**, platform-wide) · **reduced-motion rule** · **ReviewCard containment rule** · **dialog-is-the-scroll-container rule** · **icon+label button rule**. |
+| **`docs/specs/GLOSSARY.md`** | **9 entries**: Policy (investment) · Target · Band · In band · Out of band · Gap to target · Untargeted · Coverage (+ Concentration reached the popover store). |
+| **`docs/audit/DECISIONS.md`** | **D-105 SCOPE AMENDMENT** — money is a **served display string everywhere**, not just quote prices; percentages stay client-side. |
+| **`docs/specs/API-CONTRACT.md`** | Four **`present`** rows (the policy endpoints were frozen but never documented) + the **behaviour deltas**: A9 bucket-master validation · A10 staleness annotation · §9-3 `gross_assets` / `−total_value` · §9-6 `*_display` · §9-17 `symbol` · §9-21 `?entity_id` → 400 · §12po1-8 unsatisfiable policy · §11-5 liability bar · §12po1-6 served-copy. |
+| **`docs/specs/MASTER-DATA.md`** | **§3 AMENDED** — the currency master is the **`SUPPORTED_CURRENCIES` constant**; the table it described **was never built**. Three downstream contradictions closed (no admin screen · not seed-managed · no migration owed). |
+| **`docs/plans/TEMPLATE-page-build.md`** | **§13 folds**: *assertions with teeth* (§7 gate) and *a silent no-op edit is a claim* (§3b note). |
+| **`docs/audit/08-TECH-DEBT.md`** | §9-10 — `response_model` typing **deferred**, with the §12mk3-2 stripping hazard recorded. |
+| **`docs/plans/CURRENT.md`** | Policy → **DONE ✅**; NEXT → **Cash flow (plan-only first)**. |
+| **`ROADMAP.md`** | **R-33** per-entity policies (from §9-21). *(R-30/R-31/R-32 came from the release-scope task.)* |
+
+### Backend
+
+| File | What changed |
+|------|--------------|
+| **`app/services/policy.py`** | `master_buckets` (A9) + **liability bar** (§11-5) · **A10** input-quality annotation · **A11** drift reads Portfolio's canonical `allocation()` · `gross_assets` served / net `total_value` dropped · `*_display` money · concentration `symbol` · **per-dimension 100% ceiling** (§12po1-8) · **user-plain validation copy** (§12po1-6). |
+| **`app/services/portfolio.py`** | `HoldingValue.region` (makes region an allocation key) · **`PortfolioValuation.gross_assets()`** — the ONE denominator. |
+| **`app/services/review.py`** | Reads the **served** `has_targets` (§9-8) · carries the A10 annotation on `sections.policy`. |
+| **`app/api/v1/routes/policy.py`** | `?entity_id` → **honest 400** · plain-language meta validation. |
+| **`app/api/v1/routes/refdata.py`** | Serves the **`currency`** vocabulary (the picker and the A9 validator now read one list). |
+| **`app/api/v1/routes/settings.py`**, **`markets.py`**, **`portfolio.py`** | §12po1-6 served-copy fixes (app-wide) · summary reads the one `gross_assets()`. |
+| **`tests/integration/test_policy.py`** (+`test_review_centre.py`, `test_attribution_api.py`) | 24 policy tests: A9/A10/A11, the contract deltas, the 100% ceiling, the liability bar, the app-wide copy guard, and the **live Policy↔Review reconciliation**. |
+
+### Frontend
+
+| File | What changed |
+|------|--------------|
+| **`src/routes/Policy.tsx` / `.css` / `.test.tsx`** | **NEW** — the page + 12 tests. |
+| **`src/api/policy.ts`** | **NEW** — typed readers/writers. |
+| **`src/components/ui/StatusChip.tsx`**, `badges.css`, `index.ts` | **NEW** ratified chip. |
+| **`src/components/ui/ReviewCard.tsx`**, `structure.css` | **Containment** + `maxItems` + "+N more ↗". |
+| **`src/components/ui/structure.css`** | The shared **`.lf-page`** shell · centralised **in-page link** treatment. |
+| **`src/components/ui/inputs.css`**, `PercentInput.tsx` | Unified **focus ring** + `.lf-field--error` · `placeholder` prop. |
+| **`src/components/ui/data.css`** | Reduced-motion **ticker** treatment. |
+| **`src/routes/PricingHealth.*`, `Review.*`** | `ph__chip` + `rv__chip` **migrated onto `StatusChip`** and deleted. |
+| **9 page roots** (`NetWorth`, `Portfolio`, `Holdings`, `Markets`, `Heatmap`, `News`, `InstrumentDetail`, `Review`, `PricingHealth`, `Home`) + their CSS | Adopt **`.lf-page`**; the ten copy-pasted shells **deleted**. |
+| **`src/routes/KitchenSink.tsx`** | Specimens: StatusChip (7 states) · focus states · **many-items ReviewCard (17)**. |
+| **`e2e/overflow.spec.ts`** | `/policy` added + **two new cross-page guards** (shared shell · themed links). |
+| **`e2e/review-card-row.spec.ts`**, **`e2e/icon-button.spec.ts`** | **NEW** guards (row integrity with the 17-item fixture · icon+label buttons). |
+| **`e2e/smoke/policy-smoke.spec.ts`** | **NEW** Phase-3a pre-pass. |

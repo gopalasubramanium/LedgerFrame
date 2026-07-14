@@ -430,6 +430,17 @@ the theme/density matrix. Written as checkable statements.*
       pre-check was never run on its free-port path — the normal case — where `set -e` + a non-zero
       `grep` aborted the script before starting anything.) A guard whose red path is never observed is
       assumed-working, not verified.
+- [ ] **ASSERTIONS WITH TEETH — for any OWNER-VISIBLE defect (page-policy §13-1):** the assertion
+      **(a)** is written against the **RENDERED artefact the owner looked at**; **(b)** is **seen RED on
+      that exact state** (a mutation proof, not a claim); and **(c)** carries the **fixture that
+      reproduces it** — *a guard whose fixture cannot express the defect is decoration* (a 3-item
+      ReviewCard fixture proves nothing about the 17-item defect that broke the row).
+      **Corollary:** if an assertion goes **RED on something the owner has already ACCEPTED**, the
+      **assertion is wrong, not the product** — measure before you assert. **Assert CONTAINMENT** ("is
+      the thing inside its box?"), **never a container's scroll metrics**: a clipping container keeps
+      `scrollWidth === clientWidth` while a control is cut off the edge.
+      *This is the page-home §12ho2-1 lesson RECURRING — recurrence means it was recorded but never
+      MECHANISED, which is why it is now a checklist gate.*
 - [ ] **Copy hygiene (page-chrome §11-8):** no decision ID (`D-0…`/`P-…`/`§…`) or
       implementation note (`server-side`, enum/endpoint names) in any user-facing string
       — grep the rendered copy. A changed label is updated **app-wide** (§11-4), not only
@@ -483,6 +494,12 @@ tests. Never assemble the page against an endpoint that does not exist.*
   closes the phase — never self-certify it.**
 
 ---
+
+> **A SILENT NO-OP EDIT IS A CLAIM, NOT A CHANGE (page-policy §13-2).** A scripted string-replace that
+> matches **nothing** fails **silently** — page-policy's pencil icon was reported shipped on exactly that.
+> **Every scripted replace asserts its match count**, and **no UI change is reported without looking at the
+> render**. Likewise a **mutation proof run against the hot-reloading dev server can measure a STALE
+> module** — wait for the rebuild, or the proof is worthless.
 
 ## 9. NEEDS DECISION
 

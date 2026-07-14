@@ -906,39 +906,42 @@ widget is a linked summary of the canonical page's reader (P-1/D-038). Shipped:
   the box the product actually has*; *four guards reported green over a visibly broken page*; *a content
   cut that buys nothing is pure loss* — are folded into **TEMPLATE-page-build.md**. See **§13**.
 
+## POLICY — DONE ✅ (page ACCEPTED, owner walk complete, 2026-07-15)
+
+**The first page with a WRITE UI** — and the first to carry an **[S]-gated editor**. Full record in
+`docs/plans/page-policy.md`: **§9** (21 items, owner one-pass) · **§10** (verify-first) · **§10-A** (Gate-A
+addendum **A9–A11**, shipped pre-release because a parked page does not park its engine's defects) · **§11**
+(build) · **§12po1 / §12po2 / §12po3** (three walk batches) · **§13** (retrospective).
+
+**What the build produced beyond the page itself** — two defects generalised into **cross-page guards**
+(the shared `.lf-page` shell; the centralised in-page link treatment), a ratified **`StatusChip`** with both
+page-local chips migrated onto it, a **platform-wide input-focus** amendment, **ReviewCard containment**, the
+**dialog-scroll composition rule**, the **D-105 scope amendment** (money = served display strings
+everywhere), and **9 GLOSSARY terms**.
+
+**§13 headline:** *a written assertion can pass while the visible defect remains.* The re-verify gate caught
+**two items that had been reported done** — which is the gate working exactly as designed.
+
 ## NEXT
 
-> ## ⚠ RD-9 **TIMING AMENDMENT 3** (owner, 2026-07-14) — **RELEASE = FULL COMPLETION.** Supersedes Amendment 2.
-> **NO public release before ALL of:** Help · Legal · Policy · Cash flow · Scenarios · Insurance · Estate ·
-> Accounts · Reports (+ Pack) · Settings · the **AI-surfaces milestone** (D-067/D-068/R-22) · **Voice**.
-> **Gates C–F return to STANDING/DORMANT** — they reactivate only when that full set is **owner-accepted**.
-> RD-9's original **(b)** ruling (*ship the built set + a roadmap*) is **OVERTURNED**; Legal and Help
-> **no longer jump the queue** (every page is release-blocking now, so merit order is restored).
-> ⚠ **Voice is NEW SCOPE with NO definition** — ROADMAP **R-32, DEFINITION PENDING (owner)**. It needs an
-> owner definition + its own milestone plan before the release gate can be evaluated against it.
-> **No Voice behaviour has been invented.** *(Amendments 1 and 2 are preserved struck-through in
-> `release-readiness.md` — a superseded ruling is struck through, never deleted.)*
+1. **Cash flow — `docs/plans/page-cash-flow.md` (PLAN ONLY FIRST).** Goals · Obligations · Contributions
+   (D-056 / D-057). **CRUD-heavy**, and it builds directly on Policy's editor patterns: **grid rows**, the
+   **served validation copy** posture, the sticky-header/one-scroll-container dialog rule, and the
+   **[S]-gated** write path. ⚠ **Bulk-replace vs per-row is ITS OWN §9 question — NOT inherited.** Policy's
+   answer (bulk replace) followed from *its* endpoint being an atomic replace; Cash flow's endpoints must be
+   read first (verify-first, D-019) and the editor shape decided on **its** evidence.
+   **Protected semantics (D-057):** contributions **don't** reduce runway; **'once' obligations are excluded
+   from recurring burn.** Runway stays canonical on **Net worth** (D-036) — Cash flow **links**, never
+   recomputes.
+2. **Scenarios · Insurance · Estate** — the rest of the Planning group.
+3. Then the standing queue, unchanged: **Accounts** (D-065 — must wire `entity_id` scoping) · **Reports
+   (+ Pack)** · **Settings** · **Help · Legal** · the **AI-surfaces milestone** · **Voice** (only after the
+   owner defines it — ROADMAP **R-32**, DEFINITION PENDING) · then release **Gates C→F** and tag `v2.0.0`.
 
-**Merit order (the release gate no longer reorders the queue):**
+**Release posture unchanged (RD-9 Amendment 3):** the release gate is **FULL COMPLETION**; Gates C–F stay
+**dormant** until the owner accepts the full set.
 
-1. **Policy — RESUME.** `docs/plans/page-policy.md` is DRAFTED and **PARKED AT §9**: the **§9 one-pass
-   (21 items)** is the next task. **3 are already resolved or narrowed by §10-A** — **§9-4 CLOSED** (A11:
-   one weight derivation), **§9-7 CLOSED** (A9: bucket master validation), **§9-5 NARROWED** to a copy
-   ratification (A10) — **and that copy is now RATIFIED** (below), so **§9-5 is CLOSED too**.
-   ⚠ **Re-verify any remaining §9/§10 finding whose code changed since 2026-07-14.**
-2. **Cash flow · Scenarios · Insurance · Estate** — the rest of the Planning group.
-3. **Accounts** (D-065 — **must wire `entity_id` scoping**; all `/portfolio/*` readers already accept it,
-   Portfolio defaults to household with no selector, page-portfolio ND-8; entity CRUD + selector live
-   here) · **Reports (+ Pack)** · **Settings**.
-4. **Help · Legal** — still release-blocking; **plan-only first**, each via `TEMPLATE-page-build.md`.
-   `docs/plans/page-help.md` already carries its **SCOPE-NOTES** (the `[Help]` retrofit ruling, SN-1).
-5. **AI-surfaces milestone** (D-067/D-068/R-22) · **Voice** — **Voice only AFTER the owner defines it**
-   (R-32). A milestone cannot be planned against an undefined capability.
-6. **Release gates C → F**, then **tag `v2.0.0`** (Gate D3) — only once the full set is owner-accepted.
-
-**Standing, owner-only (not moveable):** the **CLA counsel review before the first external merge**
-(Gate B2). A CLA **cannot be applied retroactively**; publishing the repo (F1) starts that clock —
-Amendment 3 moves that clock **later**, not away.
+**Standing, owner-only:** the **CLA counsel review before the first external merge** (Gate B2).
 
 ## OWNER RATIFICATIONS (2026-07-14)
 

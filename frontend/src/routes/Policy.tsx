@@ -214,8 +214,8 @@ export function Policy() {
           policy ? (
             // §12po1-2 / §12po2-2 — the verb follows the STATE (you cannot "edit" a policy you have
             // not set), and the icon rides WITH the text label, never instead of it.
-            <button type="button" className="lf-btn lf-btn--primary" onClick={openEditor}>
-              <Pencil size={16} aria-hidden="true" />
+            <button type="button" className="lf-btn lf-btn--primary pol__btn" onClick={openEditor}>
+              <Pencil aria-hidden="true" />
               {hasTargets ? "Edit policy" : "Set policy"}
             </button>
           ) : undefined
@@ -258,8 +258,8 @@ export function Policy() {
               message="No policy defined."
               reason="Set target allocations to see how far your holdings sit from your own targets."
               action={
-                <button type="button" className="lf-btn lf-btn--primary" onClick={openEditor}>
-                  <Pencil size={16} aria-hidden="true" />
+                <button type="button" className="lf-btn lf-btn--primary pol__btn" onClick={openEditor}>
+                  <Pencil aria-hidden="true" />
                   Set policy
                 </button>
               }

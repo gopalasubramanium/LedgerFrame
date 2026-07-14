@@ -241,3 +241,24 @@
   margin: 0;
   color: var(--text-tertiary);
 }
+
+/* §12po3-1 — ICON + LABEL BUTTON, conforming to the Mark-reviewed precedent (Review §12rv1-1).
+   The button is a CENTRED inline-flex row with a token gap, so the icon sits on the label's optical
+   centre instead of baseline-aligning against it. The text label is always kept: an icon is never a
+   label on its own.
+
+   ⚠ THE SIZE WAS NEVER THE DEFECT — my first diagnosis was wrong. `.lf-btn svg` (structure.css)
+   ALREADY sizes every in-button icon from the `--icon-size` token, so lucide's `size={16}` had no
+   effect at all: the icon was always 18px. What was missing was the flex ROW — an 18px icon
+   baseline-aligned against 13px text, with no gap. The per-call-site `size` prop is removed (it was
+   a lie about what controlled the size) and no local sizing rule is added, because duplicating the
+   global one is exactly the copy-paste defect the centralization rule names.
+
+   ⚠ This is the SECOND icon+label button (Review · Policy). Per the centralization rule the THIRD
+   occurrence EXTRACTS the shared treatment (the Segmented/StatusChip precedent) — recorded in
+   page-policy §12po3-1, not pre-emptively built here. */
+.pol__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}

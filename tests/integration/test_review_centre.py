@@ -39,3 +39,24 @@ async def test_recent_split_surfaces_corporate_verify_item(app_client):
     corp = [a for a in attention if a["area"] == "Corporate"]   # §12rv1-5: display-cased
     assert corp, "expected a corporate-action verify item"
     assert "SPLITCO" in corp[0]["title"] and "verify" in corp[0]["title"].lower()
+
+
+async def test_policy_verdict_carries_its_input_quality(app_client):
+    """A10 — the Review policy verdict is annotated with the quality of the prices it rests on,
+    so a section computed off stale prices can never present as fresh. Same reader as the Policy
+    page (`compute_drift`), so the annotation cannot diverge between the two."""
+    pol = (await app_client.get("/api/v1/review")).json()["sections"]["policy"]
+    assert "stale_inputs" in pol and "inputs_stale" in pol
+
+    # The demo's quotes are freshly mocked, so nothing is STALE...
+    assert pol["stale_inputs"] == 0
+    # ...but it holds a manually-valued asset that scores below the low-confidence band, so the
+    # verdict genuinely does rest on an input we do not fully trust — and now says so. (This is
+    # the guard finding a real thing in the shipped fixture, not a contrived one.)
+    assert pol["inputs_stale"] is True
+
+    drift = (await app_client.get("/api/v1/policy/drift")).json()
+    assert drift["low_confidence_inputs"] >= 1
+    # Same reader, so the two payloads cannot disagree about the inputs.
+    assert drift["stale_inputs"] == pol["stale_inputs"]
+    assert drift["inputs_stale"] == pol["inputs_stale"]

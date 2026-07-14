@@ -170,6 +170,13 @@ async def compute_drift(session: AsyncSession, entity_id: int | None = None) -> 
         # weight_pct is always _q(...) -> float; the dict is str|float so mypy widens it to object.
         concentration.sort(key=lambda c: cast(float, c["weight_pct"]), reverse=True)
 
+    # A10 — the honesty layer on a DERIVED verdict. Drift is computed from market values that may
+    # be stale or poorly-sourced; a band verdict that rests on them must say so (Guarantee 3:
+    # stale values are FLAGGED, never hidden — and a verdict is not exempt just because it is
+    # derived). The figures are still shown; they simply cannot present as fresh.
+    stale_inputs, low_confidence_inputs = _input_quality(val)
+    inputs_stale = bool(stale_inputs or low_confidence_inputs)
+
     return {
         "base_currency": base,
         "total_value": _q(val.total_value, 0),
@@ -177,8 +184,44 @@ async def compute_drift(session: AsyncSession, entity_id: int | None = None) -> 
         "max_position_pct": _q(policy.max_position_pct, 1) if policy.max_position_pct is not None else None,
         "dimensions": dimensions,
         "concentration": concentration,
+        "stale_inputs": stale_inputs,
+        "low_confidence_inputs": low_confidence_inputs,
+        "inputs_stale": inputs_stale,
+        "inputs_note": _inputs_note(stale_inputs, low_confidence_inputs),
         "disclaimer": "Reporting only — distance from your own targets. Not financial advice.",
     }
+
+
+def _input_quality(val) -> tuple[int, int]:
+    """(stale, low-confidence) counts over the holdings the drift figures are computed FROM.
+
+    The same rules every other reader honours: a stale priced holding (`review.py`) and the
+    ``< 50`` low-confidence band (PRODUCT-SPEC §5 / `confidence.py`). Only positive-value
+    holdings count — they are the ones in the gross-asset denominator.
+    """
+    from app.services.confidence import score_holding
+
+    priced = [h for h in val.holdings if h.market_value_base > 0]
+    stale = sum(1 for h in priced if h.is_stale and h.symbol)
+    low = sum(1 for h in priced if score_holding(h)["confidence"] < 50)
+    return stale, low
+
+
+def _inputs_note(stale: int, low: int) -> str | None:
+    """An honest, SERVED reason — or None when there is nothing to warn about.
+
+    PROPOSED copy (Gate A10) — the owner ratifies the wording. It states a FACT about the
+    inputs; it never names or implies a trade (D-055), and carries no field or endpoint name
+    (copy hygiene, page-chrome §11-8).
+    """
+    if not stale and not low:
+        return None
+    parts = []
+    if stale:
+        parts.append(f"{stale} {'price is' if stale == 1 else 'prices are'} stale")
+    if low:
+        parts.append(f"{low} {'holding is' if low == 1 else 'holdings are'} low-confidence")
+    return (f"{' and '.join(parts)} — these figures may not reflect current values.")
 
 
 async def replace_targets(session: AsyncSession, targets: list[dict]) -> InvestmentPolicy:

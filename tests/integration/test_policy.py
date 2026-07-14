@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+
+from app.services import policy as policy_svc
+from app.services.portfolio import HoldingValue, PortfolioValuation
+
 
 async def test_default_policy_is_created(app_client):
     p = (await app_client.get("/api/v1/policy")).json()
@@ -112,3 +117,67 @@ async def test_valid_buckets_pass_and_are_stored_in_the_master_spelling(app_clie
     assert by_dim["region"] == "India"
     # Canonicalised to the master's spelling — "sgd" cannot enter as a second SGD bucket.
     assert by_dim["currency"] == "SGD"
+
+
+# --------------------------------------------------------------------------- #
+# Gate A10 — a verdict computed off STALE prices can never present as FRESH.
+# `compute_drift` consumed the valuation's market values but surfaced NO staleness
+# and NO confidence (zero `is_stale` / `confidence` in services/policy.py), so the
+# page would state "Equity is OVER its band" off a stale price, unqualified.
+# Product Guarantee 3 — "stale values are flagged, never hidden" — does not exempt
+# a DERIVED verdict. (page-policy §10-7; the page-news audit-the-guards lesson)
+# --------------------------------------------------------------------------- #
+
+
+def _holding(*, stale: bool, method: str = "market_quote", value: str = "100"):
+    return HoldingValue(
+        holding_id=1, label="ACME", name="Acme Corp", symbol="ACME", asset_class="equity",
+        sector=None, quantity=Decimal(1), native_currency="SGD", price=Decimal(value),
+        market_value_base=Decimal(value), cost_basis_base=Decimal("50"),
+        unrealised_pl_base=Decimal("50"), day_change_base=Decimal(0),
+        is_stale=stale, is_priced=True, valuation_method=method,
+    )
+
+
+def _valuation(holdings):
+    return PortfolioValuation(base_currency="SGD", total_value=Decimal("100"), holdings=holdings)
+
+
+async def _drift_with(session, monkeypatch, holdings):
+    await policy_svc.replace_targets(
+        session, [{"dimension": "asset_class", "bucket": "equity", "target_pct": 10}])
+
+    async def _fake_value_portfolio(_session, _base, entity_id=None):
+        return _valuation(holdings)
+
+    monkeypatch.setattr(policy_svc, "value_portfolio", _fake_value_portfolio)
+    return await policy_svc.compute_drift(session)
+
+
+async def test_drift_off_stale_prices_is_flagged(session, monkeypatch):
+    d = await _drift_with(session, monkeypatch, [_holding(stale=True)])
+
+    # The verdict itself still fires (the figure is shown, never hidden — Guarantee 3)...
+    row = d["dimensions"][0]["rows"][0]
+    assert row["status"] == "over"
+    # ...but it can no longer present as fresh.
+    assert d["stale_inputs"] == 1
+    assert d["inputs_stale"] is True
+    assert d["inputs_note"]                       # an honest, served reason
+    assert "stale" in d["inputs_note"].lower()
+
+
+async def test_drift_off_fresh_prices_carries_no_false_warning(session, monkeypatch):
+    d = await _drift_with(session, monkeypatch, [_holding(stale=False)])
+    assert d["stale_inputs"] == 0
+    assert d["low_confidence_inputs"] == 0
+    assert d["inputs_stale"] is False
+    assert d["inputs_note"] is None               # no warning where there is nothing to warn about
+
+
+async def test_drift_flags_low_confidence_inputs(session, monkeypatch):
+    # An estimated value scores 40 — below the low-confidence band (<50, PRODUCT-SPEC §5).
+    d = await _drift_with(session, monkeypatch, [_holding(stale=False, method="estimated_value")])
+    assert d["low_confidence_inputs"] == 1
+    assert d["inputs_stale"] is True              # the verdict rests on inputs we do not trust
+    assert d["inputs_note"]

@@ -305,7 +305,12 @@ async def review_centre(session: AsyncSession) -> dict:
         "net_worth": round(float(val.total_value), 0),
         "sections": {
             "trust": {"confidence": conf, "low": low, "stale": stale},
-            "policy": {"out_of_band": _out_of_band(drift), "has_targets": drift.get("dimensions") != []},
+            # A10: the policy verdict carries its input quality, so a Review section computed off
+            # stale prices can never present as fresh either (the drift reader is the same one the
+            # Policy page reads — one derivation, one honesty layer).
+            "policy": {"out_of_band": _out_of_band(drift), "has_targets": drift.get("dimensions") != [],
+                       "stale_inputs": drift.get("stale_inputs", 0),
+                       "inputs_stale": drift.get("inputs_stale", False)},
             "liquidity": {"liquid_pct": ladder["liquid_pct"], "runway_status": run["status"],
                           "runway_months": run["runway_months"]},
             "goals": {"goals": len(goals["goals"]),

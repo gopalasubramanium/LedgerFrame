@@ -1,15 +1,7 @@
 /* Portfolio (analytics) — overview template. Token-only; composes .lf-card sections. */
-.pf {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
 /* Every top-level section must be allowed to shrink below its content's min-content width,
    so a wide child (the attribution table) is clipped + scrolled by its .pf__scroll wrapper
    instead of stretching the whole page (overflow discipline, template §7). */
-.pf > * {
-  min-width: 0;
-}
 
 /* Main stat rail (§12-2, PROPOSED): equal-size COMPACT tiles, responsive 6×1 → 3×2 → 2×3. */
 .pf__rail {

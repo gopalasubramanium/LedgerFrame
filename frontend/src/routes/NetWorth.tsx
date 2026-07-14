@@ -129,7 +129,7 @@ export function NetWorth() {
   const sparkPoints = (perf?.series ?? []).map((p) => p.value);
 
   return (
-    <div className="nw">
+    <div className="lf-page nw">
       <PageHeader
         title="Net worth"
         subtitle="Your headline & liquidity — investment analytics on Portfolio"

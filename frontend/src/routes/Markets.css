@@ -1,13 +1,5 @@
 /* Markets (Markets-group home) — overview + worklist hybrid (ND-3). Token-only; the shell owns the
    root padding. Every child carries min-width:0 so a wide table/row can never force page overflow. */
-.mk {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.mk > * {
-  min-width: 0;
-}
 
 .mk__card {
   padding: var(--space-5);

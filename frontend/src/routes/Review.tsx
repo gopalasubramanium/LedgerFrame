@@ -119,7 +119,7 @@ export function Review() {
   ];
 
   return (
-    <div className="rv">
+    <div className="lf-page rv">
       <PageHeader
         title="Review"
         subtitle="What needs a look — reporting only, not advice or a required action"

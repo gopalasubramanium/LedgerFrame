@@ -35,15 +35,33 @@ DIMENSIONS = ("asset_class", "currency", "region")
 DIMENSION_ATTR = {"asset_class": "asset_class", "currency": "native_currency", "region": "region"}
 
 
+#: A policy allocates ASSETS. `liability` is an AssetClass, but gross assets EXCLUDE liabilities by
+#: construction (D-033 — a mortgage cannot distort a weight), so a liability bucket's actual share is
+#: permanently 0.00%: the page would report it "Under" its band forever, with a gap that can never
+#: close. Arithmetically correct, practically meaningless — so it is not offered and not accepted
+#: (§11-5, owner-ruled at the walk).
+UNTARGETABLE_ASSET_CLASSES = frozenset({AssetClass.LIABILITY.value})
+
+#: How a dimension is SPOKEN to a user. Served error copy is user copy — it never names a field
+#: (§12po1-6).
+DIMENSION_LABEL = {"asset_class": "asset class", "currency": "currency", "region": "region"}
+
+
+def _spoken(value: str) -> str:
+    """An internal key as the user reads it: `mutual_fund` -> "mutual fund"."""
+    return value.replace("_", " ")
+
+
 def master_buckets(dimension: str) -> tuple[str, ...]:
     """The MASTER-DATA vocabulary a dimension's ``bucket`` must come from (Gate A9).
 
     ``bucket`` is a **categorical field**, so it references a master — never free text
     (CLAUDE.md hard rule; D-005). The masters are the ones the rest of the app already
-    serves: AssetClass (13), the currency master, and the six D-083 regions.
+    serves: AssetClass (minus the untargetable ones), the currency master, and the six
+    D-083 regions.
     """
     if dimension == "asset_class":
-        return tuple(a.value for a in AssetClass)
+        return tuple(a.value for a in AssetClass if a.value not in UNTARGETABLE_ASSET_CLASSES)
     if dimension == "currency":
         return tuple(SUPPORTED_CURRENCIES)
     if dimension == "region":
@@ -238,35 +256,56 @@ async def replace_targets(session: AsyncSession, targets: list[dict]) -> Investm
     policy = await get_or_create_policy(session)
     cleaned: list[PolicyTarget] = []
     seen = set()
+    # §12po1-8: a policy whose targets sum past 100% of gross assets can never be met by ANY
+    # portfolio — every bucket would sit permanently out of band, reporting a gap that cannot
+    # close. Counted PER DIMENSION: a full asset-class policy plus a full currency policy is
+    # 100% + 100%, and that is correct.
+    per_dim: dict[str, Decimal] = defaultdict(lambda: Decimal(0))
     for row in targets:
         dim = str(row.get("dimension", "")).strip().lower()
         bucket = str(row.get("bucket", "")).strip()
         if dim not in DIMENSIONS:
-            raise ValueError(f"unknown dimension '{dim}'")
+            raise ValueError(
+                f"'{_spoken(dim)}' is not a policy dimension — choose asset class, currency or region.")
         if not bucket:
-            raise ValueError("bucket is required")
+            raise ValueError("Every target needs a bucket.")
         # A9: the bucket must exist in the dimension's master. Matched case-insensitively and
         # stored in the MASTER's spelling, so "sgd" can never enter as a second SGD bucket.
         allowed = master_buckets(dim)
         canonical = next((b for b in allowed if b.lower() == bucket.lower()), None)
         if canonical is None:
-            raise ValueError(
-                f"unknown {dim} bucket '{bucket}' — must be one of: {', '.join(allowed)}")
+            label = DIMENSION_LABEL[dim]
+            if dim == "asset_class" and bucket.lower() in UNTARGETABLE_ASSET_CLASSES:
+                # §11-5 — say WHY, rather than pretending the class does not exist.
+                raise ValueError(
+                    f"{_spoken(bucket).capitalize()} can't be a policy target: targets are a share "
+                    "of your gross assets, and liabilities are excluded from that.")
+            choices = ", ".join(_spoken(b) for b in allowed)
+            raise ValueError(f"'{_spoken(bucket)}' is not a {label} — choose one of: {choices}.")
         bucket = canonical
         key = (dim, bucket.lower())
         if key in seen:
-            raise ValueError(f"duplicate target {dim}/{bucket}")
+            raise ValueError(
+                f"{_spoken(bucket).capitalize()} appears twice in your {DIMENSION_LABEL[dim]} "
+                "targets — each bucket can have only one target.")
         seen.add(key)
-        tgt = _dec(row.get("target_pct"), "target_pct", required=True)
+        tgt = _dec(row.get("target_pct"), "Target", required=True)
         assert tgt is not None  # required=True raised above if it were missing
-        lo = _dec(row.get("min_pct"), "min_pct")
-        hi = _dec(row.get("max_pct"), "max_pct")
+        lo = _dec(row.get("min_pct"), "Minimum")
+        hi = _dec(row.get("max_pct"), "Maximum")
         if not (Decimal(0) <= tgt <= Decimal(100)):
-            raise ValueError("target_pct must be 0–100")
+            raise ValueError("Target must be between 0 and 100%.")
         if lo is not None and hi is not None and lo > hi:
-            raise ValueError("min_pct cannot exceed max_pct")
+            raise ValueError("Minimum can't be greater than maximum.")
+        per_dim[dim] += tgt
         cleaned.append(PolicyTarget(policy_id=policy.id, dimension=dim, bucket=bucket[:40],
                                     target_pct=tgt, min_pct=lo, max_pct=hi))
+
+    for dim, total in per_dim.items():
+        if total > Decimal(100):
+            raise ValueError(
+                f"Targets in {DIMENSION_LABEL[dim]} add up to {_q(total, 1):g}% — "
+                "together they can't exceed 100%.")
 
     policy.targets.clear()
     await session.flush()
@@ -278,11 +317,12 @@ async def replace_targets(session: AsyncSession, targets: list[dict]) -> Investm
 
 
 def _dec(v, field: str, required: bool = False) -> Decimal | None:
+    """`field` is the USER'S name for the value ("Target"), never the column name (§12po1-6)."""
     if v is None or v == "":
         if required:
-            raise ValueError(f"{field} is required")
+            raise ValueError(f"{field} is required.")
         return None
     try:
         return Decimal(str(v))
     except Exception as exc:  # noqa: BLE001
-        raise ValueError(f"{field} must be a number") from exc
+        raise ValueError(f"{field} must be a number.") from exc

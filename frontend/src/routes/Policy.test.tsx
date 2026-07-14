@@ -173,7 +173,7 @@ test("§9-13 — the empty state states a REASON and offers the way forward", as
   renderPage();
   expect(await screen.findByText("No policy defined.")).toBeTruthy();
   expect(screen.getByText(/set target allocations to see how far your holdings sit/i)).toBeTruthy();
-  expect(screen.getAllByRole("button", { name: "Set targets" }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("button", { name: /set policy/i }).length).toBeGreaterThan(0);
 });
 
 test("§9-2 — BULK REPLACE: editing one row sends the COMPLETE set; no other row is dropped", async () => {
@@ -181,7 +181,7 @@ test("§9-2 — BULK REPLACE: editing one row sends the COMPLETE set; no other r
   const user = userEvent.setup();
   renderPage();
 
-  await user.click(await screen.findByRole("button", { name: "Edit policy" }));
+  await user.click(await screen.findByRole("button", { name: /edit policy/i }));
   const dialog = await screen.findByRole("dialog");
 
   // Change ONE target's percentage.
@@ -208,12 +208,71 @@ test("§9-18 — a blank band is NOT 'no band': the editor shows the band it INH
   mockFetch();
   const user = userEvent.setup();
   renderPage();
-  await user.click(await screen.findByRole("button", { name: "Edit policy" }));
+  await user.click(await screen.findByRole("button", { name: /edit policy/i }));
   const dialog = await screen.findByRole("dialog");
 
-  // `property` (target 40) sets no min/max, so it inherits the default band of 5 → 35–45.
-  expect(within(dialog).getByText("inherits 35%")).toBeTruthy();
-  expect(within(dialog).getByText("inherits 45%")).toBeTruthy();
+  // `property` (target 40) sets no min/max, so it inherits the default band of 5 → 35–45%.
+  expect(within(dialog).getByText("inherits 35–45%")).toBeTruthy();
   // `equity` sets its own band (25/35), so it inherits nothing.
-  expect(within(dialog).queryByText("inherits 25%")).toBeNull();
+  expect(within(dialog).queryByText(/inherits 25/)).toBeNull();
+});
+
+test("§12po1-9 — the editor is PER DIMENSION, and saving still replaces the WHOLE policy", async () => {
+  const sent = mockFetch();
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: /edit policy/i }));
+  const dialog = await screen.findByRole("dialog");
+
+  // The bulk-replace semantics are said OUT LOUD — the user is editing their whole policy.
+  expect(within(dialog).getByText(/saving replaces your whole policy/i)).toBeTruthy();
+
+  // The asset-class tab shows only asset-class rows — the currency target is NOT in this table.
+  expect(within(dialog).getAllByLabelText("Bucket")).toHaveLength(2); // equity + property
+  // There is no per-row Dimension column any more (§12po1-4).
+  expect(within(dialog).queryByLabelText("Dimension")).toBeNull();
+
+  // Edit within ASSET CLASS only...
+  const targets = within(dialog).getAllByLabelText("Target");
+  await user.clear(targets[0]);
+  await user.type(targets[0], "35");
+  await user.click(within(dialog).getByRole("button", { name: "Save policy" }));
+
+  await waitFor(() => expect(sent.some((s) => s.path.includes("/policy/targets"))).toBe(true));
+  const body = sent.find((s) => s.path.includes("/policy/targets"))!.body as { targets: { dimension: string; bucket: string; target_pct: number }[] };
+
+  // ...and the CURRENCY dimension's target — which was never on screen — survives untouched.
+  // A dimension you did not open is not a dimension you deleted.
+  expect(body.targets).toHaveLength(3);
+  const sgd = body.targets.find((t) => t.dimension === "currency" && t.bucket === "SGD");
+  expect(sgd, "the currency target must survive an asset-class edit").toBeTruthy();
+  expect(sgd!.target_pct).toBe(60);
+  expect(body.targets.find((t) => t.bucket === "equity")!.target_pct).toBe(35);
+});
+
+test("§12po1-8 — an unsatisfiable policy shows the SERVED error inline, and the dialog stays open", async () => {
+  const user = userEvent.setup();
+  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    const path = String(url);
+    if (init?.method && init.method !== "GET") {
+      if (path.includes("/policy/targets")) {
+        return new Response(
+          JSON.stringify({ detail: "Targets in asset class add up to 184% — together they can't exceed 100%." }),
+          { status: 400, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(JSON.stringify(POLICY), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    const body = path.includes("/policy/drift") ? DRIFT : POLICY;
+    return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+  }));
+  renderPage();
+  await user.click(await screen.findByRole("button", { name: /edit policy/i }));
+  const dialog = await screen.findByRole("dialog");
+  await user.click(within(dialog).getByRole("button", { name: "Save policy" }));
+
+  // The SERVED message is shown verbatim, in place — not a toast that vanishes before you can act.
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent(/add up to 184%/);
+  // The dialog stays OPEN so the user can fix it where they are.
+  expect(screen.getByRole("dialog")).toBeTruthy();
 });

@@ -178,7 +178,7 @@ export function PricingHealth() {
   ];
 
   return (
-    <div className="ph">
+    <div className="lf-page ph">
       <PageHeader
         title="Pricing Health"
         subtitle="Provenance, confidence & routing — the honest “why is this number what it is”"

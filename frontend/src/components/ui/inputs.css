@@ -32,8 +32,31 @@
   background: var(--surface);
   color: var(--text-primary);
 }
+/* §12po1-10 — ONE focus treatment for every input (DESIGN-SYSTEM §5 amendment, PROPOSED).
+   The field WRAPPER carries the focus-visible ring; the inner control suppresses its own, so a
+   focused input shows ONE ring instead of the doubled ring-plus-recoloured-border it used to
+   (the global `:focus-visible` hit the <input> while `.lf-field` also swapped its border).
+   `Select` already worked this way (§12ho2-11) — this is its sibling, applied to all of them.
+
+   A11Y, NON-NEGOTIABLE: this UNIFIES the ring, it never removes it. A keyboard user must always
+   see exactly where they are. The ring is only ever MOVED to the wrapper, never dropped. */
 .lf-field:focus-within {
-  border-color: var(--accent);
+  border-color: var(--border);
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.lf-field__input:focus,
+.lf-field__input:focus-visible {
+  outline: none; /* the wrapper shows the ring — one ring, not two */
+}
+
+/* Error state — the field the served validation is pointing at. Colour is not the only signal:
+   the message is always shown too (§12po1-8 renders the served detail in an alert). */
+.lf-field--error {
+  border-color: var(--loss);
+}
+.lf-field--error:focus-within {
+  border-color: var(--loss);
 }
 .lf-field--disabled {
   opacity: 0.55;

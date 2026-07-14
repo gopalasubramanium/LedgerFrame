@@ -75,14 +75,14 @@ async def put_policy(payload: PolicyMetaIn, session: AsyncSession = Depends(get_
         policy.base_currency = bc or None
     if payload.default_band_pct is not None:
         if not 0 <= payload.default_band_pct <= 100:
-            raise HTTPException(400, "default_band_pct must be 0–100")
+            raise HTTPException(400, "The default band must be between 0 and 100%.")
         policy.default_band_pct = Decimal(str(payload.default_band_pct))
     # max_position_pct: a value sets the limit; explicitly clearing it is done via 0/None.
     if payload.max_position_pct is not None:
         if payload.max_position_pct <= 0:
             policy.max_position_pct = None
         elif payload.max_position_pct > 100:
-            raise HTTPException(400, "max_position_pct must be 0–100")
+            raise HTTPException(400, "The concentration limit must be between 0 and 100%.")
         else:
             policy.max_position_pct = Decimal(str(payload.max_position_pct))
     if payload.notes is not None:

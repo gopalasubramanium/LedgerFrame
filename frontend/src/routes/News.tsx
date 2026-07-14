@@ -76,7 +76,7 @@ export function News() {
   }, [noEgress, toast]);
 
   return (
-    <div className="nw">
+    <div className="lf-page nw">
       <PageHeader title="News" subtitle="The market briefing and grouped headlines" />
 
       {/* Briefing (D-037/D-068) — deterministic served text; NO AI copy (ND-1). Per-card refresh

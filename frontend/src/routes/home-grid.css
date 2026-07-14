@@ -17,10 +17,10 @@
  * is gone — there was never supposed to be one, and a bug in a thing that should not exist is best
  * fixed by deleting the thing. It also hands ~40px of vertical space straight back to the grid
  * (§12ho2-12 lever 1): the page-local padding was competing with the shell's own. */
+/* Home uses the shared `.lf-page` shell (§12po1-1) and declares its two deliberate differences:
+   a tighter stack and a full-height fill. */
 .hm3 {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  --page-gap: var(--space-3);
   min-height: 100%; /* the grid may still fill the region when content is short — no half-empty page */
 }
 /* Every top-level section may shrink below its content's min-width, so a wide child scrolls inside

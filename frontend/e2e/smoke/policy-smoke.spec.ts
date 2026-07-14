@@ -17,9 +17,12 @@ const consoleErrors: string[] = [];
 
 // The 13 AssetClass values — REAL-SHAPED data. page-home's lesson: a mockup fed 5 classes while the
 // real dataset had 8, and the difference was the whole fit.
+// The 12 TARGETABLE asset classes (§11-5 bars `liability`: gross assets exclude it, so a liability
+// target could never be satisfied). REAL-SHAPED data — page-home's lesson: a mockup fed 5 classes
+// while the real dataset had 8, and the difference was the whole fit.
 const ALL_CLASSES = [
   "equity", "etf", "mutual_fund", "bond", "cash", "fixed_deposit", "commodity",
-  "crypto", "property", "private", "retirement", "liability", "other",
+  "crypto", "property", "private", "retirement", "other",
 ];
 
 test.describe.serial("policy pre-pass (live)", () => {
@@ -50,13 +53,41 @@ test.describe.serial("policy pre-pass (live)", () => {
     // Build a REAL-SHAPED policy: every one of the 13 asset classes gets a target, so the table is
     // the size the product actually has to render (§9-12 geometry, measured on real shape).
     await page.request.put(`${API}/policy`, { data: { default_band_pct: 5, max_position_pct: 25 } });
-    const targets = ALL_CLASSES.map((c) => ({ dimension: "asset_class", bucket: c, target_pct: 7 }));
+    // 12 x 8 = 96% — under the 100% ceiling (§12po1-8), which is a legitimate partial policy.
+    const targets = ALL_CLASSES.map((c) => ({ dimension: "asset_class", bucket: c, target_pct: 8 }));
     targets.push(
       { dimension: "currency", bucket: "SGD", target_pct: 60 },
       { dimension: "region", bucket: "India", target_pct: 20 },
     );
     const put = await page.request.put(`${API}/policy/targets`, { data: { targets } });
     expect(put.ok(), "the PIN-gated write path accepts a valid full set").toBeTruthy();
+
+    // §12po1-3 — the editor's table header PINS inside its own scroll region. It used to be a raw
+    // <table> sitting directly in the dialog, so the header had nothing to stick to and slid away
+    // under the rows as you scrolled.
+    await page.request.put(`${API}/policy/targets`, { data: { targets } });
+    await page.keyboard.press("Escape");
+    await page.reload();
+    await page.getByRole("button", { name: /edit policy/i }).first().click();
+    const editor = page.getByRole("dialog");
+    await expect(editor).toBeVisible();
+    const scroller = editor.locator(".lf-table__scroll");
+    await expect(scroller, "the editor table has its OWN scroll region").toHaveCount(1);
+    const headTopBefore = await editor.locator(".lf-table__th").first().boundingBox();
+    await scroller.evaluate((el) => el.scrollTo(0, 400));
+    await page.waitForTimeout(150);
+    const headTopAfter = await editor.locator(".lf-table__th").first().boundingBox();
+    expect(await scroller.evaluate((el) => el.scrollTop), "the table actually scrolled").toBeGreaterThan(50);
+    expect(
+      Math.abs(headTopAfter!.y - headTopBefore!.y),
+      "the header stays pinned while the rows scroll under it",
+    ).toBeLessThanOrEqual(1);
+    console.log("PART 2b — editor sticky header pinned after scroll");
+
+    // §12po1-4 — no horizontal overflow in the dialog at desktop width.
+    const dlgOverflow = await editor.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(dlgOverflow, "the editor does not scroll horizontally at 1366").toBeLessThanOrEqual(1);
+    console.log("PART 2b — editor has no horizontal overflow at 1366");
 
     await page.keyboard.press("Escape");
     await page.reload();
@@ -66,16 +97,41 @@ test.describe.serial("policy pre-pass (live)", () => {
     const rows = page.locator(".lf-table tbody tr");
     await expect
       .poll(async () => await rows.count(), { timeout: 10_000 })
-      .toBeGreaterThanOrEqual(13); // all 13 classes render
+      .toBeGreaterThanOrEqual(12); // all 12 targetable classes render
     await expect(page.getByRole("columnheader", { name: /gap to target/i })).toBeVisible();
     // Coverage renders as a reconciling total INSIDE the table.
     await expect(page.locator(".lf-table tfoot")).toBeVisible();
-    console.log(`PART 3 — drift table rendered with ${await rows.count()} rows (13 classes, real shape)`);
+    console.log(`PART 3 — drift table rendered with ${await rows.count()} rows (12 targetable classes, real shape)`);
 
     // The dimension switcher actually switches.
     await page.getByRole("button", { name: "Region" }).click();
     await expect(page.locator(".lf-table tbody").getByText("India")).toBeVisible();
     await page.getByRole("button", { name: "Asset class" }).click();
+
+    // PART 3b: §12po1-8 — an UNSATISFIABLE policy is refused, and the editor says so IN PLACE.
+    const bad = await page.request.put(`${API}/policy/targets`, {
+      data: { targets: [
+        { dimension: "asset_class", bucket: "equity", target_pct: 100 },
+        { dimension: "asset_class", bucket: "property", target_pct: 84 },
+      ] },
+    });
+    expect(bad.status(), "a 184% policy is refused").toBe(400);
+    const badDetail = (await bad.json()).detail as string;
+    expect(badDetail).toContain("184");
+    expect(badDetail, "the served error is USER copy — never a field name (§12po1-6)").not.toContain("target_pct");
+    console.log(`PART 3b — unsatisfiable policy refused: "${badDetail}"`);
+
+    // §11-5 — a liability target is refused, and says WHY.
+    const liab = await page.request.put(`${API}/policy/targets`, {
+      data: { targets: [{ dimension: "asset_class", bucket: "liability", target_pct: 10 }] },
+    });
+    expect(liab.status()).toBe(400);
+    console.log(`PART 3b — liability target refused: "${(await liab.json()).detail}"`);
+
+    // Restore the real-shaped policy for the geometry pass.
+    await page.request.put(`${API}/policy/targets`, { data: { targets } });
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Drift" })).toBeVisible({ timeout: 15_000 });
 
     // PART 4: D-055 — NO TRADE LANGUAGE anywhere on the RENDERED page ------------------------------
     const body = ((await page.locator("body").innerText()) || "").toLowerCase();
@@ -84,6 +140,19 @@ test.describe.serial("policy pre-pass (live)", () => {
     }
     await expect(page.getByText(/not financial advice/i)).toBeVisible();
     console.log("PART 4 — D-055 clean on the rendered page");
+
+    // PART 4b: §12po1-1 — Policy uses the SHARED page shell (its cards no longer butt into the
+    // header band), and §12po1-7 — no in-page link falls back to the browser default.
+    const shell = await page.evaluate(() => {
+      const first = document.querySelector(".lf-shell__content")?.firstElementChild as HTMLElement | null;
+      const links = [...document.querySelectorAll(".lf-page a")].map(
+        (a) => getComputedStyle(a as HTMLElement).textDecorationLine,
+      );
+      return { hasPageShell: !!first?.classList.contains("lf-page"), underlinedAtRest: links.filter((d) => d.includes("underline")).length };
+    });
+    expect(shell.hasPageShell, "Policy uses the shared .lf-page shell").toBe(true);
+    expect(shell.underlinedAtRest, "no in-page link is default-underlined").toBe(0);
+    console.log("PART 4b — shared shell + themed links OK");
 
     // PART 5: no card is left in skeleton (progressive loading resolved) ---------------------------
     expect(await page.locator(".lf-skeleton").count(), "every card is out of skeleton").toBe(0);

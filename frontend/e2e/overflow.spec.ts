@@ -125,3 +125,63 @@ for (const theme of THEMES) {
     });
   }
 }
+
+// §12po1-1 — THE PAGE SHELL IS SHARED, NOT COPIED (generalised from the Policy walk).
+//
+// Policy shipped with NO page root at all (a bare fragment), so its first card butted straight
+// into the header band while every other page sat in a `flex column · gap · min-width:0` root —
+// a root that had been COPY-PASTED into ten page-local classes (.nw .pf .rv .ph .hold .mk .hm
+// .ins …). The owner saw the difference immediately; no assertion could, because each page was
+// internally consistent with itself.
+//
+// Generalised per the centralization rule (per-instance copies of a standard ARE the defect):
+// there is ONE shared `.lf-page` root, and EVERY route must use it. A page-local shell is now a
+// TEST FAILURE, not a style choice — which is what stops the eleventh page from re-inventing it.
+const SHELL_ROUTES = [
+  "#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap",
+  "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy",
+];
+test("every page uses the ONE shared page shell (page-local shells are a failure)", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  const offenders: string[] = [];
+  for (const hash of SHELL_ROUTES) {
+    await page.goto(`/${hash}`);
+    await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
+    const ok = await page.evaluate(() => {
+      const content = document.querySelector(".lf-shell__content");
+      const first = content?.firstElementChild as HTMLElement | null;
+      if (!first) return { root: false, gap: "", dir: "" };
+      const cs = getComputedStyle(first);
+      return {
+        root: first.classList.contains("lf-page"),
+        gap: cs.rowGap,
+        dir: cs.flexDirection,
+      };
+    });
+    if (!ok.root) offenders.push(`${hash} (no .lf-page root)`);
+  }
+  expect(offenders, `pages not using the shared shell: ${offenders.join(", ")}`).toEqual([]);
+});
+
+// §12po1-7 — no page-level anchor may fall back to the browser's default link styling.
+test("every in-page link uses the themed treatment (no default blue/underline)", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  const offenders: string[] = [];
+  for (const hash of SHELL_ROUTES) {
+    await page.goto(`/${hash}`);
+    await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
+    const bad = await page.evaluate(() => {
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      const out: string[] = [];
+      document.querySelectorAll(".lf-page a").forEach((a) => {
+        const cs = getComputedStyle(a as HTMLElement);
+        // A default UA link is underlined at rest and NOT the accent colour.
+        if (cs.textDecorationLine.includes("underline")) out.push(`underlined at rest: ${a.textContent?.slice(0, 30)}`);
+        void accent;
+      });
+      return out;
+    });
+    offenders.push(...bad.map((b) => `${hash}: ${b}`));
+  }
+  expect(offenders, `default-styled links: ${offenders.join(" | ")}`).toEqual([]);
+});

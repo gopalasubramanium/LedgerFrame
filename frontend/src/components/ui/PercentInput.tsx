@@ -9,6 +9,9 @@ export interface PercentInputProps {
   min?: number;
   max?: number;
   disabled?: boolean;
+  /** Overrides the default "0.00" hint. Used for a field that INHERITS a value when left blank —
+   *  a band that inherits 3% must not show a placeholder reading "0.00" (page-policy §9-18). */
+  placeholder?: string;
   "aria-label": string;
 }
 
@@ -18,6 +21,7 @@ export function PercentInput({
   min,
   max,
   disabled,
+  placeholder = "0.00",
   "aria-label": ariaLabel,
 }: PercentInputProps) {
   return (
@@ -33,7 +37,7 @@ export function PercentInput({
         max={max}
         disabled={disabled}
         aria-label={ariaLabel}
-        placeholder="0.00"
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
       />
       <span className="lf-field__adornment" aria-hidden="true">

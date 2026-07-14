@@ -194,7 +194,7 @@ export function Home() {
   const losers = [...ranked].reverse().filter((i) => pctOf(i) < 0).slice(0, MOVERS_N);
 
   return (
-    <div className="hm3 hm3--full">
+    <div className="lf-page hm3 hm3--full">
       <div className="hm3__pagehead">
         <PageHeader title="Home" subtitle="Your summary — the ↗ on any card opens the full view." />
       </div>

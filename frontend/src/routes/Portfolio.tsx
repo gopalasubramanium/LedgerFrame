@@ -199,7 +199,7 @@ export function Portfolio() {
   ];
 
   return (
-    <div className="pf">
+    <div className="lf-page pf">
       <PageHeader
         title="Portfolio"
         subtitle="Investment analytics — manage holdings on Holdings"

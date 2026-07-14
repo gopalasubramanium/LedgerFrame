@@ -336,7 +336,7 @@ export function Holdings() {
   );
 
   return (
-    <div className="hold">
+    <div className="lf-page hold">
 
       <PageHeaderHoldings
         onAdd={() => setAddOpen(true)}

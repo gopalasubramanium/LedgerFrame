@@ -303,6 +303,18 @@ props are backend-computed `Decimal` strings (never client-computed).
 | **FileInput** *(amended)* | `onChange` (FileList), `accept?`, `multiple?`, `disabled?`, `aria-label`, `label?` | The sanctioned file control (CSV import); wraps the native input internally (§6 — no raw `<input type="file">`). Click-to-browse + drag-and-drop; shows the chosen filename. **Amended 2026-07-10 (Holdings page-build §9-3).** |
 | **Select** | `value`, `onChange`, `options`, `disabled?`, `onCommit?`, `aria-label` | Generic select for **non-master view-scope / user-record** choices (e.g. QuoteCardRow source, the account picker over `/accounts`). Categorical **data** fields use MasterSelect instead. **`onCommit`** = the same commit-on-pick mode as MasterSelect (first-run F3). *(Ratified 2026-07-10; `onCommit` added 2026-07-11.)* |
 
+**INPUT FOCUS IS ONE TREATMENT (§5.1 AMENDMENT — PROPOSED 2026-07-14, page-policy §12po1-10; ratify at the re-verify).**
+Every field wrapper (`.lf-field` — MoneyInput, PercentInput, QuantityInput, TextInput, DateInput, Select,
+MasterSelect, and any input inside a Dialog) carries **ONE `focus-visible` ring on the WRAPPER**; the inner
+control **suppresses its own**. Before this, a focused text input showed the global `:focus-visible` ring on
+the `<input>` **and** a recoloured border on the wrapper — a **doubled, uneven** treatment that differed from
+`Select` (which had already been fixed this way, §12ho2-11). This amendment makes `Select`'s behaviour the
+rule for all of them. A **`.lf-field--error`** state is added for the field a served validation message points
+at (colour is never the only signal — the message is always rendered too).
+**A11Y, NON-NEGOTIABLE: this UNIFIES the ring; it never removes it.** A keyboard user must always see exactly
+where they are — the ring is only ever moved to the wrapper, never dropped. Specimens at `/kitchen-sink`:
+rest · focus · error · disabled, in both themes.
+
 ### 5.2 Data display
 
 | Component | Props (surface) | Usage rules |
@@ -586,3 +598,12 @@ does every other Donut site. Specimen in `/kitchen-sink` (hover · focus · long
 with the capped legend instead of towering over it. **Measured honestly: this bought ~0px of page
 height** — the *capped legend* (6 rows) is taller than the ring, so the **legend**, not the ring, sets
 that tile's height. It is kept because it is better balanced, **not** because it won a fit.
+**MOTION RULE (RECORDED 2026-07-14, page-policy §12po1-11).** **Reduced motion disables MOVEMENT, never
+ACCESS.** When `prefers-reduced-motion` (or the Settings axis) is set, an animated surface must stop moving
+**and remain fully reachable** — it may never become unusable or hide content that motion was carrying. The
+motivating case: the **TickerStrip** correctly halts its marquee and becomes statically scrollable
+(behaviour **confirmed correct** at the owner walk), but it did so with **no room reserved for a scrollbar**,
+so a chunky default-looking bar crowded the quotes. It now uses the **quotes-row treatment** — a thin,
+**themed** bar with a stable gutter and reserved space. *Stopping the animation was right; making the
+fallback ugly-but-working was not the same as making it right.*
+

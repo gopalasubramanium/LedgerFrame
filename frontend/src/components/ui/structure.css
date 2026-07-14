@@ -338,3 +338,39 @@
   outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
+
+/* THE page shell (§12po1-1, generalised from the Policy walk). ONE root for every content page:
+   a column stack with the standard gap, whose children may shrink below their content width so a
+   wide child (a table) scrolls inside its OWN wrapper instead of stretching the page.
+
+   This existed as ten copy-pasted page-local classes (.nw .pf .rv .ph .hold .mk .hm .ins …) — and
+   Policy shipped with NONE, so its first card butted into the header band. Per-instance copies of
+   a standard ARE the defect (the Segmented/StatusChip rule). A page-local shell is now a test
+   failure: e2e/overflow.spec.ts asserts every route's content root carries `.lf-page`. */
+.lf-page {
+  display: flex;
+  flex-direction: column;
+  /* Home's ratified grid runs a TIGHTER stack (it must fit one viewport — it took three
+     assemblies to land, page-home §12ho1). It sets `--page-gap` rather than fighting this rule
+     with specificity, so the exception is DECLARED instead of accidental. */
+  gap: var(--page-gap, var(--space-5));
+}
+.lf-page > * {
+  min-width: 0;
+}
+
+/* §12po1-7 — LINK TREATMENT IS CENTRALISED ON THE PAGE SHELL (generalised, §11-4).
+   The ratified entity-link (accent, no underline at rest, underline on hover) was scoped to
+   `.lf-table a`, so every anchor OUTSIDE a table — the Policy concentration list, Markets'
+   "Heatmap ↗", the Net worth insurance line, Holdings' summary link — fell back to the browser's
+   default blue-and-underlined. The owner saw it on Policy; it was never only Policy's.
+   Now it hangs off `.lf-page`, which every route has (§12po1-1), so no page can opt out and the
+   next page inherits it by existing. Chrome (nav, ticker, banners) is OUTSIDE `.lf-page` and keeps
+   its own treatment. */
+.lf-page a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.lf-page a:hover {
+  text-decoration: underline;
+}

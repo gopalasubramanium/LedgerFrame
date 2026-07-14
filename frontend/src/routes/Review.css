@@ -1,12 +1,4 @@
 /* Review (Planning-group home) — worklist template. Token-only; the shell owns the root padding. */
-.rv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.rv > * {
-  min-width: 0;
-}
 
 .rv__card {
   padding: var(--space-5);

@@ -123,7 +123,7 @@ export function InstrumentDetail() {
   const isFundWrapped = ["mutual_fund", "etf"].includes(meta?.asset_class ?? "");
 
   return (
-    <div className="ins">
+    <div className="lf-page ins">
       <PageHeader
         title={sym}
         subtitle={

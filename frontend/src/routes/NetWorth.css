@@ -1,15 +1,7 @@
 /* Net worth (overview) — token-only; composes .lf-card sections. Root padding is owned by the
    shell (.lf-shell__content, page-portfolio §12-1) — this page sets none. */
-.nw {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
 /* Every top-level section may shrink below its content's min-width so a wide child (a table)
    scrolls inside its own wrapper instead of stretching the page (overflow discipline). */
-.nw > * {
-  min-width: 0;
-}
 
 /* KPI strip (D-054): equal-geometry tiles straight from the grid — no wrapper resizes a tile
    (page-portfolio §12b4-1). 4×1 → 2×2 → 1×4. */

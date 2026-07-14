@@ -123,3 +123,60 @@
   line-height: var(--line-12);
   color: var(--text-tertiary);
 }
+
+/* §12po1-8 — the SERVED validation message, in place, where the user is working. */
+.pol__error {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--loss);
+  border-radius: var(--radius-sm);
+  color: var(--loss);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+
+/* §12po1-4 / §12po1-5 — the editor fits its dialog without horizontal scroll, and every row sits
+   on one baseline. Numeric inputs are sized to their CONTENT (a percent is 3 characters, not a
+   full-width field), and Band is ONE grouped Min–Max pair rather than two full columns. */
+.pol__edittable .lf-field {
+  width: auto;
+}
+.pol__edittable .lf-field__input--num {
+  width: 4.5rem;
+  text-align: right;
+}
+.pol__bandpair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.pol__bandsep {
+  color: var(--text-tertiary);
+}
+/* The inherited-band helper hangs BELOW the pair, so it can never break the row's rhythm. */
+.pol__inherits {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  white-space: nowrap;
+}
+.pol__actioncol {
+  width: 1%;
+  white-space: nowrap;
+}
+.pol__emptyrow {
+  color: var(--text-tertiary);
+}
+/* The editor's table scrolls inside the dialog, never the dialog itself (D-101). */
+.pol__editscroll {
+  max-height: 45vh;
+}
+.pol__editfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}

@@ -325,7 +325,7 @@ async def set_instrument_ongoing_cost(symbol: str, payload: OngoingCostPatch,
 
     bps = payload.annual_cost_bps
     if bps is not None and bps < 0:
-        raise HTTPException(400, "annual_cost_bps must be non-negative")
+        raise HTTPException(400, "Ongoing cost can't be negative.")
     instr = (await session.execute(
         select(Instrument).where(Instrument.symbol == symbol.upper())
     )).scalars().first()

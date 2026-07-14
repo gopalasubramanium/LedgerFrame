@@ -375,3 +375,122 @@ async def test_served_policy_copy_never_names_a_trade(app_client):
 
     # The protected disclaimer is SERVED, not merely rendered (it may not be removed).
     assert "not financial advice" in drift
+
+
+# --------------------------------------------------------------------------- #
+# Phase 3b — owner walk, batch 1.
+# --------------------------------------------------------------------------- #
+
+
+async def test_liability_cannot_be_a_policy_target(app_client):
+    """§11-5 — a target on `liability` can NEVER be satisfied, so it is not offered or accepted.
+
+    Gross assets EXCLUDE liabilities by construction (D-033: a mortgage cannot distort a weight),
+    so a liability bucket's actual share is permanently 0.00% — the page would report it "Under"
+    its band forever, with a gap that can never close. Arithmetically correct, practically
+    meaningless. A policy allocates ASSETS.
+    """
+    from app.services.policy import master_buckets
+
+    assert "liability" not in master_buckets("asset_class")
+
+    r = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "liability", "target_pct": 10}]})
+    assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert "liability" in detail.lower()
+    # The other twelve classes remain targetable.
+    ok = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 10}]})
+    assert ok.status_code == 200
+
+
+async def test_targets_in_a_dimension_cannot_exceed_100_pct(app_client):
+    """§12po1-8 — an UNSATISFIABLE policy is rejected. The owner's walk set 184% of a dimension.
+
+    A policy whose targets sum past 100% of gross assets can never be met by any portfolio, so
+    every bucket sits permanently out of band and the page reports a gap that cannot close. Sums
+    UNDER 100% stay legal: a partial policy is a legitimate policy (it deliberately does not speak
+    for the rest — that is what Coverage means).
+    """
+    over = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 100},
+        {"dimension": "asset_class", "bucket": "property", "target_pct": 84},
+    ]})
+    assert over.status_code == 400
+    detail = over.json()["detail"]
+    assert "184" in detail and "100" in detail
+    assert "asset_class" not in detail  # user-plain: never the internal field name (§12po1-6)
+
+    # Exactly 100 is fine; a partial policy is fine.
+    full = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 60},
+        {"dimension": "asset_class", "bucket": "property", "target_pct": 40},
+    ]})
+    assert full.status_code == 200
+    partial = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 30}]})
+    assert partial.status_code == 200
+
+    # Each dimension is counted on its own — a full asset_class policy plus a full currency policy
+    # is 100% + 100%, and that is correct.
+    both = await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 100},
+        {"dimension": "currency", "bucket": "SGD", "target_pct": 100},
+    ]})
+    assert both.status_code == 200
+
+
+async def test_validation_copy_never_leaks_an_internal_field_name(app_client):
+    """§12po1-6 — a served error is USER copy. It may not name an internal field.
+
+    "target_pct must be 0–100" is us talking to ourselves. Every served `detail` is plain language
+    (the D-005 posture: the backend serves what the user reads).
+    """
+    # NB: an ABSENT target_pct is a pydantic 422 (a malformed request), not user-facing validation
+    # — a different class of error with a different shape. These are the 400s the editor surfaces
+    # inline to the user, which is where the copy has to be human.
+    #
+    # "bucket" and "dimension" are RATIFIED GLOSSARY terms — they are the user's vocabulary, not
+    # internal names. The snake_case FIELD names are what may never appear.
+    cases = [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 150},
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 30,
+         "min_pct": 50, "max_pct": 10},
+        {"dimension": "asset_class", "bucket": "", "target_pct": 30},
+        {"dimension": "zzz", "bucket": "equity", "target_pct": 30},
+        {"dimension": "asset_class", "bucket": "zzz", "target_pct": 30},
+    ]
+    leaked = []
+    for case in cases:
+        r = await app_client.put("/api/v1/policy/targets", json={"targets": [case]})
+        assert r.status_code == 400, case
+        detail = r.json()["detail"]
+        for internal in ("target_pct", "min_pct", "max_pct", "max_position_pct",
+                         "default_band_pct", "asset_class", "policy_targets"):
+            if internal in detail:
+                leaked.append(f"{internal!r} in {detail!r}")
+    assert not leaked, f"internal field names leaked into user-facing copy: {leaked}"
+
+
+async def test_served_validation_copy_is_user_copy_app_wide(app_client):
+    """§12po1-6, generalised — a served 400 `detail` is USER copy on EVERY endpoint, not just Policy.
+
+    The Policy walk found "target_pct must be 0–100" in front of the user. The same grep found the
+    same class of leak elsewhere, so they are fixed in the same batch (§11-4: a copy fix is
+    app-wide, never only where it was spotted).
+    """
+    bad = [
+        ("/api/v1/settings", "PUT", {"values": {"base_currency": "ZZZ"}}),
+        ("/api/v1/settings", "PUT", {"values": {"home_quote_source": "zzz"}}),
+        ("/api/v1/instruments/AAPL/ongoing-cost", "PUT", {"annual_cost_bps": -1}),
+    ]
+    leaked = []
+    for path, method, body in bad:
+        r = await app_client.request(method, path, json=body)
+        assert r.status_code == 400, (path, r.status_code)
+        detail = r.json()["detail"]
+        for internal in ("base_currency", "home_quote_source", "annual_cost_bps", "_pct", "_bps"):
+            if internal in detail:
+                leaked.append(f"{internal!r} in {detail!r}")
+    assert not leaked, f"internal field names served to the user: {leaked}"

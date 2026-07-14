@@ -293,6 +293,28 @@ export function KitchenSink() {
         title="Inputs (§5.1)"
         note="The only sanctioned way to accept input. No raw <input>/<select>; categoricals resolve through MasterSelect / the master registry."
       >
+        {/* §12po1-10 — the UNIFIED input focus treatment (DESIGN-SYSTEM §5 amendment, PROPOSED;
+            ratify at the Policy re-verify). ONE focus-visible ring, carried by the field WRAPPER;
+            the inner control suppresses its own, so a focused input no longer shows a doubled
+            ring-plus-recoloured-border. A11y: the ring is UNIFIED, never removed — tab through
+            these and the ring must be obvious in BOTH themes. */}
+        <div className="ks__row">
+          <Specimen label="focus · rest">
+            <PercentInput value="30" onChange={() => {}} aria-label="Rest" />
+          </Specimen>
+          <Specimen label="focus · click/tab me (one ring, no doubled border)">
+            <PercentInput value="40" onChange={() => {}} aria-label="Focus me" />
+          </Specimen>
+          <Specimen label="focus · error state">
+            <span className="lf-field lf-field--block lf-field--error">
+              <input className="lf-field__input lf-field__input--num" defaultValue="184" aria-label="Error state" />
+            </span>
+          </Specimen>
+          <Specimen label="focus · disabled">
+            <PercentInput value="10" onChange={() => {}} disabled aria-label="Disabled" />
+          </Specimen>
+        </div>
+
         <div className="ks__grid">
           <Specimen label="MoneyInput · SGD">
             <MoneyInput value={money} currency="SGD" onChange={setMoney} aria-label="Amount SGD" />

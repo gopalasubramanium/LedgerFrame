@@ -1,12 +1,4 @@
 /* Pricing Health (diagnostics) — worklist template. Token-only. Root padding owned by the shell. */
-.ph {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.ph > * {
-  min-width: 0;
-}
 
 .ph__card {
   padding: var(--space-5);

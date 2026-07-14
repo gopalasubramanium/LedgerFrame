@@ -315,7 +315,7 @@ export function Markets() {
   const activeGroup = global?.groups.find((g) => g.region === region) ?? global?.groups[0];
 
   return (
-    <div className="mk">
+    <div className="lf-page mk">
       <PageHeader
         title="Markets"
         subtitle="Quotes, indices, market status, Gainers / Losers, the instrument grid, the Global tab, and watchlists"

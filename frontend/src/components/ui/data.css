@@ -244,9 +244,21 @@
   animation: lf-ticker-scroll var(--ticker-scroll-duration) linear infinite;
 }
 /* Reduced motion (setting or OS): the marquee halts and the strip becomes static +
-   MANUALLY scrollable (RATIFICATION §1.6, §11-17). */
+   MANUALLY scrollable (RATIFICATION §1.6, §11-17).
+   §12po1-11 — the BEHAVIOUR is confirmed correct (reduced motion disables MOVEMENT, never
+   ACCESS: the quotes stay reachable by scrolling). Only the PRESENTATION was wrong: the strip
+   got `overflow-x: auto` with no room for a bar, so a chunky default-looking scrollbar crowded
+   the quotes. It now uses the same treatment as the quotes row — a thin, THEMED bar with a
+   stable gutter and space reserved for it. */
 :root[data-motion="reduced"] .lf-ticker__track { animation: none; }
-:root[data-motion="reduced"] .lf-ticker { overflow-x: auto; }
+:root[data-motion="reduced"] .lf-ticker {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+:root[data-motion="reduced"] .lf-ticker__track {
+  padding-block: var(--space-2);
+}
 .lf-ticker__item {
   display: inline-flex;
   align-items: center;

@@ -76,7 +76,7 @@ class SettingsPatch(BaseModel):
 async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(get_db)) -> dict:
     # Validate the reporting currency up front so we never persist a bad value.
     if "base_currency" in patch.values and patch.values["base_currency"].upper() not in SUPPORTED_CURRENCIES:
-        raise HTTPException(400, f"base_currency must be one of {SUPPORTED_CURRENCIES}")
+        raise HTTPException(400, f"Base currency must be one of: {', '.join(SUPPORTED_CURRENCIES)}.")
     # Validate the timezone against the server's IANA zoneinfo (F-3/F-4: the backend is
     # the validation truth; a client value we don't recognise is an honest 400, never a
     # silent default).
@@ -88,7 +88,7 @@ async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(
     # page-home §9-7 — the backend is the validation truth here too: an unrecognised quote source is
     # an honest 400, never silently coerced to a default.
     if "home_quote_source" in patch.values and patch.values["home_quote_source"] not in HOME_QUOTE_SOURCES:
-        raise HTTPException(400, f"home_quote_source must be one of {list(HOME_QUOTE_SOURCES)}")
+        raise HTTPException(400, f"That is not a quote source — choose one of: {', '.join(HOME_QUOTE_SOURCES)}.")
     # An unknown key is REFUSED, not skipped. It used to `continue` here — which is exactly why a PUT
     # of the (then unlisted) `home_layout` looked like it worked and changed nothing (page-home Phase
     # 0). A write surface that accepts a key it does not store is lying to its caller, and it hid a

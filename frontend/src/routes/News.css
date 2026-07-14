@@ -1,13 +1,5 @@
 /* News (Markets-group home) — overview + worklist hybrid (ND-4). Token-only; the shell owns the root
    padding. Every child min-width:0 so a long headline/group can never force page overflow. */
-.nw {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.nw > * {
-  min-width: 0;
-}
 
 .nw__card {
   padding: var(--space-5);

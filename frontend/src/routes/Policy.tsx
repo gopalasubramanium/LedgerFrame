@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Pencil } from "../icons";
 import {
   Dialog,
   DataTable,
@@ -93,6 +94,8 @@ export function Policy() {
   const [dim, setDim] = useState<Dimension>("asset_class");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editDim, setEditDim] = useState<Dimension>("asset_class");
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Editor state — the WHOLE target set (bulk replace, §9-2).
   const [draft, setDraft] = useState<DraftTarget[]>([]);
@@ -109,8 +112,12 @@ export function Policy() {
   }, []);
   useEffect(() => reload(), [reload]);
 
+  const hasTargets = Boolean(policy?.targets.length);
+
   const openEditor = () => {
     if (!policy) return;
+    setFormError(null);
+    setEditDim("asset_class");
     setDraft(policy.targets.map(toDraft));
     setBand(String(policy.default_band_pct));
     setMaxPos(policy.max_position_pct === null ? "" : String(policy.max_position_pct));
@@ -137,9 +144,12 @@ export function Policy() {
     const res = await saveTargets(targets);
     setSaving(false);
     if (!res.ok || !meta.ok) {
-      toast.show({ message: !res.ok ? res.error : !meta.ok ? meta.error : "Could not save.", tone: "warning" });
+      // §12po1-8 — the backend owns the rules; the editor shows exactly what it said, in place,
+      // so the user can fix it where they are (a toast would vanish before they could act on it).
+      setFormError(!res.ok ? res.error : !meta.ok ? meta.error : "Could not save.");
       return;
     }
+    setFormError(null);
     setEditing(false);
     toast.show({ message: "Policy saved.", tone: "success" });
     reload();
@@ -195,7 +205,7 @@ export function Policy() {
   ];
 
   return (
-    <>
+    <div className="lf-page pol">
       <PageHeader
         title="Policy"
         // Protected copy (D-055) — may not be removed.
@@ -246,7 +256,8 @@ export function Policy() {
               reason="Set target allocations to see how far your holdings sit from your own targets."
               action={
                 <button type="button" className="lf-btn lf-btn--primary" onClick={openEditor}>
-                  Set targets
+                  <Pencil size={16} aria-hidden="true" />
+                  Set policy
                 </button>
               }
             />
@@ -373,7 +384,7 @@ export function Policy() {
       <Dialog
         open={editing}
         onClose={() => setEditing(false)}
-        title="Edit policy"
+        title={hasTargets ? "Edit policy" : "Set policy"}
         size="xl"
         footer={
           <>
@@ -392,6 +403,14 @@ export function Policy() {
         }
       >
         <div className="pol__editor">
+          {/* §12po1-8 — the SERVED validation message, surfaced inline where the user is working.
+              The rules live in the backend (one place); the editor shows what it said, verbatim. */}
+          {formError && (
+            <p className="pol__error" role="alert">
+              {formError}
+            </p>
+          )}
+
           <div className="pol__metarow">
             <label className="pol__field">
               <span>Default band</span>
@@ -399,7 +418,7 @@ export function Policy() {
               {/* §9-18 — a blank band is NOT "no band": it inherits this one. Say so, or the user
                   misreads their own risk tolerance. PROPOSED copy — ratify at the walk. */}
               <small className="pol__muted">
-                Applied either side of a target when that target sets no band of its own.
+                Applied either side of a target that sets no band of its own.
               </small>
             </label>
             <label className="pol__field">
@@ -415,112 +434,155 @@ export function Policy() {
             </label>
           </div>
 
-          <table className="lf-table pol__edittable">
-            <thead>
-              <tr>
-                <th className="lf-table__th">Dimension</th>
-                <th className="lf-table__th">Bucket</th>
-                <th className="lf-table__th lf-table__th--num">Target</th>
-                <th className="lf-table__th lf-table__th--num">Min</th>
-                <th className="lf-table__th lf-table__th--num">Max</th>
-                <th className="lf-table__th" />
-              </tr>
-            </thead>
-            <tbody>
-              {draft.map((d, i) => (
-                <tr key={i} className="lf-table__tr">
-                  <td className="lf-table__td">
-                    <MasterSelect
-                      master="policy_dimension"
-                      value={d.dimension}
-                      // Changing the dimension re-binds the bucket master, so the old bucket (from a
-                      // different master) is cleared — it could never be valid here.
-                      onChange={(v) => updateRow(setDraft, i, { dimension: v, bucket: "" })}
-                      aria-label="Dimension"
-                    />
-                  </td>
-                  <td className="lf-table__td">
-                    <MasterSelect
-                      master={DIM_MASTER[d.dimension as Dimension] ?? "asset_class"}
-                      value={d.bucket}
-                      onChange={(v) => updateRow(setDraft, i, { bucket: v })}
-                      aria-label="Bucket"
-                    />
-                  </td>
-                  <td className="lf-table__td lf-table__td--num">
-                    <PercentInput
-                      value={d.target_pct}
-                      onChange={(v) => updateRow(setDraft, i, { target_pct: v })}
-                      min={0}
-                      max={100}
-                      aria-label="Target"
-                    />
-                  </td>
-                  <td className="lf-table__td lf-table__td--num">
-                    <PercentInput
-                      value={d.min_pct}
-                      onChange={(v) => updateRow(setDraft, i, { min_pct: v })}
-                      min={0}
-                      max={100}
-                      aria-label="Minimum"
-                    />
-                    {d.min_pct === "" && effectiveBand(d.target_pct, band, "min") !== "" && (
-                      <small className="pol__muted">
-                        inherits {effectiveBand(d.target_pct, band, "min")}%
-                      </small>
-                    )}
-                  </td>
-                  <td className="lf-table__td lf-table__td--num">
-                    <PercentInput
-                      value={d.max_pct}
-                      onChange={(v) => updateRow(setDraft, i, { max_pct: v })}
-                      min={0}
-                      max={100}
-                      aria-label="Maximum"
-                    />
-                    {d.max_pct === "" && effectiveBand(d.target_pct, band, "max") !== "" && (
-                      <small className="pol__muted">
-                        inherits {effectiveBand(d.target_pct, band, "max")}%
-                      </small>
-                    )}
-                  </td>
-                  <td className="lf-table__td">
-                    <RowMenu
-                      aria-label={`Actions for ${d.bucket || "new target"}`}
-                      items={[
-                        {
-                          label: "Remove",
-                          danger: true,
-                          onClick: () => setDraft((rows) => rows.filter((_, j) => j !== i)),
-                        },
-                      ]}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* §12po1-9 — the editor MIRRORS the display: one dimension at a time. This drops the
+              per-row Dimension column (which was the widest thing in the dialog — §12po1-4) and
+              makes "which axis am I editing?" a fact of the layout rather than a value in a cell. */}
+          <Segmented
+            aria-label="Edit dimension"
+            value={editDim}
+            onChange={(v) => setEditDim(v as Dimension)}
+            options={DIMENSIONS.map((d) => ({
+              value: d,
+              label: (
+                <>
+                  {DIM_LABEL[d]}
+                  {countIn(draft, d) > 0 && <span className="lf-segbtn__count">{countIn(draft, d)}</span>}
+                </>
+              ),
+            }))}
+          />
 
-          <button
-            type="button"
-            className="lf-btn"
-            onClick={() =>
-              setDraft((rows) => [
-                ...rows,
-                { dimension: "asset_class", bucket: "", target_pct: "", min_pct: "", max_pct: "" },
-              ])
-            }
-          >
-            Add target
-          </button>
+          {/* §12po1-3 — the table lives in the RATIFIED wrapper, so its sticky header pins to its
+              OWN scroll region. Before, a raw <table> sat directly in the dialog: the header had no
+              container to stick to and slid away under the rows. */}
+          <div className="lf-table-wrap">
+            <div className="lf-table__scroll pol__editscroll">
+              <table className="lf-table pol__edittable">
+                <thead>
+                  <tr>
+                    <th className="lf-table__th">Bucket</th>
+                    <th className="lf-table__th lf-table__th--num">Target</th>
+                    {/* §12po1-4 — Band is ONE grouped Min–Max pair, not two full columns. */}
+                    <th className="lf-table__th lf-table__th--num">Band (min–max)</th>
+                    <th className="lf-table__th pol__actioncol" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rowsFor(draft, editDim).length === 0 && (
+                    <tr className="lf-table__tr">
+                      <td className="lf-table__td pol__emptyrow" colSpan={4}>
+                        No {DIM_LABEL[editDim].toLowerCase()} targets yet.
+                      </td>
+                    </tr>
+                  )}
+                  {rowsFor(draft, editDim).map(({ row, index }) => (
+                    <tr key={index} className="lf-table__tr">
+                      <td className="lf-table__td">
+                        <MasterSelect
+                          master={DIM_MASTER[editDim]}
+                          value={row.bucket}
+                          onChange={(v) => updateRow(setDraft, index, { bucket: v })}
+                          aria-label="Bucket"
+                        />
+                      </td>
+                      <td className="lf-table__td lf-table__td--num">
+                        <PercentInput
+                          value={row.target_pct}
+                          onChange={(v) => updateRow(setDraft, index, { target_pct: v })}
+                          min={0}
+                          max={100}
+                          aria-label="Target"
+                        />
+                      </td>
+                      <td className="lf-table__td lf-table__td--num">
+                        {/* §12po1-5 — the pair sits on ONE baseline; the inherited-band helper
+                            copy hangs BELOW it so it cannot break the row's rhythm. */}
+                        <span className="pol__bandpair">
+                          <PercentInput
+                            value={row.min_pct}
+                            onChange={(v) => updateRow(setDraft, index, { min_pct: v })}
+                            min={0}
+                            max={100}
+                            placeholder={effectiveBand(row.target_pct, band, "min") || undefined}
+                            aria-label="Minimum"
+                          />
+                          <span className="pol__bandsep" aria-hidden="true">
+                            –
+                          </span>
+                          <PercentInput
+                            value={row.max_pct}
+                            onChange={(v) => updateRow(setDraft, index, { max_pct: v })}
+                            min={0}
+                            max={100}
+                            placeholder={effectiveBand(row.target_pct, band, "max") || undefined}
+                            aria-label="Maximum"
+                          />
+                        </span>
+                        {inheritedBand(row, band) && (
+                          <small className="pol__inherits">inherits {inheritedBand(row, band)}</small>
+                        )}
+                      </td>
+                      <td className="lf-table__td pol__actioncol">
+                        <RowMenu
+                          aria-label={`Actions for ${row.bucket || "new target"}`}
+                          items={[
+                            {
+                              label: "Remove",
+                              danger: true,
+                              onClick: () => setDraft((rows) => rows.filter((_, j) => j !== index)),
+                            },
+                          ]}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-          <p className="pol__muted pol__editnote">
-            Bands left empty inherit the default band above.
-          </p>
+          <div className="pol__editfoot">
+            <button
+              type="button"
+              className="lf-btn"
+              onClick={() =>
+                setDraft((rows) => [
+                  ...rows,
+                  { dimension: editDim, bucket: "", target_pct: "", min_pct: "", max_pct: "" },
+                ])
+              }
+            >
+              Add {DIM_LABEL[editDim].toLowerCase()} target
+            </button>
+            {/* §12po1-9 — bulk-replace semantics are UNCHANGED, and now SAID OUT LOUD. The user is
+                editing their whole policy, not one dimension of it. */}
+            <p className="pol__muted pol__editnote">
+              Saving replaces your whole policy — every dimension, not just this one.
+            </p>
+          </div>
         </div>
       </Dialog>
-    </>
+    </div>
   );
+}
+
+/** The draft rows belonging to one dimension, carrying their index in the FULL draft — the save
+ *  always sends every dimension (bulk replace), so an index is what edits must address. */
+function rowsFor(draft: DraftTarget[], dim: Dimension): { row: DraftTarget; index: number }[] {
+  return draft
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row.dimension === dim);
+}
+
+const countIn = (draft: DraftTarget[], dim: Dimension) =>
+  draft.filter((d) => d.dimension === dim).length;
+
+/** The band a row INHERITS when it sets none of its own: target ± the default band (§9-18). */
+function inheritedBand(row: DraftTarget, band: string): string | null {
+  if (row.min_pct !== "" || row.max_pct !== "") return null;
+  const lo = effectiveBand(row.target_pct, band, "min");
+  const hi = effectiveBand(row.target_pct, band, "max");
+  return lo && hi ? `${lo}–${hi}%` : null;
 }
 
 function updateRow(

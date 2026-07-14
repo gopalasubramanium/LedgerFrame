@@ -101,7 +101,7 @@ export function Heatmap() {
   );
 
   return (
-    <div className="hm">
+    <div className="lf-page hm">
       <PageHeader
         title="Heatmap"
         subtitle="Your holdings — tile size is position value, colour is Today's change"

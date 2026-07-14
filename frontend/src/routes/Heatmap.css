@@ -1,12 +1,4 @@
 /* Heatmap (Markets group, Overview template) — token-only; the shell owns root padding. */
-.hm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-.hm > * {
-  min-width: 0;
-}
 
 .hm__card {
   padding: var(--space-5);

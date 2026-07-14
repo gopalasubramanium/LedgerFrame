@@ -912,3 +912,50 @@ treatment · the **8 GLOSSARY terms** · the **D-105 scope amendment** record ·
 strip** (§11-1) · **§11-5** above.
 
 **Phase 3b (owner acceptance walk) is the gate. Nothing here is self-certified.**
+
+---
+
+## 12. OWNER WALK — BATCH 1 (§12po1-N, 2026-07-14)
+
+All fail-first: the defect was **reproduced** before it was fixed, and each new guard was **seen RED** on
+the thing it exists to catch. **Nothing here is self-certified — Phase 3b re-verify is the gate.**
+
+| # | Finding | Fix | RED evidence |
+|---|---------|-----|--------------|
+| **§12po1-1** | **Page shell inconsistency** — the Drift tile butted into the header band. Policy shipped with **no page root at all** (a bare fragment), while every other page sat in a `flex column · gap · min-width:0` root that had been **copy-pasted into ten page-local classes**. | **ONE shared `.lf-page` shell**, adopted by **every** route; the ten copies **deleted**. **GENERALISED:** a cross-page e2e guard asserts every route's content root carries `.lf-page` — **a page-local shell is now a TEST FAILURE**, which is what stops the eleventh page re-inventing it. *(Home's deliberately tighter stack is DECLARED via `--page-gap`, not fought with specificity — its ratified grid took three assemblies and is not collateral.)* | Guard RED on **all 11 routes**. |
+| **§12po1-2** | **Action button** — a static "Edit policy" on a policy that does not exist yet; no icon. | **State-adaptive verb**: "Set policy" when there are no targets, "Edit policy" when there are. **Pencil icon + KEPT text label.** The empty-state action uses the **same verb**. *(Owner alternative recorded: a single "Add/Edit policy" — owner picks at re-verify.)* | — (copy/affordance) |
+| **§12po1-3** | **Editor sticky header broken** — a raw `<table>` sat directly in the dialog, so its header had **nothing to stick to** and slid away under the rows. | Table moved into the **ratified `.lf-table-wrap` / `.lf-table__scroll`** so the header pins to **its own** scroll region. | Reverting to the raw table takes the pre-pass **RED** (*"the editor table has its OWN scroll region"*) — proven by mutation. |
+| **§12po1-4** | **Editor scrolled horizontally** at desktop widths. | Per-dimension sections (§12po1-9) **drop the widest thing in the dialog — the Dimension column**; numeric inputs sized to **content**; **Band is ONE grouped Min–Max pair**, not two full columns. | Pre-pass asserts **0 horizontal overflow in the dialog at 1366**. |
+| **§12po1-5** | **Row alignment** — inputs and helper copy broke the row rhythm. | One baseline per row; the band pair is inline; the inherited-band hint hangs **below** the pair so it cannot shift the row. Screenshots before/after in `e2e/smoke/artifacts/`. | Visual (screenshot). |
+| **§12po1-6** | ⚠ **An internal field name was shown to the user** — *"target_pct must be 0–100"*. That is **us talking to ourselves**. | Every served `detail` is **plain language**, fixed **at the SOURCE**. **Generalised app-wide (§11-4):** the same grep found **`base_currency`**, **`home_quote_source`**, **`annual_cost_bps`** — all fixed **in this batch**. **`bucket`/`dimension` are KEPT**: they are ratified GLOSSARY terms, i.e. **the user's vocabulary**, not internal names. **Strings PROPOSED → ratify at re-verify.** | A guard asserts **no snake_case field name** appears in any served 400 on Policy **or** the three other endpoints. |
+| **§12po1-7** | **Concentration links were browser-default blue/underline.** | The ratified entity-link treatment was scoped to **`.lf-table a`** — so **every anchor outside a table** fell back to the default. **Centralised on `.lf-page`** (which every route now has, §12po1-1), so **no page can opt out** and the next page inherits it by existing. | Guard RED — and it caught **Net worth, Holdings and Portfolio too**. *It was never only Policy's defect.* |
+| **§12po1-8** | ⚠ **An UNSATISFIABLE policy was ACCEPTED** — the owner's walk set asset-class targets summing to **184%**. Such a policy can never be met by **any** portfolio: every bucket sits permanently out of band, reporting a gap that **cannot close**. | **§3b behaviour delta:** per-dimension Σ `target_pct` > 100 → **400** with plain served copy (*"Targets in asset class add up to 184% — together they can't exceed 100%."*). Counted **per dimension** (a full asset-class policy **plus** a full currency policy is 100% + 100%, and that is correct). **Sums ≤ 100 stay legal** — a partial policy deliberately does not speak for the rest, which is exactly what **Coverage** means. The editor surfaces the **served** error **inline**, and the dialog **stays open** so the user can fix it where they are. | **RED: `assert 200 == 400`** — the 184% policy was accepted. |
+| **§12po1-9** | **Editor structure** did not mirror the display. | The editor is now **per dimension**, matching the page's `Segmented` (with per-tab counts). This **drops the per-row Dimension column** (also serving §12po1-4). **Bulk-replace semantics UNCHANGED** and now **said out loud**: *"Saving replaces your whole policy — every dimension, not just this one."* The no-drop test is **strengthened**: editing inside asset class **must not drop the currency target that was never on screen** — *a dimension you did not open is not a dimension you deleted.* | The strengthened no-drop test. |
+| **§12po1-10** | **Input focus was DOUBLED** — the global `:focus-visible` ring hit the `<input>` **and** the wrapper recoloured its border. | **ONE ring, carried by the field WRAPPER**; the inner control suppresses its own. This makes **`Select`'s** existing behaviour (§12ho2-11) the rule for **every** input. A **`.lf-field--error`** state is added. **DESIGN-SYSTEM §5.1 amendment — PROPOSED.** **A11Y, NON-NEGOTIABLE: the ring is UNIFIED, never removed.** Kitchen-sink specimens: rest · focus · error · disabled. | Visual (both themes). |
+| **§12po1-11** | **Reduced-motion ticker looked broken.** | **Behaviour CONFIRMED CORRECT and recorded**: reduced motion **disables MOVEMENT, never ACCESS** — the marquee halts and the strip stays **scrollable**. Only the **presentation** was wrong: `overflow-x: auto` with **no room reserved for a bar**. It now uses the **quotes-row treatment** (thin, **themed**, stable gutter). **DESIGN-SYSTEM motion rule recorded.** | Visual. |
+| **§11-5** | **A `liability` policy target could never be satisfied** (owner-ruled at the walk). | `liability` is **barred** from the asset-class bucket master and **rejected with a reason**: *"Liability can't be a policy target: targets are a share of your gross assets, and liabilities are excluded from that."* | **RED:** `assert 'liability' not in master_buckets('asset_class')`, and the write path accepted it. |
+
+### One deviation, resolved the way the owner offered
+
+**§9-18 / §12po1-5 — `PercentInput` gained a `placeholder` prop.** Last batch I flagged that the ruling asked
+for the effective band **as a placeholder** but the component had none, so I used helper copy instead. The
+screenshot showed **why that was not good enough**: `PercentInput` **hardcodes `placeholder="0.00"`**, so a
+band field that actually inherits **3–13%** was displaying a placeholder reading **"0.00"** — *the field was
+lying about the user's own risk tolerance.* The owner's stated alternative ("demand the prop as an
+amendment") is taken: the prop is added (default unchanged), and the band fields now show **the band they
+inherit**. The explicit *"inherits 3–13%"* line is **kept** as well, so a grey number can never be mistaken
+for a typed value. **Both PROPOSED — ratify at re-verify.**
+
+### Verified, not assumed
+
+The editor first screenshotted **light while the chrome was dark**, which looked like a theming bug. Rendering
+it in **both themes** showed the dialog is correctly themed — the instance had simply reset to the light
+theme. **No defect. It is recorded because "it looked wrong" is not the same as "it is wrong", and the
+difference is a measurement.**
+
+### Carried to the re-verify (unchanged)
+
+`StatusChip` **superset** (neutral/attention/positive/negative; Policy **barred** from positive/negative) +
+both migrations · **9-13 / 9-18 / 9-19** strings · **9-16** treatment · the **8 GLOSSARY terms** · the
+**D-105 scope amendment** record · the **[Help] strip** · **§12po1-6** served-copy strings · **§12po1-10**
+focus amendment · **§12po1-2** button-label alternative.

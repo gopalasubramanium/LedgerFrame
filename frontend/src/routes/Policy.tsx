@@ -225,7 +225,7 @@ export function Policy() {
           {drift === null && (
             <EmptyState
               message="Drift is unavailable."
-              reason="The policy reader could not be reached."
+              reason="Your policy could not be loaded just now."
               action={
                 <button type="button" className="lf-btn" onClick={reload}>
                   Retry

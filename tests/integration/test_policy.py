@@ -321,3 +321,57 @@ async def test_refdata_serves_the_currency_master(app_client):
     assert served == list(SUPPORTED_CURRENCIES)
     # The picker's options and the write path's validator cannot drift apart.
     assert tuple(served) == master_buckets("currency")
+
+
+async def test_policy_and_review_reconcile_by_construction(app_client):
+    """PHASE 2 — the P-1/D-038 reconciliation, DEMONSTRATED (the ND-3 posture), not asserted in prose.
+
+    Review SUMMARISES Policy's drift. It must do so through the SAME reader, never a second code
+    path — so the count of out-of-band rows the POLICY page displays and the `out_of_band` verdict
+    REVIEW serves cannot disagree. They share `compute_drift`, so this holds by construction; the
+    test proves the construction was not broken.
+    """
+    await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 30},
+        {"dimension": "asset_class", "bucket": "property", "target_pct": 40},
+        {"dimension": "currency", "bucket": "SGD", "target_pct": 60},
+    ]})
+    await app_client.put("/api/v1/policy", json={"max_position_pct": 25})
+
+    drift = (await app_client.get("/api/v1/policy/drift")).json()
+    review = (await app_client.get("/api/v1/review")).json()["sections"]["policy"]
+
+    # What the Policy page itself displays as out-of-band:
+    shown = sum(1 for d in drift["dimensions"] for r in d["rows"] if r["status"] in ("over", "under"))
+    shown += len(drift["concentration"])
+
+    assert shown > 0, "the demo must actually breach something, or this proves nothing"
+    assert review["out_of_band"] == shown
+    assert review["has_targets"] == drift["has_targets"] is True
+    # The A10 honesty annotation reconciles too — same reader, same inputs.
+    assert review["stale_inputs"] == drift["stale_inputs"]
+    assert review["inputs_stale"] == drift["inputs_stale"]
+
+
+async def test_served_policy_copy_never_names_a_trade(app_client):
+    """D-055, permanently: policy drift REPORTS A GAP — it never names or implies a trade.
+
+    A standing grep over every SERVED string, so no future change can quietly add "rebalance by X"
+    or "sell 200 shares" to a payload the page renders verbatim.
+    """
+    import json
+
+    await app_client.put("/api/v1/policy/targets", json={"targets": [
+        {"dimension": "asset_class", "bucket": "equity", "target_pct": 30}]})
+    await app_client.put("/api/v1/policy", json={"max_position_pct": 5})
+
+    drift = json.dumps((await app_client.get("/api/v1/policy/drift")).json()).lower()
+    review = json.dumps((await app_client.get("/api/v1/review")).json()).lower()
+
+    for banned in ("rebalance", "amount to sell", "amount to buy", "you should", "recommend",
+                   "trim ", "top up", "reduce your", "increase your"):
+        assert banned not in drift, f"D-055: policy drift served trade language: {banned!r}"
+        assert banned not in review, f"D-055: review served trade language: {banned!r}"
+
+    # The protected disclaimer is SERVED, not merely rendered (it may not be removed).
+    assert "not financial advice" in drift

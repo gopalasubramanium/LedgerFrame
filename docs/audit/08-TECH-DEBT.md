@@ -214,3 +214,17 @@ The Gate-A10 *(stale, low-confidence)* input-quality logic now lives in **`confi
 Per the centralization rule they should migrate onto the shared helper — **as its own behaviour-neutral
 task**, NOT rewired mid-Scenarios-build on accepted pages (their pre-passes would need re-verifying). Recorded
 so the consolidation is a decision, not forgotten.
+
+---
+
+## Pre-existing frontend-suite unhandled error — `CashFlow.tsx:330` (found 2026-07-16, page-insurance Phase 0)
+
+`npm run check`'s Vitest run fails with **one unhandled error** (all 208 tests still PASS): `TypeError:
+Cannot read properties of undefined (reading 'length')` at **`CashFlow.tsx:330`** (`obs.obligations.length`),
+thrown asynchronously while `AppShell.test.tsx`'s `/snapshot` **redirect** test incidentally renders CashFlow
+with a mock whose `obs` lacks `obligations`. **Verified pre-existing** — it reproduces at `c0e9fb1` (the
+scenarios close, before any insurance work), and it is a **test-harness / partial-mock race**, not a product
+regression. **Not touched by the insurance build** (no insurance commit changes CashFlow/AppShell). Fix is a
+one-line defensive guard (`obs?.obligations?.length` or an early `obligations ?? []`) **on an accepted page**,
+so it belongs in **its own hygiene commit**, not mid-insurance-build (the "make lint RED on trunk" precedent,
+page-heatmap close). Until then the frontend `npm run check` exits non-zero on this alone.

@@ -523,5 +523,70 @@ insurance touch-point in the built frontend is Net worth's `getInsurance` for th
 
 ---
 
-**STOP.** §10 (verify-first) and §9 (13 open items) are complete. **No code, no build.** The owner resolves §9
-one-pass; matched by number and topic before recording. Build is blocked until then.
+## 11. BUILD RECORD — Phase 0 → Phase 0a (2026-07-16)
+
+**Phase 0 (backend-first, one delta per commit, contract regenerated in the same commit where the shape
+changed, every guard fail-first).** All 765 backend tests pass; `make api-contract-check` green.
+
+| Item | Change | RED evidence (before) → GREEN |
+|------|--------|-------------------------------|
+| **9-3** | Delete `GET /insurance/meta` (`routes/insurance.py`); vocab lives on `/refdata` | Grep confirmed no consumer (§10-13); endpoint removed, contract regenerated (path dropped), API-CONTRACT.md `remove` row → ✅ |
+| **9-4 + 9-10 (Amendment A)** | `*_display` for all policy money + the 3 totals + each `cover_by_type` value (D-105); `count` = **active only**; Net worth's D-081 line → `total_cash_value_display` | `test_insurance_phase0`: RED on both causes — `count == 2` while totals sum 1 active; `KeyError: 'total_cover_display'` → GREEN. Net worth pre-pass **re-run GREEN**; delta note in `page-net-worth.md §15` |
+| **9-10** | `policy_status` fixed vocab `active/lapsed/expired` — MASTER-DATA §2 + `/refdata`, enforced in `_apply` like `policy_type` | RED: `refdata["policy_status"]` KeyError + `status` stored verbatim → GREEN (unknown → `active`) |
+| **9-6** | `?entity_id` → honest **400** (`routes/insurance.py`) | RED: silent `200` → GREEN `400` ("household-scoped"); contract regenerated (new query param) |
+| **9-7 (Amendment C)** | ONE `renewal_reminders(session, within_days)` helper; page calls it at `_RENEWAL_SOON_DAYS=60`, Review at `_INSURANCE_SOON_DAYS=30`; both named in the D-059 table (PRODUCT-SPEC §5); overdue unifies on the `_OVERDUE_CLAMP_DAYS=3650` clamp | RED: a >10y-overdue policy surfaced under the old inline `days<=60`, and `upcoming_renewals != renewal_reminders(60)` → GREEN (clamp excludes it; the equality test pins both call-sites to the one helper) |
+| **9-12** | `cover_by_type` serves `{type, label, value, value_display}` (display-cased at the boundary, §12rv1-5) | RED: no `label` key → GREEN (`critical_illness` → "Critical illness") |
+| **9-8 (Amendment D)** | Report serves `document_defaults` (four labels) as **seed content**, not a vocab | RED: absent → GREEN; code + MASTER-DATA note record "seed content, not vocabulary" |
+| **9-11** | GLOSSARY: Cover / Cover amount, Premium, Premium frequency, Nominee, Insured person, Renewal — **`GLOSSARY.md` first**, then `mocks/glossary.ts` (canonical "Cover", never "sum assured") | `test_glossary_parity` GREEN (37); PROPOSED → ratify at walk |
+
+**Out of scope, not taken (per the brief):** `response_model` typing for `/insurance` (08-TECH-DEBT); the
+Institution master (§9-5 Amendment B — deferred to Accounts); any `linked_goal_id` surface (§9-9 — omit,
+column untouched); any adequacy computation (§9-2 — the served disclaimer stands; the standing
+adequacy-language content guard ships with the page tests in Phase 2, not now).
+
+**⚠ Pre-existing, NOT mine, NOT fixed (out of scope):** the frontend `npm run check` is RED on **one
+unhandled error** — `CashFlow.tsx:330` reads `obs.obligations.length` on `undefined` during an
+`AppShell.test.tsx` **redirect** test (a partial mock). **Verified pre-existing** — it reproduces at
+`c0e9fb1` (before any insurance work) and none of the insurance commits touch CashFlow/AppShell. Recorded in
+`08-TECH-DEBT.md`; left for a separate hygiene commit (the "make lint RED on trunk" precedent). Everything I
+added is green: 765 backend, glossary parity, NetWorth unit, typecheck, lint, tokens, build.
+
+**Phase 0a — the §9-1 STATIC LAYOUT SPECIMEN** ships at `/kitchen-sink` (*"Insurance — LAYOUT SPECIMEN
+(page-insurance §9-1) — PROPOSED, AWAITING RATIFICATION"*), composed from ratified `ui/` components only,
+tokens only. Real-shaped data — **9 policies**, mixed types + long insurer names, SGD. Money written **as the
+backend serves it** (display strings). Three frames:
+- **populated register** — the totals TrendStat strip (Total cover · Cash value *(excluded)* · Annual premium ·
+  Active policies = **8**, the lapsed policy excluded) → the **policies DataTable** spine (Policy + insurer
+  subline · display-cased Type · Cover · Premium/yr · Renewal + chip · Status chip · ⋯ RowMenu) → flanking
+  **upcoming-renewals** + **cover-by-type** cards. Honesty staged: a **LAPSED** policy (visible, excluded from
+  totals + count); an **OVERDUE** and a **Renews soon** renewal chip (§9-7); a **MISSING premium** (em dash,
+  §Guarantee-3). Protected bar in the subtitle (§9-2); the disclaimer once at the table foot.
+- **empty register** — `EmptyState` (reason + Add CTA).
+- **documents checklist** — composed **Switch + TextInput** rows seeded with the four default labels (§9-8,
+  Amendment D; no new component).
+
+Verified rendered in **both themes, 0 console errors** (via a fresh `vite preview` of the production build —
+the running dev server had a stale HMR cache). Screenshots: `frontend/e2e/smoke/artifacts/insurance-specimen-{light,dark}.png`.
+
+---
+
+## 12. GEOMETRY GATE — ⏸ AWAITING OWNER RATIFICATION
+
+**The §9-1 specimen is PROPOSED, not ratified.** Phase 1 assembly is **BLOCKED** until the owner ratifies the
+geometry by looking.
+
+**To review:** `/kitchen-sink` → *"Insurance — LAYOUT SPECIMEN (page-insurance §9-1)"* (three frames:
+populated · empty · documents checklist). *(If the running dev server does not show it, restart `vite` — its
+file-watch cache was stale this session; a fresh build renders it correctly.)*
+
+**What is being ratified:** the totals strip + the single policies table as the spine + the two flanking
+cards; the row-action ⋯ menu; the renewal-soon / overdue chip treatment; the status chip tones (active →
+positive, lapsed → attention); the lapsed-excluded-from-totals honesty; the missing-figure em dash; the
+protected bar placement; the documents-checklist affordance.
+
+**Also pending ratification at the walk (carried):** the §9-11 GLOSSARY terms (PROPOSED); the §9-2 protected
+bar wording + the standing adequacy-language guard (mechanised in Phase 2); the §9-8 default checklist labels;
+the §9-9 empty-register copy.
+
+**STOP.** Phase 0 (8 deltas, all RED→GREEN, contract regenerated) and the Phase 0a specimen are complete.
+**Phase 1 assembly has not begun and is blocked on the owner's geometry ratification.**

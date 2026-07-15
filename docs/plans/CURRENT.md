@@ -967,14 +967,19 @@ at real viewports. All three folded into TEMPLATE §7 (extending existing rules,
 
 ## NEXT
 
-1. **Insurance — `docs/plans/page-insurance.md` — 🟡 PLAN DRAFTED, awaiting §9 one-pass.** Verify-first (§10)
-   done with file:line cites; **13 open §9 items**, none resolved (owner one-pass next). Worklist CRUD page on
-   the Cash flow patterns. Verify-first headline: the register + CRUD engine are **complete and frozen**, so
-   the deltas are guard/vocab/D-105 shape — **`/insurance/meta` never removed** though `/refdata` serves the
-   vocab (§9-3); **money is raw floats** (D-105, §9-4); **insurer's Institution master is UNBUILT** (§9-5, an
-   owner scope call — it co-lives with Accounts); **`?entity_id` silently ignored** (§9-6, reject like
-   Policy/Scenarios); **renewal derived twice** — the page @60d vs Review's `renewal_reminders` @30d (§9-7,
-   A11). The D-081 cash-value exclusion is **one reader** already (Net worth reads `/insurance.total_cash_value`).
+1. **Insurance — `docs/plans/page-insurance.md` — 🟢 §9 CLOSED (owner one-pass 2026-07-15), Phase 0 DONE,
+   Phase 0a specimen shipped → ⏸ AWAITING OWNER GEOMETRY RATIFICATION at `/kitchen-sink`.** All 13 §9 items
+   accepted (+amendments A–D). **Phase 0 (8 deltas, backend-first, every guard fail-first, contract regen):**
+   `/insurance/meta` deleted (§9-3); D-105 `*_display` + `count` active-only (§9-4/§9-10, Amendment A —
+   **Net worth's D-081 line migrated to `total_cash_value_display`, its pre-pass re-run GREEN**,
+   `page-net-worth.md §15`); `policy_status` vocab active/lapsed/expired (§9-10); `?entity_id` → 400 (§9-6);
+   ONE `renewal_reminders` helper, both windows named in the D-059 table (§9-7, Amendment C); `cover_by_type`
+   display-cased (§9-12); documents default labels as seed content (§9-8, Amendment D); 6 GLOSSARY terms
+   spec-first (§9-11, PROPOSED). **765 backend + parity + typecheck/lint/tokens/build green.** Phase 0a: the
+   §9-1 Worklist specimen at `/kitchen-sink` (populated · empty · documents-checklist frames), verified both
+   themes, 0 console errors. **Phase 1 assembly is BLOCKED until the owner ratifies the geometry.** ⚠ Recorded
+   pre-existing (not mine): a `CashFlow.tsx:330` unhandled error fails the frontend `npm run check` — reproduces
+   at `c0e9fb1`, out of scope, logged in `08-TECH-DEBT.md`.
 2. **Estate**, then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping; **also owns the
    Institution master §9-5 defers to it**) · **Reports (+ Pack)** · **Settings** · **Help · Legal** · the
    **AI-surfaces milestone** · **Voice** (only after the owner defines it — ROADMAP **R-32**) · then release

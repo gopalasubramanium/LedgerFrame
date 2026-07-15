@@ -27,6 +27,10 @@ FREQUENCIES = ["monthly", "quarterly", "annual", "single"]
 # Fixed vocab (page-insurance §9-10) — served via /refdata; enforced in _apply exactly like
 # policy_type/premium_frequency (unknown → default). Only `active` policies count toward the totals.
 POLICY_STATUSES = ["active", "lapsed", "expired"]
+# Suggested default checklist labels for a NEW policy (page-insurance §9-8, Amendment D). This is
+# SEED CONTENT — user-editable record data — NOT a fixed vocabulary and NOT a GLOSSARY term: the
+# refdata/glossary-parity guards must never police it. Not per-type.
+DEFAULT_DOCUMENT_LABELS = ["Policy schedule", "Premium receipts", "Nominee form", "Terms & conditions"]
 _FREQ_MULT = {"monthly": 12, "quarterly": 4, "annual": 1, "single": 0}
 # Renewal-reminder windows (page-insurance §9-7 / D-059 named constants, PRODUCT-SPEC §5). Both the
 # Insurance page and the Review feed derive "renewal due soon" from the ONE renewal_reminders helper:
@@ -182,6 +186,8 @@ async def insurance_report(session: AsyncSession) -> dict:
                                   "value_display": format_money_display(v)} for k, v in by_type.items()),
                                 key=lambda x: x["value"], reverse=True),
         "upcoming_renewals": upcoming,   # already sorted by days (the shared helper)
+        # Seed content for a new policy's checklist (§9-8) — suggested labels, user-editable; not a vocab.
+        "document_defaults": list(DEFAULT_DOCUMENT_LABELS),
         "disclaimer": "Records and reminders only — not an assessment of whether your cover is "
                       "adequate, and not advice. Base-currency totals use current FX.",
     }

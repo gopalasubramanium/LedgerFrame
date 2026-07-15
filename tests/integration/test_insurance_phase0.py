@@ -152,3 +152,15 @@ async def test_cover_by_type_display_cased_at_boundary(app_client):
     assert row["type"] == "critical_illness"
     assert row["label"] == "Critical illness"       # display-cased at the boundary, not a raw enum
     assert row["value_display"] == "100,000.00"
+
+
+# --------------------------------------------------------------------------- #
+# 9-8 (Amendment D) — the report serves suggested default checklist labels (SEED CONTENT, not vocab).
+# --------------------------------------------------------------------------- #
+async def test_document_defaults_served_as_seed_content(app_client):
+    """§9-8 — a NEW policy's checklist is seeded with four user-editable default labels, served from
+    the backend (D-005). Seed content, NOT a /refdata vocabulary and NOT a GLOSSARY term. RED: absent."""
+    rep = (await app_client.get("/api/v1/insurance")).json()
+    assert rep["document_defaults"] == [
+        "Policy schedule", "Premium receipts", "Nominee form", "Terms & conditions",
+    ]

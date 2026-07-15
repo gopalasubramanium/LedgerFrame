@@ -967,15 +967,18 @@ at real viewports. All three folded into TEMPLATE §7 (extending existing rules,
 
 ## NEXT
 
-1. **Insurance — `docs/plans/page-insurance.md` (PLAN ONLY FIRST).** The next Planning-group page — a
-   **register page on the Cash flow CRUD patterns** (per-row create/edit/delete, `[S]`-gated editor). **Pre-cut
-   seam:** Review already surfaces **estate / insurance-class signals** — verify-first should find them before
-   inventing anything. **SN-class vocabulary checks apply** (align any served notes to the ratified model
-   vocabulary, the §12cf1-2 / SN-1 precedent). `POLICY_TYPES` (10) / `premium_frequency` (4) already seeded
-   (DEF-4). Insurance cash value → the D-081 visible-but-excluded Net worth line.
-2. **Estate**, then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping) · **Reports (+
-   Pack)** · **Settings** · **Help · Legal** · the **AI-surfaces milestone** · **Voice** (only after the owner
-   defines it — ROADMAP **R-32**) · then release **Gates C→F** and tag `v2.0.0`.
+1. **Insurance — `docs/plans/page-insurance.md` — 🟡 PLAN DRAFTED, awaiting §9 one-pass.** Verify-first (§10)
+   done with file:line cites; **13 open §9 items**, none resolved (owner one-pass next). Worklist CRUD page on
+   the Cash flow patterns. Verify-first headline: the register + CRUD engine are **complete and frozen**, so
+   the deltas are guard/vocab/D-105 shape — **`/insurance/meta` never removed** though `/refdata` serves the
+   vocab (§9-3); **money is raw floats** (D-105, §9-4); **insurer's Institution master is UNBUILT** (§9-5, an
+   owner scope call — it co-lives with Accounts); **`?entity_id` silently ignored** (§9-6, reject like
+   Policy/Scenarios); **renewal derived twice** — the page @60d vs Review's `renewal_reminders` @30d (§9-7,
+   A11). The D-081 cash-value exclusion is **one reader** already (Net worth reads `/insurance.total_cash_value`).
+2. **Estate**, then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping; **also owns the
+   Institution master §9-5 defers to it**) · **Reports (+ Pack)** · **Settings** · **Help · Legal** · the
+   **AI-surfaces milestone** · **Voice** (only after the owner defines it — ROADMAP **R-32**) · then release
+   **Gates C→F** and tag `v2.0.0`.
 
 **Release posture unchanged (RD-9 Amendment 3):** the release gate is **FULL COMPLETION**; Gates C–F stay
 dormant until the owner accepts the full set. **Standing, owner-only:** the **CLA counsel review** before the

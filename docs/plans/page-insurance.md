@@ -1,7 +1,9 @@
-# page-insurance — build plan (PLAN ONLY — nothing is built)
+# page-insurance — build plan
 
-**Status: 🟡 PLAN DRAFTED — §10 verify-first done, §9 has 13 open items. AWAITING owner one-pass.
-Nothing is built. I resolved none.**
+**Status: 🟢 §9 CLOSED (owner one-pass, 2026-07-15; +amendments A–D) · Phase 0 done (backend-first, fail-first,
+contract regen) · Phase 0a specimen shipped · BUILD STOPS at the geometry gate. Phase 1 assembly is BLOCKED
+until the owner ratifies the §9-1 specimen at `/kitchen-sink`.** See §11 (Phase 0 record) and §12 (geometry
+gate — pending owner).
 
 Drafted 2026-07-15 from `TEMPLATE-page-build.md`. The **verify-first pass (D-019) is done** — §10 records
 what the insurance engine **actually serves and actually guards**, with `file:line` cites. Every ambiguity is
@@ -209,13 +211,27 @@ types today** (`PolicyIn` is one flat schema; `_FIELDS`/`_DEC_FIELDS`, `insuranc
 |--------------------|---------------------|-------------------------------|-----------------|
 | `policy_type` | `policy_type` (10) | Fixed (/refdata, `{value,label}`) | DEF-4 (MASTER-DATA:72) |
 | `premium_frequency` | `premium_frequency` (4) | Fixed (/refdata, `{value,label}`) | DEF-4 (MASTER-DATA:73) |
-| `status` | **`policy_status`** — ⚠ **NO MASTER-DATA entry yet** | **PROPOSED fixed (/refdata)** — §9-10 | (gap) |
+| `status` | **`policy_status`** = `active / lapsed / expired` — ✅ **RULED (§9-10)**, added to MASTER-DATA §2 + `/refdata` | Fixed (/refdata, `{value,label}`) | MASTER-DATA §2 (Phase 0) |
 | `currency` | `currency` (`SUPPORTED_CURRENCIES`, 9) | Fixed (/refdata) | MASTER-DATA §3 |
-| `insurer` | **Institution master (D-008)** — ⚠ **UNBUILT** (free text today) | Extensible master (own endpoint) — §9-5 | MASTER-DATA:284 |
+| `insurer` | **Free text with a client-side typeahead** over served `policies[]` — ✅ **RULED (§9-5, Amendment B)** | *(the Institution master is DEFERRED — see seam below)* | MASTER-DATA:284 |
 
 **User data, not a master (use `Select`/`TextInput`, not `MasterSelect`):** `insured_person`, `nominee` are
-**free text by design** (names, not vocabulary — IA §5). `linked_goal_id` (if surfaced, §9-9) is a
-user-record pick, not a master.
+**free text by design** (names, not vocabulary — IA §5). `insurer` is free text this milestone; its typeahead
+suggestions are derived **client-side** from the already-served `policies[]` (Amendment B — UI convenience over
+served data, not a vocabulary and not money math).
+
+**Named seam — Institution master (D-008), DEFERRED to the Accounts milestone (§9-5, Amendment B).** `insurer`
+and `accounts.institution` will both re-point to the Institution master when Accounts (which co-owns
+`institution`) builds it. No `/insurance/insurers` endpoint is added now. Until then insurer stays free text.
+
+**Named seam — `linked_goal_id` (§9-9, Amendment D).** The column stays (soft link, no FK — D-063) but is
+**omitted from the editor** this milestone. It surfaces **once goals have a home to link to** — a one-line
+seam, **not a ROADMAP item** (a consequence of an unmade product decision, the currency-master precedent).
+
+**Documents checklist seed content (§9-8, Amendment D) — NOT a vocabulary.** A new policy's checklist is
+seeded with four **user-editable default labels** (*Policy schedule · Premium receipts · Nominee form · Terms &
+conditions*), served from the backend as **seed content** (record data), never a `/refdata` vocab and never a
+GLOSSARY term — the parity guard must not police them.
 
 ---
 
@@ -299,10 +315,57 @@ user-record pick, not a master.
 
 ---
 
-## 9. NEEDS DECISION — ⚠ OPEN (13 items) — OWNER RESOLVES ONE-PASS
+## 9. NEEDS DECISION — ✅ RESOLVED, OWNER ONE-PASS 2026-07-15
 
-**I resolved none.** Rulings are the owner's. Each row carries a **PROPOSED** resolution for the owner to
-approve, amend, or reject. The build is **blocked** until §9 is closed.
+**All 13 items are ruled — every one ACCEPTED as proposed, with four owner amendments (A–D) folded into the
+named rows.** Rulings first; the **original questions and proposed resolutions are PRESERVED VERBATIM below**.
+**Matched by NUMBER AND TOPIC before recording — all 13 agree; no mismatch.** Build is unblocked through
+Phase 0a — then it **STOPS at the geometry gate**.
+
+| # | Topic | ✅ RULING (owner, 2026-07-15) |
+|---|-------|------------------------------|
+| **9-1** | Geometry | ✅ **ACCEPTED** — totals TrendStat strip → policies DataTable (spine) → upcoming-renewals + cover-by-type flanking cards; empty register → EmptyState. **GATE: static specimen at `/kitchen-sink`** (real shell, real-shaped data, honesty frames). **STOP after Phase 0a for screenshot ratification BEFORE Phase 1.** |
+| **9-2** | Protected bar | ✅ **ACCEPTED** — subtitle bar **"A register, never an adequacy judgment."** + served disclaimer at the table foot; **standing adequacy-language content guard ships with the page tests in Phase 2** (D-058 precedent), **not now**. |
+| **9-3** | `/insurance/meta` removal | ✅ **ACCEPTED** — delete the endpoint; editor reads `/refdata`. Phase-0, contract regen; flip the API-CONTRACT `remove` row to ✅ delivered. |
+| **9-4** | D-105 money | ✅ **ACCEPTED + AMENDMENT A** — serve `*_display` for all policy money, the three totals, and each `cover_by_type` value. **Bundled with 9-10 into ONE Phase-0 change** (both touch the accepted Net worth D-081 line). |
+| **9-5** | Insurer master | ✅ **ACCEPTED + AMENDMENT B** — Institution master **DEFERRED to the Accounts milestone** (it co-owns `institution`). **NO new `/insurance/insurers` endpoint** — the editor's insurer typeahead derives distinct suggestions **client-side** from the served `policies[]`. Master recorded as a named seam. |
+| **9-6** | `?entity_id` | ✅ **ACCEPTED** — `GET /insurance` rejects `?entity_id` with an honest **400** (household-scoped). Fail-first. |
+| **9-7** | Renewal A11 | ✅ **ACCEPTED + AMENDMENT C** — one `renewal_reminders(session, within_days)` helper; **both windows become named constants with rationale rows in the D-059 table** (`_RENEWAL_SOON_DAYS = 60` "a page you visit deliberately"; `_INSURANCE_SOON_DAYS = 30` "the attention feed"). Overdue unifies on the helper's **−3650d clamp**, deliberately; a fixture pins it. |
+| **9-8** | Documents defaults | ✅ **ACCEPTED + AMENDMENT D** — four default labels (*Policy schedule · Premium receipts · Nominee form · Terms & conditions*) are **owner-ratified SEED CONTENT** (user-editable record data), **NOT GLOSSARY vocabulary** — the parity guard must not be misapplied. |
+| **9-9** | `linked_goal_id` | ✅ **ACCEPTED + AMENDMENT D** — **omit from the editor** this milestone; column untouched (soft link, D-063). "Surface once goals have a home" is a **one-line seam note in this plan, NOT a ROADMAP R-item** (the currency-master precedent — a consequence of an unmade product decision). |
+| **9-10** | `status` vocab | ✅ **ACCEPTED + AMENDMENT A** — vocab = **`active / lapsed / expired`**; totals stay active-only; **`count` fixed to count active** so the excluded-line and totals agree (bundled with 9-4). |
+| **9-11** | Terminology | ✅ **ACCEPTED** — canonical term is **"Cover"** (not "Sum assured"); add Cover / Cover amount, Premium, Premium frequency, Nominee, Insured person, Renewal to `GLOSSARY.md` first, then the mock. PROPOSED → ratify at walk. |
+| **9-12** | `cover_by_type` enum | ✅ **ACCEPTED** — serve `{type, label, value, value_display}` (display-cased at the backend boundary, §12rv1-5); the UI never maps enums. |
+| **9-13** | Staleness (A10) | ✅ **ACCEPTED** — **A10 confirmed N/A** (user records, no market inputs; only the current-FX caveat, already in copy). Recorded so the absence is a decision, not a gap. |
+
+### The four owner amendments (2026-07-15) — recorded in full
+
+- **AMENDMENT A (binds 9-4 + 9-10):** both change figures the **ACCEPTED Net worth page renders on its D-081
+  line** (`total_cash_value` → display string; `count` semantics change when inactive rows drop out). Bundle
+  both into **ONE Phase-0 change**; **fail-first on BOTH** (a mixed active/lapsed fixture: today's `count` = 2
+  vs totals over 1 → RED; a served total is a display string → RED on today's float); **re-run Net worth's
+  pre-pass** after; append a **dated delta note to `docs/plans/page-net-worth.md`** recording that an accepted
+  page's rendered figures changed and why (a §-entry, never a silent edit).
+- **AMENDMENT B (binds 9-5):** Institution master **DEFERRED to the Accounts milestone**. **No new endpoint** —
+  the insurer typeahead is a **client-side** distinct-suggestion derivation over the served `policies[]` (UI
+  convenience over served data; **not** money math, **not** a vocabulary). The master is a **named seam**
+  (§2 Ownership + §5 Vocabularies).
+- **AMENDMENT C (binds 9-7):** one `renewal_reminders(session, within_days)` helper; **both windows named
+  constants with rationale rows in the D-059 named-constants table (PRODUCT-SPEC §5):** `_RENEWAL_SOON_DAYS =
+  60` (*"a page you visit deliberately"*) alongside `_INSURANCE_SOON_DAYS = 30` (*"the attention feed"*).
+  Overdue semantics unify on the helper's existing **−3650d clamp**, deliberately; the fixture pins it.
+- **AMENDMENT D (binds 9-8 + 9-9):** the four default checklist labels are **owner-ratified SEED CONTENT**
+  (user-editable record data), **NOT** GLOSSARY vocabulary — recorded so the parity guard is not misapplied.
+  9-9's *"surface `linked_goal_id` once goals have a home"* is a **one-line seam note in this plan, NOT a
+  ROADMAP R-item**.
+
+**Execution order (owner):** **Phase 0** (9-3 · 9-4+9-10[A] · 9-10 vocab · 9-6 · 9-7[C] · 9-12 · 9-8[D] ·
+9-11, all backend-first, contract regen same commit, fail-first) → **Phase 0a** (the 9-1 specimen) → **STOP
+for the geometry ratification.** Phase 1 assembly proceeds only after it.
+
+---
+
+### The original questions and proposed resolutions — PRESERVED
 
 | # | Item | Why it blocks / what's needed | Proposed resolution (PROPOSED — owner decides) |
 |---|------|-------------------------------|------------------------------------------------|
@@ -325,7 +388,8 @@ approve, amend, or reject. The build is **blocked** until §9 is closed.
 **Sign-off to start build:** §9 has no open blocker · §3b deltas are approved · no component in §4 requires an
 unresolved amendment.
 
-**Not signed off. §9 is open — 13 items. Nothing is built.**
+**✅ §9 CLOSED (owner one-pass, 2026-07-15). Phase 0 + Phase 0a proceed; Phase 1 assembly is BLOCKED until the
+owner ratifies the §9-1 specimen geometry at `/kitchen-sink`.**
 
 ---
 

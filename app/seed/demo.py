@@ -16,6 +16,7 @@ from app.models import (
     AssetClass,
     Holding,
     Instrument,
+    InsurancePolicy,
     Transaction,
     TxnType,
     Watchlist,
@@ -175,6 +176,39 @@ async def seed_demo_data(session: AsyncSession) -> bool:
             assets=(assets_now * frac).quantize(D("1")),
             liabilities=(liab_now * frac).quantize(D("1")),
             net_worth=(net_now * frac).quantize(D("1")),
+        ))
+
+    # Insurance protection register (page-insurance) — a realistic household set so the page renders
+    # POPULATED, exercising every honesty case live: a NON-BASE (USD) policy (§12in-1), a LAPSED policy
+    # (visible, excluded from totals + the active count, §9-10), a MISSING premium (em dash, §12in-4),
+    # and renewals spanning overdue / soon / upcoming (§12in-3). Demo-only, seed-flag convention.
+    import json as _ins_json
+    from datetime import timedelta as _td
+
+    _today = datetime.now(UTC).date()
+
+    def _iso(days: int) -> str:
+        return (_today + _td(days=days)).isoformat()
+
+    _seed_policies = [
+        # name, insurer, type, currency, cover, cash, premium, freq, renewal_days, status, docs
+        ("Term Life", "Prudential Assurance Singapore", "term_life", "SGD", "500000", None, "1200", "annual", 45, "active", True),
+        ("Global Whole Life", "Zurich International", "whole_life", "USD", "500000", "12000", "800", "annual", 210, "active", False),
+        ("IntegratedShield", "AIA Singapore", "health", "SGD", "1000000", None, "2400", "annual", 12, "active", False),
+        ("Critical Illness", "Manulife (Singapore)", "critical_illness", "SGD", "300000", None, "1800", "annual", -8, "active", False),
+        ("Personal Accident", "NTUC Income Insurance Co-operative", "personal_accident", "SGD", "250000", None, "480", "annual", 90, "active", False),
+        ("Motor (private car)", "MSIG Insurance", "motor", "SGD", "80000", None, None, "annual", 25, "active", False),
+        ("Home Contents", "Chubb Insurance Singapore", "property", "SGD", "150000", None, "600", "annual", 300, "active", False),
+        ("Endowment (matured)", "AXA Insurance", "whole_life", "SGD", "50000", "51000", None, "single", None, "lapsed", False),
+    ]
+    for name, insurer, ptype, ccy, cover, cash, prem, freq, rd, status, docs in _seed_policies:
+        session.add(InsurancePolicy(
+            name=name, insurer=insurer, policy_type=ptype, currency=ccy,
+            cover_amount=D(cover), cash_value=(D(cash) if cash else None),
+            premium=(D(prem) if prem else None), premium_frequency=freq,
+            renewal_date=(_iso(rd) if rd is not None else None), status=status,
+            documents=(_ins_json.dumps([{"label": "Policy schedule", "have": True},
+                                        {"label": "Premium receipts", "have": False}]) if docs else None),
         ))
 
     session.add(Setting(key=SEED_FLAG_KEY, value="1"))

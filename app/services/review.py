@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.services.confidence import score_holding
+from app.services.insurance import _INSURANCE_SOON_DAYS as _INSURANCE_SOON_DAYS_INS
 from app.services.liquidity import liquidity_ladder
 from app.services.planning import _parse_date, goals_report, obligations_report
 from app.services.policy import compute_drift
@@ -26,7 +27,9 @@ from app.services.runway import runway_report
 _LIQUID_THIN_PCT = 15.0
 _GOAL_SOON_DAYS = 180           # D-084: owner-set — a half-year's notice on an approaching goal
 _OBLIGATION_SOON_DAYS = 30
-_INSURANCE_SOON_DAYS = 30
+# §12in-3 — the insurance renewal "soon" window lives in ONE store (insurance.py); Review reads it
+# (imported at the top), never redefines it. Value unchanged (30): a definition move, not behaviour.
+_INSURANCE_SOON_DAYS = _INSURANCE_SOON_DAYS_INS
 _RUNWAY_LOW_MONTHS = 3          # D-084: owner-set floor — below 3 months' recurring net burn warrants a look
 _CORP_ACTION_RECENT_DAYS = 45   # window for "corporate action recorded — verify" reminders
 _INCOMPLETE_DETAILS_MIN = 1     # D-091: manual holdings with no optional detail recorded (≥ this many surfaces)

@@ -9,6 +9,9 @@ from datetime import UTC, datetime, timedelta
 async def test_insurance_crud_totals_and_renewal_reminder(app_client):
     # Use the base currency so totals are identity (no FX) and the assertion is exact.
     base = (await app_client.get("/api/v1/insurance")).json()["base_currency"]
+    # The demo seed now ships a register (page-insurance §12in-1); clear it so this CRUD test is exact.
+    for p in (await app_client.get("/api/v1/insurance")).json()["policies"]:
+        await app_client.delete(f"/api/v1/insurance/{p['id']}")
     renewal = (datetime.now(UTC).date() + timedelta(days=20)).isoformat()
     r = (await app_client.post("/api/v1/insurance", json={
         "name": "Term Life", "insurer": "DBS", "policy_type": "term_life",

@@ -39,6 +39,10 @@ _FREQ_MULT = {"monthly": 12, "quarterly": 4, "annual": 1, "single": 0}
 # dominate the list.
 _RENEWAL_SOON_DAYS = 60   # Insurance page horizon — "a page you visit deliberately"
 _OVERDUE_CLAMP_DAYS = 3650  # ~10 years — the shared lower bound for "overdue" reminders
+# The "soon" threshold — the ONE store (§12in-3): both the served renewal `state` and the Review
+# attention window read this. No client-side copy may exist; the frontend renders the served `state`.
+# Review imports THIS constant (it does not redefine it) — see review.py.
+_INSURANCE_SOON_DAYS = 30
 
 
 def _type_label(policy_type: str) -> str:
@@ -47,6 +51,17 @@ def _type_label(policy_type: str) -> str:
     the UI renders it verbatim and never maps enums. None of the policy_type values need an override."""
     s = policy_type.replace("_", " ")
     return s[:1].upper() + s[1:]
+
+
+def _money_display(amount: Decimal | None, ccy: str, base: str) -> str | None:
+    """A served money display string (D-105). When the policy's currency is NOT the base currency, the
+    code is prefixed (`USD 500,000.00`) so a non-base figure is never mistaken for base; base-currency
+    rows stay bare (§12in-1). None passes through — a blank optional field stays honestly empty (§12in-4),
+    never a fabricated 0. Decided at the backend boundary; the frontend renders it verbatim."""
+    s = format_money_display(amount)
+    if s is None:
+        return None
+    return s if ccy == base else f"{ccy} {s}"
 
 
 def _dec(v) -> Decimal | None:
@@ -69,7 +84,7 @@ async def _to_base(amount: Decimal | None, ccy: str, base: str) -> Decimal:
         return amount
 
 
-def _serialize(r: InsurancePolicy) -> dict:
+def _serialize(r: InsurancePolicy, base: str) -> dict:
     docs = []
     if r.documents:
         try:
@@ -80,15 +95,16 @@ def _serialize(r: InsurancePolicy) -> dict:
         "id": r.id, "name": r.name, "insurer": r.insurer, "policy_type": r.policy_type,
         "policy_number": r.policy_number, "insured_person": r.insured_person,
         # Money is served as a display string (D-105); the raw float stays alongside for callers that
-        # still read it (e.g. Net worth's exclusion line reads the total's display). None passes through
-        # so a missing cash value / premium stays honestly empty, never a fabricated 0 (Guarantee 3).
+        # still read it (e.g. Net worth's exclusion line reads the total's display). Non-base currencies
+        # carry the code (§12in-1). None passes through so a missing cash value / premium stays honestly
+        # empty, never a fabricated 0 (Guarantee 3 / §12in-4).
         "cover_amount": float(r.cover_amount or 0),
-        "cover_amount_display": format_money_display(r.cover_amount or Decimal("0")),
+        "cover_amount_display": _money_display(r.cover_amount or Decimal("0"), r.currency, base),
         "currency": r.currency,
         "cash_value": (float(r.cash_value) if r.cash_value is not None else None),
-        "cash_value_display": format_money_display(r.cash_value),
+        "cash_value_display": _money_display(r.cash_value, r.currency, base),
         "premium": (float(r.premium) if r.premium is not None else None),
-        "premium_display": format_money_display(r.premium),
+        "premium_display": _money_display(r.premium, r.currency, base),
         "premium_frequency": r.premium_frequency,
         "start_date": r.start_date, "renewal_date": r.renewal_date,
         "nominee": r.nominee, "linked_goal_id": r.linked_goal_id,
@@ -130,7 +146,7 @@ async def create_policy(session: AsyncSession, data: dict) -> dict:
     _apply(p, data)
     session.add(p)
     await session.flush()
-    return _serialize(p)
+    return _serialize(p, get_settings().base_currency)
 
 
 async def update_policy(session: AsyncSession, pid: int, data: dict) -> dict:
@@ -139,7 +155,7 @@ async def update_policy(session: AsyncSession, pid: int, data: dict) -> dict:
         raise ValueError("policy not found")
     _apply(p, data)
     await session.flush()
-    return _serialize(p)
+    return _serialize(p, get_settings().base_currency)
 
 
 async def delete_policy(session: AsyncSession, pid: int) -> None:
@@ -172,7 +188,7 @@ async def insurance_report(session: AsyncSession) -> dict:
     upcoming = await renewal_reminders(session, _RENEWAL_SOON_DAYS)
     return {
         "base_currency": base,
-        "policies": [_serialize(r) for r in rows],   # ALL rows (inactive visible, excluded from totals)
+        "policies": [_serialize(r, base) for r in rows],   # ALL rows (inactive visible, excluded from totals)
         # `count` is ACTIVE policies only, so it agrees with the totals it rides beside on Net worth's
         # D-081 excluded line (page-insurance §9-10, Amendment A). The records table uses policies.length.
         "count": active_count,
@@ -188,8 +204,13 @@ async def insurance_report(session: AsyncSession) -> dict:
         "upcoming_renewals": upcoming,   # already sorted by days (the shared helper)
         # Seed content for a new policy's checklist (§9-8) — suggested labels, user-editable; not a vocab.
         "document_defaults": list(DEFAULT_DOCUMENT_LABELS),
+        # §12in-2 — ONE served string (D-005) carrying the two on-page exclusion statements the
+        # specimen showed. The frontend renders it verbatim (it only linkifies the trailing "see Net
+        # worth"); no copy lives in the client.
         "disclaimer": "Records and reminders only — not an assessment of whether your cover is "
-                      "adequate, and not advice. Base-currency totals use current FX.",
+                      "adequate, and not advice. Base-currency totals use current FX. Lapsed and "
+                      "expired policies are shown but excluded from the totals and the active count. "
+                      "Insurance cash value is excluded from Net worth — see Net worth.",
     }
 
 
@@ -210,5 +231,8 @@ async def renewal_reminders(session: AsyncSession, within_days: int = 30) -> lis
         except ValueError:
             continue
         if -_OVERDUE_CLAMP_DAYS <= days <= within_days:
-            out.append({"id": r.id, "name": r.name, "renewal_date": r.renewal_date, "days": days})
+            # §12in-3 — the state is SERVED so the frontend never re-derives it (no client threshold).
+            state = "overdue" if days < 0 else "soon" if days <= _INSURANCE_SOON_DAYS else "upcoming"
+            out.append({"id": r.id, "name": r.name, "renewal_date": r.renewal_date,
+                        "days": days, "state": state})
     return sorted(out, key=lambda x: x["days"])

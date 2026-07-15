@@ -14,6 +14,13 @@ async def _base(app_client) -> str:
     return (await app_client.get("/api/v1/insurance")).json()["base_currency"]
 
 
+async def _clear(app_client) -> None:
+    """The demo seed now ships a realistic insurance register (page-insurance §12in-1). Tests that
+    assert ABSOLUTE counts/totals clear it first so they control the register."""
+    for p in (await app_client.get("/api/v1/insurance")).json()["policies"]:
+        await app_client.delete(f"/api/v1/insurance/{p['id']}")
+
+
 # --------------------------------------------------------------------------- #
 # 9-10 + 9-4 (Amendment A) — count is ACTIVE-only, and money is served as display strings.
 # --------------------------------------------------------------------------- #
@@ -21,6 +28,7 @@ async def test_count_and_totals_count_active_only(app_client):
     """`count` must agree with the totals it rides beside on Net worth's D-081 line (active only).
     RED today: `count` = len(all rows) = 2 while the totals sum 1 active policy (Amendment A cause i)."""
     base = await _base(app_client)
+    await _clear(app_client)
     await app_client.post("/api/v1/insurance", json={
         "name": "Active Term", "policy_type": "term_life", "cover_amount": 100000,
         "currency": base, "cash_value": 5000, "premium_frequency": "annual", "status": "active"})
@@ -38,6 +46,7 @@ async def test_money_served_as_display_strings(app_client):
     """D-105: every money figure is served as a display string (Amendment A cause ii).
     RED today: the `*_display` keys do not exist."""
     base = await _base(app_client)
+    await _clear(app_client)
     await app_client.post("/api/v1/insurance", json={
         "name": "Term Life", "policy_type": "term_life", "cover_amount": 500000,
         "currency": base, "cash_value": 12000, "premium": 1200,
@@ -145,6 +154,7 @@ async def test_upcoming_renewals_is_exactly_the_shared_helper(session):
 async def test_cover_by_type_display_cased_at_boundary(app_client):
     """§9-12 — cover_by_type serves {type, label, value, value_display}. RED today: no `label` key."""
     base = await _base(app_client)
+    await _clear(app_client)
     await app_client.post("/api/v1/insurance", json={
         "name": "CI", "policy_type": "critical_illness", "cover_amount": 100000,
         "currency": base, "premium_frequency": "annual", "status": "active"})

@@ -1,6 +1,8 @@
 # page-scenarios — build plan (PLAN ONLY — nothing is built)
 
-**Status: DRAFT, §9 OPEN.** Drafted 2026-07-15 from `TEMPLATE-page-build.md`. The **verify-first pass
+**Status: ✅ §9 RESOLVED (owner one-pass, 2026-07-15) · BUILD UNBLOCKED to the geometry gate · Phases 0→0a in progress.**
+
+Drafted 2026-07-15 from `TEMPLATE-page-build.md`. The **verify-first pass
 (D-019) is done** — §10 records what the scenario engine **actually serves and what it actually guards**,
 with `file:line` cites. **Nothing is built.** Every ambiguity is in **§9**; the owner resolves them
 **one-pass**. **I resolved none.**
@@ -275,9 +277,39 @@ they earn a rationale line (the D-059 posture) so a future R-11 has a home to ma
 
 ---
 
-## 9. NEEDS DECISION
+## 9. NEEDS DECISION — ✅ **RESOLVED, OWNER ONE-PASS 2026-07-15**
 
-*Everything the specs under-specify. **I resolved none.** Build starts on **none** while open.*
+**All 14 items are ruled. Build is unblocked through Phase 0a — then it STOPS at the geometry gate.**
+Rulings first; the **original questions, options and evidence are PRESERVED VERBATIM below** — a resolved
+question keeps its reasoning, or the next reader inherits a verdict with no argument.
+
+**Matched by NUMBER AND TOPIC before recording — all 14 agree; no mismatch, no STOP.**
+
+| # | Topic | ✅ RULING (owner, 2026-07-15) |
+|---|-------|------------------------------|
+| **9-1** | Geometry | **Exposures `TrendStat` strip · the 7 shocks as ONE `DataTable` · the two liquidity what-ifs as a card with StatusChip verdicts.** **GATE: a static specimen at `/kitchen-sink`** (real shell, real-shaped data **incl. the stale + near-zero honesty cases**, both themes). **STOP after Phase 0a for the owner's screenshot ratification BEFORE Phase 1.** |
+| **9-2** | Staleness (A10 gap) | **§3b — serve the A10-shape annotation** (`stale_inputs` / `inputs_stale` / `inputs_note`); render **`StalenessChip` + a Pricing Health link**; **shared `staleCount` posture, NO second fetch.** **Fail-first** (a stale fixture yields unflagged what-ifs today = RED). |
+| **9-3** | D-105 money | **§3b — `*_display` served for EVERY money figure** (`net_worth`, per-shock `exposure`/`delta`/`new_net_worth`, the liquidity figures), **rendered verbatim; percentages stay numbers.** |
+| **9-4** | Exposure derivation (A11) | **(a) ONE DERIVATION.** `crypto`/`property` **from `allocation()`**; `equities`/`foreign_fx` as **NAMED SUMS of served canonical buckets** (equities = equity + etf + mutual_fund buckets; foreign_fx = Σ non-base `allocation("native_currency")`). **The private loop is DELETED; an equality test pins the named sums to the canonical buckets.** Fail-first. |
+| **9-5** | StatusChip / delta colour | **CONFIRMED — `positive`/`negative` sanctioned here** (cash facts, the Cash-flow §9-11 precedent): **`covered` → positive; `not covered` → attention** (needs-a-look, **not** a loss verdict); **shock deltas render factual `--loss` amounts, never `--gain`.** Ratify visuals at the walk. |
+| **9-6** | GLOSSARY | **Add `Shock` + `Exposure` (its own term)** — `docs/specs/GLOSSARY.md` **FIRST**, then `mocks/glossary.ts` (parity guard). **`Stress test` only if body copy uses it.** **PROPOSED → walk.** |
+| **9-7** | Shock-magnitude home | **Extract the magnitudes to NAMED CONSTANTS with one-line rationales** (the D-059 posture; Family-C recorded in §6). **NO magnitude changes.** **The R-11 seam is now named — the ROADMAP note updated to say so.** |
+| **9-8** | Entity scope | **HOUSEHOLD-ONLY — `/portfolio/scenarios` REJECTS `?entity_id` with an honest 400** (*"scenarios are household-scoped"*). **Fail-first** (accepted today = RED). Per-entity scenarios → **ROADMAP R-35**. |
+| **9-9** | Empty / near-zero portfolio | **Empty → `EmptyState`** (reason + route to Holdings). **Near-zero/negative net worth → suppress the `%`, show the base-currency delta with an honest note.** Copy **PROPOSED → walk.** |
+| **9-10** | SN-1 note vocabulary | **Served note aligned to "expenses"** (*"…of recorded expenses were paid from liquid assets now."*), matching §12cf1-2 / §12rv2-1. **Fail-first.** |
+| **9-11** | Contract docs | **One `present` row** in `API-CONTRACT.md`. **Doc-only.** |
+| **9-12** | Export | **DECLINED** — the **Reports Pack** decides scenario inclusion at the **Reports plan**. No §3b delta. |
+| **9-13** | Disclaimer cadence | **Once in the PageHeader subtitle** (*"a scenario, never a forecast"*) **+ the served disclaimer at the table foot; NEVER per row.** Ratify at the walk. |
+| **9-14** | Rotation | **Rotation-eligible; the empty state → skipped by construction.** Confirmed. |
+
+**Execution order (owner):** **Phase 0** (9-2 · 9-3 · 9-4 · 9-7 · 9-8 · 9-10 · 9-11, all backend-first,
+contract regen same commit, fail-first) → **Phase 0a** (the 9-1 specimen, both themes, honesty cases staged)
+→ **STOP for the geometry ratification.** **Phases 1–3a proceed only after it.**
+
+---
+
+### The original questions, options and evidence — PRESERVED
+
 
 | # | Item | Why it blocks / what's needed | Proposed resolution (for owner to approve) |
 |---|------|-------------------------------|---------------------------------------------|

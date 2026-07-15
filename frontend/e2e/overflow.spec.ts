@@ -24,6 +24,7 @@ const ROUTES = [
   { name: "policy (worklist)", hash: "#/policy" },
   { name: "cash flow (worklist)", hash: "#/cash-flow" },
   { name: "scenarios (overview)", hash: "#/scenarios" },
+  { name: "insurance (worklist)", hash: "#/insurance" },
 ];
 const THEMES = ["light", "dark"] as const;
 
@@ -97,7 +98,7 @@ for (const route of ROUTES) {
 test("built pages share one content-left inset (shell owns the padding)", async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
   const lefts: number[] = [];
-  for (const hash of ["#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios"]) {
+  for (const hash of ["#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance"]) {
     await page.goto(`/${hash}`);
     await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
     lefts.push(
@@ -147,7 +148,7 @@ for (const theme of THEMES) {
 // TEST FAILURE, not a style choice — which is what stops the eleventh page from re-inventing it.
 const SHELL_ROUTES = [
   "#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap",
-  "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios",
+  "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance",
 ];
 test("every page uses the ONE shared page shell (page-local shells are a failure)", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 800 });

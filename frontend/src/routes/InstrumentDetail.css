@@ -1,52 +1,53 @@
-.ins {
+.idp {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  /* Root padding is owned by the shell (.lf-shell__content) — not per page (§12-1). */
-  max-width: 70rem;
-  margin: 0 auto;
+  /* The page INSET is owned by the shell (.lf-shell__content) — the ONE platform standard
+     (DESIGN-SYSTEM "Page inset", §14in-6). No page-local `max-width` / centering `margin`: a
+     capped, centered root reads as a larger inset than every full-width page at wide viewports.
+     (This class was renamed `.ins` → `.idp` to end the collision with the Insurance page's `.ins`.) */
 }
-.ins__bar {
+.idp__bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
-.ins__section {
+.idp__section {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
-.ins__h2 {
+.idp__h2 {
   margin: 0;
   font-size: var(--font-size-16);
   font-weight: var(--weight-semibold);
 }
 /* D-100 companion — card header: title left, canonical-home link top-right. */
-.ins__cardhead {
+.idp__cardhead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
 /* Quote card — border/background/padding come from the .lf-card primitive (D-100). */
-.ins__price {
+.idp__price {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--space-4);
 }
-.ins__pricenum {
+.idp__pricenum {
   font-size: var(--font-size-28);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
-.ins__muted { color: var(--text-tertiary); }
-.ins__change { font-size: var(--font-size-16); font-variant-numeric: tabular-nums; }
-.ins__up { color: var(--gain); }
-.ins__down { color: var(--loss); }
-.ins__prov {
+.idp__muted { color: var(--text-tertiary); }
+.idp__change { font-size: var(--font-size-16); font-variant-numeric: tabular-nums; }
+.idp__up { color: var(--gain); }
+.idp__down { color: var(--loss); }
+.idp__prov {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -55,29 +56,29 @@
   font-size: var(--font-size-12);
   color: var(--text-secondary);
 }
-.ins__tag {
+.idp__tag {
   padding: 0 var(--space-2);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-sm);
 }
-.ins__reason { color: var(--text-secondary); font-size: var(--font-size-13); }
-.ins__link { color: var(--accent); text-decoration: none; }
-.ins__link:hover { text-decoration: underline; }
+.idp__reason { color: var(--text-secondary); font-size: var(--font-size-13); }
+.idp__link { color: var(--accent); text-decoration: none; }
+.idp__link:hover { text-decoration: underline; }
 
 /* Fact grids (identity / provider detail / position). */
-.ins__facts {
+.idp__facts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   gap: var(--space-3) var(--space-5);
   margin: 0;
 }
-.ins__fact { display: flex; flex-direction: column; gap: var(--space-1); }
-.ins__factlabel { font-size: var(--font-size-12); color: var(--text-secondary); }
-.ins__factval { font-size: var(--font-size-14); font-variant-numeric: tabular-nums; }
+.idp__fact { display: flex; flex-direction: column; gap: var(--space-1); }
+.idp__factlabel { font-size: var(--font-size-12); color: var(--text-secondary); }
+.idp__factval { font-size: var(--font-size-14); font-variant-numeric: tabular-nums; }
 /* Item 3a — numeric values right-aligned; text values keep the default left. */
-.ins__factval--num { text-align: right; }
-.ins__factlink { align-self: end; }
-.ins__chip {
+.idp__factval--num { text-align: right; }
+.idp__factlink { align-self: end; }
+.idp__chip {
   display: inline-block;
   padding: 0 var(--space-2);
   border-radius: var(--radius-sm);
@@ -85,26 +86,26 @@
   border: var(--border-width) solid var(--border);
   font-size: var(--font-size-12);
 }
-.ins__cost { display: flex; align-items: center; gap: var(--space-4); margin: 0; font-variant-numeric: tabular-nums; }
-.ins__inline { padding-block: var(--space-1); }
+.idp__cost { display: flex; align-items: center; gap: var(--space-4); margin: 0; font-variant-numeric: tabular-nums; }
+.idp__inline { padding-block: var(--space-1); }
 
 /* Item 4 / D-101 — News is the reference "header outside, content scrolls" pattern:
    the section header sits outside; the list (a nested .lf-card__body) caps at ~5
    items and scrolls internally, so the scrollbar starts below the header. */
 /* News list extracted to the shared `NewsList` component (news.css) — page-news ND-5. */
-.ins__pending { opacity: 0.8; }
+.idp__pending { opacity: 0.8; }
 
 /* Dialog form (page-local; mirrors the Add-dialog grid). */
-.ins__form { display: flex; flex-direction: column; gap: var(--space-4); }
-.ins__field { display: flex; flex-direction: column; gap: var(--space-2); }
-.ins__label { font-size: var(--font-size-13); font-weight: var(--weight-medium); }
-.ins__sub { font-size: var(--font-size-12); color: var(--text-secondary); }
+.idp__form { display: flex; flex-direction: column; gap: var(--space-4); }
+.idp__field { display: flex; flex-direction: column; gap: var(--space-2); }
+.idp__label { font-size: var(--font-size-13); font-weight: var(--weight-medium); }
+.idp__sub { font-size: var(--font-size-12); color: var(--text-secondary); }
 @media (min-width: 34rem) {
-  .ins__form--grid {
+  .idp__form--grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3) var(--space-4);
     align-items: start;
   }
-  .ins__form--grid > .ins__field--full { grid-column: 1 / -1; }
+  .idp__form--grid > .idp__field--full { grid-column: 1 / -1; }
 }

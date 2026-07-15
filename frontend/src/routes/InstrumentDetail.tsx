@@ -123,7 +123,7 @@ export function InstrumentDetail() {
   const isFundWrapped = ["mutual_fund", "etf"].includes(meta?.asset_class ?? "");
 
   return (
-    <div className="lf-page ins">
+    <div className="lf-page idp">
       <PageHeader
         title={sym}
         subtitle={
@@ -162,34 +162,34 @@ export function InstrumentDetail() {
       ) : (
         <>
           {/* Quote — the canonical Markets reader, scoped. Unpriced → "—" + reason. */}
-          <section className="ins__section lf-card ins__quote">
+          <section className="idp__section lf-card idp__quote">
             <SummaryHead title="Quote" to="/markets" destination="Markets" whole />
             <div className="lf-card__body">
-              <div className="ins__price">
+              <div className="idp__price">
                 {quote?.price != null ? (
-                  <span className="ins__pricenum">{quote.currency} {quote.price_display ?? "—"}</span>
+                  <span className="idp__pricenum">{quote.currency} {quote.price_display ?? "—"}</span>
                 ) : (
-                  <span className="ins__pricenum ins__muted">—</span>
+                  <span className="idp__pricenum idp__muted">—</span>
                 )}
                 {quote?.change != null && (
-                  <span className={`ins__change ${Number(quote.change) >= 0 ? "ins__up" : "ins__down"}`}>
+                  <span className={`idp__change ${Number(quote.change) >= 0 ? "idp__up" : "idp__down"}`}>
                     {formatSignedMoney(quote.change)}
                     {quote.change_pct != null ? ` (${Number(quote.change_pct).toFixed(2)}%)` : ""}
                   </span>
                 )}
               </div>
-              <div className="ins__prov">
-                {quote?.price == null && <span className="ins__reason">No live quote from the source — value withheld, never fabricated.</span>}
-                {quote?.source && <span className="ins__tag">Source: {quote.source}</span>}
-                {quote?.entitlement && <span className="ins__tag">{quote.entitlement}</span>}
+              <div className="idp__prov">
+                {quote?.price == null && <span className="idp__reason">No live quote from the source — value withheld, never fabricated.</span>}
+                {quote?.source && <span className="idp__tag">Source: {quote.source}</span>}
+                {quote?.entitlement && <span className="idp__tag">{quote.entitlement}</span>}
                 {quote?.is_stale && <StalenessChip isStale asOf={quote.received_at ?? ""} />}
               </div>
             </div>
           </section>
 
           {/* Identity / taxonomy. */}
-          <section className="ins__section lf-card">
-            <h2 className="ins__h2">Identity</h2>
+          <section className="idp__section lf-card">
+            <h2 className="idp__h2">Identity</h2>
             {/* Compact metadata strip (DESIGN-SYSTEM §5.2): one row on desktop,
                 2-col grid on narrow. Vocab values render as chips. */}
             <div className="lf-card__body">
@@ -209,8 +209,8 @@ export function InstrumentDetail() {
 
           {/* Class-conditional provider detail (never fabricated — only if linked). */}
           {detailPanel && (
-            <section className="ins__section lf-card">
-              <h2 className="ins__h2">{detailPanel[0].replace(/_/g, " ")} detail</h2>
+            <section className="idp__section lf-card">
+              <h2 className="idp__h2">{detailPanel[0].replace(/_/g, " ")} detail</h2>
               <div className="lf-card__body">
                 <MetaStrip
                   items={Object.entries(detailPanel[1]).map(([k, v]) => ({
@@ -225,8 +225,8 @@ export function InstrumentDetail() {
           {/* Price history — house-SVG chart (D-053). Simple default; period selector
               + Simple/Advanced toggle + crosshair (PROPOSED amendment). Honest short
               history: shows only what exists, labelled, never stretched. */}
-          <section className="ins__section lf-card">
-            <h2 className="ins__h2">Price history</h2>
+          <section className="idp__section lf-card">
+            <h2 className="idp__h2">Price history</h2>
             <div className="lf-card__body">
               <PriceChart
                 series={series}
@@ -242,11 +242,11 @@ export function InstrumentDetail() {
           </section>
 
           {/* Position if held — the canonical holdings reader, scoped (ND-1, P-3). */}
-          <section className="ins__section lf-card">
+          <section className="idp__section lf-card">
             {/* §12ho1-2: the one linked-summary affordance — the corner ↗, top-right. */}
             <SummaryHead title="Your position" to="/holdings" destination="Holdings" whole />
             {position ? (
-              <dl className="ins__facts lf-card__body">
+              <dl className="idp__facts lf-card__body">
                 <Fact label="Quantity" num value={position.quantity != null ? String(position.quantity) : "—"} />
                 <Fact label={`Value (${baseCcy})`} num value={position.market_value != null ? formatMoney(position.market_value) : "—"} />
                 <Fact label="Cost basis" num value={position.cost_basis != null ? formatMoney(position.cost_basis) : "—"} />
@@ -260,27 +260,27 @@ export function InstrumentDetail() {
           {/* Ongoing cost (expense ratio) — D-029, CLASS-SCOPED to fund wrappers
               (D-099). Not rendered for equity/crypto/manual. Shown as bps (no math). */}
           {isFundWrapped && (
-            <section className="ins__section lf-card">
-              <h2 className="ins__h2">Ongoing cost (expense ratio)</h2>
-              <p className="ins__cost lf-card__body">
+            <section className="idp__section lf-card">
+              <h2 className="idp__h2">Ongoing cost (expense ratio)</h2>
+              <p className="idp__cost lf-card__body">
                 {meta?.annual_cost_bps != null ? `${meta.annual_cost_bps} bps / year` : "— (not set)"}
-                <button type="button" className="lf-btn ins__inline" onClick={() => setCostOpen(true)}>Set</button>
+                <button type="button" className="lf-btn idp__inline" onClick={() => setCostOpen(true)}>Set</button>
               </p>
             </section>
           )}
 
           {/* AI explainer — DEFERRED to the AI-surfaces milestone (ND-2/ND-5); D-068
               intact. Item-4 layout: sits ABOVE News. */}
-          <section className="ins__section lf-card ins__pending">
-            <h2 className="ins__h2">Explain this instrument</h2>
-            <p className="ins__reason lf-card__body">
+          <section className="idp__section lf-card idp__pending">
+            <h2 className="idp__h2">Explain this instrument</h2>
+            <p className="idp__reason lf-card__body">
               The AI explainer (grounded + validated, D-068/P-6) arrives with the
               AI-surfaces milestone (shared Ask panel). Deferred, not dropped.
             </p>
           </section>
 
           {/* News — scoped reader (D-037, P-3). Caps at ~5 visible; scrolls internally. */}
-          <section className="ins__section lf-card">
+          <section className="idp__section lf-card">
             <SummaryHead title="News" to="/news" destination="News" whole />
             <div className="lf-card__body">
               {/* Extracted shared NewsList (page-news ND-5). Scoped view → no per-symbol links. */}
@@ -313,12 +313,12 @@ export function InstrumentDetail() {
 
 function Fact({ label, value, chip, signed, num }: { label: string; value?: string | null; chip?: boolean; signed?: number | null; num?: boolean }) {
   const shown = value == null || value === "" ? "—" : value;
-  const tone = signed == null ? "" : Number(signed) > 0 ? " ins__up" : Number(signed) < 0 ? " ins__down" : "";
+  const tone = signed == null ? "" : Number(signed) > 0 ? " idp__up" : Number(signed) < 0 ? " idp__down" : "";
   // Item 3a: numeric values right-aligned + tabular; text values left-aligned.
   return (
-    <div className="ins__fact">
-      <dt className="ins__factlabel">{label}</dt>
-      <dd className={`ins__factval${num ? " ins__factval--num" : ""}${tone}`}>{chip && shown !== "—" ? <span className="ins__chip">{shown}</span> : shown}</dd>
+    <div className="idp__fact">
+      <dt className="idp__factlabel">{label}</dt>
+      <dd className={`idp__factval${num ? " idp__factval--num" : ""}${tone}`}>{chip && shown !== "—" ? <span className="idp__chip">{shown}</span> : shown}</dd>
     </div>
   );
 }
@@ -357,17 +357,17 @@ function EditDialog({
         </>
       }
     >
-      <div className="ins__form ins__form--grid">
-        <div className="ins__field ins__field--full">
-          <span className="ins__label">Display name</span>
+      <div className="idp__form idp__form--grid">
+        <div className="idp__field idp__field--full">
+          <span className="idp__label">Display name</span>
           <TextInput value={name} onChange={setName} aria-label="Display name" placeholder="e.g. Apple Inc." />
         </div>
-        <div className="ins__field">
-          <span className="ins__label">Asset class</span>
+        <div className="idp__field">
+          <span className="idp__label">Asset class</span>
           <MasterSelect master="asset_class" value={assetClass} onChange={setAssetClass} />
         </div>
-        <div className="ins__field">
-          <span className="ins__label">Source override</span>
+        <div className="idp__field">
+          <span className="idp__label">Source override</span>
           <MasterSelect master="source_override" value={source} onChange={setSource} />
         </div>
       </div>
@@ -403,11 +403,11 @@ function CostDialog({
         </>
       }
     >
-      <div className="ins__form">
-        <div className="ins__field">
-          <span className="ins__label">Annual cost (bps)</span>
+      <div className="idp__form">
+        <div className="idp__field">
+          <span className="idp__label">Annual cost (bps)</span>
           <QuantityInput value={bps} onChange={setBps} aria-label="Annual cost (bps)" />
-          <span className="ins__sub">Basis points per year (e.g. 20 = 0.20%). Leave blank to clear.</span>
+          <span className="idp__sub">Basis points per year (e.g. 20 = 0.20%). Leave blank to clear.</span>
         </div>
       </div>
     </Dialog>

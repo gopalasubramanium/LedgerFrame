@@ -980,7 +980,18 @@ at real viewports. All three folded into TEMPLATE §7 (extending existing rules,
    entry (PROPOSED). §14in-3 parked → **R-36**. Backend 774 · Insurance unit 9 · overflow 179 · live
    insurance + net-worth pre-passes GREEN, 0 console errors; fail-first proven (backend `KeyError`,
    geometry gaps `[16,28,28]`). **The owner re-walks — nothing self-certified.**
-   Full record: **`page-insurance.md` §14.**
+   **Walk batch 2 (owner re-walk with platform screenshots, 2026-07-16; page-insurance §14in-6/7/8):**
+   §14in-1 **RE-OPENED** — the batch-1 gap-rhythm guard measured an adjacent property, not the page inset
+   (lesson folded in). §14in-6 **page-inset standard** — Insurance/Holdings rendered a larger inset at wide
+   viewports (Holdings capped itself; Insurance inherited a cap via a `.ins` CSS class collision with
+   Instrument Detail). Added DESIGN-SYSTEM §3.1 "Page inset" (RATIFIED); renamed InstrumentDetail `.ins`→
+   `.idp` + dropped its + Holdings' `max-width`/`margin`; strengthened the inset guard (measures at 1728).
+   §14in-7 **base-currency affix RATIFIED + retrofitted platform-wide** (see the retrofits section — now
+   DONE). §14in-8 **Review headline** — served whole-dollar-rounded (`796,246.00`/`+17.00`) vs canonical
+   `796,246.41`/`+16.73`; removed the `round()` so Review renders the SAME served figure (D-105). Verify:
+   backend 775 (+1) · overflow 179 (inset guard) · live smokes (net-worth/portfolio/review/scenarios/
+   cash-flow/insurance) GREEN, 0 console errors; fail-first proven for all three. Touched accepted pages
+   carry dated delta notes. **The owner re-walks — nothing self-certified.** Full record: **§14 batch 2.**
    - **(prior) Insurance build detail (Phases 0/1/2/3a) — DONE (2026-07-16).**
    §9 closed one-pass (2026-07-15, +amendments A–D); §12 geometry gate RATIFIED WITH CONDITIONS (2026-07-16,
    §12in-1..5). **Phase 0** (8 deltas): meta removal, D-105 + count-active-only (Amendment A — Net worth
@@ -1013,10 +1024,12 @@ These are **platform patterns ratified on one page** that later-accepted pages m
 never a one-shot sweep (the *"per-instance copies of a standard ARE the defect"* rule, applied forward).
 Each target is a **small commit + a pre-pass re-run**, owner picks the order:
 
-- **Base-currency indication (page-insurance §14in-5; DESIGN-SYSTEM "Base-currency indication", PROPOSED).**
-  Money **summary tiles/strips** carry a muted served-`base_currency` affix (`.lf-stat__unit`). First
-  instance shipped on Insurance. Retrofit targets: **Net worth, Portfolio, Home tiles, Review rail**, and
-  the **liquidity / runway / statement** money surfaces (all already serve `base_currency`).
+- ~~**Base-currency indication**~~ — **✅ DONE (owner pulled it forward, walk batch 2 §14in-7, 2026-07-16).**
+  DESIGN-SYSTEM §5.2 **RATIFIED**; the muted served-`base_currency` affix (`.lf-stat__unit`, one form) is
+  applied to every money summary tile/strip: Net worth (four tiles), Portfolio (rail + Costs), Holdings,
+  Review, Scenarios (exposures + caption), Cash flow (runway), Home (net-worth/change), Insurance (first).
+  Inline `SGD` embeds (Review/Holdings/Home) converted to the one affix. Instrument Detail has no
+  base-currency summary tiles (facts `<dl>` labels the currency) — out of scope.
 - **[Help] popover scope + Segmented extraction** — the standing prior retrofits (page-markets / page-news
   legacy) remain owner-picked.
 

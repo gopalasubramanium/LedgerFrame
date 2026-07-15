@@ -765,3 +765,117 @@ vertical scroll + **0 console errors**, both themes) · **`net-worth-smoke` live
 is self-certified**. The owner re-walks `/insurance` (padding rhythm, the annualised "Premium / yr" column
 + its reconciliation, the aligned renewals card, the base-currency affix) and ratifies §14in-5 (the
 DESIGN-SYSTEM "Base-currency indication" entry, still PROPOSED).
+
+---
+
+## 14 — OWNER WALK BATCH 2 (owner re-walk with platform screenshots, 2026-07-16)
+
+The owner re-walked platform-wide and filed three findings. Two are platform decisions with cross-page
+reach; every touched ACCEPTED page carries a dated delta note + a re-run pre-pass. **STOP before any
+acceptance claim — the owner re-walks.**
+
+### §14in-1 RE-OPENED — the batch-1 guard measured the wrong property (lesson)
+
+**Batch 1 "fixed" §14in-1 by aligning the SECTION GAPS (16px rhythm) — but the owner's finding was the
+PAGE INSET** (the padding between the shell and the page content on all four sides). The gap-rhythm guard
+went **green on an adjacent property**, leaving the real defect standing. **Recorded lesson (folded into
+the guard):** *a guard must measure the geometry the finding NAMES — matching some neighbouring property
+is a green that hides the bug.* This is the page-home §12ho2-1 / §12sc1-1 lesson recurring; the strengthened
+inset guard now measures the four-side inset at the width where it appears. **Superseded by §14in-6.**
+
+### §14in-6 (bug + spec gap) — page inset drifted; no DESIGN-SYSTEM standard existed — FIXED
+
+**Finding:** Insurance AND Holdings render a visibly larger page inset than Net worth / Portfolio /
+Scenarios. **Root cause (measured live at 1728/1920, fail-first):** two page roots capped + centred
+themselves — Holdings `.hold { max-width: 72rem; margin: 0 auto }`, and Insurance inherited
+`max-width: 70rem; margin: 0 auto` **through a CSS class collision** (Instrument Detail's page root also
+used the `.ins` prefix, so its rule bled onto Insurance — and the two pages were cross-contaminating
+`.ins__cardhead / __section / __field` as well). At 1920 both centred ~250px in from each edge while every
+other page ran full-width; **invisible at ≤1366** (the cap doesn't bite), which is why the batch-1 guard
+(measuring at 1200) never saw it. There was **no page-inset standard in DESIGN-SYSTEM**, which is why pages
+drifted.
+
+**Fix:**
+1. **Spec first — DESIGN-SYSTEM §3.1 "Page inset" (RATIFIED 2026-07-16):** ONE shell-owned content inset
+   for all pages (`.lf-shell__content` padding, the value Net worth/Portfolio render); no page-local
+   `max-width` / centering `margin` / root padding.
+2. **Instrument Detail:** renamed its `.ins` prefix → **`.idp`** (ending the collision — Insurance is the
+   rightful `ins`) and removed its `max-width` + `margin: 0 auto`. (Delta note: `page-instrument-detail.md`.)
+3. **Holdings:** removed `.hold` `max-width` + `margin: 0 auto`. (Delta note: `page-holdings.md`.)
+4. **Insurance** needed **no change** — with the collision gone it has no root `max-width`.
+5. **Guard (pixels, at the width where it appears):** `e2e/overflow.spec.ts` — *"every page fills the
+   shell content box"* — replaces the batch-1 test; measures each built route's `.lf-page` box vs the shell
+   content box **at 1728px** and asserts left+right inset ≈ 0.
+
+**RED → GREEN:** the strengthened guard, run on the pre-fix tree, reported `#/holdings left=148 right=148 |
+#/instrument/AAPL left=164 right=164 | #/insurance left=164 right=164` (RED) → all pages left=right=0 after
+the fix (GREEN). InstrumentDetail (7) + Holdings (23) unit tests pass after the rename.
+
+### §14in-7 (owner ruling) — base-currency indication RATIFIED; retrofit pulled forward — DONE
+
+**Owner ruling:** the DESIGN-SYSTEM §5.2 base-currency indication (first shipped on Insurance, §14in-5) is
+**RATIFIED as shipped**, and the cross-page retrofit is **pulled forward — done now** (the owner overruled
+the batch-1 scheduling). Flipped DESIGN-SYSTEM §5.2 → **RATIFIED (2026-07-16)** and applied the muted
+`.lf-stat__unit` affix (source = each reader's **served `base_currency`**, never hardcoded) to every
+base-currency money summary tile/strip:
+
+| Page | Tiles affixed | base_currency source | Inline form converted? |
+|------|---------------|----------------------|------------------------|
+| **Net worth** | the four headline tiles (Net worth · Gross assets · Liabilities · Cash & deposits) | `/portfolio/summary` (`portfolio.ts`) | — |
+| **Portfolio** | rail money tiles (Today's change · Unrealised P/L · Realised P/L · Cost basis) + **Costs** (recorded fees · ongoing cost) | `/portfolio/summary`, `/portfolio/cost-of-ownership` | — |
+| **Holdings** | the linked net-worth summary tile | `/portfolio/summary` (`baseCcy`) | **yes** (`SGD …` embed → affix) |
+| **Review** | the net-worth stat | `/review` (`base_currency`) | **yes** (embed → affix) |
+| **Scenarios** | the four Exposure tiles + the "Net worth today" caption | `/portfolio/scenarios` | — |
+| **Cash flow** | the three runway money figures (net burn · monthly expenses · monthly income) | `/portfolio/runway` | — |
+| **Home** | the net-worth + today's-change widgets | `/portfolio/summary` | **yes** (page-local `.hm3__unit` → the one `.lf-stat__unit`) |
+| **Insurance** | totals strip (first instance, §14in-5) | `/insurance` | — |
+
+**ONE form, not two:** the affix is the ratified `.lf-stat__unit` slot everywhere (via `TrendStat`'s `unit`
+prop, or the same class for the few non-`TrendStat` money figures); the page-local `.hm3__unit` copy was
+removed. **Instrument Detail** has **no** base-currency summary TILES — its "Your position" is a facts
+`<dl>` whose money row already labels the currency (`Value (SGD)`) — so it is out of scope (verified, not
+skipped). Markets / Heatmap / Pricing Health rows carry per-quote codes already — out of scope.
+
+**Platform improvement (TrendStat):** a **zero-width-space break** now sits before the `unit`, so on a
+narrow tile the code drops to its own line instead of clipping the value (invisible when it fits) —
+otherwise the widened value clipped at 320px (Scenarios) / would have at 500px (Insurance). Proven RED
+(Scenarios exposure `980,000.00SGD` clipped `191>186` @320) → GREEN (wraps, `186==186`).
+
+### §14in-8 (bug, honesty) — Review headline disagreed with Net worth — FIXED (backend-first)
+
+**Finding:** Review showed `SGD 796,246.00` / `+17.00` while Holdings/Net worth showed `796,246.41` /
+`+16.73` — the same figures, two values. **Root cause (verify-first, file:line):** `review.py:319` served
+`round(float(val.total_value), 0)` and `:335` `round(float(val.day_change), 0)` — **whole-dollar rounded**,
+while Net worth renders the un-rounded `val.total_value` from the SAME `value_portfolio` reader with the
+same client formatter. Review also embedded `SGD` inside the value string.
+
+**Fix (D-105, one derivation):** removed both `round(..., 0)` so Review serves the full-precision figure
+(identical to `/portfolio/summary`); Review's tile renders it with the same `formatMoney`/`formatSignedMoney`
+and carries the base-currency **affix** (not an embed). **RED → GREEN:** `test_review_centre` —
+`review.net_worth == /portfolio/summary.total_value` (and `day_change` likewise) — RED on the pre-fix round
+→ GREEN. Live: `/review` and `/portfolio/summary` both serve `796,246.41 / 16.73`; the review-smoke asserts
+the rendered headline matches to the cent + carries the affix. (Delta note: `page-review.md`.)
+
+### §14 BATCH-2 verification (all GREEN)
+
+- **Backend:** `775 passed` (+1 walk-2 equality test) · `api-contract-check` green (no contract shape
+  change — `/review` fields stay `float`).
+- **Frontend:** `tsc` clean · lint clean on all touched files · tokens clean · unit suites for every
+  touched page pass (Net worth 7 · Portfolio 12 · Holdings 23 · Scenarios 9 · Cash flow 10 · Review 8 ·
+  Home 8 · Instrument Detail 7) · production build implied by tsc+smokes.
+- **e2e:** `overflow.spec.ts` **179 pass** incl. the **strengthened inset guard** (fail-first proven).
+  Live smokes GREEN with the new render guards: **net-worth** (four tiles carry the affix), **review**
+  (headline == canonical to the cent + affix), **portfolio · scenarios · cash-flow · insurance** — 0
+  console errors, both themes, 320–1366 (+ 1728 for inset).
+- **Fail-first proven** on the real cause for all three: inset guard (`left=148/164` RED), Review
+  (`KeyError`-class rounding mismatch RED), affix-clip (`191>186` RED).
+
+**⚠ Pre-existing, NOT mine (unchanged, out of scope):** the `AppShell.test.tsx` redirect test errors on the
+`CashFlow.tsx` `obligations.length` partial-mock crash — reproduces with my CashFlow edit reverted;
+logged in `08-TECH-DEBT.md`. Every touched page's own unit + smoke suites are green.
+
+**STOP — AWAITING OWNER RE-WALK.** Nothing self-certified. The owner re-walks: the uniform page inset at
+wide viewports (Insurance/Holdings now match Net worth/Portfolio; **Instrument Detail is now full-width** —
+a consequence of the uniform-inset ruling, flagged for confirmation), the base-currency affix on every
+money summary across the platform (one form), and the Review headline now matching Net worth/Holdings to
+the cent.

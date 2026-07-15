@@ -129,10 +129,11 @@ export function Scenarios() {
               </h2>
             </header>
             <div className="lf-card__body sc__expbody">
-              <TrendStat label="Equities" value={data.exposures.equities_display} />
-              <TrendStat label="Crypto" value={data.exposures.crypto_display} />
-              <TrendStat label="Property" value={data.exposures.property_display} />
-              <TrendStat label="Foreign FX" value={data.exposures.foreign_fx_display} />
+              {/* §14in-7 — base-currency affix on the exposure money tiles (served base_currency). */}
+              <TrendStat label="Equities" value={data.exposures.equities_display} unit={data.base_currency} />
+              <TrendStat label="Crypto" value={data.exposures.crypto_display} unit={data.base_currency} />
+              <TrendStat label="Property" value={data.exposures.property_display} unit={data.base_currency} />
+              <TrendStat label="Foreign FX" value={data.exposures.foreign_fx_display} unit={data.base_currency} />
             </div>
           </section>
 
@@ -142,7 +143,7 @@ export function Scenarios() {
               <h2 className="lf-card__title">
                 <GlossaryTerm term="term-shock">Stress scenarios</GlossaryTerm>
               </h2>
-              <span className="sc__nw">Net worth today · {data.net_worth_display}</span>
+              <span className="sc__nw">Net worth today · {data.net_worth_display}<span className="lf-stat__unit">{data.base_currency}</span></span>
             </header>
             <div className="lf-card__body">
               <DataTable<AssetShock> caption="Stress scenarios" columns={cols} rows={data.asset_scenarios} />

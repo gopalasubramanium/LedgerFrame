@@ -571,3 +571,16 @@ Cash flow** (IA §5, D-057), and ND-7 requires the link to be the *canonical* pa
 **`/cash-flow`** (and the obligations key becomes `"income & expenses"` to match the new served label). *This
 was the identical bug class sitting one line away from the ruled fix; correcting it silently would have been
 the wrong call, so it is called out for the owner's look.*
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-8 + §14in-7)
+
+- **§14in-8 (one headline, honesty):** `review.py` served the net-worth headline + today's-change
+  **whole-dollar-rounded** (`round(..., 0)`), so Review showed `796,246.00 / +17.00` beside Net worth's
+  `796,246.41 / +16.73`. Removed the rounding — Review now serves the SAME full-precision
+  `value_portfolio` figure `/portfolio/summary` carries, rendered with the same formatter (D-105, one
+  derivation). Guard: `test_review_centre` asserts `review.net_worth == summary.total_value` (RED on the
+  round → GREEN); `review-smoke` asserts the rendered headline matches to the cent.
+- **§14in-7 (affix):** the net-worth stat's inline `SGD` embed became the muted `.lf-stat__unit` affix.
+  Review.test.tsx (8) + backend + smoke green.

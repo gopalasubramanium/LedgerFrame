@@ -668,3 +668,12 @@ normalise-vs-verbatim posture (kept `_clean_tags`; demo casing a sanctioned exce
 codes over ambiguous symbols in movers (§12b4-3); D-082 bucket label wording "Unclassified sector"
 (§12-4 → batch-2 #1); performance return honest label "Current holdings — price return" over "TWR"
 (§11 ND-3a). Each is recorded with its rationale so a later reader doesn't re-litigate it.
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-7)
+
+- **Base-currency affix (RATIFIED):** the stat-rail money tiles (Today's change · Unrealised P/L · Realised
+  P/L · Cost basis) and the **Costs** figures (recorded fees · ongoing cost) now carry the served
+  `base_currency` (`/portfolio/summary`, `/portfolio/cost-of-ownership`) as the muted `.lf-stat__unit`
+  affix; %/metric tiles carry none. Portfolio.test.tsx (12) + `portfolio-smoke` green.

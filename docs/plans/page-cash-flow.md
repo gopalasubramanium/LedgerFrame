@@ -852,3 +852,11 @@ Phase 1–3a) · **§14** (walk batch 1) · **§16** (retrospective). The walk r
 | **`src/routes/KitchenSink.tsx` / `.css`, `NetWorth.tsx`** | the Cash flow + Button specimens; Net worth's *"Edit income & expenses →"* link. |
 | **`e2e/table-header-fill.spec.ts`** (NEW), **`icon-button.spec.ts`**, **`overflow.spec.ts`**, **`tile-integrity.spec.ts`** | the pixel guard (on the specimen) · both component guards moved to the gallery · `/cash-flow` added to the cross-page guards · **the overflow "document never scrolls" readiness-wait hardened** (a load-tipped flake). |
 | **`e2e/smoke/cash-flow-smoke.spec.ts`, `cash-flow-editor.spec.ts`** (NEW), **`review-smoke.spec.ts`** | the pre-passes; review-smoke's stale `.rv__chip` → `.lf-statuschip`. |
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-7)
+
+- **Base-currency affix (RATIFIED):** the three runway money figures (Net monthly burn · Monthly expenses ·
+  Monthly income) now carry the served `base_currency` (`/portfolio/runway`) as the muted `.lf-stat__unit`
+  affix; the Runway figure (months) carries none. CashFlow.test.tsx (10) + `cash-flow-smoke` green.

@@ -153,7 +153,7 @@ export function HomeMockupFull() {
         <section className="lf-card hm3__cell hm3__cell--networth">
           <SummaryHead title="Net worth" to="#/net-worth" destination="Net worth" whole />
           <div className="hm3__figure hm3__figure--anchor">
-            796,216.68 <span className="hm3__unit">SGD</span>
+            796,216.68<span className="lf-stat__unit">SGD</span>
           </div>
           <dl className="hm3__split">
             <div className="hm3__splitrow">
@@ -177,7 +177,7 @@ export function HomeMockupFull() {
         <section className="lf-card hm3__cell hm3__cell--change">
           <SummaryHead title="Today's change" to="#/net-worth" destination="Net worth" whole />
           <div className="hm3__figure hm3__figure--lead hm3__figure--up">
-            +2,140.55 <span className="hm3__unit">SGD</span>
+            +2,140.55<span className="lf-stat__unit">SGD</span>
           </div>
           <div className="hm3__leadpct hm3__figure--up">+0.27%</div>
           <div className="hm3__spark hm3__spark--lead">

@@ -132,6 +132,23 @@ test.describe.serial("review pre-pass (live)", () => {
       }
     }
 
+    // PART 8 — §14in-8 + §14in-7: the Review headline is the SAME served net-worth figure the canonical
+    // /portfolio/summary reader carries (to the cent) — NOT whole-dollar-rounded — and the base-currency
+    // code is the muted AFFIX, never embedded in the value string.
+    const sum8 = await (await page.request.get(`${API}/portfolio/summary`)).json();
+    const rev8 = await (await page.request.get(`${API}/review`)).json();
+    expect(rev8.net_worth, "Review net worth == canonical /portfolio/summary total_value").toBe(sum8.total_value);
+    expect(rev8.sections.changed.day_change, "Review day_change == canonical day_change").toBe(sum8.day_change);
+    await page.setViewportSize({ width: 1366, height: 1000 });
+    await page.waitForTimeout(120);
+    const nwTile = page.locator('[data-card="rail"] .lf-stat').filter({ hasText: "Net worth" }).first();
+    const nwAffix = (await nwTile.locator(".lf-stat__unit").innerText()).trim();
+    const nwValue = (await nwTile.locator(".lf-stat__value").innerText()).trim();
+    console.log(`PART 8 — Review net-worth tile "${nwValue}" · affix "${nwAffix}"`);
+    expect(nwAffix, "base-currency affix present").toBe(rev8.base_currency);
+    expect(nwValue.startsWith(rev8.base_currency), "currency is the affix, NOT the start of the value").toBe(false);
+    expect(nwValue, "full-precision headline (cents), not whole-dollar rounded").toMatch(/\d\.\d{2}/);
+
     console.log("\n===== CONSOLE ERRORS (" + consoleErrors.length + ") =====\n" + (consoleErrors.join("\n") || "(none)") + "\n===== END =====\n");
     expect(consoleErrors, "zero console errors on the populated page").toHaveLength(0);
   });

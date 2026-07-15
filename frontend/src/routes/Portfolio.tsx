@@ -218,10 +218,11 @@ export function Portfolio() {
         {(s) => (
           <>
             <section className="pf__rail" data-card="rail">
-              <TrendStat label="Today's change" value={formatSignedMoney(s.day_change)} tone={signOf(s.day_change)} />
-              <TrendStat label="Unrealised P/L" value={formatSignedMoney(s.unrealised_pl)} tone={signOf(s.unrealised_pl)} />
-              <RealisedTile realised={realised} />
-              <TrendStat label="Cost basis" value={formatMoney(s.cost_basis)} />
+              {/* §14in-7 — base-currency affix on the MONEY tiles (served base_currency); %/metric tiles carry none. */}
+              <TrendStat label="Today's change" value={formatSignedMoney(s.day_change)} tone={signOf(s.day_change)} unit={s.base_currency} />
+              <TrendStat label="Unrealised P/L" value={formatSignedMoney(s.unrealised_pl)} tone={signOf(s.unrealised_pl)} unit={s.base_currency} />
+              <RealisedTile realised={realised} base={s.base_currency} />
+              <TrendStat label="Cost basis" value={formatMoney(s.cost_basis)} unit={s.base_currency} />
               <TrendStat label="Total return" value={formatSignedPercent(s.total_return_pct)} tone={signOf(s.total_return_pct)} />
               <TrendStat label="Time-weighted return (TWR)" value={metricDisplay(metric(stats, "Time-weighted return (TWR)"))} />
             </section>
@@ -393,13 +394,14 @@ export function Portfolio() {
               <div className="pf__costs">
                 <div className="pf__costblock lf-card__body">
                   <h3 className="pf__h3">Recorded fees</h3>
-                  <p className="pf__costnum">{formatMoney(c.recorded_fees.total)}</p>
+                  {/* §14in-7 — base-currency affix (served base_currency), the one muted form. */}
+                  <p className="pf__costnum">{formatMoney(c.recorded_fees.total)}<span className="lf-stat__unit">{c.base_currency}</span></p>
                   <p className="pf__note">{c.recorded_fees.label}</p>
                 </div>
                 <div className="pf__costblock lf-card__body">
                   <h3 className="pf__h3">Ongoing cost (expense ratio)</h3>
                   {c.estimated_ongoing_cost.available ? (
-                    <p className="pf__costnum">{formatMoney(c.estimated_ongoing_cost.estimated_annual_total)} / yr</p>
+                    <p className="pf__costnum">{formatMoney(c.estimated_ongoing_cost.estimated_annual_total)}<span className="lf-stat__unit">{c.base_currency}</span> / yr</p>
                   ) : (
                     <p className="pf__costnum pf__muted">—</p>
                   )}
@@ -414,13 +416,13 @@ export function Portfolio() {
   );
 }
 
-function RealisedTile({ realised }: { realised: RealisedResp | null | undefined }) {
+function RealisedTile({ realised, base }: { realised: RealisedResp | null | undefined; base: string }) {
   // ND-12: label with the SERVED report year (never "YTD"); link to the full report.
   const label = realised ? `Realised P/L · ${realised.year}` : "Realised P/L";
   const value = realised ? formatSignedMoney(realised.base_realised_total_current_fx) : "—";
   return (
     <div className="pf__railtile">
-      <TrendStat label={label} value={value} tone={realised ? signOf(realised.base_realised_total_current_fx) : undefined} />
+      <TrendStat label={label} value={value} unit={base} tone={realised ? signOf(realised.base_realised_total_current_fx) : undefined} />
       {/* D-100 header-arrow, inside the tile, to the full report on Reports. */}
       <SummaryLink to="/reports" destination="Realised P/L report" />
     </div>

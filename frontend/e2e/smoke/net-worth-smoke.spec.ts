@@ -181,6 +181,17 @@ test.describe.serial("net worth pre-pass (live)", () => {
       }
     }
 
+    // §14in-7 — each of the four money KPI tiles carries the served base-currency affix (muted slot).
+    const sumAffix = await (await page.request.get("http://127.0.0.1:8321/api/v1/portfolio/summary")).json();
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.waitForTimeout(120);
+    for (const label of ["Net worth", "Gross assets", "Liabilities", "Cash & deposits"]) {
+      const tile = kpis.locator(".lf-stat").filter({ hasText: label }).first();
+      const affix = (await tile.locator(".lf-stat__unit").innerText()).trim();
+      expect(affix, `${label} tile carries the ${sumAffix.base_currency} affix`).toBe(sumAffix.base_currency);
+    }
+    console.log("§14in-7 — four KPI tiles carry the base-currency affix");
+
     console.log("\n===== CONSOLE ERRORS (" + consoleErrors.length + ") =====\n" + (consoleErrors.join("\n") || "(none)") + "\n===== END =====\n");
     expect(consoleErrors, "zero console errors on the populated page").toHaveLength(0);
   });

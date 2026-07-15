@@ -1,9 +1,11 @@
 @import "../components/ui/structure.css";
 
 .hold {
-  max-width: 72rem;
-  margin: 0 auto;
-  /* Root padding is owned by the shell (.lf-shell__content) — not per page (§12-1). */
+  /* The page INSET is owned by the shell (.lf-shell__content) — the ONE platform standard
+     (DESIGN-SYSTEM "Page inset", §14in-6). No page-local `max-width` / centering `margin`: those
+     made Holdings read as a larger inset than Net worth / Portfolio at wide viewports (the owner's
+     walk-batch-2 finding). The shared `.lf-page` root already supplies flex-column; the gap is a
+     deliberate page choice kept as-is. */
   display: flex;
   flex-direction: column;
   gap: var(--space-7);

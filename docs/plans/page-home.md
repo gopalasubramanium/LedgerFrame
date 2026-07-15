@@ -1295,3 +1295,12 @@ Verified against `git diff a4fc4f6..HEAD` — **not** from memory.
 **Deliberately NOT changed:**
 - **`ROADMAP.md`** — **R-19 (customisable Home) stays PARKED, unamended.** The widget set is still FIXED; nothing this milestone unparks it.
 - **`docs/specs/API-CONTRACT.json` / `docs/openapi.json`** — regenerated, **no diff**. `/settings` serves a free dict, so **a shape check cannot see an allow-list key**. That is not an omission; it is the reason the served-value tests exist, and it is now stated in API-CONTRACT.md.
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-7)
+
+- **Base-currency affix — one form:** the net-worth + today's-change widgets already showed the currency
+  via a page-local `.hm3__unit` span; converted to the ONE ratified `.lf-stat__unit` affix (DESIGN-SYSTEM
+  §5.2) and removed the `.hm3__unit` copy — a single rendering of the standard platform-wide (the
+  HomeMockup specimen updated to match). Home.test.tsx (8) green.

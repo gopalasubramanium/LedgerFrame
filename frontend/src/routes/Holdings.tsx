@@ -351,7 +351,9 @@ export function Holdings() {
       <div className="hold__section lf-card">
         <TrendStat
           label={`Net worth · ${holdings.length} position${holdings.length === 1 ? "" : "s"}`}
-          value={summary ? `${baseCcy} ${formatMoney(summary.total_value)}` : "—"}
+          // §14in-7 — base-currency code as the muted affix, not embedded in the value string.
+          value={summary ? formatMoney(summary.total_value) : "—"}
+          unit={summary ? baseCcy : undefined}
           delta={summary?.day_change}
           deltaDisplay={summary ? formatSignedMoney(summary.day_change) : undefined}
         />

@@ -302,19 +302,21 @@ export function CashFlow() {
                 <StatusChip label={RUNWAY_LABEL[runway.status] ?? runway.status}
                   tone={RUNWAY_TONE[runway.status] ?? "neutral"} />
               </div>
+              {/* §14in-7 — base-currency affix on the runway MONEY figures (served base_currency); the
+                  Runway figure above is months, not money, so it carries none. */}
               <div className="cf__figure">
                 <span className="cf__figlabel">
                   <GlossaryTerm term="term-net-monthly-burn">Net monthly burn</GlossaryTerm>
                 </span>
-                <span className="cf__figvalue">{runway.net_monthly_burn_display}</span>
+                <span className="cf__figvalue">{runway.net_monthly_burn_display}<span className="lf-stat__unit">{runway.base_currency}</span></span>
               </div>
               <div className="cf__figure">
                 <span className="cf__figlabel">Monthly expenses</span>
-                <span className="cf__figvalue">{runway.monthly_expense_display}</span>
+                <span className="cf__figvalue">{runway.monthly_expense_display}<span className="lf-stat__unit">{runway.base_currency}</span></span>
               </div>
               <div className="cf__figure">
                 <span className="cf__figlabel">Monthly income</span>
-                <span className="cf__figvalue">{runway.monthly_income_display}</span>
+                <span className="cf__figvalue">{runway.monthly_income_display}<span className="lf-stat__unit">{runway.base_currency}</span></span>
               </div>
               {/* The served note + disclaimer, verbatim. Protected: contributions do not reduce it. */}
               <p className="lf-card__footnote">{runway.note} {runway.disclaimer}</p>

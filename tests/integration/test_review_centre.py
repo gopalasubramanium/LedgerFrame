@@ -60,3 +60,15 @@ async def test_policy_verdict_carries_its_input_quality(app_client):
     # Same reader, so the two payloads cannot disagree about the inputs.
     assert drift["stale_inputs"] == pol["stale_inputs"]
     assert drift["inputs_stale"] == pol["inputs_stale"]
+
+
+async def test_net_worth_matches_canonical_summary_to_the_cent(app_client):
+    """§14in-8 — the Review headline net-worth + today's-change are the SAME served figures the canonical
+    /portfolio/summary reader carries (value_portfolio), at full cent precision. RED on the pre-fix code:
+    review_centre rounded both to whole dollars (796,246.00 / +17.00 vs the canonical 796,246.41 / +16.73)."""
+    summary = (await app_client.get("/api/v1/portfolio/summary")).json()
+    review = (await app_client.get("/api/v1/review")).json()
+    assert review["net_worth"] == summary["total_value"]                       # to the cent, one derivation
+    assert review["sections"]["changed"]["day_change"] == summary["day_change"]
+    # And it is NOT silently whole-dollar-rounded (the defect signature).
+    assert review["net_worth"] != round(float(summary["total_value"]), 0) or float(summary["total_value"]).is_integer()

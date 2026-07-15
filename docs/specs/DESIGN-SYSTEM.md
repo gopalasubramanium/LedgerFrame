@@ -245,6 +245,28 @@ Notes:
   (DataTable `truncate`) rather than forcing horizontal scroll. Interactive
   open states (the ⋯ menu) are verified manually in both themes (§7).
 
+### 3.1 Page inset — ONE standard, shell-owned (RATIFIED 2026-07-16, page-insurance §14in-6)
+
+**Every page renders at the SAME content inset from the chrome, on all four sides.** The inset is a single
+tokenized value **owned by the shell** — `.lf-shell__content` sets `padding: var(--space-7) var(--space-6)
+var(--space-12)` (top / horizontal / bottom) and **every in-shell page inherits it by sitting inside that
+box**. Net worth and Portfolio are the reference: their `.lf-page` root fills the shell content box with no
+further inset.
+
+- **A page MUST NOT add a root `max-width`, a centering `margin`, or its own root `padding`.** A capped,
+  centered root (`max-width` + `margin: 0 auto`) reads as a **larger inset than every full-width page at
+  wide viewports** — invisible at ≤1366 (the cap doesn't bite) and plainly visible at 1600+. This is what
+  drifted: Holdings capped itself at `72rem` and Insurance inherited `70rem` **through a CSS class
+  collision** (two pages both used the `.ins` prefix), so both centered ~250px in from each edge at 1920
+  while the rest ran full-width.
+- **Guarded (pixels, at the width where it appears):** `e2e/overflow.spec.ts` — *"every page fills the
+  shell content box"* measures each built route's `.lf-page` box against the shell content box **at 1728px**
+  and asserts left+right inset ≈ 0. It runs WIDE deliberately: a guard that measures at 1366 (where no
+  cap bites) is green over the real defect — the §14in-1 lesson (*a guard must measure the geometry the
+  finding names, not an adjacent property at a width where the bug can't appear*).
+- **A page may still cap an inner content MEASURE** (a reading column inside a card, a dialog form width)
+  — that is component-local, not the page root. The rule is only about the **page root inset**.
+
 ---
 
 ## 4. Chart layer policy
@@ -658,7 +680,7 @@ fallback ugly-but-working was not the same as making it right.*
 
 ---
 
-## §5.2 AMENDMENT — Base-currency indication on money summary surfaces (PROPOSED 2026-07-16, page-insurance §14in-5; ratify at the re-walk)
+## §5.2 AMENDMENT — Base-currency indication on money summary surfaces (RATIFIED 2026-07-16, owner walk batch 2 §14in-7; first proposed §14in-5)
 
 **A money SUMMARY tile/strip showing a base-currency aggregate carries a small muted currency-code
 affix** (e.g. `SGD`) next to the value — so the reader always knows which currency the aggregate is in.
@@ -670,11 +692,13 @@ colour-semantic**. The affix source is the **SERVED `base_currency`** (D-005 —
 **non-base** amounts already carry their own code inline (the Insurance §12in-1 pattern); this amendment
 governs the **base-currency SUMMARY** figure, which was otherwise bare.
 
-- **First instance (applied now):** the Insurance totals strip — Total cover · Cash value · Annual
-  premium each carry the served base-currency affix; the Active-policies count tile carries none.
-- **Cross-page retrofit is a SCHEDULED BATCH, not folded in here.** Every already-accepted money-summary
-  page (Net worth, Portfolio, Home tiles, Review rail, and the liquidity/runway/statement surfaces) must
-  adopt the affix and **re-run its pre-pass** — owner-picked targets, listed in `CURRENT.md` beside the
-  [Help]/Segmented retrofits. A one-shot sweep is exactly the *"per-instance copies of a standard ARE the
-  defect"* trap in reverse: the pattern lands in ONE place (this entry), then each page inherits it under
-  its own re-verify.
+- **ONE form only.** The affix is the muted `.lf-stat__unit` slot beside the value — **never** embedded
+  inside the value string (`SGD 796,246.00`). Review/Holdings/Home had inline embeds; those are converted
+  to the affix so the platform has a single rendering of the standard (§14in-7).
+- **Retrofit DONE (owner pulled it forward, §14in-7 — 2026-07-16):** applied to every base-currency money
+  summary tile/strip — **Home** money widgets, **Net worth** headline tiles, **Portfolio** stat strip +
+  Costs, **Holdings** net-worth summary, **Review** net-worth stat, **Scenarios** exposure tiles + "Net
+  worth today", **Cash flow** runway money, **Insurance** totals (first instance). The affix source is the
+  page reader's **served `base_currency`** (never hardcoded); a page whose reader lacked it gained it
+  backend-first. Money **rows** that already carry per-quote codes (Markets, Heatmap, Pricing Health) are
+  out of scope. Each touched accepted page carries a dated delta note + a re-run pre-pass.

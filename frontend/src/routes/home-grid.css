@@ -121,11 +121,8 @@
 }
 .hm3__figure--up { color: var(--gain); }
 .hm3__figure--down { color: var(--loss); }
-.hm3__unit {
-  font-size: var(--font-size-13);
-  font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
-}
+/* §14in-7 — the base-currency affix now uses the ONE ratified `.lf-stat__unit` slot (DESIGN-SYSTEM
+   §5.2), replacing this page-local `.hm3__unit` copy — a single rendering of the standard everywhere. */
 
 /* The gross/liabilities split — the net-worth reader serves both; Net worth shows both (P-1). */
 .hm3__split {

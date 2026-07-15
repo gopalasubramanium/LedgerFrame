@@ -316,7 +316,12 @@ async def review_centre(session: AsyncSession) -> dict:
 
     return {
         "base_currency": base,
-        "net_worth": round(float(val.total_value), 0),
+        # ONE net-worth figure (§14in-8): the SAME `value_portfolio().total_value` Net worth/Holdings
+        # render, at full cent precision. It was `round(..., 0)` — which made the Review headline read
+        # `796,246.00` beside Net worth's `796,246.41` (and `+17.00` vs `+16.73`): a precise-looking
+        # figure that disagreed with the canonical one. No local rounding — the frontend formats the
+        # served value with the same formatter Net worth uses, so they match to the cent.
+        "net_worth": float(val.total_value),
         "sections": {
             "trust": {"confidence": conf, "low": low, "stale": stale},
             # A10: the policy verdict carries its input quality, so a Review section computed off
@@ -332,7 +337,8 @@ async def review_centre(session: AsyncSession) -> dict:
             "goals": {"goals": len(goals["goals"]),
                       "next_obligation": (obs["obligations"][0]["next_due"] if obs["obligations"] else None),
                       "next_12m_total": obs["next_12m_total"]},
-            "changed": {"day_change": round(float(val.day_change), 0),
+            # Same as net_worth (§14in-8): full-precision `val.day_change`, not `round(..., 0)`.
+            "changed": {"day_change": float(val.day_change),
                         "top_mover": (top.label if top else None)},
         },
         "attention": rev["items"],

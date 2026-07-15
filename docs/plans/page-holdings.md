@@ -616,3 +616,14 @@ reshaped. **No engine changes.**
 **Sign-off:** all §9 items resolved (2026-07-10). Build proceeds per §8; the
 Phase 0a component amendment pauses at `/kitchen-sink` for the owner's
 ratification look before Phase 1 assembly.
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2)
+
+- **§14in-6 (page inset):** removed the page-local `.hold { max-width: 72rem; margin: 0 auto }` — the page
+  now uses the ONE shell-owned inset (DESIGN-SYSTEM §3.1 "Page inset", RATIFIED). At wide viewports Holdings
+  had centred ~244px in from each edge vs the full-width standard. Guarded by the cross-page inset test in
+  `e2e/overflow.spec.ts` (at 1728). No functional change; pre-pass (overflow suite covers `/holdings`) green.
+- **§14in-7 (base-currency affix):** the linked net-worth summary tile now shows the served `base_currency`
+  as the muted `.lf-stat__unit` affix instead of embedding `SGD` inside the value string. Holdings.test.tsx (23) green.

@@ -139,7 +139,9 @@ export function Review() {
               <>
                 <div className="rv__rail" data-card="rail">
                   <div className="rv__railtile">
-                    <TrendStat label="Net worth" value={`${p.base_currency} ${formatMoney(p.net_worth)}`} />
+                    {/* §14in-8 — the SAME served figure Net worth renders, same formatter, to the cent.
+                        §14in-7 — the base-currency code is the muted affix, not embedded in the value. */}
+                    <TrendStat label="Net worth" value={formatMoney(p.net_worth)} unit={p.base_currency} />
                     <SummaryLink to="/net-worth" destination="Net worth" />
                   </div>
                   <TrendStat label="Today's change" value={formatSignedMoney(p.sections.changed.day_change)} tone={signOf(p.sections.changed.day_change)} />

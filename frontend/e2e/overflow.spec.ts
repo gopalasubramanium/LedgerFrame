@@ -92,25 +92,43 @@ for (const route of ROUTES) {
   }
 }
 
-// Content-left offset is OWNED by the shell (page-portfolio §12-1): every built content page
-// starts at the same left inset from the chrome — no page sets its own root padding. At ≤1366
-// the content box is narrower than any page's max-width, so no page centering shifts the left.
-test("built pages share one content-left inset (shell owns the padding)", async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 800 });
-  const lefts: number[] = [];
-  for (const hash of ["#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance"]) {
+// THE PAGE INSET IS OWNED BY THE SHELL — ONE standard for every page (DESIGN-SYSTEM "Page inset",
+// page-insurance §14in-6). The page content fills the shell content box on all four sides; NO page adds
+// a root `max-width` / centering `margin` / padding that grows the inset.
+//
+// ⚠ THIS GUARD MEASURES THE GEOMETRY THE FINDING NAMES, AT THE WIDTH WHERE IT APPEARS (§14in-6 lesson).
+// The previous version measured the content-LEFT at 1200px — but a page's `max-width` only bites ABOVE
+// its cap (Holdings 1152px, Insurance 1120px via a `.ins` class collision), so at 1200px every page's
+// left was identical and the guard was green over a real, visible defect (Insurance/Holdings rendered
+// ~250px of extra left+right inset at 1920). Matching an adjacent property at the wrong width is a green
+// that hides the bug. This runs WIDE (1728) and measures the inset on ALL FOUR relevant sides.
+test("every page fills the shell content box — one page inset, no per-page cap/centering", async ({ page }) => {
+  await page.setViewportSize({ width: 1728, height: 1000 });
+  const ROUTES = ["#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news",
+    "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance"];
+  const offenders: string[] = [];
+  for (const hash of ROUTES) {
     await page.goto(`/${hash}`);
-    await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
-    lefts.push(
-      await page.evaluate(() => {
-        const first = document.querySelector(".lf-shell__content")?.firstElementChild as HTMLElement | null;
-        return first ? Math.round(first.getBoundingClientRect().left) : -1;
-      }),
-    );
+    await page.waitForSelector(".lf-page", { timeout: 15_000 });
+    const inset = await page.evaluate(() => {
+      const content = document.querySelector(".lf-shell__content") as HTMLElement | null;
+      const pageEl = document.querySelector(".lf-page") as HTMLElement | null;
+      if (!content || !pageEl) return null;
+      const cs = getComputedStyle(content);
+      const cRect = content.getBoundingClientRect();
+      const innerLeft = cRect.left + parseFloat(cs.paddingLeft);
+      const innerRight = cRect.right - parseFloat(cs.paddingRight);
+      const p = pageEl.getBoundingClientRect();
+      return { left: Math.round(p.left - innerLeft), right: Math.round(innerRight - p.right) };
+    });
+    if (!inset) { offenders.push(`${hash}: no .lf-page`); continue; }
+    // The page root fills the shell content box: left and right insets are ~0. A capped/centered page
+    // shows a large left+right gap (max-width) — that is the deviation this guard exists to catch.
+    if (Math.abs(inset.left) > 1 || Math.abs(inset.right) > 1) {
+      offenders.push(`${hash}: left=${inset.left} right=${inset.right}`);
+    }
   }
-  // All equal (within 1px) and non-zero (there IS a gap from the chrome).
-  expect(Math.max(...lefts) - Math.min(...lefts), `content-left offsets: ${lefts.join(",")}`).toBeLessThanOrEqual(1);
-  expect(Math.min(...lefts), "content is inset from the chrome, not flush").toBeGreaterThan(4);
+  expect(offenders, `pages deviating from the shell-owned inset @1728: ${offenders.join(" | ")}`).toEqual([]);
 });
 
 // First-run checklist overlay (D-045). Opened from the kitchen-sink specimen (the shell

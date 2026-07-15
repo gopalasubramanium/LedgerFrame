@@ -643,3 +643,12 @@ Derived from the milestone diff (`git diff 9ced7de~1 HEAD` + this close-out):
 
 **Reported for the owner's final look. No self-certification — the guards above were run RED-then-GREEN and
 are cited by `file:line`.**
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-7)
+
+- **Base-currency affix (RATIFIED):** the four Exposure tiles + the "Net worth today" caption now carry the
+  served `base_currency` (`/portfolio/scenarios`) as the muted `.lf-stat__unit` affix. The widened value
+  clipped at 320px until `TrendStat` gained a zero-width-space break before the unit (wraps the code to its
+  own line when tight); proven RED (`980,000.00SGD` `191>186`) → GREEN. Scenarios.test.tsx (9) + `scenarios-smoke` green.

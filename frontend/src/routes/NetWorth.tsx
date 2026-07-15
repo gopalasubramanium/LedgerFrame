@@ -145,10 +145,11 @@ export function NetWorth() {
         {(s) => (
           <>
             <section className="nw__kpis" data-card="kpis">
-              <TrendStat label="Net worth" value={formatMoney(s.total_value)} />
-              <TrendStat label="Gross assets" value={formatMoney(s.gross_assets)} />
-              <TrendStat label="Liabilities" value={formatMoney(s.liabilities)} />
-              <TrendStat label="Cash & deposits" value={formatMoney(s.cash_and_deposits)} />
+              {/* §14in-7 — the base-currency code as the muted affix (served base_currency). */}
+              <TrendStat label="Net worth" value={formatMoney(s.total_value)} unit={s.base_currency} />
+              <TrendStat label="Gross assets" value={formatMoney(s.gross_assets)} unit={s.base_currency} />
+              <TrendStat label="Liabilities" value={formatMoney(s.liabilities)} unit={s.base_currency} />
+              <TrendStat label="Cash & deposits" value={formatMoney(s.cash_and_deposits)} unit={s.base_currency} />
             </section>
             <p className="nw__note">
               Net worth = Gross assets − Liabilities (GLOSSARY).

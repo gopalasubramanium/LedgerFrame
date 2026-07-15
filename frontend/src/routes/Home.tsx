@@ -217,7 +217,7 @@ export function Home() {
             {(s) => (
               <>
                 <div className="hm3__figure hm3__figure--anchor">
-                  {formatMoney(s.total_value)} <span className="hm3__unit">{s.base_currency}</span>
+                  {formatMoney(s.total_value)}<span className="lf-stat__unit">{s.base_currency}</span>
                 </div>
                 {/* Gross assets / Liabilities — figures D-046 did not list, but which the canonical
                   * Net worth page DOES show, so P-1 holds (owner-approved content widening,
@@ -267,7 +267,7 @@ export function Home() {
             {(s) => (
               <>
                 <div className={`hm3__figure hm3__figure--lead hm3__figure--${signOf(s.day_change)}`}>
-                  {formatSignedMoney(s.day_change)} <span className="hm3__unit">{s.base_currency}</span>
+                  {formatSignedMoney(s.day_change)}<span className="lf-stat__unit">{s.base_currency}</span>
                 </div>
                 {/* Per-item staleness is PRESERVED in the summary (Guarantee 3) — the count itself is
                   * the chrome StaleBanner's, never re-fetched or re-counted here (§2). */}

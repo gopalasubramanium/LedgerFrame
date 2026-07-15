@@ -673,3 +673,11 @@ cash value, so the D-081 exclusion line renders **live** on the demo (it previou
 Net worth pre-pass PART 6 was updated from *"line omitted"* to *"line present, `total_cash_value_display`
 served verbatim + the see-Insurance link"* and re-run GREEN. No page-code change — only the pre-pass
 assertion caught up to the richer demo data.
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-7)
+
+- **Base-currency affix (RATIFIED):** the four headline tiles (Net worth · Gross assets · Liabilities ·
+  Cash & deposits) now carry the served `base_currency` (`/portfolio/summary`) as the muted `.lf-stat__unit`
+  affix. `net-worth-smoke` gains a render guard (four tiles carry the affix); NetWorth.test.tsx (7) + smoke green.

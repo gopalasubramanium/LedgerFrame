@@ -303,3 +303,16 @@ Both are **PROPOSED pending the owner's visual ratify** at the next look.
   table-edge screenshots (both themes): the header block + bottom rule span to the
   right border; the scroll region begins below it. (The two-table split was NOT
   needed.)
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-insurance walk batch 2, §14in-6)
+
+- **CSS prefix renamed `.ins` → `.idp`** to end a namespace collision with the Insurance page (both used
+  `.ins`; Instrument Detail's root rule was bleeding a `max-width`/centering onto Insurance, and the two
+  pages were cross-contaminating `.ins__cardhead / __section / __field`). Pure rename — restores this page
+  to its own rules; InstrumentDetail.test.tsx (7) green.
+- **Removed `.idp { max-width: 70rem; margin: 0 auto }`** to conform to the new DESIGN-SYSTEM §3.1 "Page
+  inset" standard (shell owns the inset; no page-local cap/centering). **Visible change:** the page now
+  renders full-width like Net worth/Portfolio (was a centred ~1120px column) — flagged for owner
+  confirmation at the re-walk. Overflow suite covers `/instrument/AAPL` at all breakpoints + the 1728 inset guard; green.

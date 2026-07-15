@@ -941,18 +941,41 @@ to **"Income & expenses"**, and its ND-7 route corrected to Cash flow, which als
 **§16 headline:** *computed styles are claims; rendered pixels are facts* — and *the CI e2e suite runs without a
 backend*, so component guards live on the static specimen. Both mechanised into TEMPLATE + 08-TECH-DEBT.
 
+## SCENARIOS — DONE ✅ (page ACCEPTED, owner, 2026-07-15)
+
+**`/scenarios` is complete and owner-accepted** — the read-only Planning-group page: **deterministic what-if
+shocks on today's values, "a scenario, never a forecast"** (D-058). **Fastest full loop yet — one walk batch.**
+Full record in `docs/plans/page-scenarios.md`: §9 (14 items, owner one-pass) · §10 (verify-first) · §11 (Phase
+0/0a) · §12 (geometry gate) · §13 (Phases 1–3a) · §14 (walk §12sc1) · **§15 (close-out + retrospective)**.
+
+**Verify-first paid off — the reader was already frozen and read-only, so §3b was all guard/honesty deltas, not
+a new endpoint.** Backend deltas (all fail-first, contract regen same commit): `*_display` money strings (D-105) ·
+the **A10 staleness annotation** from the shared `confidence.portfolio_input_quality` helper (§9-2) · **exposures
+from the canonical `allocation()`** — the private loop deleted, one derivation pinned by an equality test (§9-4,
+A11 closed) · **named shock constants** with rationale (§9-7, the R-11 seam) · **`?entity_id` → honest 400**
+(household-only, §9-8) · the drawdown note aligned to **"expenses"** (SN-1/§9-10).
+
+**Platform produced beyond the page:** the **magnitude-scaled house-SVG impact bar** (§12sc1-3; the **donut was
+DECLINED** on chart-semantics honesty — alternative hypotheticals do not sum) · **2 GLOSSARY terms** (`Shock`,
+`Exposure`) · the **standing D-058 forecast-language guard** (mechanised, proven RED). **R-11 upgraded** to an
+interactive per-class shock **slider** over a parameterized endpoint (§12sc1-2, own plan file required).
+
+**§15 retrospective headline:** *`getBoundingClientRect` is clamped to the visible box* (measure the clipped
+element's `scrollWidth`), *a `@media` breakpoint must model the content box not the viewport* (the sidebar eats
+~230px), and *a media-query-responsive component is un-guardable on a static specimen* — it runs in the pre-pass
+at real viewports. All three folded into TEMPLATE §7 (extending existing rules, not duplicating).
+
 ## NEXT
 
-1. **Scenarios — `docs/plans/page-scenarios.md` (PLAN ONLY FIRST).** Read-only **deterministic shocks** on
-   today's values — **"a scenario, never a forecast"** (D-058). Owns the fixed shock set, exposures, liquidity
-   what-ifs; runway what-ifs consume the **canonical runway reader** (Net worth), never a private copy
-   (D-036/D-058). ⚠ **Vocabulary scope-note already recorded (SN-1):** the `obligation_due` what-if serves a
-   note still using the model's word *"obligations"* — **align it to "income and expenses" at Phase 0**
-   (served-string, D-005, fail-first — the §12cf1-2 / §12rv2-1 precedent).
-2. **Insurance · Estate** — the rest of the Planning group.
-3. Then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping) · **Reports (+ Pack)** ·
-   **Settings** · **Help · Legal** · the **AI-surfaces milestone** · **Voice** (only after the owner defines it
-   — ROADMAP **R-32**) · then release **Gates C→F** and tag `v2.0.0`.
+1. **Insurance — `docs/plans/page-insurance.md` (PLAN ONLY FIRST).** The next Planning-group page — a
+   **register page on the Cash flow CRUD patterns** (per-row create/edit/delete, `[S]`-gated editor). **Pre-cut
+   seam:** Review already surfaces **estate / insurance-class signals** — verify-first should find them before
+   inventing anything. **SN-class vocabulary checks apply** (align any served notes to the ratified model
+   vocabulary, the §12cf1-2 / SN-1 precedent). `POLICY_TYPES` (10) / `premium_frequency` (4) already seeded
+   (DEF-4). Insurance cash value → the D-081 visible-but-excluded Net worth line.
+2. **Estate**, then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping) · **Reports (+
+   Pack)** · **Settings** · **Help · Legal** · the **AI-surfaces milestone** · **Voice** (only after the owner
+   defines it — ROADMAP **R-32**) · then release **Gates C→F** and tag `v2.0.0`.
 
 **Release posture unchanged (RD-9 Amendment 3):** the release gate is **FULL COMPLETION**; Gates C–F stay
 dormant until the owner accepts the full set. **Standing, owner-only:** the **CLA counsel review** before the

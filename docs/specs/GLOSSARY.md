@@ -184,8 +184,8 @@ Home shows one summary of each, linked to its canonical page.
 | **Planned cash out** | Recurring expenses **plus** planned contributions, per month — a fuller picture of money leaving your accounts. It **does not change the Cash runway** (a contribution builds wealth; it isn't consumption — D-057). *(PROPOSED 2026-07-15 — ratify at the walk.)* **[Help]** |
 | **Progress (goal)** | How far the goal's **basis** (net worth or liquid assets) has come against its target. A goal with **no basis** has **no progress** — it shows "—", never 0%. A fact against your target, **never a forecast** (Guarantee 3). *(PROPOSED 2026-07-15 — ratify at the walk.)* **[Help]** |
 | **Scenario** | A deterministic "what-if" shock on today's values — a **scenario, never a forecast** (protected copy, D-058). |
-| **Shock** | A single hypothetical move applied to an exposure — e.g. *equities fall 20%*. Deterministic arithmetic on today's values, **never a forecast** (D-058). *(PROPOSED 2026-07-15, page-scenarios §9-6 — ratify at the walk.)* **[Help]**
-| **Exposure** | The base-currency amount a shock is applied to — your holdings grouped by what would move together (equities, crypto, property, foreign currencies). A share of **gross** assets; liabilities are not exposures. *(PROPOSED 2026-07-15, page-scenarios §9-6 — ratify at the walk.)* **[Help]**
+| **Shock** | A single hypothetical move applied to an exposure — e.g. *equities fall 20%*. Deterministic arithmetic on today's values, **never a forecast** (D-058). *(Ratified 2026-07-15, page-scenarios §9-6.)* **[Help]**
+| **Exposure** | The base-currency amount a shock is applied to — your holdings grouped by what would move together (equities, crypto, property, foreign currencies). A share of **gross** assets; liabilities are not exposures. *(Ratified 2026-07-15, page-scenarios §9-6.)* **[Help]**
 | **Cash flow** | The planning page holding Goals, Obligations, and Contributions (renamed from "Planning", D-056). It sits inside the **Planning** nav group. |
 
 ---

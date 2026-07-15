@@ -55,6 +55,12 @@ mid-build.
   page's content really gets. **Render mockup frames inside the real shell, or subtract the chrome AND
   the shell padding explicitly — and feed them REAL-SHAPED data** (page-home's demo had 5 asset classes
   and 3 quotes; the real dataset had 8 and 7, and the difference was the whole fit).
+  **Corollary — the same rule governs `@media` BREAKPOINT selection (page-scenarios §12sc1-1, now a
+  stated rule).** A media query fires on the **viewport**, but the content box is **viewport − the fixed
+  chrome** (the sidebar eats ~230px at laptop widths), so a breakpoint tuned to the viewport promises a
+  fit the content box does not have: a 4-across tile grid set at ~1100px lands four tiles in a ~870px
+  box and clips. **Set a multi-column breakpoint for the content box, not the viewport** — measure the
+  box the product has, don't assume the viewport.
 - **A GUARD MUST EXERCISE THE FAILURE GEOMETRY, AND BE PROVEN RED BEFORE IT IS TRUSTED (page-home
   §12ho2-1 / §12ho3-3).** page-home shipped **three** guards that reported green over a visibly broken
   page: one **counted** affordances (8 ↗, all with aria-labels — all true of headers lying in a heap in
@@ -445,6 +451,14 @@ the theme/density matrix. Written as checkable statements.*
       backend* (§3b tooling note): the product pages rendered empty and the guards waited for content that
       could not exist. **A guard that needs a backend to find its subject is a page test wearing a
       component's name** — label it as one, and point it at the specimen.
+      **Exception — a MEDIA-QUERY-RESPONSIVE component cannot be guarded on a static specimen
+      (page-scenarios §12sc1-1).** Narrowing a fixed-width `/kitchen-sink` frame does not change the
+      **viewport** the `@media` rule responds to, so a specimen frame can never reproduce a
+      breakpoint-driven reflow (a 2×2→4-across tile strip). Its containment guard must run in the
+      **scripted pre-pass at REAL viewports** (§13c), with the **shell present** so the fixed chrome
+      subtracts real width — not on the specimen (§13b). This is the one component guard that lives in
+      the pre-pass, not the kitchen-sink suite; label it so the next reader does not "fix" it back onto
+      the specimen.
 - [ ] **ASSERTIONS WITH TEETH — for any OWNER-VISIBLE defect (page-policy §13-1):** the assertion
       **(a)** is written against the **RENDERED artefact the owner looked at**; **(b)** is **seen RED on
       that exact state** (a mutation proof, not a claim); and **(c)** carries the **fixture that
@@ -456,6 +470,13 @@ the theme/density matrix. Written as checkable statements.*
       `scrollWidth === clientWidth` while a control is cut off the edge.
       *This is the page-home §12ho2-1 lesson RECURRING — recurrence means it was recorded but never
       MECHANISED, which is why it is now a checklist gate.*
+      **Containment is measured on the CLIPPED ELEMENT, and `getBoundingClientRect` cannot see it
+      (page-scenarios §12sc1-1).** A non-wrapping tabular value that overruns its tile is clipped, but
+      its **rect is clamped to the visible box** (96px reported for 160px of content) — so a rect check,
+      and a card-level tile-integrity guard whose subject is the card not the value, both pass. The
+      honest test measures the **content element itself**: `el.scrollWidth <= el.clientWidth` on the
+      value node. (Scenarios shipped a card-level guard that missed a child-tile clip for exactly this
+      reason.)
 - [ ] **Copy hygiene (page-chrome §11-8):** no decision ID (`D-0…`/`P-…`/`§…`) or
       implementation note (`server-side`, enum/endpoint names) in any user-facing string
       — grep the rendered copy. A changed label is updated **app-wide** (§11-4), not only

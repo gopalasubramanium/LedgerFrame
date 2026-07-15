@@ -1,6 +1,8 @@
-# page-scenarios — build plan (PLAN ONLY — nothing is built)
+# page-scenarios — build plan
 
-**Status: ✅ §9 RESOLVED (owner one-pass, 2026-07-15) · BUILD UNBLOCKED to the geometry gate · Phases 0→0a in progress.**
+**Status: ✅ DONE — page ACCEPTED (owner, 2026-07-15). Phase 3b walk (§14 batch 1) ratified at re-verify;
+close-out in §15. `/scenarios` is live.** Fastest full loop yet — one walk batch. See §15 for the CLOSE
+lines and the milestone retrospective.
 
 Drafted 2026-07-15 from `TEMPLATE-page-build.md`. The **verify-first pass
 (D-019) is done** — §10 records what the scenario engine **actually serves and what it actually guards**,
@@ -568,9 +570,76 @@ near-zero copy · the **§9-13** disclaimer cadence · the **§9-2** staleness w
 | **§12sc1-2** | **Interactive sensitivity analysis (owner idea) → ROADMAP, not built.** | **ROADMAP R-11 UPGRADED:** a **per asset-class / currency / region shock slider** over a **parameterized scenario endpoint** (server computes; **no client money math**, D-105); **debounced**; the **D-058 bar applies to the exploratory surface** (a scenario, never a forecast, even while dragging). **Enabled by** the §9-7 named-constant seam and the §9-4 single derivation. **Requires its own plan file.** No UI now. | — |
 | **§12sc1-3** | **Impact chart.** | **DONUT DECLINED (chart-semantics honesty):** a donut asserts **composition** — parts of a whole that **sum**. The shocks are **alternative hypotheticals that do NOT sum**; charting them as a donut would **visually claim a false relationship** (D-058-adjacent). **INLINE BARS — OWNER: YES, BUILT:** a **house-SVG** impact bar in the shock table's **% column**, **magnitude-scaled against the largest shock**, **`--loss` tone**, **no axis, no forecast framing**. Suppressed with the % under near-zero net worth (§9-9). **Kitchen-sink specimen updated.** **PROPOSED → ratify the visuals at re-verify.** | **Guard:** the larger-magnitude shock has the fuller bar; the **largest is 100** (scaled); the near-zero state renders **no bar**. |
 
-### Carried ratifications (pending owner at re-verify)
+### Carried ratifications — ✅ ALL RATIFIED (owner, re-verify, 2026-07-15)
 The **§9-5** chip/loss treatment · the **§9-6** GLOSSARY terms (`Shock`, `Exposure`) · the **§9-9** empty /
-near-zero copy · the **§9-13** disclaimer cadence · the **§9-2** staleness copy · **NEW: the §12sc1-3 impact
-bar** visual.
+near-zero copy · the **§9-13** disclaimer cadence · the **§9-2** staleness copy · the **§12sc1-3 impact
+bar** visual — **all accepted as shown.** The CLOSE lines are recorded in §15.
 
-**Phase 3b re-verify is the gate. Nothing here is self-certified.**
+**Phase 3b re-verify PASSED — the page is accepted. Close-out follows in §15.**
+
+---
+
+## 15. CLOSE-OUT — ✅ OWNER ACCEPTED (2026-07-15)
+
+`/scenarios` is **live and owner-accepted**. Phase 3b was closed in a **single walk batch** (§14) —
+the fastest full loop to date. The owner ratified every carried judgment item at the re-verify.
+
+### 15a. CLOSE lines (owner, 2026-07-15)
+
+| Item | Ratification |
+|------|--------------|
+| **§9-5** — chip / loss treatment | `covered` → **positive**, `not covered` → **attention** (needs-a-look, not a loss verdict); shock deltas render **factual `--loss`** amounts, never `--gain`. **CLOSE.** |
+| **§9-6** — GLOSSARY | **`Shock` + `Exposure`** accepted; `GLOSSARY.md` markers flipped **PROPOSED → ratified**, `mocks/glossary.ts` parity green. **CLOSE.** |
+| **§9-9** — empty / near-zero copy | Empty → `EmptyState` (*"No holdings to model a shock against."* + Add-holdings route); near-zero net worth → **% suppressed** (em dash + honest footnote), amount shown. **CLOSE.** |
+| **§9-13** — disclaimer cadence | Once in the PageHeader subtitle (*"a scenario, never a forecast"*) **+** the served disclaimer at the table foot; **never per row.** **CLOSE.** |
+| **§9-2** — staleness copy | The A10 annotation wording (*"N prices are stale and M holdings are low-confidence — these figures may not reflect current values"*) + Pricing Health link. **CLOSE.** |
+| **§12sc1-1** — mobile exposures | **1-col phone · 2×2 below desktop · 4-across only ≥82rem**; values contained 320–1600. **CLOSE.** |
+| **§12sc1-3** — impact bars | **APPROVED, built** — house-SVG magnitude-scaled `--loss` bar in the % column; suppressed with the % under near-zero. **The donut DECLINE stands** (chart-semantics honesty: the shocks are alternative hypotheticals that do not sum). **CLOSE.** |
+| **§12sc1-2** — R-11 upgrade | Recorded to ROADMAP — interactive per-class/currency/region **slider** over a parameterized endpoint; D-058 bar applies to the exploratory surface; own plan file required. **No UI now.** |
+
+### 15b. Retrospective — §13-family lessons (strike-checked, verified, folded)
+
+Each lesson was **strike-checked against the TEMPLATE first** (is it already recorded?), **verified against
+the shipped code**, and only then **folded** — an extension where a rule already existed, never a duplicate.
+
+| # | Lesson | Verified against | Fold (strike-check outcome) |
+|---|--------|------------------|-----------------------------|
+| **(a)** | `getBoundingClientRect` is **clamped to the visible box**, so a clipped non-wrapping value is invisible to a rect check and to a card-level guard; measure **`el.scrollWidth <= el.clientWidth` on the value node**. | `scenarios-smoke.spec.ts:47-59` (the real check) + the comment at `:45`. | **EXTENDED** the existing §7 CONTAINMENT bullet — it already said *"never a container's scroll metrics"*; the new nuance is the rect-clamp + measure-the-clipped-element. Not a fresh bullet. |
+| **(b)** | Breakpoints must model the **REAL content box** — the fixed sidebar subtracts ~230px, so a 4-across breakpoint tuned to the viewport clips in the ~870px box. | The shipped `Scenarios.css` breakpoints (4-across gated at ≥82rem, deliberately high) + `scenarios-smoke.spec.ts:41-43`. | **EXTENDED** the §12ho1-7 *"model the box the product has"* rule with a **breakpoint corollary** — the principle was recorded for gate artifacts; now stated for `@media` selection too. |
+| **(c)** | A **media-query-responsive** component is **un-guardable on a static specimen** — narrowing a fixed-width `/kitchen-sink` frame does not change the viewport the `@media` responds to; its containment guard runs in the **pre-pass at real viewports** with the shell present. | `scenarios-smoke.spec.ts:38-59` (PART 1b, real-viewport loop) vs. the §13b specimen rule. | **EXTENDED** the §7 §13b component-guard bullet with the **media-query exception → §13c pre-pass** (as drafted in §14 §12sc1-1). |
+| **(d)** | The **D-058 forecast-language guard is a STANDING test proven to bite** — a protected-copy bar ships as a permanent test, not a one-time check. | `Scenarios.test.tsx:70-84` + smoke PART 2; proven RED by renaming a heading to *"Liquidity forecast"* (§13). | Recorded — the D-058 bar is **mechanised** as a standing content guard (§7 copy-hygiene family). No new rule needed; the pattern is now demonstrated. |
+
+**Positives worth keeping:** (1) **two guards were honestly corrected, not bent** — the card-level
+tile-integrity guard and a rect check both *missed* the §12sc1-1 clip, and the response was to fix the
+guards (measure the clipped element at real viewports), not to weaken the claim; (2) the **specimen
+self-caught** an internal inconsistency (the near-zero frame's header net worth had to reflect the near-zero
+value for the % suppression to read honestly).
+
+### 15c. Changed-file table (wholesale re-upload)
+
+Derived from the milestone diff (`git diff 9ced7de~1 HEAD` + this close-out):
+
+| File | What changed |
+|------|--------------|
+| `docs/plans/page-scenarios.md` | §9 rulings → build record (§11–§14) → this close-out (§15). |
+| `docs/specs/GLOSSARY.md` | `Shock` + `Exposure` added, flipped **PROPOSED → ratified** at close. |
+| `docs/specs/API-CONTRACT.md` | `present` row + the `?entity_id`-reject / `*_display` / staleness / `allocation()` / `expenses`-note delta rows (§9-2/3/4/8/10/11). |
+| `ROADMAP.md` | **R-11** — named-constant seam recorded (§9-7) + interactive-slider **upgrade** (§12sc1-2). |
+| `docs/audit/08-TECH-DEBT.md` | the shared A10 input-quality helper migration (behaviour-neutral, deferred); typed `scenarios` response deferred. |
+| `app/services/scenarios.py` | `*_display` money strings · A10 staleness annotation · exposures from `allocation()` (private loop deleted) · named shock constants · `?entity_id` → 400 · `expenses` note. |
+| `app/services/confidence.py` | shared `portfolio_input_quality` helper (extracted, not a 4th copy). |
+| `app/api/v1/routes/portfolio.py` | `?entity_id` rejection wiring. |
+| `docs/specs/API-CONTRACT.json` | regenerated in the same commit as the deltas. |
+| `tests/integration/test_scenarios_phase0.py` | the Phase-0 fail-first backend guards. |
+| `frontend/src/routes/Scenarios.tsx` / `.css` / `.test.tsx` | the page, its styles, and the 9 render guards (incl. the standing D-058 grep, §9-5 loss tone, impact bars). |
+| `frontend/src/api/scenarios.ts` | the typed client. |
+| `frontend/src/routes/ScenariosMockup.tsx`, `KitchenSink.tsx` | the §9-1 layout specimen (both frames). |
+| `frontend/src/AppRoutes.tsx`, `components/ui/nav.ts` | route + nav wired (`NotBuilt` fallback gone). |
+| `frontend/src/mocks/glossary.ts` | `Shock` + `Exposure` popover parity. |
+| `frontend/e2e/smoke/scenarios-smoke.spec.ts` | the Phase-3a pre-pass (incl. the §12sc1-1 real-viewport containment guard). |
+| `frontend/e2e/overflow.spec.ts` | `/scenarios` added to the cross-page overflow / single-scroll suite. |
+| `docs/plans/TEMPLATE-page-build.md` | §7 folds — containment (a), breakpoint corollary (b), media-query exception (c). |
+| `docs/plans/CURRENT.md` | Scenarios → DONE; NEXT = Insurance. |
+
+**Reported for the owner's final look. No self-certification — the guards above were run RED-then-GREEN and
+are cited by `file:line`.**

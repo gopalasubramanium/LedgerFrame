@@ -9,6 +9,7 @@ import {
   TrendStat,
 } from "../components/ui";
 import type { Column } from "../components/ui";
+import { EMDASH } from "../format/number";
 import "./Scenarios.css";
 
 // STATIC LAYOUT SPECIMEN — page-scenarios §9-1 (the GEOMETRY GATE).
@@ -47,12 +48,28 @@ const SHOCKS: ShockRow[] = [
 // The near-zero variant: same shocks, net worth ≈ 0 → the % is noise, so it is suppressed (§9-9).
 const NEAR_ZERO: ShockRow[] = SHOCKS.map((s) => ({ ...s, pct: null }));
 
+const MAX_PCT = Math.max(...SHOCKS.map((s) => (s.pct ? Math.abs(parseFloat(s.pct.replace("−", "-").replace("%", ""))) : 0)));
+
+const impactBar = (pct: string | null) => {
+  if (!pct) return EMDASH;
+  const mag = Math.abs(parseFloat(pct.replace("−", "-").replace("%", "")));
+  return (
+    <span className="sc__impactcell">
+      <svg className="sc__impactbar" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="0" y="2" width="100" height="4" rx="2" className="sc__impacttrack" />
+        <rect x="0" y="2" width={Math.max(2, (mag / MAX_PCT) * 100)} height="4" rx="2" className="sc__impactfill" />
+      </svg>
+      <span>{pct}</span>
+    </span>
+  );
+};
+
 const COLS: Column<ShockRow>[] = [
   { key: "name", label: "Scenario", sortable: true, truncate: true },
   { key: "exposure", label: "Exposure", align: "right", sortable: true },
   { key: "delta", label: "Impact", align: "right", sortable: true, render: (r) => <span className="sc__loss">{r.delta}</span> },
   { key: "new_net_worth", label: "New net worth", align: "right", sortable: true },
-  { key: "pct", label: "% of net worth", align: "right", sortable: true, render: (r) => r.pct ?? "—" },
+  { key: "pct", label: "% of net worth", align: "right", sortable: true, render: (r) => impactBar(r.pct) },
 ];
 
 function Exposures() {

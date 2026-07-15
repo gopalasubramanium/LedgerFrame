@@ -557,3 +557,20 @@ The **§9-5** chip/loss treatment · the **§9-6** GLOSSARY terms (`Shock`, `Exp
 near-zero copy · the **§9-13** disclaimer cadence · the **§9-2** staleness wording.
 
 **Phase 3b (owner acceptance walk) is the gate. Nothing here is self-certified.**
+
+---
+
+## 14. OWNER WALK — BATCH 1 (§12sc1-N, 2026-07-15)
+
+| # | Finding | Resolution | RED evidence |
+|---|---------|------------|--------------|
+| **§12sc1-1** | ⚠ **Exposures strip overflows on mobile — and the containment guard had a GAP.** At ~375px the two-across tiles were narrower than the tabular value, which **does not wrap**, so it **clipped** its box. The card-level tile-integrity guard missed it (the tile is a child of a card, not a card), and a `getBoundingClientRect` check would have missed it too — the rect is **clamped to the visible box** (96px) while the content is **160px** (`scrollWidth`). | The strip is a **clean grid** — **1-col phone (≤30rem) · 2×2 below desktop · 4-across only ≥82rem**. The 4-across breakpoint is **high on purpose**: at laptop widths the **fixed sidebar eats ~230px**, so a 1100px viewport is a ~870px content box where four tiles clip (the page-home §12ho1-7 lesson — *the breakpoint must model the box the product has*, measured not assumed). Values contained at **every** width 320–1600. | **RED at 375px** (fix reverted): *"no exposure value clipped @375px"* — `160px content in a 115px box`. **GUARD** = a **real-viewport** check in the scenarios pre-pass (scrollWidth ≤ clientWidth at 320/375/420/500/900/1100/1366). ⚠ **A specimen guard could NOT do this** — the layout is **media-query driven**, and narrowing a fixed-width `/kitchen-sink` frame does not change the viewport the `@media` responds to (a real limit of §13b for responsive components; the guard lives in the pre-pass instead, §13c). |
+| **§12sc1-2** | **Interactive sensitivity analysis (owner idea) → ROADMAP, not built.** | **ROADMAP R-11 UPGRADED:** a **per asset-class / currency / region shock slider** over a **parameterized scenario endpoint** (server computes; **no client money math**, D-105); **debounced**; the **D-058 bar applies to the exploratory surface** (a scenario, never a forecast, even while dragging). **Enabled by** the §9-7 named-constant seam and the §9-4 single derivation. **Requires its own plan file.** No UI now. | — |
+| **§12sc1-3** | **Impact chart.** | **DONUT DECLINED (chart-semantics honesty):** a donut asserts **composition** — parts of a whole that **sum**. The shocks are **alternative hypotheticals that do NOT sum**; charting them as a donut would **visually claim a false relationship** (D-058-adjacent). **INLINE BARS — OWNER: YES, BUILT:** a **house-SVG** impact bar in the shock table's **% column**, **magnitude-scaled against the largest shock**, **`--loss` tone**, **no axis, no forecast framing**. Suppressed with the % under near-zero net worth (§9-9). **Kitchen-sink specimen updated.** **PROPOSED → ratify the visuals at re-verify.** | **Guard:** the larger-magnitude shock has the fuller bar; the **largest is 100** (scaled); the near-zero state renders **no bar**. |
+
+### Carried ratifications (pending owner at re-verify)
+The **§9-5** chip/loss treatment · the **§9-6** GLOSSARY terms (`Shock`, `Exposure`) · the **§9-9** empty /
+near-zero copy · the **§9-13** disclaimer cadence · the **§9-2** staleness copy · **NEW: the §12sc1-3 impact
+bar** visual.
+
+**Phase 3b re-verify is the gate. Nothing here is self-certified.**

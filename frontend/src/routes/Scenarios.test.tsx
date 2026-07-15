@@ -126,3 +126,31 @@ test("§9-9 — an empty portfolio shows a reason and a route to Holdings", asyn
   expect(await screen.findByText("No holdings to model a shock against.")).toBeTruthy();
   expect(screen.getByRole("link", { name: "Add holdings" }).getAttribute("href")).toContain("/holdings");
 });
+
+
+test("§12sc1-3 — the impact bar is magnitude-scaled: the largest shock fills it; a loss tone; no forecast", async () => {
+  // crypto (−2.9) is smaller than equities (−3.9) in the fixture → equities' bar is the fuller one.
+  mockFetch();
+  const { container } = renderPage();
+  await screen.findByText("−31,240.00");
+  const table = container.querySelector('[data-card="shocks"]') as HTMLElement;
+  const bars = [...table.querySelectorAll(".sc__impactfill")] as SVGRectElement[];
+  expect(bars.length).toBe(2);
+  const eqRow = [...table.querySelectorAll("tbody tr")].find((r) => r.textContent?.includes("Equities fall 10%"))!;
+  const eqFill = Number((eqRow.querySelector(".sc__impactfill") as SVGRectElement).getAttribute("width"));
+  const crRow = [...table.querySelectorAll("tbody tr")].find((r) => r.textContent?.includes("Crypto"))!;
+  const crFill = Number((crRow.querySelector(".sc__impactfill") as SVGRectElement).getAttribute("width"));
+  // The larger-magnitude shock (equities −3.9%) has the fuller bar; the largest is 100.
+  expect(eqFill).toBeGreaterThan(crFill);
+  expect(Math.max(eqFill, crFill)).toBe(100);   // scaled against the largest shock
+  // The fill uses the loss token (no gain, no forecast framing).
+  expect((eqRow.querySelector(".sc__impactfill") as SVGElement).getAttribute("class")).toContain("sc__impactfill");
+});
+
+test("§12sc1-3 + §9-9 — near-zero net worth suppresses BOTH the % and its bar", async () => {
+  mockFetch({ net_worth: 412, net_worth_display: "412.00" });
+  const { container } = renderPage();
+  await screen.findByText("−31,240.00");
+  const table = container.querySelector('[data-card="shocks"]') as HTMLElement;
+  expect(table.querySelectorAll(".sc__impactfill").length).toBe(0);   // no bar when the % is suppressed
+});

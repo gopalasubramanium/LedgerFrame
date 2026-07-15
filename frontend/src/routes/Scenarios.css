@@ -15,13 +15,33 @@
 }
 .sc__stalenote { color: var(--text-secondary); }
 
-/* Exposures: equal-width KPI tiles in one row (wraps narrow). */
+/* Exposures: equal KPI tiles on a GRID — 4 across on desktop, a clean 2×2 below the tablet
+   breakpoint (§12sc1-1). The old flex-wrap gave a ragged 1/2/3/4-across reflow, and at ~375px the
+   two-across tiles were narrower than the tabular value, which then overflowed its box (a tabular
+   number does not wrap). The grid is even, and the value font steps down below tablet so it stays
+   CONTAINED; at the narrowest phone widths the strip drops to one column so a 10-digit money value
+   is never clipped (a truncated money figure would be a lie). */
 .sc__expbody {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-5);
+  display: grid;
+  /* DEFAULT is the clean 2×2 (§12sc1-1). The old flex-wrap gave a ragged 1/2/3/4-across reflow and,
+     at ~375px, two-across tiles narrower than the tabular value — which does not wrap, so it
+     overflowed its box. 2×2 is the safe baseline: half-width tiles hold the value at full size. */
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
 }
-.sc__expbody > * { flex: 1 1 8rem; min-width: 0; }
+.sc__expbody > * { min-width: 0; }
+/* 4 across ONLY once the CONTENT region is genuinely wide enough for four tiles + the value. The
+   breakpoint is high because at laptop widths the fixed sidebar eats the width — a 1100px viewport
+   is a ~870px content box, and four tiles there are narrower than the value (measured, not assumed;
+   the page-home §12ho1-7 lesson: the breakpoint must model the box the product actually has). */
+@media (min-width: 82rem) {
+  .sc__expbody { grid-template-columns: repeat(4, 1fr); }
+}
+/* Phone: one column — a 10-digit money value cannot fit two-across here without being clipped, and a
+   truncated money figure would be a lie. */
+@media (max-width: 30rem) {
+  .sc__expbody { grid-template-columns: 1fr; }
+}
 
 /* Section header: title left, its meta right, on one row. */
 .sc__head {
@@ -59,3 +79,21 @@
 .sc__wlabel { flex: 1 1 14rem; color: var(--text-secondary); font-size: var(--font-size-13); line-height: var(--line-13); }
 .sc__wvalue { font-variant-numeric: tabular-nums; font-size: var(--font-size-16); line-height: var(--line-16); color: var(--text-primary); }
 .sc__wnote { flex: 1 1 100%; color: var(--text-tertiary); font-size: var(--font-size-12); line-height: var(--line-12); }
+
+/* §12sc1-3 — inline IMPACT BAR in the % column (owner: YES). A house SVG, magnitude-scaled against
+   the largest shock, --loss tone, NO axis and no forecast framing — it shows relative severity of a
+   hypothetical, never a prediction. The DONUT was declined (see the plan §12sc1-3): shocks are
+   alternative what-ifs that do not sum, so a parts-of-a-whole chart would claim a false relationship. */
+.sc__impactcell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.sc__impactbar {
+  width: 3rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+}
+.sc__impacttrack { fill: var(--border); }
+.sc__impactfill { fill: var(--loss); }

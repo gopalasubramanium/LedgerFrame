@@ -35,6 +35,31 @@ test.describe.serial("scenarios pre-pass (live)", () => {
       console.log("PART 1 — empty state (no holdings)");
     }
 
+    // PART 1b — §12sc1-1 — THE EXPOSURES STRIP CONTAINS ITS VALUES AT EVERY MOBILE WIDTH.
+    //
+    // ⚠ This is a REAL-VIEWPORT check, not a specimen one: the strip's layout is media-query driven
+    // (2×2 below tablet, 4-across on wide, 1-col on phone) and the fixed sidebar eats content width,
+    // so it can ONLY be measured at a real viewport with the shell present (§13b's limit — a
+    // media-query-responsive component cannot be tested by narrowing a fixed-width specimen frame).
+    // The value is a TABULAR number that does not wrap, so a too-narrow tile CLIPS it: assert the
+    // content fits its box (scrollWidth <= clientWidth) — getBoundingClientRect is clamped and misses
+    // it (§13a: measure the actual thing).
+    for (const w of [320, 375, 420, 500, 900, 1100, 1366]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await page.waitForTimeout(150);
+      const clipped = await page.evaluate(() => {
+        const out: string[] = [];
+        document.querySelectorAll('[data-card="exposures"] .lf-stat__value').forEach((v) => {
+          const el = v as HTMLElement;
+          if (el.scrollWidth > el.clientWidth + 1) out.push(`${el.textContent?.trim()} (${el.scrollWidth} in ${el.clientWidth})`);
+        });
+        return out;
+      });
+      expect(clipped, `no exposure value clipped @${w}px`).toEqual([]);
+    }
+    await page.setViewportSize({ width: 1366, height: 900 });
+    console.log("PART 1b — exposures strip contains its values at 320..1366");
+
     // PART 2 — D-058: NO forecast language on the RENDERED page except the protected copy.
     const body = ((await page.locator(".lf-page").innerText()) || "").toLowerCase();
     const protectedCopy = "never a forecast";

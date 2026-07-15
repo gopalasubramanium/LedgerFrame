@@ -38,6 +38,9 @@ export function Scenarios() {
 
   // §9-9 — a percentage of a near-zero base is noise. Suppress it (show only the amount).
   const showPct = Boolean(data && Math.abs(data.net_worth) >= NEAR_ZERO);
+  // §12sc1-3 — the impact bar is magnitude-scaled against the LARGEST shock (biggest drop = full
+  // bar). A house SVG, --loss tone, no axis: it shows relative severity, never a forecast.
+  const maxImpact = Math.max(1, ...(data?.asset_scenarios ?? []).map((s) => Math.abs(s.pct_change)));
 
   const cols: Column<AssetShock>[] = [
     { key: "name", label: "Scenario", sortable: true, truncate: true },
@@ -56,7 +59,19 @@ export function Scenarios() {
       label: "% of net worth",
       align: "right",
       sortable: true,
-      render: (r) => (showPct ? formatPercent(r.pct_change) : EMDASH),
+      render: (r) =>
+        showPct ? (
+          <span className="sc__impactcell">
+            {/* House-SVG impact bar (§12sc1-3) — magnitude-scaled, --loss, no axis, no forecast. */}
+            <svg className="sc__impactbar" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="2" width="100" height="4" rx="2" className="sc__impacttrack" />
+              <rect x="0" y="2" width={Math.max(2, (Math.abs(r.pct_change) / maxImpact) * 100)} height="4" rx="2" className="sc__impactfill" />
+            </svg>
+            <span>{formatPercent(r.pct_change)}</span>
+          </span>
+        ) : (
+          EMDASH
+        ),
     },
   ];
 

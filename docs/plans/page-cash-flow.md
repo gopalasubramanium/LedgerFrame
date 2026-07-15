@@ -860,3 +860,12 @@ Phase 1–3a) · **§14** (walk batch 1) · **§16** (retrospective). The walk r
 - **Base-currency affix (RATIFIED):** the three runway money figures (Net monthly burn · Monthly expenses ·
   Monthly income) now carry the served `base_currency` (`/portfolio/runway`) as the muted `.lf-stat__unit`
   affix; the Runway figure (months) carries none. CashFlow.test.tsx (10) + `cash-flow-smoke` green.
+
+## DELTA NOTE — 2026-07-16 (hygiene: partial-mock render guard, no behaviour change)
+
+- **Defensive guard** on the section reads: `obs.obligations.length` / `cons.contributions.length` /
+  `goals.goals.length` → `(… ?? []).length`-style optional chaining, matching the existing `?? []`
+  defensive reads (`goalName`, `orphansOf`). A **partial mock** (the `AppShell` `/snapshot` redirect test
+  renders CashFlow with an `obs`/`cons`/`goals` object lacking its array) can no longer crash the render.
+  **Real API behaviour is unchanged** — those readers always serve the arrays. Closes the pre-existing
+  `08-TECH-DEBT` "CashFlow.tsx unhandled error" entry; `npm run check` exits 0. Cash-flow smoke re-run green.

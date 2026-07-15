@@ -41,10 +41,11 @@ export function TrendStat({
       <span className="lf-stat__label">{label}</span>
       <span className={`lf-stat__value${tone ? ` lf-stat__value--${tone}` : ""}`}>
         {value}
-        {/* The unit/affix (e.g. a base-currency code, §14in-7) gets a zero-width-space break BEFORE it,
-            so on a narrow tile it drops to its own line instead of clipping the value — invisible when
-            the value+unit fit on one line. */}
-        {unit && <>{"​"}<span className="lf-stat__unit">{unit}</span></>}
+        {/* The unit/affix (e.g. a base-currency code, §14in-7) is a sibling flex item; on a narrow tile
+            `.lf-stat__value`'s flex-wrap drops it to its own line instead of clipping the value. No text
+            hack — the value's own text node stays exactly the number so testing-library `getByText`
+            matches, and the affix's text stays exactly the code. */}
+        {unit && <span className="lf-stat__unit">{unit}</span>}
       </span>
 
       {(delta !== undefined || deltaDisplay) && (

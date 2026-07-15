@@ -329,7 +329,7 @@ export function CashFlow() {
       <section className="lf-card cf__section" data-card="obligations">
         <header className="cf__head">
           <h2 className="lf-card__title">Income &amp; expenses</h2>
-          {obs && obs.obligations.length > 0 && (
+          {obs && (obs.obligations?.length ?? 0) > 0 && (
             <span className="cf__total">
               <GlossaryTerm term="term-next-12-months">Next 12 months</GlossaryTerm>
               {" · "}{obs.next_12m_total_display}
@@ -344,14 +344,14 @@ export function CashFlow() {
           {obs === undefined && <Skeleton lines={4} />}
           {obs === null && <EmptyState message="Income and expenses are unavailable." reason="They could not be loaded just now."
             action={<Button onClick={reload}>Retry</Button>} />}
-          {obs && obs.obligations.length === 0 && (
+          {obs && (obs.obligations?.length ?? 0) === 0 && (
             <EmptyState
               message="No income or expenses recorded."
               reason="Add your recurring income and expenses to see a cash runway. One-off bills can go here too."
               action={<Button variant="primary" icon={Plus} onClick={() => { setFormError(null); setObDraft({ ...OB_NEW }); }}>Add income or expense</Button>}
             />
           )}
-          {obs && obs.obligations.length > 0 && (
+          {obs && (obs.obligations?.length ?? 0) > 0 && (
             <DataTable<Obligation> caption="Income and expenses" columns={obCols} rows={obs.obligations} />
           )}
         </div>
@@ -361,7 +361,7 @@ export function CashFlow() {
       <section className="lf-card cf__section" data-card="contributions">
         <header className="cf__head">
           <h2 className="lf-card__title">Contributions</h2>
-          {cons && cons.contributions.length > 0 && (
+          {cons && (cons.contributions?.length ?? 0) > 0 && (
             <span className="cf__total">
               <GlossaryTerm term="term-planned-cash-out">Planned cash out</GlossaryTerm>
               {" · "}{cons.monthly_cash_out_with_expenses_display} / month
@@ -376,14 +376,14 @@ export function CashFlow() {
           {cons === undefined && <Skeleton lines={4} />}
           {cons === null && <EmptyState message="Contributions are unavailable." reason="They could not be loaded just now."
             action={<Button onClick={reload}>Retry</Button>} />}
-          {cons && cons.contributions.length === 0 && (
+          {cons && (cons.contributions?.length ?? 0) === 0 && (
             <EmptyState
               message="No contributions recorded."
               reason="Record what you plan to invest, withdraw or prepay. Contributions never reduce your cash runway."
               action={<Button variant="primary" icon={Plus} onClick={() => { setFormError(null); setConDraft({ ...CON_NEW }); }}>Add contribution</Button>}
             />
           )}
-          {cons && cons.contributions.length > 0 && (
+          {cons && (cons.contributions?.length ?? 0) > 0 && (
             <>
               <DataTable<Contribution> caption="Contributions" columns={conCols} rows={cons.contributions} />
               <p className="lf-card__footnote">{cons.disclaimer}</p>
@@ -405,14 +405,14 @@ export function CashFlow() {
           {goals === undefined && <Skeleton lines={4} />}
           {goals === null && <EmptyState message="Goals are unavailable." reason="They could not be loaded just now."
             action={<Button onClick={reload}>Retry</Button>} />}
-          {goals && goals.goals.length === 0 && (
+          {goals && (goals.goals?.length ?? 0) === 0 && (
             <EmptyState
               message="No goals recorded."
               reason="Set a target amount and we'll show how far your net worth or liquid assets have come against it."
               action={<Button variant="primary" icon={Plus} onClick={() => { setFormError(null); setGoalDraft({ ...GOAL_NEW }); }}>Add goal</Button>}
             />
           )}
-          {goals && goals.goals.length > 0 && (
+          {goals && (goals.goals?.length ?? 0) > 0 && (
             <>
               <DataTable<Goal> caption="Goals" columns={goalCols} rows={goals.goals} />
               <p className="lf-card__footnote">{goals.disclaimer}</p>

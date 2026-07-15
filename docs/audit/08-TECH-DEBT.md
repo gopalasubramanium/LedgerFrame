@@ -217,7 +217,17 @@ so the consolidation is a decision, not forgotten.
 
 ---
 
-## Pre-existing frontend-suite unhandled error — `CashFlow.tsx:330` (found 2026-07-16, page-insurance Phase 0)
+## Pre-existing frontend-suite unhandled error — `CashFlow.tsx:330` (found 2026-07-16, page-insurance Phase 0) — ✅ RESOLVED 2026-07-16 (commit `ab53da3`)
+
+**RESOLVED** in a dedicated hygiene commit: the obligations/contributions/goals section reads are now
+optional-chained (`(obs.obligations?.length ?? 0)` etc., matching the page's existing `?? []` defensive
+reads), so a partial mock can no longer crash the render — real API behaviour unchanged (the readers always
+serve the arrays). Fail-first: the `AppShell` `/snapshot` redirect test reproduced the unhandled
+`TypeError` before the guard, green after. `npm run check` exits 0. *(The same commit also fixed a
+collateral `TrendStat` regression the batch-2 §14in-7 affix introduced — a zero-width-space break had split
+the value's text node, breaking `getByText` in `Insurance.test.tsx`; the affix now wraps via `.lf-stat__value`
+flex-wrap instead, keeping DOM text nodes clean. Both were required for a green `npm run check`.)* Delta
+note in `docs/plans/page-cash-flow.md`. Original entry preserved below.
 
 `npm run check`'s Vitest run fails with **one unhandled error** (all 208 tests still PASS): `TypeError:
 Cannot read properties of undefined (reading 'length')` at **`CashFlow.tsx:330`** (`obs.obligations.length`),

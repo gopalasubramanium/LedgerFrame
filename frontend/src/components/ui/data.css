@@ -20,6 +20,13 @@
   line-height: var(--line-28);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
+  /* Value + unit/affix on one baseline; the affix WRAPS to its own line on a narrow tile instead of
+     clipping the value (§14in-7). No zero-width-space text hack — DOM text nodes stay clean. The unit's
+     own `margin-left` supplies the gap (so the affix also spaces correctly in the non-TrendStat money
+     figures that reuse `.lf-stat__unit`). */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
 }
 /* Value tone (§12b-1) — colour the figure itself when it IS a signed change (gain/loss). */
 .lf-stat__value--up { color: var(--gain); }

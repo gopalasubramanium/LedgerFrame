@@ -28,7 +28,13 @@ FREQUENCIES = ["monthly", "quarterly", "annual", "single"]
 # policy_type/premium_frequency (unknown → default). Only `active` policies count toward the totals.
 POLICY_STATUSES = ["active", "lapsed", "expired"]
 _FREQ_MULT = {"monthly": 12, "quarterly": 4, "annual": 1, "single": 0}
-_RENEWAL_SOON_DAYS = 60
+# Renewal-reminder windows (page-insurance §9-7 / D-059 named constants, PRODUCT-SPEC §5). Both the
+# Insurance page and the Review feed derive "renewal due soon" from the ONE renewal_reminders helper:
+# the page (a surface you visit deliberately) uses the wider 60-day horizon; the attention feed uses
+# 30 (review.py:_INSURANCE_SOON_DAYS). Overdue is included but clamped so an ancient lapsed date can't
+# dominate the list.
+_RENEWAL_SOON_DAYS = 60   # Insurance page horizon — "a page you visit deliberately"
+_OVERDUE_CLAMP_DAYS = 3650  # ~10 years — the shared lower bound for "overdue" reminders
 
 
 def _dec(v) -> Decimal | None:
@@ -135,11 +141,9 @@ async def insurance_report(session: AsyncSession) -> dict:
     rows = (await session.execute(
         select(InsurancePolicy).order_by(InsurancePolicy.renewal_date.is_(None),
                                          InsurancePolicy.renewal_date))).scalars().all()
-    today = datetime.now(UTC).date()
     by_type: dict[str, float] = {}
     total_cover = total_cash = total_prem = Decimal("0")
     active_count = 0
-    upcoming: list[dict] = []
     for r in rows:
         if r.status != "active":
             continue
@@ -151,13 +155,9 @@ async def insurance_report(session: AsyncSession) -> dict:
         mult = _FREQ_MULT.get(r.premium_frequency, 1)
         if r.premium and mult:
             total_prem += await _to_base(r.premium, r.currency, base) * mult
-        if r.renewal_date:
-            try:
-                days = (date.fromisoformat(r.renewal_date) - today).days
-                if days <= _RENEWAL_SOON_DAYS:
-                    upcoming.append({"id": r.id, "name": r.name, "renewal_date": r.renewal_date, "days": days})
-            except ValueError:
-                pass
+    # ONE derivation of "renewal due soon" (§9-7): the same helper the review feed uses, at the page
+    # horizon. No inline copy — the two windows are the only difference.
+    upcoming = await renewal_reminders(session, _RENEWAL_SOON_DAYS)
     return {
         "base_currency": base,
         "policies": [_serialize(r) for r in rows],   # ALL rows (inactive visible, excluded from totals)
@@ -173,14 +173,18 @@ async def insurance_report(session: AsyncSession) -> dict:
         "cover_by_type": sorted(({"type": k, "value": round(v, 0),
                                   "value_display": format_money_display(v)} for k, v in by_type.items()),
                                 key=lambda x: x["value"], reverse=True),
-        "upcoming_renewals": sorted(upcoming, key=lambda x: x["days"]),
+        "upcoming_renewals": upcoming,   # already sorted by days (the shared helper)
         "disclaimer": "Records and reminders only — not an assessment of whether your cover is "
                       "adequate, and not advice. Base-currency totals use current FX.",
     }
 
 
 async def renewal_reminders(session: AsyncSession, within_days: int = 30) -> list[dict]:
-    """Active policies whose renewal is due within ``within_days`` — for the review feed."""
+    """Active policies whose renewal is due within ``within_days`` (overdue included, clamped to
+    ~10 years so an ancient lapsed date can't dominate). The ONE derivation of "renewal due soon"
+    (page-insurance §9-7): the Insurance page calls it at ``_RENEWAL_SOON_DAYS`` (60), the review feed
+    at ``_INSURANCE_SOON_DAYS`` (30). Each item carries ``id`` so the page can link to its policy row;
+    the feed ignores the extra key. Sorted by days (soonest/most-overdue first)."""
     rows = (await session.execute(select(InsurancePolicy))).scalars().all()
     today = datetime.now(UTC).date()
     out = []
@@ -191,6 +195,6 @@ async def renewal_reminders(session: AsyncSession, within_days: int = 30) -> lis
             days = (date.fromisoformat(r.renewal_date) - today).days
         except ValueError:
             continue
-        if -3650 <= days <= within_days:
-            out.append({"name": r.name, "renewal_date": r.renewal_date, "days": days})
-    return out
+        if -_OVERDUE_CLAMP_DAYS <= days <= within_days:
+            out.append({"id": r.id, "name": r.name, "renewal_date": r.renewal_date, "days": days})
+    return sorted(out, key=lambda x: x["days"])

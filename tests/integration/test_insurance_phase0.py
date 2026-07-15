@@ -92,3 +92,48 @@ async def test_entity_id_rejected_with_400(app_client):
     assert "household" in r.json()["detail"].lower()
     # the unscoped call still works
     assert (await app_client.get("/api/v1/insurance")).status_code == 200
+
+
+# --------------------------------------------------------------------------- #
+# 9-7 (Amendment C) — ONE renewal derivation: insurance_report and Review share renewal_reminders;
+# overdue unifies on the helper's -3650d clamp.
+# --------------------------------------------------------------------------- #
+async def test_renewal_clamp_excludes_ancient_overdue(app_client):
+    """The page's upcoming_renewals unifies on the shared helper's -3650d clamp: a policy overdue by
+    >10 years is NOT surfaced. RED against the old unbounded inline `days <= 60` (which included it)."""
+    base = await _base(app_client)
+    ancient = (datetime.now(UTC).date() - timedelta(days=4000)).isoformat()   # ~11 years overdue
+    soon = (datetime.now(UTC).date() + timedelta(days=45)).isoformat()
+    for name, rd in [("Ancient", ancient), ("Soon", soon)]:
+        await app_client.post("/api/v1/insurance", json={
+            "name": name, "policy_type": "health", "currency": base,
+            "premium_frequency": "annual", "status": "active", "renewal_date": rd})
+    rep = (await app_client.get("/api/v1/insurance")).json()
+    names = [u["name"] for u in rep["upcoming_renewals"]]
+    assert "Soon" in names                       # within the 60-day page horizon
+    assert "Ancient" not in names                # RED today: old inline `days <= 60` had no lower clamp
+    assert all("id" in u for u in rep["upcoming_renewals"])   # shared helper returns id for row-linking
+
+
+async def test_upcoming_renewals_is_exactly_the_shared_helper(session):
+    """page-insurance §9-7 (the Scenarios §9-4 equality-test pattern): the page's upcoming_renewals IS
+    renewal_reminders at the page window — one derivation, not a second inline copy."""
+    from app.core.config import get_settings
+    from app.services.insurance import (
+        _RENEWAL_SOON_DAYS,
+        create_policy,
+        insurance_report,
+        renewal_reminders,
+    )
+
+    base = get_settings().base_currency
+    for name, d in [("A", 10), ("B", 50), ("C", 200)]:
+        renewal = (datetime.now(UTC).date() + timedelta(days=d)).isoformat()
+        await create_policy(session, {"name": name, "policy_type": "health", "currency": base,
+                                      "premium_frequency": "annual", "status": "active",
+                                      "renewal_date": renewal})
+    await session.commit()
+    rep = await insurance_report(session)
+    helper = await renewal_reminders(session, _RENEWAL_SOON_DAYS)
+    assert rep["upcoming_renewals"] == helper          # one derivation — cannot silently diverge
+    assert [u["name"] for u in helper] == ["A", "B"]   # C (200d) outside the 60d page horizon; sorted by days

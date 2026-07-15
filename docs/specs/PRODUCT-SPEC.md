@@ -141,7 +141,8 @@ user-configurable (D-084).
 | `_RUNWAY_LOW_MONTHS` | **3** (D-084) | Runway low when `runway_months` < 3 | Owner-set floor (D-084): below three months' recurring net burn warrants a look. |
 | `_GOAL_SOON_DAYS` | **180** (D-084) | Goal target date within 180 days | Owner-set (D-084): a half-year's notice to act on an approaching goal. |
 | `_OBLIGATION_SOON_DAYS` | 30 | Obligation due within 30 days | One month's notice on an upcoming cash obligation. |
-| `_INSURANCE_SOON_DAYS` | 30 | Insurance renewal within 30 days (or overdue) | One month to renew before a policy lapses; overdue always flags. |
+| `_INSURANCE_SOON_DAYS` | 30 | Insurance renewal within 30 days (or overdue) — **the attention feed** | One month to renew before a policy lapses; overdue always flags. The Review window of the shared `renewal_reminders` helper (page-insurance §9-7). |
+| `_RENEWAL_SOON_DAYS` | 60 | Insurance **page** — renewals within 60 days (or overdue) — **a page you visit deliberately** | The Insurance page shows a wider horizon than the 30-day attention feed. **Same `renewal_reminders` helper, different window** (page-insurance §9-7, Amendment C) — not a Review signal, recorded here so both named windows of the one derivation live together. `app/services/insurance.py`. |
 | `_CORP_ACTION_RECENT_DAYS` | 45 | Split/bonus within 45 days → "verify" | Recent corporate actions warrant a manual verification window. |
 | `low` confidence band | < 50 | Low-confidence holding count | Below the medium band (≥50); poorly-sourced values deserve attention. |
 | `LEDGERFRAME_STALE_AFTER_SECONDS` | 900 (default) | Stale holding count | Quotes older than 15 min are flagged stale (EOD/NAV use a longer 30h threshold). |

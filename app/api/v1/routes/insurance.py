@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,7 +39,13 @@ class PolicyIn(BaseModel):
 
 
 @router.get("/insurance")
-async def list_insurance(session: AsyncSession = Depends(get_db)) -> dict:
+async def list_insurance(entity_id: int | None = Query(default=None),
+                         session: AsyncSession = Depends(get_db)) -> dict:
+    # page-insurance §9-6. `entity_id` is REJECTED, not ignored: the register has no entity FK
+    # (D-063, household by construction), so a scope param could only produce a precise-looking,
+    # meaningless answer — the Policy/Scenarios household-scoped precedent.
+    if entity_id is not None:
+        raise HTTPException(400, "the insurance register is household-scoped: it cannot be filtered to one entity")
     return await insurance_report(session)
 
 

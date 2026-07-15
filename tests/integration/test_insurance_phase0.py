@@ -79,3 +79,16 @@ async def test_policy_status_vocab_served_and_enforced(app_client):
         "name": "Lapsed", "policy_type": "health", "currency": base,
         "premium_frequency": "annual", "status": "lapsed"})).json()
     assert r2["status"] == "lapsed"
+
+
+# --------------------------------------------------------------------------- #
+# 9-6 — the register is household-scoped; ?entity_id is REJECTED, not silently ignored.
+# --------------------------------------------------------------------------- #
+async def test_entity_id_rejected_with_400(app_client):
+    """A silently-ignored scope param is an API honesty trap (the register has no entity FK, D-063).
+    RED today: the unknown param is dropped and the request returns 200."""
+    r = await app_client.get("/api/v1/insurance", params={"entity_id": 1})
+    assert r.status_code == 400
+    assert "household" in r.json()["detail"].lower()
+    # the unscoped call still works
+    assert (await app_client.get("/api/v1/insurance")).status_code == 200

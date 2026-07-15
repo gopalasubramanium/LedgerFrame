@@ -6227,6 +6227,22 @@
         "operationId": "list_insurance_api_v1_insurance_get",
         "parameters": [
           {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

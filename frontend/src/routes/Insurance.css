@@ -1,0 +1,93 @@
+/* Insurance — GEOMETRY (page-insurance §9-1, PROPOSED; ratify at the gate). Worklist: a totals strip
+   → the policies DataTable (page spine) → upcoming-renewals + cover-by-type flanking cards. Tokens
+   only. NOTE (TEMPLATE §7 media-query exception): the responsive containment of the strips below is a
+   §13c pre-pass check at REAL viewports (the fixed sidebar eats width), NOT a static-specimen claim. */
+
+.ins__section,
+.ins__card { min-width: 0; }
+
+/* Totals strip — equal KPI tiles on a GRID. 2×2 default → 4-across only once the CONTENT region is
+   wide enough for four tiles plus a large money value (the sidebar eats ~230px at laptop widths, so
+   the breakpoint models the content box, not the viewport — the §12sc1-1 lesson) → 1 column on phone
+   so an 8-digit money figure is never clipped (a truncated money value would be a lie). */
+.ins__totals {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.ins__totals > * { min-width: 0; }
+@media (min-width: 82rem) {
+  .ins__totals { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 30rem) {
+  .ins__totals { grid-template-columns: 1fr; }
+}
+
+/* Card header: title left, primary action right, one row. */
+.ins__cardhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.ins__cardhead .lf-card__title { margin: 0; font-size: var(--font-size-16); line-height: var(--line-16); }
+.ins__add { margin-left: auto; }
+
+.ins__section { margin-bottom: var(--space-4); }
+
+/* Policy identity cell — name over insurer, insurer muted (Holdings pattern; keeps the table narrow). */
+.ins__policycell { display: flex; flex-direction: column; min-width: 0; }
+.ins__pname { font-weight: var(--weight-medium); }
+.ins__pinsurer {
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ins__missing { color: var(--text-tertiary); }
+.ins__renewalcell { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* Flanking cards — one column, side by side once the content box is wide enough. */
+.ins__flank {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+@media (min-width: 64rem) {
+  .ins__flank { grid-template-columns: 1fr 1fr; }
+}
+.ins__renewals,
+.ins__bytype { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ins__renewalrow,
+.ins__typerow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.ins__renewalrow:last-child,
+.ins__typerow:last-child { border-bottom: none; }
+.ins__rname,
+.ins__tlabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ins__rdate,
+.ins__rdays { margin-left: auto; color: var(--text-secondary); font-size: var(--font-size-13); line-height: var(--line-13); }
+.ins__renewalrow .lf-statuschip { margin-left: var(--space-2); }
+.ins__tvalue { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* Documents-checklist affordance (§9-8) — composed Switch + TextInput rows; NOT a new component. */
+.ins__editorframe {
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  max-width: 32rem;
+}
+.ins__editorh { margin: 0 0 var(--space-3); font-size: var(--font-size-14); line-height: var(--line-14); }
+.ins__editorhint { color: var(--text-secondary); font-weight: var(--weight-regular); }
+.ins__checklist { display: flex; flex-direction: column; gap: var(--space-2); margin: 0 0 var(--space-3); padding: 0; list-style: none; }
+.ins__addlabel { display: flex; align-items: center; gap: var(--space-2); }
+.ins__addlabel > :first-child { flex: 1; }

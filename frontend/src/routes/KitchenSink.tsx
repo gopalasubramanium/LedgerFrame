@@ -8,6 +8,7 @@ import { TokenBoard } from "./TokenBoard";
 import { HomeMockupFull } from "./HomeMockup";
 import { CashFlowMockup } from "./CashFlowMockup";
 import { ScenariosMockup } from "./ScenariosMockup";
+import { InsuranceMockup, InsuranceDocumentsChecklistSpecimen } from "./InsuranceMockup";
 import {
   AllocationDonut,
   Clock,
@@ -704,6 +705,33 @@ export function KitchenSink() {
                 <ScenariosMockup nearZero />
               </div>
             </div>
+          </Specimen>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        bleed
+        title="Insurance — LAYOUT SPECIMEN (page-insurance §9-1) — PROPOSED, AWAITING RATIFICATION"
+        note="THE GEOMETRY GATE. Static, unwired — ratified BY LOOKING before assembly. The ruling (§9-1): a totals TrendStat strip → the policies DataTable as the page SPINE (row actions in a ⋯ RowMenu) → upcoming-renewals + cover-by-type as flanking cards. Real content region, real-shaped data (9 policies, mixed types + long insurer names, SGD). Money is written AS SERVED (display strings, D-105). Honesty is staged: a LAPSED policy (visible, excluded from totals + the active count, §9-10); an OVERDUE and a soon renewal (§9-7); a MISSING premium (em dash + reason, §Guarantee-3). The protected bar is in the subtitle (§9-2) with the disclaimer once at the table foot. Two more frames: the EMPTY register, and the documents-checklist affordance composed from Switch + TextInput (§9-8, no new component)."
+      >
+        <div className="ks__stack">
+          <Specimen label="Insurance · populated register (lapsed policy excluded from totals; overdue + soon renewals; missing premium)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <InsuranceMockup />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Insurance · EMPTY register — reason + Add CTA (§9-1)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <InsuranceMockup variant="empty" />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Insurance · documents checklist — composed Switch + TextInput, seeded with the four default labels (§9-8)">
+            <InsuranceDocumentsChecklistSpecimen />
           </Specimen>
         </div>
       </Section>

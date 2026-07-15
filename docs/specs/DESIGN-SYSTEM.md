@@ -655,3 +655,26 @@ so a chunky default-looking bar crowded the quotes. It now uses the **quotes-row
 **themed** bar with a stable gutter and reserved space. *Stopping the animation was right; making the
 fallback ugly-but-working was not the same as making it right.*
 
+
+---
+
+## §5.2 AMENDMENT — Base-currency indication on money summary surfaces (PROPOSED 2026-07-16, page-insurance §14in-5; ratify at the re-walk)
+
+**A money SUMMARY tile/strip showing a base-currency aggregate carries a small muted currency-code
+affix** (e.g. `SGD`) next to the value — so the reader always knows which currency the aggregate is in.
+One pattern, **token-styled via the existing `.lf-stat__unit` slot** (muted `--text-tertiary`, regular
+weight, `--space-2` before the value's trailing edge) — **no new component**, and it is **never
+colour-semantic**. The affix source is the **SERVED `base_currency`** (D-005 — the frontend picks nothing;
+`liquidity`, `runway`, `statement`, `insurance` and other readers already serve it). It rides the
+**`unit`** prop of `TrendStat`; a **non-money** tile (a count, a policy tally) carries none. Per-row
+**non-base** amounts already carry their own code inline (the Insurance §12in-1 pattern); this amendment
+governs the **base-currency SUMMARY** figure, which was otherwise bare.
+
+- **First instance (applied now):** the Insurance totals strip — Total cover · Cash value · Annual
+  premium each carry the served base-currency affix; the Active-policies count tile carries none.
+- **Cross-page retrofit is a SCHEDULED BATCH, not folded in here.** Every already-accepted money-summary
+  page (Net worth, Portfolio, Home tiles, Review rail, and the liquidity/runway/statement surfaces) must
+  adopt the affix and **re-run its pre-pass** — owner-picked targets, listed in `CURRENT.md` beside the
+  [Help]/Segmented retrofits. A one-shot sweep is exactly the *"per-instance copies of a standard ARE the
+  defect"* trap in reverse: the pattern lands in ONE place (this entry), then each page inherits it under
+  its own re-verify.

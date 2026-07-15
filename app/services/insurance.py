@@ -64,6 +64,24 @@ def _money_display(amount: Decimal | None, ccy: str, base: str) -> str | None:
     return s if ccy == base else f"{ccy} {s}"
 
 
+def _annual_premium(premium: Decimal | None, frequency: str) -> Decimal | None:
+    """The per-policy ANNUAL-EQUIVALENT premium, in the policy's OWN currency (page-insurance §14in-2).
+
+    This is the ONE derivation of "premium per year": both the served per-row ``annual_premium_display``
+    and the base-currency ``total_annual_premium`` accumulator call it (the total merely FX-converts the
+    result), so the "Premium / yr" column always reconciles with the strip — no second code path (A11).
+
+    Frequency semantics (GLOSSARY): monthly ×12, quarterly ×4, annual ×1, **single → None** — a one-off
+    premium has no recurring annual equivalent, so it is served ``null`` and the UI renders a bare em dash
+    (§12in-4, user-data-absent), never a fabricated 0. ``None`` when there is no premium at all."""
+    if not premium:
+        return None
+    mult = _FREQ_MULT.get(frequency, 0)
+    if not mult:
+        return None
+    return premium * mult
+
+
 def _dec(v) -> Decimal | None:
     if v is None or v == "":
         return None
@@ -91,6 +109,7 @@ def _serialize(r: InsurancePolicy, base: str) -> dict:
             docs = json.loads(r.documents)
         except (ValueError, TypeError):
             docs = []
+    ann = _annual_premium(r.premium, r.premium_frequency)  # ONE derivation (§14in-2)
     return {
         "id": r.id, "name": r.name, "insurer": r.insurer, "policy_type": r.policy_type,
         # Display-cased at the boundary (§9-12) so the table renders a served label, never mapping the
@@ -108,6 +127,11 @@ def _serialize(r: InsurancePolicy, base: str) -> dict:
         "cash_value_display": _money_display(r.cash_value, r.currency, base),
         "premium": (float(r.premium) if r.premium is not None else None),
         "premium_display": _money_display(r.premium, r.currency, base),
+        # The ANNUAL EQUIVALENT (§14in-2) — the "Premium / yr" column renders THIS, not the per-frequency
+        # premium. Built from the ONE _annual_premium derivation the totals accumulator also uses; None for
+        # a single-pay policy (no recurring equivalent) → em dash, never a fabricated 0.
+        "annual_premium": (float(ann) if ann is not None else None),
+        "annual_premium_display": _money_display(ann, r.currency, base),
         "premium_frequency": r.premium_frequency,
         "start_date": r.start_date, "renewal_date": r.renewal_date,
         "nominee": r.nominee, "linked_goal_id": r.linked_goal_id,
@@ -183,9 +207,11 @@ async def insurance_report(session: AsyncSession) -> dict:
         by_type[r.policy_type] = by_type.get(r.policy_type, 0.0) + float(cb)
         total_cover += cb
         total_cash += await _to_base(r.cash_value, r.currency, base)
-        mult = _FREQ_MULT.get(r.premium_frequency, 1)
-        if r.premium and mult:
-            total_prem += await _to_base(r.premium, r.currency, base) * mult
+        # The SAME per-policy annual-equivalent the row serves (§14in-2) — FX-converted, then summed. One
+        # derivation: Σ(served annual_premium_display, FX-converted) reconciles with total_annual_premium.
+        ann = _annual_premium(r.premium, r.premium_frequency)
+        if ann is not None:
+            total_prem += await _to_base(ann, r.currency, base)
     # ONE derivation of "renewal due soon" (§9-7): the same helper the review feed uses, at the page
     # horizon. No inline copy — the two windows are the only difference.
     upcoming = await renewal_reminders(session, _RENEWAL_SOON_DAYS)

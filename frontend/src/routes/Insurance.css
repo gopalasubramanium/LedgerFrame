@@ -8,19 +8,24 @@
 
 /* Totals strip — equal KPI tiles on a GRID. 2×2 default → 4-across only once the CONTENT region is
    wide enough for four tiles plus a large money value (the sidebar eats ~230px at laptop widths, so
-   the breakpoint models the content box, not the viewport — the §12sc1-1 lesson) → 1 column on phone
-   so an 8-digit money figure is never clipped (a truncated money value would be a lie). */
+   the breakpoint models the content box, not the viewport — the §12sc1-1 lesson) → 1 column once the
+   box is narrow enough that a 2-col tile can't hold an 8-digit money figure PLUS the §14in-5
+   base-currency affix (e.g. "2,952,505.50 SGD") — a truncated money value would be a lie. The 1-col
+   cutoff is 40rem, not 30rem, because the affix widened the value (a 2-col tile clips it below ~560px). */
+/* NOTE (§14in-1): NO page-local margin here — the vertical rhythm between the totals strip, the policies
+   card and the flanking cards is owned by `.lf-page`'s `gap` (the platform standard, as on /cash-flow and
+   /scenarios). A page-local `margin-bottom` stacked ON TOP of that gap and made /insurance's whitespace
+   exceed every other page (28px vs 16px). A per-instance copy fighting the shared shell IS the defect. */
 .ins__totals {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-4);
-  margin-bottom: var(--space-4);
 }
 .ins__totals > * { min-width: 0; }
 @media (min-width: 82rem) {
   .ins__totals { grid-template-columns: repeat(4, 1fr); }
 }
-@media (max-width: 30rem) {
+@media (max-width: 40rem) {
   .ins__totals { grid-template-columns: 1fr; }
 }
 
@@ -34,8 +39,6 @@
 }
 .ins__cardhead .lf-card__title { margin: 0; font-size: var(--font-size-16); line-height: var(--line-16); }
 .ins__add { margin-left: auto; }
-
-.ins__section { margin-bottom: var(--space-4); }
 
 /* Policy identity cell — name over insurer, insurer muted (Holdings pattern; keeps the table narrow). */
 .ins__policycell { display: flex; flex-direction: column; min-width: 0; }
@@ -51,18 +54,59 @@
 .ins__missing { color: var(--text-tertiary); }
 .ins__renewalcell { display: inline-flex; align-items: center; gap: var(--space-2); }
 
-/* Flanking cards — one column, side by side once the content box is wide enough. */
+/* Flanking cards — one column, side by side once the content box is wide enough. `align-items: start`
+   so each card's height is CONTENT-DRIVEN (§14in-4): the renewals card is no longer stretched to match
+   the taller cover-by-type sibling, which reserved dead vertical space below its short list. */
 .ins__flank {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-4);
+  align-items: start;
 }
 @media (min-width: 64rem) {
   .ins__flank { grid-template-columns: 1fr 1fr; }
 }
-.ins__renewals,
+
+/* Upcoming-renewals list (§14in-4) — an ALIGNED grid, not a ragged flex row. Every row shares three
+   tracks via subgrid: policy name (truncating, takes the slack) · date (tabular, right-aligned) · state
+   chip / "in N days" (right-edge aligned). The list fills the card width; the date column and the right
+   edge line up across rows (they floated on `margin-left:auto` before). */
+.ins__renewals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ins__renewalrow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  column-gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.ins__renewalrow:last-child { border-bottom: none; }
+.ins__rdate {
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  font-variant-numeric: tabular-nums;
+}
+.ins__rdays {
+  justify-self: end;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+.ins__renewalrow .lf-statuschip { justify-self: end; }
+
+/* Cover-by-type list — a simple two-part flex row (label … value); values right-aligned + tabular. */
 .ins__bytype { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.ins__renewalrow,
 .ins__typerow {
   display: flex;
   align-items: center;
@@ -70,13 +114,9 @@
   padding: var(--space-2) 0;
   border-bottom: var(--border-width) solid var(--border);
 }
-.ins__renewalrow:last-child,
 .ins__typerow:last-child { border-bottom: none; }
 .ins__rname,
 .ins__tlabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ins__rdate,
-.ins__rdays { margin-left: auto; color: var(--text-secondary); font-size: var(--font-size-13); line-height: var(--line-13); }
-.ins__renewalrow .lf-statuschip { margin-left: var(--space-2); }
 .ins__tvalue { margin-left: auto; font-variant-numeric: tabular-nums; }
 
 /* Documents-checklist affordance (§9-8) — composed Switch + TextInput rows; NOT a new component. */

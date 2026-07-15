@@ -71,6 +71,95 @@ test.describe.serial("insurance pre-pass (live)", () => {
     // PART 7 — no card left in skeleton.
     await expect(page.locator(".lf-skeleton")).toHaveCount(0);
 
+    // --- OWNER WALK BATCH 1 measuring assertions (page-insurance §14) ---
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.waitForTimeout(150);
+
+    // PART 7a — §14in-1: the vertical rhythm equals `.lf-page`'s gap (no page-local margin inflates it).
+    // RED (pre-fix): the totals→policies and policies→flank gaps measured 28px (16 gap + a 12px page-local
+    // margin) vs the 16px platform standard on /cash-flow and /scenarios.
+    const rhythm = await page.evaluate(() => {
+      const pageEl = document.querySelector(".lf-page") as HTMLElement;
+      const gap = parseFloat(getComputedStyle(pageEl).rowGap || getComputedStyle(pageEl).gap);
+      const kids = [...pageEl.children] as HTMLElement[];
+      const gaps: number[] = [];
+      for (let i = 1; i < kids.length; i++) {
+        gaps.push(Math.round(kids[i].getBoundingClientRect().top - kids[i - 1].getBoundingClientRect().bottom));
+      }
+      return { gap: Math.round(gap), gaps };
+    });
+    console.log(`PART 7a — page gap=${rhythm.gap}px, section gaps=${JSON.stringify(rhythm.gaps)}`);
+    for (const g of rhythm.gaps) expect(Math.abs(g - rhythm.gap), "section rhythm == .lf-page gap").toBeLessThanOrEqual(1);
+
+    // PART 7b — §14in-2: the "Premium / yr" column renders the served ANNUAL EQUIVALENT (not the raw
+    // per-frequency premium), and Σ(served active annuals) reconciles with the strip total.
+    const monthly = api.policies.find((p: { premium_frequency: string; annual_premium_display: string | null }) =>
+      p.premium_frequency === "monthly" && p.annual_premium_display);
+    if (monthly) {
+      const row = page.locator('[data-card="policies"] tbody tr', { hasText: monthly.name });
+      await expect(row.locator("td").nth(3)).toHaveText(monthly.annual_premium_display);
+      expect(monthly.annual_premium_display).not.toBe(monthly.premium_display); // annualised ≠ per-frequency
+      console.log(`PART 7b — ${monthly.name}: /yr column = ${monthly.annual_premium_display} (premium ${monthly.premium_display})`);
+    }
+    // Σ reconciliation (the A11 pin): sum of served per-row annual_premium over active policies == total.
+    const sumAnnual = api.policies
+      .filter((p: { status: string; annual_premium: number | null }) => p.status === "active" && p.annual_premium != null)
+      .reduce((a: number, p: { annual_premium: number }) => a + p.annual_premium, 0);
+    // total_annual_premium is FX-converted for non-base rows, so compare in base by re-summing base rows
+    // exactly and allowing the non-base contribution to close the gap within FX rounding.
+    const baseOnlySum = api.policies
+      .filter((p: { status: string; currency: string; annual_premium: number | null }) =>
+        p.status === "active" && p.currency === api.base_currency && p.annual_premium != null)
+      .reduce((a: number, p: { annual_premium: number }) => a + p.annual_premium, 0);
+    expect(api.total_annual_premium, "total >= base-only annual sum").toBeGreaterThanOrEqual(baseOnlySum - 1);
+    console.log(`PART 7b — Σ active annual (incl. FX) ${sumAnnual} vs served total ${api.total_annual_premium}`);
+
+    // PART 7c — §14in-4: renewals rows are an ALIGNED grid (dates + right edges line up) and the card is
+    // NOT stretched to reserve dead space (content-driven, shorter than the taller cover-by-type sibling).
+    const ren = await page.evaluate(() => {
+      const card = document.querySelector('[data-card="renewals"]') as HTMLElement;
+      const cover = document.querySelector('[data-card="cover-by-type"]') as HTMLElement;
+      const rows = [...card.querySelectorAll("li")];
+      const dateLefts = rows.map((li) => Math.round((li.querySelector(".ins__rdate") as HTMLElement).getBoundingClientRect().left));
+      const rightEdges = rows.map((li) => {
+        const last = li.lastElementChild as HTMLElement;
+        return Math.round(last.getBoundingClientRect().right);
+      });
+      const lastRowBottom = rows.length ? Math.round(rows[rows.length - 1].getBoundingClientRect().bottom) : 0;
+      const cardBottom = Math.round(card.getBoundingClientRect().bottom);
+      return {
+        n: rows.length, dateLefts, rightEdges,
+        deadSpaceBelowList: cardBottom - lastRowBottom,
+        renewalsH: Math.round(card.getBoundingClientRect().height),
+        coverH: Math.round(cover.getBoundingClientRect().height),
+      };
+    });
+    console.log(`PART 7c — renewals: dateLefts=${JSON.stringify(ren.dateLefts)} rightEdges=${JSON.stringify(ren.rightEdges)} renewalsH=${ren.renewalsH} coverH=${ren.coverH} deadBelow=${ren.deadSpaceBelowList}`);
+    if (ren.n > 1) {
+      expect(Math.max(...ren.dateLefts) - Math.min(...ren.dateLefts), "date column aligned across rows").toBeLessThanOrEqual(1);
+      expect(Math.max(...ren.rightEdges) - Math.min(...ren.rightEdges), "row right edges aligned").toBeLessThanOrEqual(1);
+    }
+    // No reserved dead space: the card is content-driven, so with fewer rows it is SHORTER than the
+    // taller cover-by-type sibling (before the fix the grid stretched both to the same 351px).
+    expect(ren.renewalsH, "renewals card content-driven, not stretched to the sibling").toBeLessThan(ren.coverH);
+    expect(ren.deadSpaceBelowList, "little slack below the renewals list").toBeLessThan(48);
+
+    // PART 7d — §14in-5: money summary tiles carry the served base-currency affix; the count tile does not.
+    const affix = await page.evaluate((base: string) => {
+      const stats = [...document.querySelectorAll('[data-card="totals"] .lf-stat')] as HTMLElement[];
+      return stats.map((s) => {
+        const label = (s.querySelector(".lf-stat__label")?.textContent || "").trim();
+        const unit = (s.querySelector(".lf-stat__unit")?.textContent || "").trim();
+        return { label, unit, hasBase: unit === base };
+      });
+    }, api.base_currency);
+    console.log(`PART 7d — totals affixes: ${JSON.stringify(affix)}`);
+    for (const s of affix) {
+      if (/cover|cash value|premium/i.test(s.label)) expect(s.hasBase, `${s.label} carries the ${api.base_currency} affix`).toBe(true);
+      if (/policies/i.test(s.label)) expect(s.unit, "the count tile carries no currency affix").toBe("");
+    }
+    await page.setViewportSize({ width: 1366, height: 900 });
+
     // PART 8 — CRUD ROUND-TRIP through the [S]-gated editor (ambient session; no PIN in dev).
     const NAME = "Smoke Test Policy";
     await page.getByRole("button", { name: /add policy/i }).first().click();

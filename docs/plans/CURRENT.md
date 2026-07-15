@@ -967,7 +967,21 @@ at real viewports. All three folded into TEMPLATE §7 (extending existing rules,
 
 ## NEXT
 
-1. **Insurance — `docs/plans/page-insurance.md` — 🟢 Phases 0→3a DONE → AWAITING OWNER WALK (Phase 3b).**
+1. **Insurance — `docs/plans/page-insurance.md` — 🟢 Phases 0→3a DONE · Phase 3b WALK BATCH 1 fixed + pre-pass
+   re-GREEN → AWAITING OWNER RE-WALK.**
+   **Walk batch 1 (owner, 2026-07-16; page-insurance §14in-1..5):** §14in-1 page padding — removed the
+   page-local `margin-bottom` that stacked on `.lf-page`'s gap (28px → the standard 16px, matching
+   cash-flow/scenarios). §14in-2 honesty bug — the "Premium / yr" column served the raw per-frequency
+   premium (monthly 50 → 50); it now renders the served **annual equivalent** built by ONE
+   `_annual_premium` helper the strip total also uses (monthly 50 → 600; single-pay → em dash), Σ(column)
+   reconciles with the total (A11 equality test). §14in-4 renewals card — aligned subgrid rows +
+   content-driven height (no dead-space stretch). §14in-5 — base-currency affix on the money totals
+   (served `base_currency` via the muted `.lf-stat__unit` slot); DESIGN-SYSTEM "Base-currency indication"
+   entry (PROPOSED). §14in-3 parked → **R-36**. Backend 774 · Insurance unit 9 · overflow 179 · live
+   insurance + net-worth pre-passes GREEN, 0 console errors; fail-first proven (backend `KeyError`,
+   geometry gaps `[16,28,28]`). **The owner re-walks — nothing self-certified.**
+   Full record: **`page-insurance.md` §14.**
+   - **(prior) Insurance build detail (Phases 0/1/2/3a) — DONE (2026-07-16).**
    §9 closed one-pass (2026-07-15, +amendments A–D); §12 geometry gate RATIFIED WITH CONDITIONS (2026-07-16,
    §12in-1..5). **Phase 0** (8 deltas): meta removal, D-105 + count-active-only (Amendment A — Net worth
    D-081 migrated to `total_cash_value_display`), `policy_status` vocab, `?entity_id`→400, one
@@ -992,6 +1006,26 @@ at real viewports. All three folded into TEMPLATE §7 (extending existing rules,
 **Release posture unchanged (RD-9 Amendment 3):** the release gate is **FULL COMPLETION**; Gates C–F stay
 dormant until the owner accepts the full set. **Standing, owner-only:** the **CLA counsel review** before the
 first external merge (Gate B2).
+
+## Scheduled cross-page retrofits (owner-picked targets; each re-runs its own pre-pass)
+
+These are **platform patterns ratified on one page** that later-accepted pages must adopt one at a time —
+never a one-shot sweep (the *"per-instance copies of a standard ARE the defect"* rule, applied forward).
+Each target is a **small commit + a pre-pass re-run**, owner picks the order:
+
+- **Base-currency indication (page-insurance §14in-5; DESIGN-SYSTEM "Base-currency indication", PROPOSED).**
+  Money **summary tiles/strips** carry a muted served-`base_currency` affix (`.lf-stat__unit`). First
+  instance shipped on Insurance. Retrofit targets: **Net worth, Portfolio, Home tiles, Review rail**, and
+  the **liquidity / runway / statement** money surfaces (all already serve `base_currency`).
+- **[Help] popover scope + Segmented extraction** — the standing prior retrofits (page-markets / page-news
+  legacy) remain owner-picked.
+
+## ROADMAP additions (this session)
+
+- **R-36 — Insurance premiums → Cash flow (derived integration)** (owner-requested 2026-07-16,
+  page-insurance §14in-3). Parked; a plan file must decide derived-line vs suggested-entries, double-count
+  handling, D-057 §0-protected invariants untouched, one derivation (the §14in-2 `_annual_premium`),
+  lapse/deletion semantics, and which figure Review summarises. **No behaviour invented.**
 
 ## OWNER RATIFICATIONS (2026-07-14)
 

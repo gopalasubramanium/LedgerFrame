@@ -1,8 +1,9 @@
 # page-insurance — build plan
 
 **Status: 🟢 §9 CLOSED (2026-07-15) · Phase 0 done · Phase 0a specimen shipped · §12 geometry gate RATIFIED
-WITH CONDITIONS (owner, 2026-07-16; §12in-1..5) · Phases 1–3a done · AWAITING OWNER WALK (Phase 3b).** See §11
-(Phase 0), §12 (gate rulings), §13 (Phases 1–3a build record). Phase 3b is the gate — nothing self-certified.
+WITH CONDITIONS (owner, 2026-07-16; §12in-1..5) · Phases 1–3a done · Phase 3b WALK BATCH 1 fixed + pre-pass
+re-GREEN (§14in-1..5), AWAITING OWNER RE-WALK.** See §11 (Phase 0), §12 (gate rulings), §13 (Phases 1–3a
+build record), §14 (walk batch 1). Phase 3b is the gate — nothing self-certified; the owner re-walks.
 
 Drafted 2026-07-15 from `TEMPLATE-page-build.md`. The **verify-first pass (D-019) is done** — §10 records
 what the insurance engine **actually serves and actually guards**, with `file:line` cites. Every ambiguity is
@@ -646,3 +647,121 @@ build.
 
 **STOP.** Phases 1–3a are complete and the pre-pass is GREEN. **Phase 3b (the owner acceptance walk) is the
 gate — nothing here is self-certified. The walk has not begun.**
+
+---
+
+## 14. OWNER WALK — BATCH 1 (owner, 2026-07-16)
+
+**The owner walked the live `/insurance` (demo-seeded, 2026-07-16) and filed five findings.** Recorded
+verbatim below; four are fixed this batch (three walk bugs + the §14in-2 honesty defect + one platform
+first-instance), one is parked to ROADMAP. **Nothing here is self-certified — the owner re-walks.**
+
+| # | Kind | Finding (owner) | Disposition |
+|---|------|-----------------|-------------|
+| **§14in-1** | bug | Page padding **exceeds the platform standard** — the whitespace between the totals strip, the policies card and the flanking cards is larger than every other page. | **FIXED** (Part 3.1). |
+| **§14in-2** | bug (honesty) | The **"Premium / yr"** column renders the served **per-frequency** `premium_display` — a monthly 50 shows as `50`, not `600`. A precise-looking figure that is **wrong**, and **Σ(column) ≠ the Annual premium total** shown in the strip beside it. | **FIXED** — backend-first (Part 2). |
+| **§14in-3** | scope → ROADMAP | Premiums should **flow into Cash flow automatically** — the owner calls the current separation *"disintegrated"*. | **PARKED → R-36** (Part 4). NOT batched: Cash flow's obligations register is §0-PROTECTED (D-057); derived-row injection is a data-model + semantics decision needing its own plan. |
+| **§14in-4** | bug | **Upcoming-renewals card** — dead vertical space; rows misaligned (dates float, right edge ragged). | **FIXED** (Part 3.2). |
+| **§14in-5** | platform decision | **Base-currency indication** on money summary surfaces should be shown **platform-wide** (which currency the aggregate is in). | **FIRST INSTANCE now** on the Insurance totals strip + **DESIGN-SYSTEM amendment (PROPOSED)** (Part 3.3); **cross-page retrofit scheduled, not batched** (CURRENT.md, beside the [Help]/Segmented retrofits). |
+
+### §14in-1 — page padding exceeds the platform standard (bug) — FIXED
+
+**Root cause (measured live, fail-first):** the shell content padding is IDENTICAL on every page
+(`24 / 20 / 64 / 20` px on `.lf-shell__content`) — **not** the deviation. The deviation is **page-local
+vertical margin**: `.ins__totals` and `.ins__section` each carried `margin-bottom: var(--space-4)` (12px),
+which **stacks on top of** `.lf-page`'s `gap: var(--space-5)` (16px) → the gap between the totals strip and
+the policies card, and between the policies card and the flanking cards, rendered at **28px** where
+`/cash-flow` and `/scenarios` (which set NO page-local margins) hold a consistent **16px** rhythm. A
+per-instance copy fighting the shared `.lf-page` gap IS the defect (the Segmented/StatusChip rule).
+
+**RED (before):** measured `/insurance` gaps = **28px, 28px** vs `/cash-flow` = **16, 16, 16, 16** and
+`/scenarios` = **16, 16, 16** (same shell padding on all three). **Fix:** deleted the two page-local
+`margin-bottom` rules; `.lf-page`'s gap now owns the vertical rhythm. **GREEN:** all `/insurance` gaps =
+**16px**, matching the platform standard. Guarded by the pre-pass rhythm assertion (Part 5).
+
+### §14in-2 — "Premium / yr" rendered the per-frequency premium (bug, honesty) — FIXED (backend-first)
+
+**The lie:** the column read the served `premium_display`, which is the premium **as the user pays it**
+(a monthly premium of 50 renders `50.00`), while its header says *"/ yr"* and the strip beside it sums the
+**annual-equivalent** `total_annual_premium`. So the column showed a precise-but-wrong number **and** the
+column did not reconcile with the total.
+
+**Fix (Part 2), one derivation:** a per-policy annual-equivalent is now computed by **one function**,
+`_annual_premium(premium, frequency)`, that **both** the served per-row `annual_premium_display` AND the
+`total_annual_premium` accumulator call — no second derivation. Frequency semantics (GLOSSARY): monthly
+×12, quarterly ×4, annual ×1, **single → no recurring equivalent** (served `null` → the UI renders a bare
+em dash, the §12in-4 user-data-absent case). Non-base policies keep the §12in-1 currency-code affix. The
+column renders `annual_premium_display` verbatim; the editor still captures premium + frequency as entered
+(the register stores what the user pays; the page shows the annual equivalent).
+
+**RED (before) → GREEN:** `test_insurance_walk1` — a monthly-50 fixture asserting
+`annual_premium_display == "600.00"` (RED: field absent), and an **equality test**
+`Σ(served per-row annual, FX-converted) == total_annual_premium` (the A11 pattern — pins the one
+derivation). See §14 build record (Part 5).
+
+### §14in-4 — upcoming-renewals card: dead space + misaligned rows (bug) — FIXED
+
+**Root cause (measured live, fail-first):** (a) the flanking grid stretched the renewals card to
+**351px** to match the taller 7-row cover-by-type sibling, while the renewals content was only ~159px →
+**~190px of reserved dead vertical space**; (b) rows were flex with `margin-left:auto`, so the date column
+floated (measured date left edges at **L569 / L542 / L542 / L464** — ragged) and only the chip right edge
+happened to align.
+
+**Fix:** the renewals list is now a **subgrid** — every row shares three tracks: policy name
+(`minmax(0,1fr)`, truncating, min-width) · date (tabular, right-aligned) · state chip / *"in N days"*
+(right-edge aligned); the list fills the card width. The flanking grid uses `align-items: start` so each
+card's height is **content-driven** (consistent with the cover-by-type sibling) — no reserved dead space.
+Breakpoints model the content box; the responsive containment guard runs in the **pre-pass at real
+viewports** (TEMPLATE §7 media-query exception), not on a static specimen. **RED → GREEN** proven by the
+pre-pass row-alignment + no-dead-space assertions (Part 5).
+
+### §14in-5 — base-currency indication (platform decision) — FIRST INSTANCE + DESIGN-SYSTEM (PROPOSED)
+
+Money **summary tiles/strips** that show a base-currency aggregate now carry a **small muted currency-code
+affix** (e.g. `SGD`) next to the value — one pattern, token-styled via the existing `.lf-stat__unit` slot
+(muted `--text-tertiary`, no new component), **never colour-semantic**. The affix source is the SERVED
+`base_currency` (`/insurance` already serves it, `insurance.py`). Applied to the Insurance totals strip's
+three **money** tiles now (Total cover · Cash value · Annual premium); the **Active policies** count tile
+carries none (it is not money). Per-row non-base amounts already carry codes (§12in-1).
+
+Recorded as a **DESIGN-SYSTEM.md "Base-currency indication" entry (PROPOSED — owner ratifies at the
+re-walk)**. The **cross-page retrofit is a scheduled batch** — each already-accepted money-summary page
+(liquidity/runway/statement readers already serve `base_currency`; Net worth, Portfolio, Home, Review
+tiles) needs its own pre-pass re-run — listed in CURRENT.md beside the [Help]/Segmented retrofits, owner
+picks the targets. **Not batched here.**
+
+### §14 BUILD RECORD — Walk batch 1 (2026-07-16) — RED → GREEN
+
+**Backend (§14in-2), fail-first, no contract shape change** (the `/insurance` route is an untyped dict —
+the added `annual_premium` / `annual_premium_display` keys flow through; `make api-contract-check` green):
+
+| Item | Change (file) | RED → GREEN |
+|------|---------------|-------------|
+| **§14in-2** | One `_annual_premium(premium, frequency)` helper (`services/insurance.py`) — monthly ×12, quarterly ×4, annual ×1, **single/none → None**; BOTH `_serialize.annual_premium_display` AND the `total_annual_premium` accumulator call it (one derivation). Demo seed converted to a **mixed-frequency** register (`seed/demo.py`): monthly 100/200/40, quarterly 450/150, single 3000, one no-premium — annual-equivalents chosen so `total_annual_premium` is unchanged. Frontend: the "Premium / yr" column renders `annual_premium_display` (`Insurance.tsx`); `api/insurance.ts` typed. | `test_insurance_walk1` (3): a monthly-50 fixture asserting `annual_premium_display == "600.00"` — **RED: `KeyError: 'annual_premium'`** (field absent, column showed the raw per-frequency premium) → **GREEN**; the multiplier + single→null cases; and the **A11 equality** `Σ(active per-row annual) == total_annual_premium` (base-currency, exact). Unit: `Insurance.test.tsx` gains a monthly-100 row asserting the /yr cell reads `1,200.00`, not `100.00`. |
+
+**Frontend (§14in-1 / §14in-4 / §14in-5), CSS/compose only:**
+
+| Item | Change | RED (measured live) → GREEN |
+|------|--------|-----------------------------|
+| **§14in-1** | Deleted the page-local `margin-bottom: var(--space-4)` on `.ins__totals` + `.ins__section` (`Insurance.css`) — `.lf-page`'s gap now owns the rhythm. | pre-pass **PART 7a**: section gaps **[16, 28, 28]** on the pre-fix CSS (guard RED, *"section rhythm == .lf-page gap"*) → **[16, 16, 16]** (== the platform standard, as `/cash-flow` and `/scenarios`). |
+| **§14in-4** | Renewals list → **subgrid** (name · date · chip/days, right-edge aligned); flanking grid `align-items: start` (content-driven height). The 1-col totals breakpoint widened 30rem → **40rem** (the §14in-5 affix widened the largest money value; a 2-col tile clipped `2,952,505.50 SGD` below ~560px). | pre-pass **PART 7c**: pre-fix date lefts **L569/L542/L542/L464** (ragged), both flank cards stretched to **351px** → dates all **L589**, right edges all **L767**, renewals **213px < cover-by-type 318px** (no dead-space stretch), slack below list **30px**. Containment @320..1366 GREEN after the breakpoint fix. |
+| **§14in-5** | Totals money tiles pass `unit={base_currency}` (`Insurance.tsx`) → the muted `.lf-stat__unit` affix; DESIGN-SYSTEM.md "Base-currency indication" entry (PROPOSED). | pre-pass **PART 7d**: Total cover / Cash value / Annual premium each carry **`SGD`**; the **Active policies** count tile carries **none**. |
+
+**Verification (all GREEN):** backend **774 passed** (+3 walk1; 16 insurance) · `api-contract-check` green ·
+frontend typecheck / lint / tokens clean · `Insurance.test.tsx` **9** · `NetWorth.test.tsx` **7** · build
+green · overflow suite **179** (incl. `/insurance` 320/375/900/1366 × both themes + shared-shell +
+themed-link) · **`insurance-smoke` live GREEN** (PART 7a–7d + containment + CRUD round-trip + single
+vertical scroll + **0 console errors**, both themes) · **`net-worth-smoke` live GREEN** (D-081 line
+`16,140.13` served verbatim — unaffected). **Fail-first proven** on the real cause for both the backend
+(`KeyError`) and the geometry (gaps `[16,28,28]`).
+
+**⚠ Pre-existing, NOT mine (unchanged, out of scope):** the frontend `npm run check` is still RED on the
+`CashFlow.tsx:330` unhandled error in an `AppShell` redirect test (reproduces at `c0e9fb1`, logged in
+`08-TECH-DEBT.md`). None of this batch touches CashFlow/AppShell.
+
+**§14in-3 is PARKED to ROADMAP R-36 — not built.** No premiums→Cash-flow behaviour was invented.
+
+**STOP — AWAITING OWNER RE-WALK.** Batch 1 is fixed + re-verified by the scripted pre-pass; **nothing here
+is self-certified**. The owner re-walks `/insurance` (padding rhythm, the annualised "Premium / yr" column
++ its reconciliation, the aligned renewals card, the base-currency affix) and ratifies §14in-5 (the
+DESIGN-SYSTEM "Base-currency indication" entry, still PROPOSED).

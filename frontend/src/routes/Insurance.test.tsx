@@ -17,6 +17,7 @@ const policy = (over: Partial<InsuranceResp["policies"][number]>): InsuranceResp
   policy_number: null, insured_person: null,
   cover_amount: 500000, cover_amount_display: "500,000.00", currency: "SGD",
   cash_value: null, cash_value_display: null, premium: 1200, premium_display: "1,200.00",
+  annual_premium: 1200, annual_premium_display: "1,200.00",
   premium_frequency: "annual", start_date: null, renewal_date: "2026-08-30", nominee: null,
   linked_goal_id: null, documents: [], notes: null, status: "active", ...over,
 });
@@ -24,14 +25,20 @@ const policy = (over: Partial<InsuranceResp["policies"][number]>): InsuranceResp
 const DATA: InsuranceResp = {
   base_currency: "SGD",
   policies: [
-    policy({ id: 1, name: "Term Life", cover_amount_display: "500,000.00", renewal_date: "2026-08-15" }),
+    // A MONTHLY-100 policy: the "Premium / yr" column shows the annual equivalent 1,200.00 (§14in-2).
+    policy({ id: 1, name: "Term Life", cover_amount_display: "500,000.00", renewal_date: "2026-08-15",
+      premium: 100, premium_display: "100.00", premium_frequency: "monthly",
+      annual_premium: 1200, annual_premium_display: "1,200.00" }),
     policy({ id: 2, name: "Global Whole Life", policy_type: "whole_life", policy_type_label: "Whole life",
       currency: "USD", cover_amount_display: "USD 500,000.00", cash_value_display: "USD 12,000.00",
-      premium_display: "USD 800.00", renewal_date: "2026-07-28" }),
+      premium_display: "USD 800.00", annual_premium: 800, annual_premium_display: "USD 800.00",
+      renewal_date: "2026-07-28" }),
     policy({ id: 3, name: "Motor (private car)", policy_type: "motor", policy_type_label: "Motor",
-      premium: null, premium_display: null, renewal_date: "2026-07-08" }),
+      premium: null, premium_display: null, annual_premium: null, annual_premium_display: null,
+      renewal_date: "2026-07-08" }),
     policy({ id: 9, name: "Endowment (matured)", policy_type: "whole_life", policy_type_label: "Whole life",
-      status: "lapsed", premium: null, premium_display: null, renewal_date: null }),
+      status: "lapsed", premium: null, premium_display: null, annual_premium: null,
+      annual_premium_display: null, renewal_date: null }),
   ],
   count: 3, // ACTIVE only (the lapsed Endowment is excluded)
   total_cover: 2580000, total_cover_display: "2,580,000.00",
@@ -114,6 +121,17 @@ test("a missing premium renders a bare em dash, never a 0 (§12in-4)", async () 
   // the PREMIUM cell (column index 3) is a bare em dash (U+2014), never "0.00"
   const premiumCell = motor.querySelectorAll("td")[3];
   expect(premiumCell.textContent).toBe("—");
+});
+
+test("the 'Premium / yr' column renders the ANNUAL EQUIVALENT, not the per-frequency premium (§14in-2)", async () => {
+  const { container } = renderPage();
+  await screen.findByText("2,580,000.00");
+  const table = container.querySelector('[data-card="policies"]') as HTMLElement;
+  const term = [...table.querySelectorAll("tbody tr")].find((r) => r.textContent?.includes("Term Life"))!;
+  // Term Life is monthly-100; the Premium/yr cell (column index 3) shows 1,200.00 (×12), NOT 100.00.
+  const premiumCell = term.querySelectorAll("td")[3];
+  expect(premiumCell.textContent).toBe("1,200.00");
+  expect(premiumCell.textContent).not.toBe("100.00");
 });
 
 test("the served disclaimer carries both exclusion sentences; 'see Net worth' is a link (§12in-2)", async () => {

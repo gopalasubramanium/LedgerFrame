@@ -197,8 +197,10 @@ export function Insurance() {
     { key: "policy_type", label: "Type", sortable: true, render: (p) => p.policy_type_label },
     { key: "cover_amount", label: "Cover", align: "right", sortable: true, render: (p) => shown(p.cover_amount_display) },
     {
-      key: "premium", label: "Premium / yr", align: "right", sortable: true,
-      render: (p) => (p.premium_display ? p.premium_display : <span className="ins__missing">{EMDASH}</span>),
+      // §14in-2 — the ANNUAL EQUIVALENT (served, one derivation with the strip total), never the raw
+      // per-frequency premium. A single-pay / no-premium policy serves null → a bare em dash (§12in-4).
+      key: "annual_premium", label: "Premium / yr", align: "right", sortable: true,
+      render: (p) => (p.annual_premium_display ? p.annual_premium_display : <span className="ins__missing">{EMDASH}</span>),
     },
     {
       key: "renewal_date", label: "Renewal", sortable: true,
@@ -256,10 +258,13 @@ export function Insurance() {
 
       {data && data.policies.length > 0 && (
         <>
+          {/* §14in-5 — money summary tiles carry the base-currency code as a muted affix (DESIGN-SYSTEM
+              "Base-currency indication", PROPOSED). The source is the SERVED base_currency; the count tile
+              is not money, so it carries none. */}
           <section className="ins__totals" data-card="totals">
-            <TrendStat label="Total cover" value={shown(data.total_cover_display)} />
-            <TrendStat label="Cash value (excluded)" value={shown(data.total_cash_value_display)} />
-            <TrendStat label="Annual premium" value={shown(data.total_annual_premium_display)} />
+            <TrendStat label="Total cover" value={shown(data.total_cover_display)} unit={data.base_currency} />
+            <TrendStat label="Cash value (excluded)" value={shown(data.total_cash_value_display)} unit={data.base_currency} />
+            <TrendStat label="Annual premium" value={shown(data.total_annual_premium_display)} unit={data.base_currency} />
             <TrendStat label="Active policies" value={String(data.count)} />
           </section>
 

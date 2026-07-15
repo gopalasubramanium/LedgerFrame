@@ -30,7 +30,9 @@ export interface Policy {
   cash_value: number | null;
   cash_value_display: string | null;
   premium: number | null;
-  premium_display: string | null;
+  premium_display: string | null; // the per-frequency premium as the user pays it
+  annual_premium: number | null;
+  annual_premium_display: string | null; // the ANNUAL EQUIVALENT — the "Premium / yr" column (§14in-2); null (single/none) → em dash
   premium_frequency: string;
   start_date: string | null;
   renewal_date: string | null;

@@ -190,16 +190,20 @@ async def seed_demo_data(session: AsyncSession) -> bool:
     def _iso(days: int) -> str:
         return (_today + _td(days=days)).isoformat()
 
+    # A realistic MIXED-FREQUENCY register (page-insurance §14in-2): the premium is stored as the user
+    # pays it (monthly 200, quarterly 150, …) and the page shows the ANNUAL EQUIVALENT (monthly ×12,
+    # quarterly ×4). The monthly/quarterly annual-equivalents below equal the prior annual premiums, so
+    # total_annual_premium is unchanged while the per-row "Premium / yr" now exercises the annualisation.
     _seed_policies = [
         # name, insurer, type, currency, cover, cash, premium, freq, renewal_days, status, docs
-        ("Term Life", "Prudential Assurance Singapore", "term_life", "SGD", "500000", None, "1200", "annual", 45, "active", True),
-        ("Global Whole Life", "Zurich International", "whole_life", "USD", "500000", "12000", "800", "annual", 210, "active", False),
-        ("IntegratedShield", "AIA Singapore", "health", "SGD", "1000000", None, "2400", "annual", 12, "active", False),
-        ("Critical Illness", "Manulife (Singapore)", "critical_illness", "SGD", "300000", None, "1800", "annual", -8, "active", False),
-        ("Personal Accident", "NTUC Income Insurance Co-operative", "personal_accident", "SGD", "250000", None, "480", "annual", 90, "active", False),
-        ("Motor (private car)", "MSIG Insurance", "motor", "SGD", "80000", None, None, "annual", 25, "active", False),
-        ("Home Contents", "Chubb Insurance Singapore", "property", "SGD", "150000", None, "600", "annual", 300, "active", False),
-        ("Endowment (matured)", "AXA Insurance", "whole_life", "SGD", "50000", "51000", None, "single", None, "lapsed", False),
+        ("Term Life", "Prudential Assurance Singapore", "term_life", "SGD", "500000", None, "100", "monthly", 45, "active", True),         # 1,200/yr
+        ("Global Whole Life", "Zurich International", "whole_life", "USD", "500000", "12000", "800", "annual", 210, "active", False),       # 800/yr (non-base)
+        ("IntegratedShield", "AIA Singapore", "health", "SGD", "1000000", None, "200", "monthly", 12, "active", False),                    # 2,400/yr
+        ("Critical Illness", "Manulife (Singapore)", "critical_illness", "SGD", "300000", None, "450", "quarterly", -8, "active", False),  # 1,800/yr
+        ("Personal Accident", "NTUC Income Insurance Co-operative", "personal_accident", "SGD", "250000", None, "40", "monthly", 90, "active", False),  # 480/yr
+        ("Motor (private car)", "MSIG Insurance", "motor", "SGD", "80000", None, None, "annual", 25, "active", False),                     # no premium → em dash
+        ("Home Contents", "Chubb Insurance Singapore", "property", "SGD", "150000", None, "150", "quarterly", 300, "active", False),       # 600/yr
+        ("Endowment (matured)", "AXA Insurance", "whole_life", "SGD", "50000", "51000", "3000", "single", None, "lapsed", False),          # single-pay → em dash (no annual equiv)
     ]
     for name, insurer, ptype, ccy, cover, cash, prem, freq, rd, status, docs in _seed_policies:
         session.add(InsurancePolicy(

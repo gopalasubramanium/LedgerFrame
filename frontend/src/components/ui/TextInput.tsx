@@ -1,3 +1,4 @@
+import { useId } from "react";
 import "./inputs.css";
 
 // Plain free-text entry (DESIGN-SYSTEM §5.1, amended 2026-07-10 — Holdings
@@ -5,6 +6,11 @@ import "./inputs.css";
 // money/date/quantity/categorical field (e.g. manual-asset label, tag entry,
 // free-text names). Wraps the native input internally so §6's "no raw <input>"
 // rule holds. NOT for categorical data — use MasterSelect for those.
+//
+// `suggestions` (optional, page-insurance §9-5) attaches a native <datalist> —
+// a free-text field with typeahead HINTS drawn from existing user data. It is a
+// CONVENIENCE, not a vocabulary: any typed value is still accepted (unlike
+// MasterSelect), so it never constrains input.
 export interface TextInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -12,6 +18,7 @@ export interface TextInputProps {
   disabled?: boolean;
   maxLength?: number;
   onEnter?: () => void;
+  suggestions?: string[];
   "aria-label": string;
 }
 
@@ -22,8 +29,10 @@ export function TextInput({
   disabled,
   maxLength,
   onEnter,
+  suggestions,
   "aria-label": ariaLabel,
 }: TextInputProps) {
+  const listId = useId();
   return (
     <span className={`lf-field lf-field--block${disabled ? " lf-field--disabled" : ""}`}>
       <input
@@ -34,6 +43,7 @@ export function TextInput({
         disabled={disabled}
         maxLength={maxLength}
         aria-label={ariaLabel}
+        list={suggestions && suggestions.length ? listId : undefined}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={
           onEnter
@@ -46,6 +56,13 @@ export function TextInput({
             : undefined
         }
       />
+      {suggestions && suggestions.length > 0 && (
+        <datalist id={listId}>
+          {suggestions.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      )}
     </span>
   );
 }

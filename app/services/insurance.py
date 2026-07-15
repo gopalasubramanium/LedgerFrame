@@ -93,6 +93,9 @@ def _serialize(r: InsurancePolicy, base: str) -> dict:
             docs = []
     return {
         "id": r.id, "name": r.name, "insurer": r.insurer, "policy_type": r.policy_type,
+        # Display-cased at the boundary (§9-12) so the table renders a served label, never mapping the
+        # enum on the client — including for a lapsed-only type that cover_by_type does not carry.
+        "policy_type_label": _type_label(r.policy_type),
         "policy_number": r.policy_number, "insured_person": r.insured_person,
         # Money is served as a display string (D-105); the raw float stays alongside for callers that
         # still read it (e.g. Net worth's exclusion line reads the total's display). Non-base currencies

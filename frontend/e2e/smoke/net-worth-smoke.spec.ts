@@ -146,8 +146,20 @@ test.describe.serial("net worth pre-pass (live)", () => {
     // PART 5: runway card + honest basis label (ND-9) --------------------------------------------
     await expect(page.getByText(/Basis: liquid assets ÷ recurring monthly net burn/)).toBeVisible();
 
-    // PART 6: insurance exclusion line — demo has 0 policies → line OMITTED (ND-5) ---------------
-    expect(await page.locator(".nw__exclusion").count(), "no exclusion line when zero policies").toBe(0);
+    // PART 6: insurance exclusion line (D-039/D-081) — the demo now seeds an insurance register
+    // (page-insurance §12in-1), so the line is PRESENT and renders the SERVED display total verbatim
+    // (page-insurance §9-4 migrated it to total_cash_value_display). When ≥1 active policy has cash
+    // value, count>0 → the line shows; the served string must equal what /insurance serves.
+    const ins = await (await page.request.get("http://127.0.0.1:8321/api/v1/insurance")).json();
+    if (ins.count > 0 && ins.total_cash_value > 0) {
+      const line = page.locator(".nw__exclusion");
+      await expect(line, "the exclusion line renders when there is active cash value").toHaveCount(1);
+      await expect(line).toContainText(ins.total_cash_value_display); // served verbatim (no client math)
+      await expect(line.getByRole("link", { name: /see Insurance/ })).toBeVisible();
+      console.log(`PART 6 — D-081 line: ${ins.total_cash_value_display} (served verbatim)`);
+    } else {
+      expect(await page.locator(".nw__exclusion").count(), "no line when there is no active cash value").toBe(0);
+    }
 
     // PART 7: progressive loading — every card resolved OUT of skeleton --------------------------
     await expect(page.locator(".lf-skeleton"), "no card stuck in skeleton").toHaveCount(0);

@@ -65,6 +65,7 @@ const FIXED: Record<string, string[]> = {
     "personal_accident", "property", "motor", "travel", "other",
   ],
   premium_frequency: ["monthly", "quarterly", "annual", "single"],
+  policy_status: ["active", "lapsed", "expired"],
   estate_doc_category: [
     "will", "insurance", "property", "loan", "identity", "bank", "tax",
     "medical", "other",
@@ -99,6 +100,7 @@ const FIXED_LABELS: Record<string, string> = {
   account_kind: "Account kind",
   policy_type: "Policy type",
   premium_frequency: "Premium frequency",
+  policy_status: "Policy status",
   estate_doc_category: "Document category",
   contact_role: "Contact role",
 };

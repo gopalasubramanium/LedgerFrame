@@ -37,6 +37,14 @@ _RENEWAL_SOON_DAYS = 60   # Insurance page horizon — "a page you visit deliber
 _OVERDUE_CLAMP_DAYS = 3650  # ~10 years — the shared lower bound for "overdue" reminders
 
 
+def _type_label(policy_type: str) -> str:
+    """Display-case a policy_type enum at the backend boundary (§9-12 / §12rv1-5), matching the
+    titleize `/refdata` serves for the same value (e.g. `critical_illness` → "Critical illness") so
+    the UI renders it verbatim and never maps enums. None of the policy_type values need an override."""
+    s = policy_type.replace("_", " ")
+    return s[:1].upper() + s[1:]
+
+
 def _dec(v) -> Decimal | None:
     if v is None or v == "":
         return None
@@ -170,7 +178,7 @@ async def insurance_report(session: AsyncSession) -> dict:
         "total_cash_value_display": format_money_display(total_cash),
         "total_annual_premium": float(round(total_prem, 0)),
         "total_annual_premium_display": format_money_display(total_prem),
-        "cover_by_type": sorted(({"type": k, "value": round(v, 0),
+        "cover_by_type": sorted(({"type": k, "label": _type_label(k), "value": round(v, 0),
                                   "value_display": format_money_display(v)} for k, v in by_type.items()),
                                 key=lambda x: x["value"], reverse=True),
         "upcoming_renewals": upcoming,   # already sorted by days (the shared helper)

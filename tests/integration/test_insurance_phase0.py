@@ -137,3 +137,18 @@ async def test_upcoming_renewals_is_exactly_the_shared_helper(session):
     helper = await renewal_reminders(session, _RENEWAL_SOON_DAYS)
     assert rep["upcoming_renewals"] == helper          # one derivation — cannot silently diverge
     assert [u["name"] for u in helper] == ["A", "B"]   # C (200d) outside the 60d page horizon; sorted by days
+
+
+# --------------------------------------------------------------------------- #
+# 9-12 — cover_by_type is display-cased at the backend boundary (the UI never maps enums).
+# --------------------------------------------------------------------------- #
+async def test_cover_by_type_display_cased_at_boundary(app_client):
+    """§9-12 — cover_by_type serves {type, label, value, value_display}. RED today: no `label` key."""
+    base = await _base(app_client)
+    await app_client.post("/api/v1/insurance", json={
+        "name": "CI", "policy_type": "critical_illness", "cover_amount": 100000,
+        "currency": base, "premium_frequency": "annual", "status": "active"})
+    row = (await app_client.get("/api/v1/insurance")).json()["cover_by_type"][0]
+    assert row["type"] == "critical_illness"
+    assert row["label"] == "Critical illness"       # display-cased at the boundary, not a raw enum
+    assert row["value_display"] == "100,000.00"

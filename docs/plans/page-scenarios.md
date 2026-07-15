@@ -650,5 +650,7 @@ are cited by `file:line`.**
 
 - **Base-currency affix (RATIFIED):** the four Exposure tiles + the "Net worth today" caption now carry the
   served `base_currency` (`/portfolio/scenarios`) as the muted `.lf-stat__unit` affix. The widened value
-  clipped at 320px until `TrendStat` gained a zero-width-space break before the unit (wraps the code to its
-  own line when tight); proven RED (`980,000.00SGD` `191>186`) → GREEN. Scenarios.test.tsx (9) + `scenarios-smoke` green.
+  clipped at 320px until `TrendStat` gained a **`.lf-stat__value` flex-wrap** that drops the code to its own
+  line when tight; proven RED (`980,000.00SGD` `191>186`) → GREEN. Scenarios.test.tsx (9) + `scenarios-smoke`
+  green. *(Record correction 2026-07-16: the first cut used a zero-width-space break, superseded by the
+  flex-wrap in hygiene commit `331e856` because the ZWSP split the value's DOM text node — see 08-TECH-DEBT.)*

@@ -1,9 +1,11 @@
 # page-insurance — build plan
 
-**Status: 🟢 §9 CLOSED (2026-07-15) · Phase 0 done · Phase 0a specimen shipped · §12 geometry gate RATIFIED
-WITH CONDITIONS (owner, 2026-07-16; §12in-1..5) · Phases 1–3a done · Phase 3b WALK BATCH 1 fixed + pre-pass
-re-GREEN (§14in-1..5), AWAITING OWNER RE-WALK.** See §11 (Phase 0), §12 (gate rulings), §13 (Phases 1–3a
-build record), §14 (walk batch 1). Phase 3b is the gate — nothing self-certified; the owner re-walks.
+**Status: ✅ CLOSED — OWNER ACCEPTED (2026-07-16).** §9 CLOSED (2026-07-15) · Phases 0/0a/1/2/3a done ·
+§12 geometry gate RATIFIED WITH CONDITIONS (§12in-1..5) · Phase 3b owner walk CLOSED across two batches
+(§14in-1..8). The owner walked batches 1–2, confirmed the hygiene commit (`331e856`), and ACCEPTED the
+page — **including Instrument Detail full-width as shipped** (a ruling, not a drift — the §14in-6 uniform
+page-inset consequence). See §11 (Phase 0), §12 (gate rulings), §13 (Phases 1–3a build record), §14 (walk
+batches 1–2 + CLOSE), §15 (close-out + retrospective).
 
 Drafted 2026-07-15 from `TEMPLATE-page-build.md`. The **verify-first pass (D-019) is done** — §10 records
 what the insurance engine **actually serves and actually guards**, with `file:line` cites. Every ambiguity is
@@ -836,10 +838,13 @@ removed. **Instrument Detail** has **no** base-currency summary TILES — its "Y
 `<dl>` whose money row already labels the currency (`Value (SGD)`) — so it is out of scope (verified, not
 skipped). Markets / Heatmap / Pricing Health rows carry per-quote codes already — out of scope.
 
-**Platform improvement (TrendStat):** a **zero-width-space break** now sits before the `unit`, so on a
-narrow tile the code drops to its own line instead of clipping the value (invisible when it fits) —
-otherwise the widened value clipped at 320px (Scenarios) / would have at 500px (Insurance). Proven RED
-(Scenarios exposure `980,000.00SGD` clipped `191>186` @320) → GREEN (wraps, `186==186`).
+**Platform improvement (TrendStat):** on a narrow tile the muted `unit` code now **wraps to its own line
+via `.lf-stat__value` flex-wrap** instead of clipping the value (invisible when it fits) — otherwise the
+widened value clipped at 320px (Scenarios) / would have at 500px (Insurance). Proven RED (Scenarios exposure
+`980,000.00SGD` clipped `191>186` @320) → GREEN (wraps, `186==186`). **Record correction (hygiene commit
+`331e856`):** the first cut used a **zero-width-space break** before the `unit`, but that split the value's
+DOM text node and broke `getByText` in `Insurance.test.tsx` — it was **superseded by the `.lf-stat__value`
+flex-wrap** above, which keeps the text nodes clean (08-TECH-DEBT records the supersession).
 
 ### §14in-8 (bug, honesty) — Review headline disagreed with Net worth — FIXED (backend-first)
 
@@ -879,3 +884,98 @@ wide viewports (Insurance/Holdings now match Net worth/Portfolio; **Instrument D
 a consequence of the uniform-inset ruling, flagged for confirmation), the base-currency affix on every
 money summary across the platform (one form), and the Review headline now matching Net worth/Holdings to
 the cent.
+
+---
+
+## 14 — WALK CLOSED · ✅ OWNER ACCEPTED (2026-07-16)
+
+The owner walked batches 1–2 live, confirmed the hygiene commit (`331e856`), and **ACCEPTED `/insurance`**.
+The acceptance **includes Instrument Detail rendering full-width** as a consequence of the §14in-6 uniform
+page-inset ruling: the owner ruled this a **standard, not a drift** (recorded in DESIGN-SYSTEM §3.1's
+detail-page note). Every walk finding carries its final state below.
+
+| # | Final state |
+|---|-------------|
+| **§14in-1** | RE-OPENED at batch 2 (the batch-1 gap-rhythm guard measured an adjacent property, not the named inset) → **SUPERSEDED by §14in-6**. |
+| **§14in-2** | Annual-premium honesty — **FIXED + ACCEPTED.** One `_annual_premium` derivation feeds both the per-row `annual_premium_display` and the strip total; Σ(column) reconciles with the total (A11 equality). |
+| **§14in-3** | Premiums → Cash flow — **PARKED → ROADMAP R-36** (not built; needs its own plan; no behaviour invented). |
+| **§14in-4** | Renewals card alignment / dead space — **FIXED + ACCEPTED** (subgrid rows, content-driven card height). |
+| **§14in-5** | Base-currency affix (first instance) — **RATIFIED** (DESIGN-SYSTEM §5.2); superseded-forward by §14in-7's platform-wide retrofit. |
+| **§14in-6** | Page-inset drift + `.ins`/`.idp` class collision — **FIXED + ACCEPTED.** DESIGN-SYSTEM §3.1 "Page inset" RATIFIED; **Instrument Detail full-width RATIFIED** as the detail-page consequence. |
+| **§14in-7** | Base-currency affix **RATIFIED + retrofitted platform-wide** (one form, served `base_currency`) — **FIXED + ACCEPTED.** |
+| **§14in-8** | Review headline == Net worth to the cent (removed the whole-dollar `round`) — **FIXED + ACCEPTED.** |
+
+**Acceptance:** `/insurance` **ACCEPTED by the owner, 2026-07-16.** Phase 3b is CLOSED. Nothing further is
+built for Insurance.
+
+### Served copy — ratified-as-shipped (owner walk, 2026-07-16)
+
+The copy the milestone shipped is **ratified-as-shipped** at the walk — one sweep line each, recorded where
+it lives:
+
+| Served copy | Where recorded | Status |
+|-------------|----------------|--------|
+| Protected D-055 bar — *"A register, never an adequacy judgment."* | §9-2 / §12; `insurance.py` | **RATIFIED as shipped** (standing adequacy-language guard permanent, §13). |
+| Extended exclusion disclaimer (lapsed/expired excluded; cash value → "see Net worth") | §12in-2; `insurance.py` | **RATIFIED as shipped.** |
+| EmptyState wording (*"…cover, premiums, renewals and documents"* + Add CTA) | §9-1 / §12in-5 | **RATIFIED as shipped.** |
+| `?entity_id` 400 detail (*household-scoped*) | §9-6; `routes/insurance.py` | **RATIFIED as shipped.** |
+| Documents-checklist seed labels (Policy schedule · Premium receipts · Nominee form · Terms & conditions) | §9-8 (Amendment D); `insurance.py` | **RATIFIED as shipped** (seed content, not a vocabulary — the parity guard does not police it). |
+
+### PROPOSED → RATIFIED sweep (owner walk, 2026-07-16)
+
+| Item | Store(s) | Status |
+|------|----------|--------|
+| GLOSSARY: Cover · Cover amount · Premium · Premium frequency · Nominee · Insured person · Renewal | `GLOSSARY.md` + `mocks/glossary.ts` | **RATIFIED** — markers flipped; parity suite green after the edit. |
+| Base-currency indication (§14in-5/-7) | DESIGN-SYSTEM §5.2 | **RATIFIED 2026-07-16** (confirmed; no leftover PROPOSED tag). |
+| Page inset — ONE shell-owned standard (§14in-6) | DESIGN-SYSTEM §3.1 | **RATIFIED 2026-07-16** (confirmed; detail-page note appended). |
+
+---
+
+## 15. CLOSE-OUT + RETROSPECTIVE — ✅ OWNER ACCEPTED (2026-07-16)
+
+`/insurance` is **live and owner-accepted** — the protection register (Worklist template, the Cash flow CRUD
+patterns), and the first page to expose the **cross-page platform reach** of a single walk (the base-currency
+affix and page-inset standard rippled into every accepted money-summary page). Phase 3b closed across two
+walk batches (§14in-1..8). Beyond the page itself, the milestone delivered **platform** items: the
+**page-inset standard + cross-page inset guard** (§14in-6), the **base-currency-affix retrofit platform-wide**
+(§14in-7), the **one-headline Review fix** (§14in-8), the **annual-premium single-derivation** (§14in-2), a
+**hygiene commit** (`331e856`) closing the CashFlow partial-mock crash + the collateral TrendStat wrap, and
+**R-36 parked** for premiums→Cash-flow.
+
+### 15a. Strike-check — every §9 / §12 / §14 item closed (none silently dropped)
+
+| Group | Items | Outcome |
+|-------|-------|---------|
+| **§9** (13 needs-decision) | 9-1..9-13 | ✅ all RULED one-pass 2026-07-15; every ruling shipped or recorded as a named seam (Institution master → Accounts; `linked_goal_id` → surfaced when goals have a home). |
+| **§12** (geometry gate) | §12in-1..5 | ✅ all shipped (currency code on non-base strings; served exclusion disclaimer; served renewal `state`; em-dash distinction; EmptyState + StatusChip tones). |
+| **§14** (walk) | §14in-1..8 | ✅ all closed — §14in-1 superseded by -6; -2/-4/-6/-7/-8 FIXED+ACCEPTED; -3 parked → R-36; -5 ratified (superseded-forward by -7). |
+
+### 15b. Lessons — MECHANISED, not essays (strike-checked against the TEMPLATE first)
+
+Each lesson was checked against `TEMPLATE-page-build.md` (already recorded?), verified against the shipped
+diff, and folded as a **mechanism** — an extension where a rule existed, never a duplicate.
+
+| # | Lesson | Mechanism (the fold) |
+|---|--------|----------------------|
+| **(a)** | **Red trunk blinds verification.** Batch 2's 7 red Insurance unit tests hid behind the known-red `CashFlow.tsx:330` failure; only the `npm run check` exit-0 hard gate flushed them out. A known-red left standing is a screen the next regression hides behind. | **FOLDED into TEMPLATE §8 phase-report verification checklist:** every phase/batch report states the frontend check's **EXIT CODE from the correct directory**; a known-red is **fixed or explicitly quarantined the same day it is found**, never left standing on trunk. |
+| **(b)** | **A guard must measure the geometry the finding NAMES.** §14in-1 went green on section gaps (16px rhythm) while the owner's finding was the **page inset** — a green on an adjacent property that hid the bug until batch 2. | **FOLDED into TEMPLATE §7 testing culture** (next to the containment / pixel rules): a guard asserts the exact dimension the finding names, at the width where it appears — matching a neighbouring property is a false green. |
+| **(c)** | **A platform standard beats a page fix.** The inset drifted because **no standard existed** (each page set its own root); the fix was to write DESIGN-SYSTEM §3.1 + a cross-page guard, not to patch Insurance. | Recorded — the **guard IS the mechanism**: DESIGN-SYSTEM §3.1 "Page inset" + `overflow.spec.ts` "every page fills the shell content box" (measured at 1728). One line; no new rule needed. |
+| **(d)** | **A record must name the mechanism actually shipped.** The §14in-7 record described the TrendStat wrap as a **zero-width-space break**; the hygiene commit superseded it with `.lf-stat__value` **flex-wrap** (the ZWSP split the value's text node and broke `getByText`). A stale mechanism in the record is a claim, not a fact. | Corrected in this close-out (§14in-7 record, `page-scenarios.md` delta note, 08-TECH-DEBT supersession line). Reinforces the existing TEMPLATE §3b "a ratified value/mechanism needs a same-batch record that matches the code" rule — no new rule. |
+
+### 15c. Changed-file table — from the ACTUAL diff (`git diff --stat c0e9fb1..HEAD`)
+
+**60 files changed, +3418 / −327** from the pre-insurance baseline (`c0e9fb1`, the Scenarios close) to HEAD
+(`331e856`, the hygiene commit). Grouped:
+
+| Group | Count | Files |
+|-------|-------|-------|
+| **Backend** (app + tests) | 10 | `app/api/v1/routes/insurance.py` · `routes/refdata.py` · `app/services/insurance.py` · `services/review.py` · `app/seed/demo.py` · `tests/integration/test_insurance{,_phase0,_phase1,_walk1}.py` · `test_review_centre.py` |
+| **Frontend** | 31 | `routes/Insurance{.tsx,.css,.test.tsx}` · `InsuranceMockup.tsx` · `api/insurance.ts` · `api/net-worth.ts` · `components/ui/{TrendStat.tsx,TextInput.tsx,data.css,nav.ts}` · `mocks/{glossary.ts,refdata.ts}` · retrofit-touched pages `routes/{NetWorth,Portfolio,Holdings,Review,Scenarios,Home,CashFlow,InstrumentDetail}.{tsx,css}` + `Home/Holdings/InstrumentDetail` css + `HomeMockup.tsx` · `home-grid.css` · `KitchenSink.tsx` · `AppRoutes.tsx` · `NetWorth.test.tsx` · `e2e/overflow.spec.ts` · `e2e/smoke/{insurance,net-worth,review}-smoke.spec.ts` |
+| **Specs** (+ openapi) | 7 | `docs/specs/{DESIGN-SYSTEM,GLOSSARY,MASTER-DATA,PRODUCT-SPEC,API-CONTRACT.md,API-CONTRACT.json}` · `docs/openapi.json` |
+| **Plans / audit / roadmap** | 12 | `docs/plans/{page-insurance,CURRENT,page-net-worth,page-review,page-scenarios,page-cash-flow,page-holdings,page-home,page-instrument-detail,page-portfolio}.md` · `docs/audit/08-TECH-DEBT.md` · `ROADMAP.md` |
+
+*(The frontend count reflects the §14in-7 base-currency retrofit reaching eight accepted pages — the
+platform ripple this milestone is why the changed-file set is wide. Verified against the diff, not memory.)*
+
+**No open Insurance blockers remain.** The next milestone is **Estate** (`page-estate.md`, PLAN ONLY,
+verify-first — same shape as Insurance).

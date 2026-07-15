@@ -965,10 +965,19 @@ element's `scrollWidth`), *a `@media` breakpoint must model the content box not 
 ~230px), and *a media-query-responsive component is un-guardable on a static specimen* — it runs in the pre-pass
 at real viewports. All three folded into TEMPLATE §7 (extending existing rules, not duplicating).
 
-## NEXT
+## INSURANCE — DONE ✅ (page ACCEPTED, owner, 2026-07-16)
 
-1. **Insurance — `docs/plans/page-insurance.md` — 🟢 Phases 0→3a DONE · Phase 3b WALK BATCH 1 fixed + pre-pass
-   re-GREEN → AWAITING OWNER RE-WALK.**
+**`/insurance` is complete and owner-accepted** — the protection register (Worklist template, the Cash flow
+CRUD patterns). Phase 3b closed across two owner walk batches (page-insurance §14in-1..8); the owner
+confirmed the hygiene commit (`331e856`) and ACCEPTED the page, **including Instrument Detail full-width as
+shipped** (a ruling, not a drift — the §14in-6 uniform page-inset consequence). **Platform delivered beyond
+the page:** the **page-inset standard + cross-page inset guard** (§14in-6), the **base-currency-affix
+retrofit platform-wide** (§14in-7, one form), the **one-headline Review fix** matching Net worth to the cent
+(§14in-8), the **annual-premium single-derivation** (§14in-2), the hygiene commit (CashFlow partial-mock
+crash + collateral TrendStat wrap), and **R-36 parked** (premiums→Cash flow). Full record:
+**page-insurance.md §11–§15** (§15 = close-out + retrospective). The walk-log detail below is kept as build
+history.
+
    **Walk batch 1 (owner, 2026-07-16; page-insurance §14in-1..5):** §14in-1 page padding — removed the
    page-local `margin-bottom` that stacked on `.lf-page`'s gap (28px → the standard 16px, matching
    cash-flow/scenarios). §14in-2 honesty bug — the "Premium / yr" column served the raw per-frequency
@@ -1009,10 +1018,15 @@ at real viewports. All three folded into TEMPLATE §7 (extending existing rules,
    §11 (Phase 0) · §12 (gate) · §13 (Phases 1–3a).** **Phase 3b (owner walk) is the gate — not self-certified.**
    ⚠ Pre-existing (not mine): the `CashFlow.tsx:330` unhandled error fails the frontend `npm run check` —
    reproduces at `c0e9fb1`, out of scope, in `08-TECH-DEBT.md`.
-2. **Estate**, then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping; **also owns the
-   Institution master §9-5 defers to it**) · **Reports (+ Pack)** · **Settings** · **Help · Legal** · the
-   **AI-surfaces milestone** · **Voice** (only after the owner defines it — ROADMAP **R-32**) · then release
-   **Gates C→F** and tag `v2.0.0`.
+## NEXT
+
+1. **Estate — `docs/plans/page-estate.md` (PLAN ONLY, verify-first).** Same shape as Insurance; Review's
+   estate signals are the pre-cut seam; `will_status` / `doc_status` vocabs already in MASTER-DATA per D-010.
+   **Nothing is built** until the plan's §9 is owner-ruled one-pass (the Insurance/Scenarios precedent).
+2. Then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping; **also owns the Institution
+   master §9-5 defers to it**) · **Reports (+ Pack)** · **Settings** · **Help · Legal** · the **AI-surfaces
+   milestone** · **Voice** (definition still owed — only after the owner defines it, ROADMAP **R-32**) · then
+   release **Gates C→F** and tag `v2.0.0`.
 
 **Release posture unchanged (RD-9 Amendment 3):** the release gate is **FULL COMPLETION**; Gates C–F stay
 dormant until the owner accepts the full set. **Standing, owner-only:** the **CLA counsel review** before the

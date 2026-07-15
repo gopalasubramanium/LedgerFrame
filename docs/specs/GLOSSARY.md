@@ -235,17 +235,17 @@ These two "documents" ideas are distinct and must not be merged in copy:
 ### Insurance policy terms (page-insurance §9-11)
 
 The canonical term for the payout amount is **"Cover"** — LedgerFrame does **not** use "sum assured". All
-PROPOSED 2026-07-16 (page-insurance §9-11) — ratify at the walk.
+**RATIFIED 2026-07-16 (owner walk, page-insurance §9-11).**
 
 | Term | Canonical definition |
 |------|----------------------|
-| **Cover** | The amount an insurance policy would pay out on a claim (its **cover amount** / sum insured). The canonical term is **Cover**, never "sum assured". A protection figure — **never added to your Net worth**. *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* **[Help]** |
-| **Cover amount** | The base-currency **Cover** a single policy provides — shown per policy and summed by type on Insurance. *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* |
-| **Premium** | What you pay for a policy, at its **Premium frequency**. Insurance sums premiums to an annual-equivalent total (a single-pay policy contributes nothing recurring). *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* **[Help]** |
-| **Premium frequency** | How often a premium is paid: monthly, quarterly, annual, or single (a paid-once policy). *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* **[Help]** |
-| **Nominee** | The person you have named to receive a policy's benefit. A name you record, not a fixed list. *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* **[Help]** |
-| **Insured person** | The person a policy covers. A name you record, not a fixed list. *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* **[Help]** |
-| **Renewal** | The date a policy is next due to renew. Insurance flags renewals due soon (or overdue) as **neutral reminders — never advice**. *(PROPOSED 2026-07-16, page-insurance §9-11 — ratify at the walk.)* **[Help]** |
+| **Cover** | The amount an insurance policy would pay out on a claim (its **cover amount** / sum insured). The canonical term is **Cover**, never "sum assured". A protection figure — **never added to your Net worth**. *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* **[Help]** |
+| **Cover amount** | The base-currency **Cover** a single policy provides — shown per policy and summed by type on Insurance. *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* |
+| **Premium** | What you pay for a policy, at its **Premium frequency**. Insurance sums premiums to an annual-equivalent total (a single-pay policy contributes nothing recurring). *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* **[Help]** |
+| **Premium frequency** | How often a premium is paid: monthly, quarterly, annual, or single (a paid-once policy). *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* **[Help]** |
+| **Nominee** | The person you have named to receive a policy's benefit. A name you record, not a fixed list. *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* **[Help]** |
+| **Insured person** | The person a policy covers. A name you record, not a fixed list. *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* **[Help]** |
+| **Renewal** | The date a policy is next due to renew. Insurance flags renewals due soon (or overdue) as **neutral reminders — never advice**. *(RATIFIED 2026-07-16, owner walk, page-insurance §9-11.)* **[Help]** |
 
 ---
 

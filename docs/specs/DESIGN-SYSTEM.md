@@ -266,6 +266,12 @@ further inset.
   finding names, not an adjacent property at a width where the bug can't appear*).
 - **A page may still cap an inner content MEASURE** (a reading column inside a card, a dialog form width)
   — that is component-local, not the page root. The rule is only about the **page root inset**.
+- **DETAIL pages take the same uniform inset (RATIFIED 2026-07-16, owner, page-insurance §14in-6 close-out).**
+  The single shell-owned inset governs **entity-detail pages too**, not only composed/worklist pages —
+  **Instrument Detail renders full-width** (owner-accepted as shipped, 2026-07-16), the direct consequence
+  of removing its page-local `max-width` + centering `margin` in the §14in-6 fix. A **narrower detail column**
+  (a capped reading measure on a detail page) is therefore a **recorded future exception** needing its own
+  ruling — no longer a default a detail page may reach for.
 
 ---
 

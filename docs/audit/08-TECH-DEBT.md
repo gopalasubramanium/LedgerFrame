@@ -217,7 +217,7 @@ so the consolidation is a decision, not forgotten.
 
 ---
 
-## Pre-existing frontend-suite unhandled error — `CashFlow.tsx:330` (found 2026-07-16, page-insurance Phase 0) — ✅ RESOLVED 2026-07-16 (commit `ab53da3`)
+## Pre-existing frontend-suite unhandled error — `CashFlow.tsx:330` (found 2026-07-16, page-insurance Phase 0) — ✅ RESOLVED 2026-07-16 (this hygiene commit)
 
 **RESOLVED** in a dedicated hygiene commit: the obligations/contributions/goals section reads are now
 optional-chained (`(obs.obligations?.length ?? 0)` etc., matching the page's existing `?? []` defensive

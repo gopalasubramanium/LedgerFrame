@@ -922,26 +922,41 @@ everywhere), and **9 GLOSSARY terms**.
 **§13 headline:** *a written assertion can pass while the visible defect remains.* The re-verify gate caught
 **two items that had been reported done** — which is the gate working exactly as designed.
 
+## CASH FLOW — DONE ✅ (page ACCEPTED, owner walk complete, 2026-07-15)
+
+The **first per-row CRUD page** — Goals, Obligations (shown as **"Income & expenses"**), Contributions
+(D-056/D-057). The two **§0-protected D-057 invariants are PINNED IN CODE** (contributions never reduce the
+runway; `once` obligations are excluded from recurring burn — each proving **both halves**). Full record in
+`docs/plans/page-cash-flow.md`: §9 (15 items, one-pass) · §10 (verify-first) · §11 (Phase 0/0a) · §12 (geometry
+gate + Phase 1–3a) · §14 (walk) · §16 (retrospective).
+
+**Platform produced beyond the page:** the ratified **`Button`** (icon+label, both page-local copies migrated
+onto it) · the **table-header edge-to-edge fill** (one component, pixel-guarded) · the **`.lf-card__footnote`**
+inset · the **first sanctioned `StatusChip` positive/negative** (the runway status) · **5 GLOSSARY terms**.
+
+**Cross-page:** the walk reached back into **Review** (§12rv2-1 — the *"obligations"* attention area relabelled
+to **"Income & expenses"**, and its ND-7 route corrected to Cash flow, which also fixed the identical
+`goals → /scenarios` misroute) and forward into **Scenarios** (page-scenarios **SN-1** scope-note).
+
+**§16 headline:** *computed styles are claims; rendered pixels are facts* — and *the CI e2e suite runs without a
+backend*, so component guards live on the static specimen. Both mechanised into TEMPLATE + 08-TECH-DEBT.
+
 ## NEXT
 
-1. **Cash flow — `docs/plans/page-cash-flow.md` (PLAN ONLY FIRST).** Goals · Obligations · Contributions
-   (D-056 / D-057). **CRUD-heavy**, and it builds directly on Policy's editor patterns: **grid rows**, the
-   **served validation copy** posture, the sticky-header/one-scroll-container dialog rule, and the
-   **[S]-gated** write path. ⚠ **Bulk-replace vs per-row is ITS OWN §9 question — NOT inherited.** Policy's
-   answer (bulk replace) followed from *its* endpoint being an atomic replace; Cash flow's endpoints must be
-   read first (verify-first, D-019) and the editor shape decided on **its** evidence.
-   **Protected semantics (D-057):** contributions **don't** reduce runway; **'once' obligations are excluded
-   from recurring burn.** Runway stays canonical on **Net worth** (D-036) — Cash flow **links**, never
-   recomputes.
-2. **Scenarios · Insurance · Estate** — the rest of the Planning group.
-3. Then the standing queue, unchanged: **Accounts** (D-065 — must wire `entity_id` scoping) · **Reports
-   (+ Pack)** · **Settings** · **Help · Legal** · the **AI-surfaces milestone** · **Voice** (only after the
-   owner defines it — ROADMAP **R-32**, DEFINITION PENDING) · then release **Gates C→F** and tag `v2.0.0`.
+1. **Scenarios — `docs/plans/page-scenarios.md` (PLAN ONLY FIRST).** Read-only **deterministic shocks** on
+   today's values — **"a scenario, never a forecast"** (D-058). Owns the fixed shock set, exposures, liquidity
+   what-ifs; runway what-ifs consume the **canonical runway reader** (Net worth), never a private copy
+   (D-036/D-058). ⚠ **Vocabulary scope-note already recorded (SN-1):** the `obligation_due` what-if serves a
+   note still using the model's word *"obligations"* — **align it to "income and expenses" at Phase 0**
+   (served-string, D-005, fail-first — the §12cf1-2 / §12rv2-1 precedent).
+2. **Insurance · Estate** — the rest of the Planning group.
+3. Then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping) · **Reports (+ Pack)** ·
+   **Settings** · **Help · Legal** · the **AI-surfaces milestone** · **Voice** (only after the owner defines it
+   — ROADMAP **R-32**) · then release **Gates C→F** and tag `v2.0.0`.
 
 **Release posture unchanged (RD-9 Amendment 3):** the release gate is **FULL COMPLETION**; Gates C–F stay
-**dormant** until the owner accepts the full set.
-
-**Standing, owner-only:** the **CLA counsel review before the first external merge** (Gate B2).
+dormant until the owner accepts the full set. **Standing, owner-only:** the **CLA counsel review** before the
+first external merge (Gate B2).
 
 ## OWNER RATIFICATIONS (2026-07-14)
 

@@ -27,7 +27,7 @@ async def test_review_surfaces_goals_and_obligations(app_client):
     await app_client.post("/api/v1/goals", json={"name": "Trip", "target_amount": 5000, "target_date": soon, "basis": "none"})
     await app_client.post("/api/v1/obligations", json={"name": "Tax bill", "amount": 4000, "due_date": soon, "recurrence": "once", "kind": "expense"})
     areas = {i["area"] for i in (await app_client.get("/api/v1/portfolio/review")).json()["items"]}
-    assert "Goals" in areas and "Obligations" in areas   # §12rv1-5: display-cased
+    assert "Goals" in areas and "Income & expenses" in areas   # §12rv1-5 display-cased; §12rv2-1 vocabulary
 
 
 async def _incomplete_count(app_client) -> int:
@@ -69,3 +69,21 @@ async def test_review_serves_display_cased_labels(app_client):
             assert i["severity"][:1].isupper(), f"severity not display-cased: {i['severity']!r} ({path})"
             assert i["area"][:1].isupper(), f"area not display-cased: {i['area']!r} ({path})"
             assert i["severity"] in ("Review", "Info"), i["severity"]
+
+
+async def test_review_groups_income_and_expenses_not_obligations(app_client):
+    """§12cf1-2 alignment (page-review §12rv2-1) — the served attention AREA for a due income/expense
+    is the USER'S vocabulary, "Income & expenses", not the model's word "Obligations".
+
+    An INCOMING salary is not an "obligation" to the person reading it — the exact mislabel the Cash
+    flow walk fixed. Review reads the same records, so it must use the same word.
+    """
+    soon = (date.today() + timedelta(days=20)).isoformat()
+    # An INCOME obligation due soon — this is the case the old label got wrong.
+    await app_client.post("/api/v1/obligations", json={
+        "name": "Salary", "amount": 8000, "due_date": soon, "recurrence": "monthly", "kind": "income"})
+    items = (await app_client.get("/api/v1/portfolio/review")).json()["items"]
+    areas = {i["area"] for i in items}
+
+    assert "Income & expenses" in areas
+    assert "Obligations" not in areas          # the model's word never reaches the user

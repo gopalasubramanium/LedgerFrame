@@ -64,6 +64,12 @@ for (const route of ROUTES) {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(`/${route.hash}`);
       await page.waitForSelector(".lf-topbar", { timeout: 15_000 });
+      // Wait for the content region to actually MOUNT before forcing overflow — not just the chrome.
+      // Under parallel load the page's async content is still settling when only `.lf-topbar` has
+      // rendered, and appending the spacer + testing scroll before the shell has laid out is a race
+      // (it flaked ~1 run in 4 in the full suite, 0/96 single-worker). The sibling content-inset
+      // test already waits for `.lf-shell__content > *` — same wait here.
+      await page.waitForSelector(".lf-shell__content > *", { timeout: 15_000 });
       // Force the shell content to overflow, so a broken containment would spill to the document.
       await page.evaluate(() => {
         const c = document.querySelector(".lf-shell__content");

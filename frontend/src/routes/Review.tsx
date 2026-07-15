@@ -37,8 +37,8 @@ const AREA_ROUTE: Record<string, string> = {
   data: "/pricing-health",
   liquidity: "/cash-flow",
   runway: "/cash-flow",
-  goals: "/scenarios",
-  obligations: "/scenarios",
+  goals: "/cash-flow",              // §12rv2-1: Goals are canonical on Cash flow (ND-7), not Scenarios
+  "income & expenses": "/cash-flow", // §12cf1-2/§12rv2-1: the "obligations" area, aligned + routed to its canonical home
   insurance: "/insurance",
   estate: "/estate",
   corporate: "/holdings",

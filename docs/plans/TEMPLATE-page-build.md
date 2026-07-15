@@ -430,6 +430,21 @@ the theme/density matrix. Written as checkable statements.*
       pre-check was never run on its free-port path — the normal case — where `set -e` + a non-zero
       `grep` aborted the script before starting anything.) A guard whose red path is never observed is
       assumed-working, not verified.
+- [ ] **COMPUTED STYLES ARE CLAIMS; RENDERED PIXELS ARE FACTS (page-cash-flow §13a).** A **visual**
+      guard samples the **rendered pixels**, never `getComputedStyle`. The table-header corner shipped a
+      `box-shadow` that *computed* correctly and *painted* nothing (it was clipped by the very container's
+      scrollbar gutter): the style said "present", the pixels said "absent", and **the pixels were right**.
+      When you assert a colour, a fill, a border reaches somewhere, **screenshot a small patch and compare
+      it** — and sample **clear of rounded corners** (antialiasing near a radius bleeds into the patch and
+      flakes the guard: move ≥ the corner radius inward, and require **five consecutive clean runs** before
+      trusting a pixel diff).
+- [ ] **A COMPONENT GUARD MEASURES A STATIC SPECIMEN (page-cash-flow §13b).** A guard for a **component**
+      (a chip, a button, a table's chrome) runs against its **`/kitchen-sink` specimen**, which is static
+      and needs no backend — NOT against a product page, whose content may be empty. Two component guards
+      here passed in isolation and **timed out in the full CI e2e run**, because *the CI e2e suite has no
+      backend* (§3b tooling note): the product pages rendered empty and the guards waited for content that
+      could not exist. **A guard that needs a backend to find its subject is a page test wearing a
+      component's name** — label it as one, and point it at the specimen.
 - [ ] **ASSERTIONS WITH TEETH — for any OWNER-VISIBLE defect (page-policy §13-1):** the assertion
       **(a)** is written against the **RENDERED artefact the owner looked at**; **(b)** is **seen RED on
       that exact state** (a mutation proof, not a claim); and **(c)** carries the **fixture that
@@ -495,6 +510,14 @@ tests. Never assemble the page against an endpoint that does not exist.*
 
 ---
 
+> **THE CI e2e SUITE RUNS WITHOUT A BACKEND (page-cash-flow §13b/§13c).** `npm run check`'s Playwright
+> pass has **no server** — product pages render their honest empty/error states, not data. So a **page-level**
+> e2e assertion that needs real rows **only executes locally** (against a dev backend) and is **silently
+> absent in CI**. Consequences: (1) **component** guards belong on the backend-free `/kitchen-sink` specimen;
+> (2) a guard that was green locally can time out the moment it runs in the suite — **run the FULL suite, not
+> the file in isolation, before trusting a new e2e guard**; (3) closing the gap itself (a CI backend, or an
+> explicit local-only tier) is **its own task**, logged in `08-TECH-DEBT.md`.
+>
 > **A SILENT NO-OP EDIT IS A CLAIM, NOT A CHANGE (page-policy §13-2).** A scripted string-replace that
 > matches **nothing** fails **silently** — page-policy's pencil icon was reported shipped on exactly that.
 > **Every scripted replace asserts its match count**, and **no UI change is reported without looking at the

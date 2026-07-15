@@ -542,3 +542,32 @@ stayed **page-local** per the centralization rule (first severity-chip occurrenc
 **Platform legacy from this page:** the shared **`relativeDays` / `relativeTime` day-copy** (`format/time.ts`,
 now app-wide — Review + News), the **display-cased-at-the-boundary** reader pattern (serve labels, render
 verbatim; logic case-normalises), and the two TEMPLATE §3b notes above. **No open Review blockers.**
+
+---
+
+## §12rv2-1 — attention-area vocabulary aligned to Cash flow (cross-page fix, 2026-07-15)
+
+**A Cash-flow walk finding (page-cash-flow §12cf1-2) reached back into Review, and was fixed here** — the
+StatusChip-migration precedent: when a page corrects a shared vocabulary, the correction propagates to every
+page that shows it, in that page's own §-entry.
+
+**The defect.** The obligation-due signal served its attention area as **`"obligations"`** → display-cased to
+**"Obligations"**. But the signal iterates **all** obligation records, **income and expense alike** — so an
+incoming *"Salary due in 20 days"* was grouped under **"Obligations"**. Calling an incoming salary an
+*obligation* is the model's word, not the user's — the exact mislabel the Cash-flow walk had just fixed on the
+canonical page. **Review reads the same records, so it must use the same word.**
+
+**The fix (served-string, D-005).** `services/review.py` gains `_AREA_LABELS = {"obligations": "Income &
+expenses"}`, applied at the display-casing boundary. **The internal `area` KEY is unchanged** (it drives the
+ND-3 count reconciliation and stays a stable machine token); only the **served DISPLAY label** is overridden.
+Propagates to **every** Review consumer (the page + the Home/Net-worth `ReviewCard`), because it is one reader.
+**String PROPOSED → owner ratifies at re-verify.** **Fail-first:** `test_review_groups_income_and_expenses_not_obligations` was **RED** on the old label
+(`assert 'Income & expenses' in {'Data', … 'Obligations'}`).
+
+**⚠ A second, adjacent defect found and fixed while here — reported, not buried.** The frontend `AREA_ROUTE`
+mapped **both `goals` AND `obligations` to `/scenarios`** — an **ND-7 violation**: Scenarios owns *"the fixed
+shock set, exposures, liquidity what-ifs"* (IA §5), **not** goals or obligations. Their **canonical home is
+Cash flow** (IA §5, D-057), and ND-7 requires the link to be the *canonical* page. Both are re-pointed to
+**`/cash-flow`** (and the obligations key becomes `"income & expenses"` to match the new served label). *This
+was the identical bug class sitting one line away from the ruled fix; correcting it silently would have been
+the wrong call, so it is called out for the owner's look.*

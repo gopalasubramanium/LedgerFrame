@@ -29,16 +29,16 @@ test.describe.serial("review pre-pass (live)", () => {
     expect(rowCount, "attention list populated").toBeGreaterThan(0);
 
     // PART 2: SEMANTIC severity chip (served verbatim, display-cased) + area links (§12rv1-4/5, ND-7) --
-    const chip = page.locator('[data-card="attention"] .rv__chip').first();
+    const chip = page.locator('[data-card="attention"] .lf-statuschip').first();  // §11-4: migrated from .rv__chip
     const chipText = (await chip.innerText()).trim();
     const chipClass = (await chip.getAttribute("class")) ?? "";
     console.log("PART 2 — first severity chip:", chipText, "· class:", chipClass);
     // §12rv1-5 — the served value is display-cased, rendered verbatim (no raw enum key).
     expect(["Review", "Info"], "severity rendered verbatim (display-cased)").toContain(chipText);
     // §12rv1-4 — the chip carries a semantic tone class per severity (Review → attention, Info → neutral).
-    expect(chipClass, "chip carries a semantic tone class").toMatch(/rv__chip--(attention|neutral)/);
-    if (chipText === "Review") expect(chipClass, "Review → attention token").toContain("rv__chip--attention");
-    if (chipText === "Info") expect(chipClass, "Info → neutral").toContain("rv__chip--neutral");
+    expect(chipClass, "chip carries a semantic tone class").toMatch(/lf-statuschip--(attention|neutral)/);
+    if (chipText === "Review") expect(chipClass, "Review → attention token").toContain("lf-statuschip--attention");
+    if (chipText === "Info") expect(chipClass, "Info → neutral").toContain("lf-statuschip--neutral");
     // A known area links to its canonical page (Data → /pricing-health, which IS built).
     const dataLink = page.locator('[data-card="attention"] a', { hasText: "Data" }).first();
     if (await dataLink.count()) {

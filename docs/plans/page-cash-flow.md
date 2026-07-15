@@ -726,3 +726,129 @@ still say *"obligations"* — Scenarios' `obligation_due` note and Review's `obl
 belong to **other pages' copy** (one unbuilt, one **accepted**), so they are **raised, not silently changed**.
 
 **Phase 3b re-verify is the gate. Nothing here is self-certified.**
+
+---
+
+## 15. RATIFICATIONS CLOSED (owner accepted Phase 3b, 2026-07-15)
+
+| Item | Status |
+|------|--------|
+| **§12cf1-1** table-header corner fill (pixel guard + the five-clean-runs rule) | ✅ **RATIFIED — CLOSED.** DESIGN-SYSTEM §5.2 records the container-paints-the-band rule. |
+| **§12cf1-2** vocabulary set — *"Income & expenses"* / *"Add income or expense"* / *"Name"* column / the served runway copy / the specimen | ✅ **RATIFIED AS SHIPPED — CLOSED.** And **propagated to Review** (§12rv2-1) and **scope-noted for Scenarios** (page-scenarios SN-1). |
+| **§12cf1-3** compact editors (two-column grid) | ✅ **RATIFIED — CLOSED.** |
+| **§12cf1-4** card-footnote inset (`.lf-card__footnote`) | ✅ **RATIFIED — CLOSED.** |
+| **§12cf1-5** goal-surfacing → ROADMAP R-34 | ✅ **RATIFIED — CLOSED.** |
+| The carried set closed at the walk (Button + migrations; StatusChip positive/negative first use; the three empty states; goal-delete copy; the 5 GLOSSARY terms; §9-6 validation strings) | ✅ **CLOSED at the walk.** |
+| **Date display** — served ISO dates STAND | ✅ **RULED — CLOSED.** Locale date formatting → **ROADMAP R-31** (lands once, for every page). |
+
+**Cross-page CLOSE:** **§12rv2-1** (page-review) — the *"obligations"* area relabelled to **"Income &
+expenses"** (served-string, D-005, fail-first) and its ND-7 route corrected to **Cash flow** (which also
+fixed the identical `goals → /scenarios` misroute found beside it). **String PROPOSED → owner ratifies.**
+
+---
+
+## 16. RETROSPECTIVE (§13)
+
+### Strike-check FIRST — were these already recorded?
+
+| Lesson | Prior form | New this milestone |
+|--------|-----------|--------------------|
+| Guards can be green over a visibly broken page | page-home §12ho2-1; page-policy §13-1 (*assertions with teeth*) | **§13a** — a *computed style* was the green-over-broken vector this time (the shadow that painted nothing) |
+| Verify by rendering | Holdings retrospective | reinforced by §13a (assert **pixels**) |
+| — | *(none)* | **§13b** — component guard ↔ static specimen · **§13c** — CI has no backend |
+
+**§13a and §13b are the tile-integrity family recurring in new disguises; §13c is genuinely new.** All three
+are now **mechanised** — folded into `TEMPLATE-page-build.md` (§7 + §3b) and, for §13c, `08-TECH-DEBT.md`.
+
+### §13a — **Computed styles are claims; rendered pixels are facts** *(TEMPLATE §7 fold)*
+The table-header corner shipped a `box-shadow` that **computed correctly and painted nothing** — clipped by
+the very container's scrollbar gutter. `getComputedStyle` said *present*; the screenshot said *absent*; **the
+pixels were right.** A visual guard therefore samples **rendered pixels**, and samples **clear of rounded
+corners** (antialiasing near a radius flakes the diff — five consecutive clean runs before trust).
+
+### §13b — **A component guard measures a STATIC specimen** *(TEMPLATE §7 fold)*
+A guard for a component runs against its `/kitchen-sink` specimen, not a product page whose content may be
+empty. **A guard that needs a backend to find its subject is a page test wearing a component's name.**
+
+### §13c — **The CI e2e suite runs WITHOUT a backend** *(08-TECH-DEBT; TEMPLATE §3b fold)*
+`npm run check`'s Playwright pass has no server, so **page-level** assertions that need rows execute **only
+locally** and are **silently absent in CI**. Two guards proved this by passing locally and timing out in the
+full run. Validate a new e2e guard by running the **full suite**, not the file alone. Closing the gap (a CI
+backend, or an explicit local-only tier) is **its own task**, logged.
+
+### §13d — **A §0-invariant pin proves BOTH HALVES of the guarantee**
+The D-057 pins do not merely assert *"contributions don't reduce the runway"* — each asserts its **complement**
+too: contributions **are still reported** as planned cash-out; a `once` obligation contributes **0 to the
+burn** *and still appears in the 12-month total*; the exclusion is about **recurrence, not kind** (once-income
+is excluded too). **Half a guarantee is a different guarantee** — *excluded-from-the-burn is not the same as
+free*, and a test that checks only the exclusion would pass a build that silently **hid** the record.
+
+### The positives — the gate and the discipline worked
+- **Fail-first caught real defects before the owner:** the unsatisfiable 184%→ n/a *(that was Policy)* — here,
+  the **income-under-"Obligations"** mislabel was caught by a copy test going RED, and the **CI-backend gap**
+  was caught by running the **full** suite rather than the file.
+- **A cross-page fix stayed disciplined:** the Review relabel is a **served-string** edit with its own
+  §-entry and a **PROPOSED** string; the adjacent `goals → /scenarios` misroute was **reported, not buried**.
+- **A component defect generalised** (the table-header fill is one component, no page-local patches) and its
+  guard now runs where component guards belong.
+
+---
+
+## 17. CLOSE
+
+**Cash flow is DONE — owner accepted 2026-07-15.** Goals, Obligations (shown as **Income & expenses**),
+Contributions — the first **per-row CRUD** page, with the **§0-protected D-057 invariants pinned in code**.
+Record: **§9** (15 items, one-pass) · **§10** (verify-first) · **§11** (Phase 0/0a) · **§12** (geometry gate +
+Phase 1–3a) · **§14** (walk batch 1) · **§16** (retrospective). The walk reached back into **Review**
+(§12rv2-1) and forward into **Scenarios** (SN-1).
+
+---
+
+## 18. CHANGED FILES — the Cash flow milestone (for the wholesale re-upload)
+
+*Derived from the actual diff (`b285d43^..HEAD` + this close-out). Screenshot artefacts excluded.*
+
+### Specs & governance (the durable record)
+
+| File | What changed |
+|------|--------------|
+| **`docs/plans/page-cash-flow.md`** | **NEW** — §9 (15 items, one-pass) · §10 (verify-first) · §11 (Phase 0/0a) · §12 (geometry gate + Phase 1–3a) · §14 (walk) · §15–17 (ratifications · retrospective · close) · §18 (this table). |
+| **`docs/plans/page-review.md`** | **§12rv2-1** — the *"obligations"* attention area relabelled to **"Income & expenses"** (served string) + the ND-7 route correction (goals & obligations → Cash flow). |
+| **`docs/plans/page-scenarios.md`** | **NEW (SCOPE-NOTES only)** — **SN-1**: inherit the §12cf1-2 vocabulary; the `obligation_due` served note must align at Phase 0. |
+| **`docs/specs/DESIGN-SYSTEM.md`** | **`Button`** (§5.4, RATIFIED) · the **table-header edge-to-edge fill** rule + the **pixel-guard / clear-of-radius / five-clean-runs** note · the **`.lf-card__footnote`** inset. |
+| **`docs/specs/GLOSSARY.md`** | 5 terms (Net monthly burn · Monthly equivalent · Next 12 months · Planned cash out · Progress (goal)) + the **Obligation** display-grouping note. |
+| **`docs/specs/API-CONTRACT.md`** | Nine `present` rows + the behaviour/reshape deltas (monthly_equivalent · `*_display` · user-plain validation + currency master · honest 404). |
+| **`docs/plans/TEMPLATE-page-build.md`** | **§13 folds:** *computed styles are claims, pixels are facts* + *component guards measure static specimens* (§7); *the CI e2e suite runs without a backend* (§3b). |
+| **`docs/audit/08-TECH-DEBT.md`** | The **CI-has-no-backend** gap · the **`/portfolio/stats` concurrency 500** · the **card-header anatomy** debt · the **review-smoke stale-selector** follow-up · the earlier e2e-flake note. |
+| **`ROADMAP.md`** | **R-34** (goal surfacing) · **R-35** (per-entity planning) · **R-31** gains locale date formatting. |
+| **`docs/plans/CURRENT.md`** | Cash flow → **DONE ✅**; NEXT → **Scenarios (plan-only, with the SN-1 vocabulary note)**. |
+
+### Backend
+
+| File | What changed |
+|------|--------------|
+| **`app/services/planning.py`** | `monthly_equivalent` (server-side) · `*_display` money · `validate_currency` (the A9 class) · `_area`-independent user-plain validation helpers. |
+| **`app/services/contributions.py`** | per-row `monthly_equivalent` + `*_display` · currency-master validation · honest 404 on delete. |
+| **`app/services/runway.py`** | `*_display` money · the §12cf1-2 empty-copy (*"recurring income and expenses"*). |
+| **`app/services/review.py`** | **§12rv2-1** — `_AREA_LABELS = {"obligations": "Income & expenses"}` at the display-casing boundary (internal key unchanged). |
+| **`app/api/v1/routes/planning.py`** | user-plain validation `detail` (no raw tuples) · currency ∈ master → 400 · `DELETE` missing id → 404 (all three resources). |
+| **`app/api/v1/routes/settings.py`** | the app-wide §12cf1-2/§9-6 sweep caught a raw-list `detail`. |
+| **`tests/integration/test_d057_protected.py`** | **NEW** — the two §0 invariants pinned, **both halves**, fail-first. |
+| **`tests/integration/test_cash_flow_contract.py`** | **NEW** — the §9 contract deltas. |
+| **`tests/integration/test_review.py`** | **§12rv2-1** — income-under-"Income & expenses", fail-first; the old-label pin updated. |
+
+### Frontend
+
+| File | What changed |
+|------|--------------|
+| **`src/routes/CashFlow.tsx` / `.css` / `.test.tsx`** | **NEW** — the page + 10 tests. |
+| **`src/api/cash-flow.ts`** | **NEW** — typed readers/writers. |
+| **`src/routes/CashFlowMockup.tsx`** | **NEW** — the §9-10 geometry specimen. |
+| **`src/components/ui/Button.tsx`**, `index.ts` | **NEW** ratified button. |
+| **`src/components/ui/data.css`** | the table-header container-painted fill (the dead box-shadow removed). |
+| **`src/components/ui/structure.css`** | `.lf-btn--icon` · `.lf-card__footnote`. |
+| **`src/routes/Review.tsx` / `.css`, `Policy.tsx` / `.css`** | migrated onto `Button`; **Review's `AREA_ROUTE`** corrected (§12rv2-1). |
+| **`src/mocks/glossary.ts`** | the 5 popover terms. |
+| **`src/routes/KitchenSink.tsx` / `.css`, `NetWorth.tsx`** | the Cash flow + Button specimens; Net worth's *"Edit income & expenses →"* link. |
+| **`e2e/table-header-fill.spec.ts`** (NEW), **`icon-button.spec.ts`**, **`overflow.spec.ts`**, **`tile-integrity.spec.ts`** | the pixel guard (on the specimen) · both component guards moved to the gallery · `/cash-flow` added to the cross-page guards · **the overflow "document never scrolls" readiness-wait hardened** (a load-tipped flake). |
+| **`e2e/smoke/cash-flow-smoke.spec.ts`, `cash-flow-editor.spec.ts`** (NEW), **`review-smoke.spec.ts`** | the pre-passes; review-smoke's stale `.rv__chip` → `.lf-statuschip`. |

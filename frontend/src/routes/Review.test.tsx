@@ -23,6 +23,9 @@ const PAGE = {
       { area: "Data", title: "1 holding has incomplete details", severity: "Info" },
       { area: "Data", title: "2 holdings have stale prices — refresh", severity: "Review" },
       { area: "Policy", title: "Equity is under its asset class band", severity: "Review" },
+      // §12rv2-1 — the served "Income & expenses" area (the former "obligations", aligned to the
+      // §12cf1-2 vocabulary) links to its canonical home, Cash flow (ND-7).
+      { area: "Income & expenses", title: "Salary due in 20 days", severity: "Review" },
       { area: "Zzz-unknown", title: "An unmapped area item", severity: "Info" },
     ],
     attention_count: 2,
@@ -87,6 +90,9 @@ test("each area links to its canonical page; an unrecognised area is NOT linked 
   // Known areas (display-cased) map to their canonical route (lookup normalises casing).
   expect(screen.getByRole("link", { name: "Policy" }).getAttribute("href")).toContain("/policy");
   expect(screen.getAllByRole("link", { name: "Data" })[0].getAttribute("href")).toContain("/pricing-health");
+  // §12rv2-1 — "Income & expenses" (never "Obligations") -> Cash flow.
+  expect(screen.getByRole("link", { name: "Income & expenses" }).getAttribute("href")).toContain("/cash-flow");
+  expect(screen.queryByText("Obligations")).toBeNull();
   // Unrecognised area renders WITHOUT a link — never a guessed route.
   expect(screen.queryByRole("link", { name: "Zzz-unknown" })).toBeNull();
   expect(screen.getByText("Zzz-unknown")).toBeTruthy();

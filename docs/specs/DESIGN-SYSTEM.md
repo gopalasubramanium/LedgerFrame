@@ -356,7 +356,7 @@ bottom border), which *does* cover the gutter, anchored to the top of the scroll
 sticky header while rows scroll beneath it. ⚠ **The previous fix — a `box-shadow` on `.lf-table__th:last-child`
 — CANNOT WORK and is deleted:** that shadow is painted into the scrollbar gutter of the very container that
 **clips** it. *Computed styles said the shadow was there; the rendered pixels said otherwise — which is why the
-guard asserts **pixels** (`e2e/table-header-fill.spec.ts`), not styles.*
+guard asserts **pixels** (`e2e/table-header-fill.spec.ts`), not styles.* **Pixel guards sample clear of the rounded corner (antialiasing bleeds otherwise) and require five consecutive clean runs before trust; and — being a COMPONENT guard — this one runs against the backend-free `/kitchen-sink` specimen, not a product page (page-cash-flow §13b/§13c).**
 
 **CARD FOOTNOTE (RATIFIED 2026-07-15, page-cash-flow §12cf1-4).** A legend/disclaimer line under a card's
 content uses **`.lf-card__footnote`** — a **token** inset at the component level, never a per-page nudge.

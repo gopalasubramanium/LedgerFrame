@@ -41,6 +41,17 @@ def _item(area: str, title: str, severity: str = "review") -> dict:
     return {"area": area, "title": title, "severity": severity}
 
 
+#: Served DISPLAY labels for attention areas whose internal key is not the user's word (§12cf1-2 /
+#: page-review §12rv2-1). The internal `area` key stays a stable machine token (it drives the count
+#: reconciliation and the frontend route map); only what the USER READS is overridden here. An
+#: incoming salary is not an "obligation" to the person reading it.
+_AREA_LABELS = {"obligations": "Income & expenses"}
+
+
+def _area_label(area: str) -> str:
+    return _AREA_LABELS.get(area, _title(area))
+
+
 def _title(s: str) -> str:
     """Display-case a served enum key ('review' → 'Review', 'data' → 'Data'). §12rv1-5 (D-105
     precedent): the reader serves display-cased labels — the frontend renders them verbatim (D-005,
@@ -236,7 +247,7 @@ async def review_report(session: AsyncSession) -> dict:
     # §12rv1-5 — the count reconciliation (ND-3) is computed on the RAW severity BEFORE display-casing,
     # so it is unaffected; then area + severity are display-cased for the served labels.
     count = sum(1 for i in items if i["severity"] == "review")
-    items = [{**i, "area": _title(i["area"]), "severity": _title(i["severity"])} for i in items]
+    items = [{**i, "area": _area_label(i["area"]), "severity": _title(i["severity"])} for i in items]
 
     return {
         "as_of": today.isoformat(),

@@ -152,3 +152,47 @@ reproduction and a fix.
 **Tooling note earned here:** a full-suite run must **capture the failing test's identity** (keep the
 reporter output / `test-results/`) — not just the pass/fail counts. A failure you cannot name is a failure
 you cannot chase.
+
+## CI e2e runs WITHOUT a backend — page-level assertions execute only locally (page-cash-flow §13c, 2026-07-15)
+
+`npm run check`'s Playwright pass has **no server**: product pages render their honest empty/error states,
+not data. So any **page-level** e2e assertion that needs real rows **runs only locally** (against a dev
+backend) and is **silently absent in CI** — a page test can be green on a developer's machine and *never
+execute* in the pipeline.
+
+**Surfaced concretely (page-cash-flow §12cf1):** two new **component** guards (the table-header pixel check;
+the icon+label button) were written against product pages, passed locally, and **timed out in the full CI
+run** because those pages were empty there. They were moved onto the **backend-free `/kitchen-sink`
+specimen**, which is the correct home for a component guard.
+
+**The gap itself is unclosed and is ITS OWN TASK.** Either stand up a **CI backend** (seed a deterministic
+instance for the e2e pass) or introduce an **explicit local-only e2e tier** (so a page-level assertion is
+*named* as local-only rather than silently skipped). Until then: **component** guards go on the specimen, and
+**a new e2e guard is validated by running the FULL suite, not the file in isolation.**
+
+## Intermittent 500 on `/portfolio/stats` under a concurrent load burst (surfaced 2026-07-15)
+
+**`GET /api/v1/portfolio/stats` returned a 500 during the `review-smoke` pre-pass's Net-worth leg** (a full
+page load fires many readers at once). **Reproduced 2/2 in that flow — but 200 on EVERY sequential hit**
+(direct curl, cold-cache-after-reset ×3, and its 7 integration tests all pass). So it is a **concurrency
+race**, not a broken endpoint: it manifests only under the simultaneous-request burst of a rendered page,
+not under sequential calls.
+
+**Not caused by the 2026-07-15 change** (that diff touched only `app/services/review.py`; `/portfolio/stats`
+is a Net-worth/Portfolio reader, untouched). Surfaced *by* running `review-smoke` to verify the Review
+change — a dev-only pre-pass for another page.
+
+**Posture (the standing flake rule):** a flake is a **latent race until proven otherwise**. This one has a
+named trigger (concurrent burst during a Net-worth-class page load) and a named endpoint, so it is a
+**hunt-able latent defect**, not "just a flake." **Recurrence promotes it to a defect** with a reproduction
+and a fix — the natural place to chase it is the **Net worth / portfolio-stats** path (likely a shared
+FX/valuation resource raced under concurrency), not a Planning page.
+
+## `review-smoke` referenced the retired `.rv__chip` (migration follow-up, fixed 2026-07-15)
+
+The Review severity chip was migrated to the ratified **`StatusChip`** (`.lf-statuschip`) in the Policy
+StatusChip extraction (page-policy §9-15). The **dev-only `review-smoke` pre-pass** still selected the
+retired **`.rv__chip`** — stale since that migration, and only surfaced now because nobody had re-run the
+Review pre-pass since. Selectors updated (`.rv__chip` → `.lf-statuschip`); the assertions are unchanged.
+**Lesson (already the §11-4 rule):** a selector/label migration must grep **the dev-only smoke specs too**,
+not just shipped code and CI tests — they are the ones that rot unseen because they run by hand.

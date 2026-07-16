@@ -80,3 +80,22 @@ async def test_recently_added_surfaces_old_dated_import(app_client):
     # 'recently added' sort works around.
     by_date = (await app_client.get("/api/v1/portfolio/transactions?sort=ts&dir=desc")).json()
     assert by_date["transactions"][0]["symbol"] != "ZOLD"
+
+async def test_transactions_scoped_by_account_id(app_client):
+    # §14ac-3 (Amendment G, transactions half): ?account_id= scopes the ledger to one account at the
+    # SAME chokepoint the count uses, so `total` stays honest under the filter. RED before the delta:
+    # the unknown param was ignored → scoped total == the full ledger total.
+    accts = (await app_client.get("/api/v1/accounts/list")).json()["accounts"]
+    sg = next(a["id"] for a in accts if a["name"] == "Demo SG CDP")  # holds the SGD demo transactions
+
+    full = (await app_client.get("/api/v1/portfolio/transactions?limit=500")).json()
+    scoped = (await app_client.get(f"/api/v1/portfolio/transactions?account_id={sg}&limit=500")).json()
+
+    assert 0 < scoped["total"] < full["total"]  # a strict, non-empty subset
+    assert scoped["total"] == len(scoped["transactions"])  # honest denominator under the filter
+    assert all(t["account_id"] == sg for t in scoped["transactions"])  # every row is that account's
+
+
+async def test_transactions_account_id_unknown_is_empty(app_client):
+    scoped = (await app_client.get("/api/v1/portfolio/transactions?account_id=999999")).json()
+    assert scoped["total"] == 0 and scoped["transactions"] == []  # honest empty, not the whole ledger

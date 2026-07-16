@@ -447,6 +447,7 @@ async def list_transactions(
     sort: Annotated[str, Query()] = "ts",
     dir: Annotated[str, Query()] = "desc",
     filter: Annotated[str | None, Query()] = None,
+    account_id: Annotated[int | None, Query()] = None,
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     """The transactions ledger, windowed. D-094: sort + filter run server-side over
@@ -460,6 +461,10 @@ async def list_transactions(
 
     # §3.5 R9: soft-deleted rows never appear in the ledger.
     conds = [Transaction.deleted_at.is_(None)]
+    # §14ac-3 (Amendment G, transactions half): scope to one account at the SAME WHERE chokepoint the
+    # count + the window both use, so "Showing X–Y of Z" and paging stay honest under the filter.
+    if account_id is not None:
+        conds.append(Transaction.account_id == account_id)
     q = (filter or "").strip()
     if q:
         like = f"%{q}%"

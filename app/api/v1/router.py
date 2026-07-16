@@ -14,6 +14,7 @@ from app.api.v1.routes import (
     coingecko,
     ecb,
     estate,
+    institutions,
     insurance,
     kite,
     markets,
@@ -38,6 +39,7 @@ api_router.include_router(policy.router, tags=["policy"])
 api_router.include_router(planning.router, tags=["planning"])
 api_router.include_router(insurance.router, tags=["insurance"])
 api_router.include_router(estate.router, tags=["estate"])
+api_router.include_router(institutions.router, tags=["institutions"])
 api_router.include_router(tokens.router, tags=["tokens"])
 api_router.include_router(accounts.router, tags=["accounts"])
 api_router.include_router(watchlists.router, tags=["watchlists"])

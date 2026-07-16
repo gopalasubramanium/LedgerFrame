@@ -121,6 +121,24 @@ class Entity(Base):
     accounts: Mapped[list[Account]] = relationship(back_populates="entity")
 
 
+class Institution(Base):
+    """User-extensible institution master (D-008; MASTER-DATA §6/§7) — the first
+    extensible master-with-CRUD in the codebase. One master, FK'd from
+    ``accounts.institution_id`` and ``insurance_policy.institution_id`` (the FK columns
+    land in Phase-0 commit 3). Starts empty; user-populated.
+
+    **Uniqueness (Amendment F, page-accounts §9-1).** Unique by a NORMALIZED name — trimmed,
+    internal-whitespace-collapsed, case-insensitive (``name_key``) — while the display ``name``
+    keeps the FIRST-SEEN casing (the Tag case+whitespace collapse rule, D-104's exact-collapse
+    half). Fuzzy variants ("DBS" vs "DBS Bank") are USER-DRIVEN merge only (§9-2), never
+    auto-detected."""
+    __tablename__ = "institutions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))               # display, first-seen casing
+    name_key: Mapped[str] = mapped_column(String(120), unique=True, index=True)  # normalized key
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class Account(Base):
     __tablename__ = "accounts"
     id: Mapped[int] = mapped_column(primary_key=True)

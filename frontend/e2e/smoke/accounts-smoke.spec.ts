@@ -48,8 +48,9 @@ test.describe.serial("accounts pre-pass (live)", () => {
     const sums = await page.evaluate(() => {
       const t = document.querySelector('[data-card="accounts"] table') as HTMLElement;
       const n = (s: string | null) => Number((s ?? "").replace(/[^0-9.-]/g, ""));
-      const rows = [...t.querySelectorAll("tbody tr")].map((r) => n((r.querySelectorAll("td")[5] as HTMLElement).textContent));
-      const foot = n((t.querySelector("tfoot")!.querySelectorAll("td")[5] as HTMLElement).textContent);
+      // columns: Name(0) Institution(1) Kind(2) Currency(3) Cost basis(4) Entity(5) Value(6) actions(7).
+      const rows = [...t.querySelectorAll("tbody tr")].map((r) => n((r.querySelectorAll("td")[6] as HTMLElement).textContent));
+      const foot = n((t.querySelector("tfoot")!.querySelectorAll("td")[6] as HTMLElement).textContent);
       return { sum: rows.reduce((a, b) => a + b, 0), foot };
     });
     expect(Math.round(sums.foot * 100)).toBe(Math.round(sums.sum * 100));
@@ -80,9 +81,10 @@ test.describe.serial("accounts pre-pass (live)", () => {
     console.log(`PART 5 — added '${NEW_ACCT}' with inline-created institution '${NEW_INST}' (LIVE POST)`);
 
     // PART 6 — cost-basis change on the seeded account WITH transactions → warning → rebuild → figures move.
-    const seededWithHistory = rep.accounts.find((a: { last_activity: string | null; institution: string | null }) => a.last_activity && a.institution);
+    const seededWithHistory = rep.accounts.find((a: { last_activity: string | null; name: string }) => a.last_activity && a.name);
     const beforeTotal = num(rep.total_display);
-    await page.getByRole("button", { name: `Actions for ${seededWithHistory.institution}` }).first().click();
+    // §14ac-1: the account RowMenu is keyed by the account NAME now (its identity).
+    await page.getByRole("button", { name: `Actions for ${seededWithHistory.name}` }).first().click();
     await page.getByRole("menuitem", { name: "Edit" }).click();
     const cb = page.getByLabel("Cost-basis method", { exact: true }); // not the GlossaryTerm "… — definition"
     const current = await cb.inputValue();
@@ -96,7 +98,7 @@ test.describe.serial("accounts pre-pass (live)", () => {
     console.log(`PART 6 — cost-basis restated; base total ${beforeTotal} → ${num(afterRep.total_display)} (rebuild fired)`);
 
     // PART 7 — delete the smoke account (cleanup + delete path).
-    await page.locator('[data-card="accounts"]').getByRole("button", { name: `Actions for ${NEW_INST}` }).first().click();
+    await page.locator('[data-card="accounts"]').getByRole("button", { name: `Actions for ${NEW_ACCT}` }).first().click();
     await page.getByRole("menuitem", { name: "Delete" }).click();
     await page.getByRole("button", { name: "Delete", exact: true }).click();
     // the ACCOUNT row (its institution cell) is gone — the institution master still lists the institution.

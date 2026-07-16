@@ -173,12 +173,13 @@ export function Holdings() {
       sort: txnSort.key,
       dir: txnSort.dir,
       filter: txnQuery || undefined,
+      accountId: accountFilter, // §14ac-3: the ONE chip scopes BOTH tables; clearing unscopes both
     });
     if (t.ok) {
       setTxns(t.data.transactions);
       setTxnTotal(t.data.total ?? t.data.transactions.length);
     }
-  }, [txnOffset, txnSort, txnQuery]);
+  }, [txnOffset, txnSort, txnQuery, accountFilter]);
 
   const reloadCore = useCallback(async () => {
     setLoading(true);
@@ -209,6 +210,11 @@ export function Holdings() {
   useEffect(() => {
     reloadCore();
   }, [reloadCore]);
+  // §14ac-3: changing the account scope resets the ledger to page 1 (a stale offset could land on an
+  // empty page under the smaller scoped total).
+  useEffect(() => {
+    setTxnOffset(0);
+  }, [accountFilter]);
   // Refetch the ledger whenever the window (sort/filter/page) changes — server-side.
   // `txnReloadTick` forces a refetch even when the window is unchanged.
   useEffect(() => {

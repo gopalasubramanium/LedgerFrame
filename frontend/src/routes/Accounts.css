@@ -22,6 +22,15 @@
 .acct__name { font-weight: var(--weight-medium); }
 .acct__missing { color: var(--text-tertiary); }
 
+/* §14ac-5 — the account Name is a link to the scoped Holdings view (the Holdings-symbol link precedent):
+   accent colour, underline on hover, truncates with the cell (the trunc td caps + ellipsises it). */
+.acct__namelink {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+.acct__namelink:hover { text-decoration: underline; }
+
 /* Footer Σ total — the base-currency affix is a muted sibling (the .lf-stat__unit rhythm, §14in-7), so
    the value's own text node stays exactly the number for a tile-integrity read. */
 .acct__total {

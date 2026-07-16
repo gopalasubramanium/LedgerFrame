@@ -144,6 +144,7 @@ export interface TransactionsQuery {
   sort?: string;
   dir?: "asc" | "desc";
   filter?: string;
+  accountId?: number | null; // §14ac-3 (Amendment G): scope the ledger to one account
 }
 export interface TransactionsResponse {
   transactions: TransactionRow[];
@@ -161,6 +162,7 @@ export const getTransactions = (q: TransactionsQuery = {}) => {
   if (q.sort) p.set("sort", q.sort);
   if (q.dir) p.set("dir", q.dir);
   if (q.filter) p.set("filter", q.filter);
+  if (q.accountId != null) p.set("account_id", String(q.accountId));
   const qs = p.toString();
   return apiGet<TransactionsResponse>(`/portfolio/transactions${qs ? `?${qs}` : ""}`);
 };

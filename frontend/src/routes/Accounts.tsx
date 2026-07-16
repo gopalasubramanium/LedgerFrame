@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Button,
   ConfirmDialog,
@@ -17,6 +18,7 @@ import {
 } from "../components/ui";
 import type { Column, FooterRow } from "../components/ui";
 import { useLabelFor } from "../refdata/refdata-context";
+import { holdingsForAccount } from "../nav/holdingsLink";
 import { EMDASH } from "../format/number";
 import { Plus } from "../icons";
 import {
@@ -98,6 +100,7 @@ function bareEntity(name: string | null) {
 export function Accounts() {
   const toast = useToast();
   const labelFor = useLabelFor();
+  const navigate = useNavigate();
 
   const [report, setReport] = useState<AccountsReport | null | undefined>(undefined);
   const [listRows, setListRows] = useState<AccountListRow[]>([]);
@@ -342,6 +345,20 @@ export function Accounts() {
   // --- columns ------------------------------------------------------------------------------------ //
   const accountCols: Column<SpineRow>[] = useMemo(
     () => [
+      // §14ac-1 + §14ac-5: the account's own name leads the spine (its identity) and is a LINK to the
+      // scoped Holdings destination — the SAME URL "View holdings" uses (one shared builder).
+      {
+        key: "name",
+        label: "Name",
+        sortable: true,
+        truncate: true,
+        render: (r) =>
+          r.id == null ? (
+            <span className="acct__name">{r.name}</span>
+          ) : (
+            <Link className="acct__namelink" to={holdingsForAccount(r.id)} title={r.name}>{r.name}</Link>
+          ),
+      },
       { key: "institution", label: "Institution", sortable: true, truncate: true, render: (r) => <span className="acct__name">{r.institution ?? <span className="acct__missing">{EMDASH}</span>}</span> },
       { key: "kind", label: "Kind", sortable: true, render: (r) => labelFor("account_kind", r.kind) },
       { key: "currency", label: "Currency", render: (r) => r.currency },
@@ -355,17 +372,19 @@ export function Accounts() {
         render: (r) =>
           r.id == null ? null : (
             <RowMenu
-              aria-label={`Actions for ${r.institution ?? r.name}`}
+              aria-label={`Actions for ${r.name}`}
               items={[
                 { label: "Edit", onClick: () => openEditAccount(r) },
-                { label: "View holdings", onClick: () => { window.location.hash = `#/holdings?account=${r.id}`; } },
+                // §14ac-2: navigate through react-router (the shared builder) so Holdings mounts with
+                // ?account= on render 1 — never the manual window.location.hash write that raced unfiltered.
+                { label: "View holdings", onClick: () => navigate(holdingsForAccount(r.id!)) },
                 { label: "Delete", onClick: () => setAcctDelete(r), danger: true },
               ]}
             />
           ),
       },
     ],
-    [baseCurrency, labelFor],
+    [baseCurrency, labelFor, navigate],
   );
 
   const footer: FooterRow[] = report
@@ -374,7 +393,7 @@ export function Accounts() {
           key: "total",
           emphasis: true,
           cells: {
-            institution: "Total",
+            name: "Total",
             entityName: plural(spine.length, "account"),
             value: (
               <span className="acct__total">
@@ -469,7 +488,7 @@ export function Accounts() {
           )}
           {report && report.accounts.length > 0 && (
             <DataTable<SpineRow>
-              caption="Accounts — institution, kind, currency, cost basis, entity and value rollup"
+              caption="Accounts — name, institution, kind, currency, cost basis, entity and value rollup"
               columns={accountCols}
               rows={spine}
               footer={footer}

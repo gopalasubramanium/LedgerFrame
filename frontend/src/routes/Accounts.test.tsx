@@ -8,6 +8,7 @@ import { ToastProvider } from "../components/ui";
 import { RefdataContext } from "../refdata/refdata-context";
 import type { Vocabs } from "../refdata/refdata-context";
 import { Accounts } from "./Accounts";
+import { holdingsForAccount } from "../nav/holdingsLink";
 import type {
   AccountsReport,
   AccountListRow,
@@ -147,9 +148,25 @@ test("served labels render VERBATIM (FIFO, not the titleizer's Fifo); entity-les
   expect(within(table).getAllByText("FIFO").length).toBeGreaterThan(0);
   expect(within(table).queryByText("Fifo")).toBeNull();
   expect(within(table).getByText("Average")).toBeTruthy();
-  // The entity-less account (Wallet) shows a bare em dash in its Entity cell (column index 4).
+  // The entity-less account (Wallet) shows a bare em dash in its Entity cell (column index 5 now that
+  // Name leads: Name(0) Institution(1) Kind(2) Currency(3) Cost basis(4) Entity(5) Value(6) actions(7)).
   const walletRow = [...table.querySelectorAll("tbody tr")].find((r) => r.textContent?.includes("Wallet"))!;
-  expect((walletRow.querySelectorAll("td")[4] as HTMLElement).textContent).toBe("—");
+  expect((walletRow.querySelectorAll("td")[5] as HTMLElement).textContent).toBe("—");
+});
+
+test("§14ac-1 + §14ac-5: the FIRST column is the account Name, rendered as a link to the shared Holdings URL", async () => {
+  const { container } = renderPage();
+  await screen.findByText("Value (INR)");
+  const table = container.querySelector('[data-card="accounts"] table') as HTMLElement;
+  // first data column is the name; the institution-less row (Wallet, institution null) is still
+  // identifiable BY NAME (the §14ac-1 defect: institution-led rows were unidentifiable).
+  const walletRow = [...table.querySelectorAll("tbody tr")].find((r) => (r.querySelectorAll("td")[1] as HTMLElement).textContent === "—")!;
+  const nameCell = walletRow.querySelectorAll("td")[0] as HTMLElement;
+  const link = nameCell.querySelector("a") as HTMLAnchorElement;
+  expect(link, "the name is a link").toBeTruthy();
+  expect(nameCell.textContent).toBe("Wallet");
+  // the href is the SHARED builder's output (HashRouter renders it under the hash).
+  expect(link.getAttribute("href")).toContain(holdingsForAccount(3)); // Wallet is id 3
 });
 
 test("footer Σ equals total_display AND the sum of the rendered value rows (tile-integrity)", async () => {
@@ -157,12 +174,12 @@ test("footer Σ equals total_display AND the sum of the rendered value rows (til
   await screen.findByText("Value (INR)");
   const table = container.querySelector('[data-card="accounts"] table') as HTMLElement;
   const num = (s: string) => Number(s.replace(/[^0-9.-]/g, ""));
-  // value column is index 5 (institution, kind, currency, cost basis, entity, value, actions).
-  const rowValues = [...table.querySelectorAll("tbody tr")].map((r) => num((r.querySelectorAll("td")[5] as HTMLElement).textContent ?? "0"));
+  // value column is index 6 (name, institution, kind, currency, cost basis, entity, value, actions).
+  const rowValues = [...table.querySelectorAll("tbody tr")].map((r) => num((r.querySelectorAll("td")[6] as HTMLElement).textContent ?? "0"));
   const sum = rowValues.reduce((a, b) => a + b, 0);
   const footer = table.querySelector("tfoot") as HTMLElement;
-  // the footer's VALUE cell is the same column index (5) — not the "N accounts" entity cell.
-  const footerValue = num((footer.querySelectorAll("td")[5] as HTMLElement).textContent ?? "0");
+  // the footer's VALUE cell is the same column index (6) — not the "N accounts" entity cell.
+  const footerValue = num((footer.querySelectorAll("td")[6] as HTMLElement).textContent ?? "0");
   expect(sum).toBe(175000); // 100,000 + 50,000 + 25,000
   expect(footerValue).toBe(sum); // served total_display == Σ rendered rows
 });

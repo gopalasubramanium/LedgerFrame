@@ -39,11 +39,11 @@ they are **Pack-1** (⚑ §9). None may be silently dropped (Amendment I).*
 
 | # | Declined export (source) | Canonical reader (file:line) | Entity axis (verified) | Pack section | Maps to §9-12? |
 |---|--------------------------|------------------------------|------------------------|--------------|----------------|
-| 1 | **Policy drift** (`page-policy §9-20`) | `compute_drift` `app/services/policy.py:108-219` | **per-entity** — `entity_id` honoured `:108,:112` | per-entity **"drift"** | **YES** (§9-12 per-entity drift) |
-| 2 | **Net worth trend** (`page-net-worth ND-14`) | `net_worth_history` route `app/api/v1/routes/portfolio.py:894-906` | **consolidated-only** — NO `entity_id`; reads `NetWorthSnapshot` (not entity-scoped) | consolidated **"net-worth trend"** | **YES** (§9-12 consolidated) |
-| 3 | **Review** (`page-review ND-10`) | `review_report` / `review_centre` `app/services/review.py:86-260,285-349` | **consolidated-only** — NO `entity_id` (`:86,:285`) | consolidated **"review"** | **YES** (§9-12 consolidated) |
-| 4 | **Scenarios** (`page-scenarios §9-12`) | `scenario_report` `app/services/scenarios.py:49` | **household-only — per-entity ACTIVELY REJECTED** (400 `portfolio.py:1043-1044`; `ValueError` `scenarios.py:54-55`) | consolidated **"scenarios" (NEW)** | **NO → Pack-1 ⚑** |
-| 5 | **Cash flow** (`page-cash-flow §9-14`) | `obligations_report` `app/services/planning.py:135`; `goals_report` `:98`; `contributions_report` `app/services/contributions.py:115` | **household-only** — readers take **only `session`**, no `entity_id` seam (D-057) | consolidated **"cash flow" (NEW)** | **NO → Pack-1 ⚑** |
+| 1 | **Policy drift** (`page-policy §9-20`) | `compute_drift` `app/services/policy.py:108-219` | **per-entity** — `entity_id` honoured `:108,:112` | per-entity **"Policy drift"** — LIVE `reports_pack._entity_drift` (`app/services/reports_pack.py`) | **YES** (§9-12 per-entity drift) |
+| 2 | **Net worth trend** (`page-net-worth ND-14`) | `net_worth_history` route `app/api/v1/routes/portfolio.py:894-906` | **consolidated-only** — NO `entity_id`; reads `NetWorthSnapshot` (not entity-scoped) | consolidated **"Net worth trend"** — LIVE `reports_pack._consolidated_net_worth_trend` | **YES** (§9-12 consolidated) |
+| 3 | **Review** (`page-review ND-10`) | `review_report` / `review_centre` `app/services/review.py:86-260,285-349` | **consolidated-only** — NO `entity_id` (`:86,:285`) | consolidated **"Review"** — LIVE `reports_pack._consolidated_review` | **YES** (§9-12 consolidated) |
+| 4 | **Scenarios** (`page-scenarios §9-12`) | `scenario_report` `app/services/scenarios.py:49` | **household-only — per-entity ACTIVELY REJECTED** (400 `portfolio.py:1043-1044`; `ValueError` `scenarios.py:54-55`) | consolidated **"Scenarios" (Pack-1 NEW)** — LIVE `reports_pack._consolidated_scenarios` | **NO → Pack-1 ⚑ (RESOLVED — extended, §9)** |
+| 5 | **Cash flow** (`page-cash-flow §9-14`) | `obligations_report` `app/services/planning.py:135`; `goals_report` `:98`; `contributions_report` `app/services/contributions.py:115` | **household-only** — readers take **only `session`**, no `entity_id` seam (D-057) | consolidated **"Cash flow" (Pack-1 NEW)** — LIVE `reports_pack._consolidated_cash_flow` | **NO → Pack-1 ⚑ (RESOLVED — extended, §9)** |
 
 **Mapping verdict:** 3 of 5 map cleanly to a ratified §9-12 section. **Scenarios and Cash flow do
 NOT** — both are **household-scoped** (Scenarios rejects `entity_id` by design as an "API honesty
@@ -53,6 +53,12 @@ ratified §9-12 consolidated list names only *net-worth trend + review*. → **P
 consolidated section to add household-scoped Scenarios + Cash-flow subsections, or re-declare their
 disposition.** Recommendation in §9. **The ledger stays PENDING in `CURRENT.md` until this
 milestone's close** (Amendment I); the close flips all five PENDING → DELIVERED against this table.
+
+**Pack-1 RESOLVED (owner 2026-07-17):** the consolidated section is extended with Cash flow +
+Scenarios subsections (page-reports §9-12 dated amendment). **Phase 0 has BUILT all five sections**
+(the LIVE anchors above name their `reports_pack.py` renderers) — **evidence is now STAGED for the
+close**. Per Amendment I the **ledger itself still flips PENDING → DELIVERED only at THIS milestone's
+close** (after the owner acceptance walk), not at Phase 0; this table is that close's evidence.
 
 ---
 

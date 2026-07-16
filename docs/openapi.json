@@ -9362,6 +9362,22 @@
             }
           },
           {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

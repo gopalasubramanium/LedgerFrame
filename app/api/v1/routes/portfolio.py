@@ -162,17 +162,24 @@ class HoldingsResponse(BaseModel):
 @router.get("/portfolio/holdings", response_model=HoldingsResponse)
 async def portfolio_holdings(
     symbol: Annotated[str | None, Query()] = None,
+    account_id: Annotated[int | None, Query()] = None,
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     # ND-1 (Instrument Detail): `symbol` scopes the SAME canonical reader to one
     # instrument (P-3 — a scoped view is a filter of the reader, never a second code
     # path / no recompute). Empty list when the symbol is not held.
+    # §9-11 + Amendment G: `account_id` scopes the SAME reader to one account's holdings
+    # (the account rollup's drill-down target) — the identical filter-not-recompute posture as
+    # `symbol`; each HoldingValue already carries `account_id`. Phase 0 ships the reader param
+    # only; the Holdings-PAGE URL filter / clearable chip is Phase-1 work.
     base = get_settings().base_currency
     val = await value_portfolio(session, base)
     holdings = val.holdings
     if symbol:
         s = symbol.strip().upper()
         holdings = [h for h in holdings if (h.symbol or "").upper() == s]
+    if account_id is not None:
+        holdings = [h for h in holdings if h.account_id == account_id]
     return {"base_currency": base, "holdings": [_hv(h) for h in holdings]}
 
 

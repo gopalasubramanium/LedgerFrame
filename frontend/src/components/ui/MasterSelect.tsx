@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import "./inputs.css";
 import { getMaster } from "../../mocks/refdata";
 import { useRefdataVocabs } from "../../refdata/refdata-context";
+import type { RefOption } from "../../refdata/refdata-context";
 import { CommitMenu } from "./CommitMenu";
 
 // THE select for every categorical field (DESIGN-SYSTEM §5.1 / §6). Fixed-vocab
@@ -25,6 +26,11 @@ export interface MasterSelectProps {
    *  the master's vocabulary — used for D-090 form-level filtering). When set,
    *  only values present here are shown; order/labels follow the master. */
   include?: string[];
+  /** DB-backed extensible-master data source (page-accounts §9-3, the DESIGN-SYSTEM §5.1
+   *  clarification). When supplied, these SERVED options replace the /refdata + registry
+   *  source — the institution master reads its live list this way (create-new is handled by
+   *  the caller's `onChange`, which POSTs to the master endpoint and re-selects the row). */
+  options?: RefOption[];
   "aria-label"?: string;
 }
 
@@ -36,6 +42,7 @@ export function MasterSelect({
   allowCreate,
   disabled,
   include,
+  options: optionsSource,
   "aria-label": ariaLabel,
 }: MasterSelectProps) {
   const def = useMemo(() => getMaster(master), [master]);
@@ -48,9 +55,9 @@ export function MasterSelect({
   // labelled registry offline. Value may be a just-created row not yet in the
   // seed — show it regardless.
   const options = useMemo(() => {
-    // Prefer the live SERVED {value,label} options (D-005; item 3b); fall back to the
-    // labelled registry offline.
-    let base = vocabs?.[master] ?? def.options;
+    // §9-3 DB-backed master (institution) → the caller's live SERVED options; else prefer the
+    // live /refdata values (D-005; item 3b); else fall back to the labelled registry offline.
+    let base = optionsSource ?? vocabs?.[master] ?? def.options;
     // D-090 form-level filtering: keep only the whitelisted subset (never a copy
     // of the master — the subset is supplied by the caller from /refdata).
     if (include) base = base.filter((o) => include.includes(o.value));
@@ -58,7 +65,7 @@ export function MasterSelect({
       return [...base, { value, label: value }];
     }
     return base;
-  }, [vocabs, master, def.options, value, include]);
+  }, [optionsSource, vocabs, master, def.options, value, include]);
 
   // Commit-on-pick mode (F3): the value is a pre-filled suggestion the user must be able to
   // CONFIRM by choosing it, even unchanged — a native <select> can't emit that. No create flow

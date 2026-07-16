@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { KitchenSink } from "./routes/KitchenSink";
 import { Holdings } from "./routes/Holdings";
+import { Accounts } from "./routes/Accounts";
 import { Portfolio } from "./routes/Portfolio";
 import { NetWorth } from "./routes/NetWorth";
 import { Markets } from "./routes/Markets";
@@ -37,6 +38,7 @@ export function AppRoutes() {
               <Route path="/" element={<Home />} />
               <Route path="/net-worth" element={<NetWorth />} />
               <Route path="/holdings" element={<Holdings />} />
+              <Route path="/accounts" element={<Accounts />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/markets" element={<Markets />} />
         <Route path="/heatmap" element={<Heatmap />} />

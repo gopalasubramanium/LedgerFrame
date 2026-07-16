@@ -26,6 +26,7 @@ const ROUTES = [
   { name: "scenarios (overview)", hash: "#/scenarios" },
   { name: "insurance (worklist)", hash: "#/insurance" },
   { name: "estate (worklist)", hash: "#/estate" },
+  { name: "accounts (worklist)", hash: "#/accounts" },
 ];
 const THEMES = ["light", "dark"] as const;
 
@@ -106,7 +107,7 @@ for (const route of ROUTES) {
 test("every page fills the shell content box — one page inset, no per-page cap/centering", async ({ page }) => {
   await page.setViewportSize({ width: 1728, height: 1000 });
   const ROUTES = ["#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap", "#/news",
-    "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance", "#/estate"];
+    "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance", "#/estate", "#/accounts"];
   const offenders: string[] = [];
   for (const hash of ROUTES) {
     await page.goto(`/${hash}`);
@@ -167,7 +168,7 @@ for (const theme of THEMES) {
 // TEST FAILURE, not a style choice — which is what stops the eleventh page from re-inventing it.
 const SHELL_ROUTES = [
   "#/", "#/net-worth", "#/holdings", "#/portfolio", "#/markets", "#/heatmap",
-  "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance", "#/estate",
+  "#/news", "#/instrument/AAPL", "#/pricing-health", "#/review", "#/policy", "#/cash-flow", "#/scenarios", "#/insurance", "#/estate", "#/accounts",
 ];
 test("every page uses the ONE shared page shell (page-local shells are a failure)", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 800 });

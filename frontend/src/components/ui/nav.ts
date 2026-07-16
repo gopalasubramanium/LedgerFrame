@@ -28,7 +28,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Net worth", path: "/net-worth", built: true },
       { label: "Portfolio", path: "/portfolio", built: true },
       { label: "Holdings", path: "/holdings", built: true },
-      { label: "Accounts", path: "/accounts" },
+      { label: "Accounts", path: "/accounts", built: true },
     ],
   },
   {

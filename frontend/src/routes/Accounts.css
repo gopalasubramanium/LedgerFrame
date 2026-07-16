@@ -58,6 +58,19 @@
   line-height: var(--line-16);
 }
 
+/* Account editor form — two columns at the lg dialog width, one below the sheet breakpoint. The
+   name field spans the full width; every control is a ratified ui/ primitive. */
+.acct__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-4);
+}
+.acct__form .acct__field--full { grid-column: 1 / -1; }
+.acct__formerror { margin: 0 0 var(--space-3); color: var(--loss); font-size: var(--font-size-13); line-height: var(--line-16); }
+@media (max-width: 40rem) {
+  .acct__form { grid-template-columns: 1fr; }
+}
+
 .acct__field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .acct__fieldlabel {
   font-size: var(--font-size-13);

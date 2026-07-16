@@ -140,7 +140,12 @@ async def statements_report(session: AsyncSession, year: int | None = None,
                             "total": _f(v["dividend"] + v["interest"])}
                            for y, v in sorted(income_by_year.items(), reverse=True)],
         "realised_unrealised": {
-            "realised": _f(Decimal(str(realised.get("base_realised_total_current_fx", 0)))),
+            # §12rp-3 (page-reports gate condition): ONE TRUTH with the Realised P/L report. This
+            # figure IS `realised_gains_report(...).base_realised_total_current_fx` (the call above),
+            # so it must render byte-identical to the realised card/export — serve it at the SAME 2dp
+            # precision, never re-rounded to whole units (a `_f` default-p=0 would drop the cents and
+            # disagree on-screen: 14,820 vs 14,820.37). Pinned by test_statements_realised_equals_...
+            "realised": _f(Decimal(str(realised.get("base_realised_total_current_fx", 0))), 2),
             "unrealised": _f(val.unrealised_pl),
         },
         "disclaimer": "Organisation for review / your accountant — not tax or financial advice. "
@@ -156,12 +161,34 @@ def statements_csv(rep: dict) -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
     base = rep["base_currency"]
-    w.writerow([f"LedgerFrame statements (base {base}, current FX — indicative, not for filing)"])
+    # §12rp-1 (page-reports gate ruling): the Year control scopes BOTH the on-screen Realised stat
+    # AND this export, so the SELECTED YEAR must reach the artifact — otherwise the control governs a
+    # file it cannot change (the failure mode the owner named: "a control must clearly indicate what
+    # it governs"). The by-year rollup below stays ALL-YEARS (the historical rollup is the value);
+    # the year scopes the TITLE + the selected-year summary block, not the rollup.
+    year = rep.get("year")
+    year_tag = f" — {year}" if year else ""
+    w.writerow([f"LedgerFrame statements{year_tag} (base {base}, current FX — indicative, not for filing)"])
     # §9-5 (page-reports, honesty): the export previously carried ONLY the top-line current-FX
     # caveat above; the fuller served D-077 disclaimer ("for your accountant / not tax or financial
     # advice") lived in the reader but never reached the file. Write it verbatim so the export
     # carries the same disclaimer the on-screen statements show.
     w.writerow([rep["disclaimer"]])
+    # §12rp-1: the selected-year summary — the totals the Year control scopes (income / fees / cash
+    # flow for that year). Defensive (.get) so the Phase-0 disclaimer pin, which passes a minimal rep,
+    # still holds. Realised-vs-unrealised is deliberately NOT written here — the realised figure's one
+    # canonical export is realised-gains.csv (§12rp-3 keeps it in exactly one file).
+    inc = rep.get("income")
+    fee = rep.get("fees")
+    flow = rep.get("cashflow")
+    if year and isinstance(inc, dict) and isinstance(fee, dict) and isinstance(flow, dict):
+        w.writerow([])
+        w.writerow([f"Selected year, {year}", "Dividends", "Interest", "Total"])
+        w.writerow(["Income", inc.get("dividend"), inc.get("interest"), inc.get("total")])
+        w.writerow([f"Selected year, {year}", "Commissions", "Taxes/duty", "Total"])
+        w.writerow(["Fees", fee.get("commissions"), fee.get("taxes"), fee.get("total")])
+        w.writerow([f"Selected year, {year}", "Deposits", "Withdrawals", "Net"])
+        w.writerow(["Cash flow", flow.get("deposits"), flow.get("withdrawals"), flow.get("net")])
     w.writerow([])
     w.writerow(["Income by year", "Dividends", "Interest", "Total"])
     for r in rep["income_by_year"]:

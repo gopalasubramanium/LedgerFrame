@@ -49,3 +49,59 @@ def test_statements_csv_carries_the_full_D077_disclaimer():
     }
     text = statements_csv(rep)
     assert rep["disclaimer"] in text
+
+
+def test_statements_csv_honours_the_selected_year():
+    """§12rp-1 (page-reports gate ruling — fail-first, pinned): the Year control scopes BOTH the
+    on-screen Realised stat AND the statements export, so the SELECTED YEAR must reach the artifact.
+    The by-year rollup stays all-years; the year scopes the title + a selected-year summary block.
+    RED on the pre-ruling builder (no year anywhere in the file → the two years produced identical
+    text and the control governed a file it could not change)."""
+    from app.services.statements import statements_csv
+
+    def rep_for(year: int) -> dict:
+        return {
+            "base_currency": "SGD",
+            "year": year,
+            "income": {"dividend": 500.0, "interest": 200.0, "total": 700.0},
+            "fees": {"commissions": 50.0, "taxes": 0.0, "total": 50.0,
+                     "by_year": [{"year": year, "commissions": 50.0, "taxes": 0.0, "total": 50.0}]},
+            "cashflow": {"deposits": 10000.0, "withdrawals": -3000.0, "net": 7000.0,
+                         "by_year": [{"year": year, "deposits": 10000.0, "withdrawals": -3000.0, "net": 7000.0}]},
+            "income_by_year": [{"year": year, "dividend": 500.0, "interest": 200.0, "total": 700.0}],
+            "disclaimer": "Organisation for review / your accountant — not tax or financial advice.",
+        }
+
+    text_2024 = statements_csv(rep_for(2024))
+    text_2023 = statements_csv(rep_for(2023))
+    # The selected year rides the title + the selected-year summary block.
+    assert "2024" in text_2024 and "Selected year, 2024" in text_2024
+    assert "2023" in text_2023 and "Selected year, 2023" in text_2023
+    # THE TEETH: changing the year changes the artifact — the control's scope reaches the file.
+    assert text_2024 != text_2023
+    # The disclaimer still travels (the Phase-0 §9-5 pin must not regress).
+    assert rep_for(2024)["disclaimer"] in text_2024
+
+
+async def test_statements_realised_equals_the_realised_gains_reader(app_client):
+    """§12rp-3 (page-reports gate condition — fail-first, pinned): the Statements card's Realised
+    stat and the Realised P/L report's current-FX total are ONE TRUTH. `statements_report` derives
+    its realised figure by CALLING `realised_gains_report` and consuming `base_realised_total_current_fx`;
+    it must render byte-identical — served at the SAME 2dp precision, never re-rounded to whole units.
+    A realised gain WITH CENTS makes this discriminating: RED on the pre-ruling `_f` default p=0
+    (123 != 123.40), GREEN once served at 2dp."""
+    base = (await app_client.get("/api/v1/portfolio/statements")).json()["base_currency"]
+    # Buy then sell in the base currency (no FX) so the realised gain is exact and carries CENTS.
+    buy = {"type": "buy", "symbol": "ONE", "ts": "2026-01-05T00:00:00", "quantity": 10, "price": 100, "currency": base}
+    sell = {"type": "sell", "symbol": "ONE", "ts": "2026-06-05T00:00:00", "quantity": 10, "price": 112.34, "currency": base}
+    for body in (buy, sell):
+        r = await app_client.post("/api/v1/portfolio/transactions", json=body)
+        assert r.status_code == 200, r.text
+
+    st = (await app_client.get("/api/v1/portfolio/statements", params={"year": 2026})).json()
+    rg = (await app_client.get("/api/v1/portfolio/realised-gains", params={"year": 2026})).json()
+    realised_stat = st["realised_unrealised"]["realised"]
+    realised_report_total = rg["base_realised_total_current_fx"]
+    # Discriminating fixture: the gain has cents (proceeds 1123.40 − cost 1000.00 = 123.40).
+    assert realised_report_total != round(realised_report_total)  # not a whole number → the guard has teeth
+    assert realised_stat == realised_report_total  # ONE TRUTH — identical served output

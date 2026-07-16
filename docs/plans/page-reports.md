@@ -609,3 +609,28 @@ honestly without copy-hygiene leaks.
 | # | Deliverable | Check | Where |
 |---|-------------|-------|-------|
 | 0a | Reports LAYOUT SPECIMEN (Overview; 3 stacked owned sections + 2 honesty frames; served disclaimers travel-noted; read-only threshold; no Pack / no AI) | frontend `npm run check` **EXIT 0** (250 passed) from `frontend/` | `/kitchen-sink` → "Reports — LAYOUT SPECIMEN"; `assets/reports-specimen*.png` |
+
+---
+
+## 12 — GEOMETRY GATE RULING: **RATIFIED WITH CONDITIONS (owner, 2026-07-17)**
+
+**The owner ratified the Phase-0a specimen geometry BY LOOKING** (the Overview reading order Statements
+→ Realised P/L report → Open tax lots; D-100 cards; header-outside-scroll; served disclaimers in-page +
+travel-noted; read-only threshold; no Pack / no AI). The ⏸ block above flips to **RATIFIED WITH
+CONDITIONS** — one ruling and three conditions carry into Phase 1 assembly. Recorded verbatim (nothing
+struck); each item's Phase-1 disposition is in §13.
+
+| # | Ruling / condition (owner 2026-07-17) | Phase-1 obligation |
+|---|----------------------------------------|--------------------|
+| **§12rp-1** | **RULING (option b):** the **Statements table stays ALL-YEARS** — the historical rollup is the value. The **Year control moves/relabels to sit VISIBLY on what it scopes**: the **Realised stat + the `statements.csv` export**. *Owner rationale, recorded:* **a control must clearly indicate what it governs; reporting ambiguity is the failure mode.** | Assemble so the scope is **unmistakable** — the Year control lives WITH the Realised stat + Export group, labelled for them, **clearly NOT a table filter**. The all-years income/fees/cash-flow table carries no year control; the scoped group (Year → Realised stat + Export) is visually distinct. A card-anatomy deviation is **flagged, not drifted** (see §13 — the statements export is made to honour the year so the scope reaches the artifact). |
+| **§12rp-2** | **CONDITION:** the **Realised P/L table carries PER-ROW currency** — a **Currency column** (the tax-lots table's precedent) or the §12in-1 per-row code affix on Gain (native). **One pattern, applied consistently with the tax-lots table.** | The realised events (served grouped by native currency) flatten into one table with a **Currency column** — the SAME pattern the open-tax-lots table already uses (Currency column). Gain is labelled **"Gain (native)"**; the Currency column names the native currency per row. |
+| **§12rp-3** | **CONDITION:** the **Statements Realised stat and the Realised P/L current-FX total must be ONE truth** — verify with file:line; one derivation consumed twice = fine (record it); two derivations → pin equality with a backend test (Review-headline precedent) or reshape to one reader. **Evidence in §13 either way.** | **Verify-first VERDICT (file:line):** `statements_report` DERIVES its realised figure by calling `realised_gains_report` (`statements.py:106`) and consuming `base_realised_total_current_fx` (`statements.py:143`) — **one derivation** — BUT re-rounds it via `_f` **default `p=0`** (`statements.py:42-43`), so the served statements figure **dropped the cents** and could disagree on-screen with the realised card/export (14,820 vs 14,820.37). **RESHAPE TO ONE TRUTH:** serve the statements realised at 2dp (`_f(…, 2)`) so `statements_report(Y).realised_unrealised.realised == realised_gains_report(Y).base_realised_total_current_fx`, **pinned by a fail-first backend equality test** (RED on `p=0`). Evidence in §13. |
+| **§12rp-4** | **RATIFIED AS SHOWN:** the **subtitle (protected copy)**, both **EmptyState wordings**, the **travels-into-export captions**, the **section order**. The subtitle's claim — *"Every export carries the same disclaimers you see here"* — is now a **TESTABLE PROMISE**; Phase 2's artifact guards are what keep it true. | Render the ratified subtitle + both EmptyState wordings + the travel captions **verbatim** (protected copy). Phase 2 ships **artifact-level journey guards** that download each real export and assert the disclaimers are INSIDE the file — the promise is mechanised, not asserted.
+
+**§12 flips ⏸ → RATIFIED WITH CONDITIONS (owner, 2026-07-17). Phase 1 assembly is UNBLOCKED.**
+
+---
+
+## 13 — PHASE 1/2/3a BUILD RECORD
+
+*(populated during this session — see the end of the file for the running record)*

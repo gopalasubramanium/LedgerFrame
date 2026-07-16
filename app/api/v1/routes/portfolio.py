@@ -1080,8 +1080,11 @@ async def statements_export(year: int | None = Query(default=None),
     from app.services.statements import statements_csv, statements_report
 
     rep = await statements_report(session, year=year, entity_id=entity_id)
+    # §12rp-1 (page-reports): the selected year rides the filename too (parity with realised-gains),
+    # so the Year control's scope is visible on the downloaded artifact, not only inside it.
+    fname = f'ledgerframe-statements-{rep["year"]}.csv'
     return PlainTextResponse(statements_csv(rep), media_type="text/csv", headers={
-        "Content-Disposition": 'attachment; filename="ledgerframe-statements.csv"'})
+        "Content-Disposition": f'attachment; filename="{fname}"'})
 
 
 @router.get("/portfolio/cost-of-ownership")

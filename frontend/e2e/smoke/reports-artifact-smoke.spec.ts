@@ -41,7 +41,11 @@ test.describe.serial("reports exports carry their disclaimers INTO the artifact 
     // §12rp-1: the Year control governs this export — the selected year reaches the artifact.
     expect(text, "the selected year rode the file content").toContain(year);
     expect(filename, "the selected year rode the filename").toContain(year);
-    console.log(`statements.csv — year=${year} filename=${filename} disclaimer=present`);
+    // §14rp-1: an export mirrors its section — the card's Realised (year-scoped) + Unrealised
+    // (open positions, as-of) figures travel INTO the artifact; the now-snapshot is explicitly as-of.
+    expect(text, "the Realised stat is a YEAR-scoped row in the file").toContain(`Realised P/L (selected year, ${year})`);
+    expect(text, "the Unrealised stat is an explicit AS-OF row (never a year figure)").toMatch(/Unrealised P\/L \(open positions, as of \d{4}-\d{2}-\d{2}\)/);
+    console.log(`statements.csv — year=${year} filename=${filename} disclaimer+realised+unrealised=present`);
   });
 
   test("realised-gains.csv — disclaimer + historical-FX total + excluded-count rows travel", async ({ page }) => {

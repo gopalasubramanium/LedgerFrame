@@ -83,6 +83,37 @@ def test_statements_csv_honours_the_selected_year():
     assert rep_for(2024)["disclaimer"] in text_2024
 
 
+def test_statements_csv_carries_the_realised_and_unrealised_stat_block():
+    """§14rp-1 (owner walk 2026-07-17 — fail-first, pinned): the Statements CARD renders Realised
+    (selected year) and Unrealised (open positions, now); an export MIRRORS its section, so the
+    card's ARTIFACT must carry both. Realised is a YEAR-SCOPED row (it is the SAME one-derivation
+    figure as realised-gains.csv — §12rp-3); Unrealised is an EXPLICIT AS-OF row (a now-snapshot must
+    not read as a year figure inside a yearly artifact). RED on the pre-walk builder, which wrote
+    neither (the realised-vs-unrealised block was deliberately omitted before the walk)."""
+    from app.services.statements import statements_csv
+
+    rep = {
+        "base_currency": "SGD",
+        "year": 2024,
+        "as_of": "2026-07-17",
+        "income": {"dividend": 500.0, "interest": 200.0, "total": 700.0},
+        "fees": {"commissions": 50.0, "taxes": 0.0, "total": 50.0,
+                 "by_year": [{"year": 2024, "commissions": 50.0, "taxes": 0.0, "total": 50.0}]},
+        "cashflow": {"deposits": 10000.0, "withdrawals": -3000.0, "net": 7000.0,
+                     "by_year": [{"year": 2024, "deposits": 10000.0, "withdrawals": -3000.0, "net": 7000.0}]},
+        "income_by_year": [{"year": 2024, "dividend": 500.0, "interest": 200.0, "total": 700.0}],
+        "realised_unrealised": {"realised": 804.5, "unrealised": 1234.56},
+        "disclaimer": "Organisation for review / your accountant — not tax or financial advice.",
+    }
+    text = statements_csv(rep)
+    lines = text.splitlines()
+    # Realised — a YEAR-scoped row carrying the figure the card shows.
+    assert any("Realised P/L (selected year, 2024)" in ln and "804.5" in ln for ln in lines), text
+    # Unrealised — an EXPLICIT as-of row (open positions, now) so it never reads as a 2024 figure.
+    assert any("Unrealised P/L (open positions, as of 2026-07-17)" in ln and "1234.56" in ln
+               for ln in lines), text
+
+
 async def test_statements_realised_equals_the_realised_gains_reader(app_client):
     """§12rp-3 (page-reports gate condition — fail-first, pinned): the Statements card's Realised
     stat and the Realised P/L report's current-FX total are ONE TRUTH. `statements_report` derives

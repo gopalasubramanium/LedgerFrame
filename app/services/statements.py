@@ -110,6 +110,10 @@ async def statements_report(session: AsyncSession, year: int | None = None,
         "base_currency": base,
         "years": years_sorted,
         "year": yr,
+        # §14rp-1 (page-reports owner walk): the export date for the Unrealised (open-positions-now)
+        # stat row — a now-snapshot is labelled explicitly AS-OF this date so it can never read as a
+        # year figure inside a yearly artifact. ISO date (machine), rendered into the label by the CSV.
+        "as_of": now.date().isoformat(),
         "income": {
             "dividend": _f(inc["dividend"]),
             "interest": _f(inc["interest"]),
@@ -176,8 +180,7 @@ def statements_csv(rep: dict) -> str:
     w.writerow([rep["disclaimer"]])
     # §12rp-1: the selected-year summary — the totals the Year control scopes (income / fees / cash
     # flow for that year). Defensive (.get) so the Phase-0 disclaimer pin, which passes a minimal rep,
-    # still holds. Realised-vs-unrealised is deliberately NOT written here — the realised figure's one
-    # canonical export is realised-gains.csv (§12rp-3 keeps it in exactly one file).
+    # still holds.
     inc = rep.get("income")
     fee = rep.get("fees")
     flow = rep.get("cashflow")
@@ -189,6 +192,21 @@ def statements_csv(rep: dict) -> str:
         w.writerow(["Fees", fee.get("commissions"), fee.get("taxes"), fee.get("total")])
         w.writerow([f"Selected year, {year}", "Deposits", "Withdrawals", "Net"])
         w.writerow(["Cash flow", flow.get("deposits"), flow.get("withdrawals"), flow.get("net")])
+    # §14rp-1 (owner walk 2026-07-17): the Statements CARD renders Realised (selected year) and
+    # Unrealised (open positions, now) — so the card's ARTIFACT must carry them too (an export mirrors
+    # its section). Realised is the SAME one-derivation figure as realised-gains.csv (§12rp-3 —
+    # statements derives it from realised_gains_report; ONE truth, rendered in two files, never a
+    # second derivation), written as a YEAR-SCOPED row. Unrealised is a NOW-SNAPSHOT: it is labelled
+    # explicitly AS-OF the export date so it can never read as a year figure inside this yearly
+    # artifact. The values stay MACHINE NUMERICS (§14rp-2) — the base currency rides its own cell.
+    ru = rep.get("realised_unrealised")
+    if year and isinstance(ru, dict):
+        as_of = rep.get("as_of")
+        unreal_label = (f"Unrealised P/L (open positions, as of {as_of})" if as_of
+                        else "Unrealised P/L (open positions, now)")
+        w.writerow([])
+        w.writerow([f"Realised P/L (selected year, {year})", ru.get("realised"), base])
+        w.writerow([unreal_label, ru.get("unrealised"), base])
     w.writerow([])
     w.writerow(["Income by year", "Dividends", "Interest", "Total"])
     for r in rep["income_by_year"]:

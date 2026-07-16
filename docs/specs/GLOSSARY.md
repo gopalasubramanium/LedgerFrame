@@ -64,8 +64,12 @@ Liabilities    = Σ (LIABILITY-class holdings, counted negative)
 | **Lot** | A single parcel from one buy, with its own acquisition date and unit cost. FIFO consumes lots oldest-first. |
 | **Tax lot / Open lot** | An unsold lot with acquisition date, quantity, cost, and holding period. **[Help]** |
 | **Account** | A container of holdings at an institution, with a currency, kind, and an owning entity. Canonical on the **Accounts** page. |
-| **Institution** | The broker/bank an account is held at (`Account.institution`), from the Institution master. Retired synonym: "platform" (D-029). |
+| **Institution** | The broker/bank an account is held at, from the user-extensible **Institution master** (`Account.institution_id` FK; also FK'd from `insurance_policy.institution_id`). Create · rename · **merge** · delete (FK-blocked). Retired synonym: "platform" (D-029). |
 | **Entity** | An ownership entity. `kind` ∈ {self, spouse, trust, company, other}. Every account belongs to one; consolidated views span all. "Household" is a valid **entity name**, not a kind and not a separate term (D-029). Model `Entity`. |
+| **Account kind** | The category of an account: `brokerage`, `bank`, `retirement`, `wallet`, `property`, `manual`, `other` (fixed vocab, `account_kind`). Distinct from the account's currency and entity. Canonical on the **Accounts** page. |
+| **Cost-basis method** | The per-account method for computing realised gains from lots: `fifo` (FIFO — oldest lots sold first) or `average` (all open lots pooled to one average cost). Distinct from **Cost basis** (the amount). Changing it on an account **with history** restates realised/unrealised figures (D-018). Canonical on the **Accounts** page. **[Help]** |
+| **Rollup** | A per-account summary of the holdings/value reader — value, holdings count, asset classes, currencies, and stale / low-confidence counts — shown on the **Accounts** page. A **linked summary** of the canonical reader, never a second figure or a recompute (P-1 / D-031). |
+| **Merge** | Folding one Institution master row (the **duplicate**) into another (the **survivor**): re-point every referencing account and policy onto the survivor, then delete the duplicate — in one transaction. **User-driven** (you name both); no fuzzy auto-detection. Offered when a delete is blocked because rows still reference the institution. |
 
 ---
 

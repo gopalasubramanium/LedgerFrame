@@ -67,6 +67,9 @@ def _label(value: str) -> str:
 # verbatim and never re-maps it (D-005).
 _VOCAB_LABEL_OVERRIDES: dict[str, dict[str, str]] = {
     "will_status": {"none": "Not recorded"},
+    # page-accounts §9-13: the titleizer serves "Fifo"; the acronym reads "FIFO" (the UI renders
+    # the served label verbatim, §12es-3). `average` titleizes correctly and is left alone.
+    "cost_basis_method": {"fifo": "FIFO"},
 }
 
 

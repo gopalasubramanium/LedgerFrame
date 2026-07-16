@@ -8,6 +8,28 @@ export interface GlossaryEntry {
 }
 
 export const GLOSSARY: Record<string, GlossaryEntry> = {
+  // Accounts (page-accounts §9-13). Added to docs/specs/GLOSSARY.md FIRST, then here — the
+  // two-store rule; tests/unit/test_glossary_parity.py polices the spellings.
+  "term-account-kind": {
+    term: "Account kind",
+    definition:
+      "The category of an account: brokerage, bank, retirement, wallet, property, manual, or other. Distinct from the account's currency and entity.",
+  },
+  "term-cost-basis-method": {
+    term: "Cost-basis method",
+    definition:
+      "The per-account method for realised gains: FIFO (oldest lots sold first) or average (open lots pooled to one average cost). Changing it on an account with history restates your realised and unrealised figures.",
+  },
+  "term-rollup": {
+    term: "Rollup",
+    definition:
+      "A per-account summary of the holdings reader — value, holdings count, asset classes, currencies, and stale / low-confidence counts. A linked summary of the canonical figure, never a recompute.",
+  },
+  "term-merge": {
+    term: "Merge",
+    definition:
+      "Folding one institution (the duplicate) into another (the survivor): every account and policy that referenced the duplicate is re-pointed to the survivor, then the duplicate is deleted. You name both — there is no fuzzy auto-detection.",
+  },
   // Scenarios (page-scenarios §9-6). Added to docs/specs/GLOSSARY.md FIRST, then here — the
   // two-store rule; tests/unit/test_glossary_parity.py polices the spellings.
   "term-shock": {

@@ -56,3 +56,25 @@ async def test_changing_method_on_account_with_history_restates_realised_gains(a
     # The realised figures actually MOVE after the method change (the restatement is real).
     assert after["base_realised_total_current_fx"] != before["base_realised_total_current_fx"]
 
+
+# --- §9-9: kind + currency write-enforcement (no silent coercion) ---------- #
+async def test_out_of_vocab_kind_is_rejected_not_coerced(app_client):
+    # Today: invalid kind silently coerces to "brokerage" (200) → RED.
+    bad = await app_client.post("/api/v1/accounts", json={"name": "K", "kind": "cryptobank"})
+    assert bad.status_code == 400
+
+
+async def test_out_of_vocab_currency_is_rejected(app_client):
+    # Today: currency is upper()[:3] with no vocab check, so "ZZZ" is accepted (200) → RED.
+    bad = await app_client.post("/api/v1/accounts", json={"name": "C", "currency": "ZZZ"})
+    assert bad.status_code == 400
+    # A supported currency still works.
+    ok = await app_client.post("/api/v1/accounts", json={"name": "C2", "currency": "usd"})
+    assert ok.status_code == 200 and ok.json()["currency"] == "USD"
+
+
+async def test_patch_out_of_vocab_kind_rejected(app_client):
+    aid = (await app_client.post("/api/v1/accounts", json={"name": "K2"})).json()["id"]
+    bad = await app_client.patch(f"/api/v1/accounts/{aid}", json={"name": "K2", "kind": "nope"})
+    assert bad.status_code == 400
+

@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.config import get_settings
+from app.core.config import SUPPORTED_CURRENCIES, get_settings
 from app.models import Account, Entity, Transaction
 from app.services.confidence import score_holding
 from app.services.institutions import get_or_create_institution
@@ -117,6 +117,26 @@ def _validate_cost_basis_method(raw) -> str:
     return raw
 
 
+def _validate_kind(raw) -> str:
+    """§9-9: enforce the account-kind vocab — out-of-vocab is a 400, never a silent coerce to
+    brokerage (the honesty gap the policy_status precedent closed)."""
+    if raw is None:
+        return "brokerage"
+    if raw not in ACCOUNT_KINDS:
+        raise ValueError(f"kind must be one of {', '.join(ACCOUNT_KINDS)}.")
+    return raw
+
+
+def _validate_currency(raw) -> str:
+    """§9-9: enforce the currency master — an unsupported code is a 400, not upper()[:3]-pass."""
+    if raw is None or not str(raw).strip():
+        return get_settings().base_currency
+    code = str(raw).upper()[:3]
+    if code not in SUPPORTED_CURRENCIES:
+        raise ValueError(f"currency must be one of {', '.join(SUPPORTED_CURRENCIES)}.")
+    return code
+
+
 async def _resolve_entity_id(session: AsyncSession, entity_id) -> int | None:
     """§9-4/D-064: an entity_id must reference a real entity, else an honest 400 (never a silent
     drop). None clears the assignment (account.entity_id is nullable — no ≥1-entity invariant)."""
@@ -152,8 +172,8 @@ async def _resolve_institution(session: AsyncSession, raw_name):
 async def create_account(session: AsyncSession, data: dict) -> dict:
     a = Account(
         name=(data.get("name") or "Account").strip()[:120],
-        kind=(data.get("kind") if data.get("kind") in ACCOUNT_KINDS else "brokerage"),
-        currency=(data.get("currency") or get_settings().base_currency).upper()[:3],
+        kind=_validate_kind(data.get("kind")),
+        currency=_validate_currency(data.get("currency")),
     )
     a.institution = await _resolve_institution(session, data.get("institution"))
     if "entity_id" in data:
@@ -189,10 +209,10 @@ async def update_account(session: AsyncSession, aid: int, data: dict) -> dict:
                 await rebuild_holdings_from_transactions(session)
                 restatement = ("Cost-basis method changed — your realised and unrealised figures "
                                "for this account will change.")
-    if data.get("kind") in ACCOUNT_KINDS:
-        a.kind = data["kind"]
+    if data.get("kind") is not None:
+        a.kind = _validate_kind(data["kind"])  # §9-9: out-of-vocab → 400, not silent drop
     if data.get("currency"):
-        a.currency = data["currency"].upper()[:3]
+        a.currency = _validate_currency(data["currency"])  # §9-9: unsupported → 400
     await session.flush()
     out = _account_dict(a)
     if restatement:

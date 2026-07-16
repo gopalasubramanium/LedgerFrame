@@ -198,6 +198,40 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "The date a policy is next due to renew. Insurance flags renewals due soon (or overdue) as neutral reminders — never advice.",
   },
+  // Estate terms (page-estate §9-9, PROPOSED — ratify at the walk). Added to
+  // docs/specs/GLOSSARY.md FIRST, then here — the two-store rule; test_glossary_parity.py
+  // polices the spellings. Status values ride their parent term (no per-value entries).
+  "term-will": {
+    term: "Will",
+    definition:
+      "A document recording how you want your estate handled. LedgerFrame records that one exists and where — it never drafts a will and is not legal advice.",
+  },
+  "term-will-status": {
+    term: "Will status",
+    definition:
+      "Where your will stands, as a plain state you record: None (not recorded), Draft (being prepared), Executed (signed and in force), or Needs update (recorded but marked for revision). A fact you record, never a prompt.",
+  },
+  "term-executor": {
+    term: "Executor",
+    definition: "The person you name to carry out your will. A name you record, not a fixed list.",
+  },
+  "term-beneficiary": {
+    term: "Beneficiary",
+    definition: "A person you have named to receive part of your estate. A name you record, not a fixed list.",
+  },
+  "term-guardian": {
+    term: "Guardian",
+    definition: "A person you have named to care for a dependant. A name you record, not a fixed list.",
+  },
+  "term-emergency-contact": {
+    term: "Emergency contact",
+    definition: "A person to reach in an emergency. A name you record, not a fixed list.",
+  },
+  "term-readiness": {
+    term: "Readiness",
+    definition:
+      "A plain count of how much of your estate documentation is in order — documents present versus those needing attention. Each document has a status: Present (on file), Missing (not held), or Outdated (needs refreshing). A record and a reminder, never a score.",
+  },
 };
 
 export function lookupTerm(id: string): GlossaryEntry | undefined {

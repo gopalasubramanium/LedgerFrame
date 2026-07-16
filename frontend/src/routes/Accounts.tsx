@@ -440,7 +440,7 @@ export function Accounts() {
     <div className="lf-page acct">
       <PageHeader
         title="Accounts"
-        subtitle="Manage accounts, entities and the institution master. Per-account value is a linked summary of the holdings reader — never a second figure."
+        subtitle="Manage accounts, entities and the institution master. Per-account value is a linked summary of your holdings — never a second figure."
       />
 
       {/* ACCOUNTS — the page spine */}
@@ -456,7 +456,7 @@ export function Accounts() {
           {report === null && (
             <EmptyState
               message="Couldn't load your accounts"
-              reason="The reader is unavailable, so the figures are held back rather than guessed."
+              reason="It couldn't be loaded just now, so the figures are held back rather than guessed."
               action={<button className="lf-btn" onClick={() => void reload()}>Retry</button>}
             />
           )}
@@ -492,7 +492,7 @@ export function Accounts() {
           {entities === null && (
             <EmptyState
               message="Couldn't load your entities"
-              reason="The reader is unavailable, so the list is held back rather than guessed."
+              reason="It couldn't be loaded just now, so the list is held back rather than guessed."
               action={<button className="lf-btn" onClick={() => void reload()}>Retry</button>}
             />
           )}
@@ -522,7 +522,7 @@ export function Accounts() {
           {institutions === null && (
             <EmptyState
               message="Couldn't load the institution master"
-              reason="The reader is unavailable, so the list is held back rather than guessed."
+              reason="It couldn't be loaded just now, so the list is held back rather than guessed."
               action={<button className="lf-btn" onClick={() => void reload()}>Retry</button>}
             />
           )}

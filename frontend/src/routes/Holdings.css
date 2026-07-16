@@ -30,6 +30,22 @@
   line-height: var(--line-20);
   font-weight: var(--weight-semibold);
 }
+/* Amendment G — the account-scope filter chip: a removable pill over the scoped holdings reader. */
+.hold__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  cursor: pointer;
+}
+.hold__chip:hover { background: var(--surface); }
+.hold__chipx { color: var(--text-tertiary); font-size: var(--font-size-16); line-height: 1; }
 .hold__sub {
   color: var(--text-secondary);
   font-size: var(--font-size-13);

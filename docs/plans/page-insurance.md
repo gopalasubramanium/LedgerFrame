@@ -1002,3 +1002,16 @@ insurers into the master.
 `test_institution_migration.py` asserts `/insurance` still serves the insurer name via the join.
 **Frontend `Insurance.tsx` is unchanged this commit** (still posts/reads `insurer` as a name); the
 typeahead→MasterSelect swap + its smoke re-run is **Phase-1 work** (§9-3), noted for that batch.
+
+### 16a. DELTA NOTE — insurer typeahead → MasterSelect over the master (2026-07-16, page-accounts Phase 1)
+
+**Done this batch (§9-3 follow-through).** `Insurance.tsx` now renders the **Insurer** field as a
+`MasterSelect master="institution"` wired to the **live** DB master (`fetchInstitutions` → `options`),
+`allowCreate` → **Create-new POSTs to `/institutions`** (`createInstitution`) then re-selects the
+canonical row; the policy write still posts `insurer` as a **name** (resolve-or-create, unchanged). The
+superseded client-side typeahead (the `insurers` distinct-over-served-policies `useMemo` +
+`TextInput suggestions`) is **removed** — the master is the single source, shared with `/accounts`
+(D-008). This is the §9-3 MasterSelect **data-source extension** (a new `options` prop; no new
+component). **Guards:** `Insurance.test.tsx` + the Insurance unit suite GREEN (typecheck/lint/build
+green); the `insurance-smoke.spec.ts` live re-run rides the page-accounts Phase-3a pre-pass (it drives
+the insurer MasterSelect against the live master). No served shape changed (still `insurer` name).

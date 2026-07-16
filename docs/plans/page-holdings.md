@@ -627,3 +627,19 @@ ratification look before Phase 1 assembly.
   `e2e/overflow.spec.ts` (at 1728). No functional change; pre-pass (overflow suite covers `/holdings`) green.
 - **§14in-7 (base-currency affix):** the linked net-worth summary tile now shows the served `base_currency`
   as the muted `.lf-stat__unit` affix instead of embedding `SGD` inside the value string. Holdings.test.tsx (23) green.
+
+---
+
+## DELTA NOTE — 2026-07-16 (page-accounts Phase 1, Amendment G — account drill-down chip)
+
+- **Amendment G (page-accounts §9-11):** the Accounts page's RowMenu **"View holdings"** now drills
+  down here via **`#/holdings?account=<id>`**. Holdings reads the `account` URL query
+  (`useSearchParams`) and, when set, fetches the **scoped reader** `GET /portfolio/holdings?account_id=`
+  (`getHoldings(accountId)` — filter-not-recompute, the Phase-0 reader half) and renders a **visible,
+  clearable filter chip** (`.hold__chip`, account name from the `accounts` list) beside the Holdings
+  heading; clearing it drops the param and reloads unscoped. No money math added — the chip only scopes
+  the canonical reader's output. Tokens-only CSS (drift green).
+- **Guards / pre-pass re-run:** `Holdings.test.tsx` + the frontend unit suite GREEN; typecheck/lint/
+  build green. `/holdings` stays in all three `e2e/overflow.spec.ts` arrays. The **`holdings-smoke`**
+  live re-run (param → chip → clear round-trip, plus RowMenu navigation from `/accounts`) rides the
+  page-accounts Phase-3a pre-pass on the reset demo-seeded instance. Served shape unchanged.

@@ -14,6 +14,7 @@ from app.core.money import D
 from app.models import (
     Account,
     AssetClass,
+    Entity,
     EstateContact,
     EstateDocument,
     EstateProfile,
@@ -116,8 +117,31 @@ async def seed_demo_data(session: AsyncSession) -> bool:
 
     brokerage = Account(name="Demo Brokerage", kind="brokerage", currency="USD")
     sg_account = Account(name="Demo SG CDP", kind="brokerage", currency="SGD")
-    cash = Account(name="Demo Cash", kind="cash", currency="SGD")
+    # kind "bank" (was "cash" — out of ACCOUNT_KINDS vocab, which /accounts's write path would 400 on).
+    cash = Account(name="Demo Cash", kind="bank", currency="SGD")
     session.add_all([brokerage, sg_account, cash])
+    await session.flush()
+
+    # Entities (§10-5 / D-065) + institution master (D-008) wiring for the /accounts page. Accounts
+    # span three entities; institutions are FK'd from the account (the same master insurers FK into).
+    # A near-duplicate pair ("DBS" vs "DBS Bank") seeds the user-driven merge demo (§9-2).
+    from app.services.institutions import get_or_create_institution
+
+    household = Entity(name="Household", kind="self")
+    trust = Entity(name="Rajan Family Trust", kind="trust")
+    person = Entity(name="Meera Iyer", kind="spouse")  # 0 accounts → the deletable-entity demo (§9-6)
+    session.add_all([household, trust, person])
+    await session.flush()
+
+    saxo = await get_or_create_institution(session, "Saxo Markets")
+    citi_sg = await get_or_create_institution(session, "Citibank Singapore")  # merge survivor
+    citi = await get_or_create_institution(session, "Citibank")  # the merge duplicate — 1 account to re-point
+    brokerage.institution = saxo
+    brokerage.entity_id = trust.id
+    sg_account.institution = citi_sg
+    sg_account.entity_id = household.id
+    cash.institution = citi
+    cash.entity_id = household.id
     await session.flush()
 
     from app.services.identity import classify_defaults

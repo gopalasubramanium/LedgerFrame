@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./Holdings.css";
 import { Upload, Download, Plus } from "../icons";
 import {
@@ -96,6 +96,22 @@ export function Holdings() {
   const [holdSort, setHoldSort] = useState<SortState | undefined>(undefined);
   const [holdFilter, setHoldFilter] = useState("");
 
+  // Amendment G (page-accounts §9-11): ?account=<id> scopes the holdings table to one account via the
+  // scoped reader, shown as a clearable chip. The Accounts page's "View holdings" navigates here.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const accountParam = searchParams.get("account");
+  const accountFilter = accountParam != null && accountParam !== "" ? Number(accountParam) : null;
+  const clearAccountFilter = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("account");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
   const labelFor = useLabelFor(); // item 3b — served display labels for enums
 
   const onHoldSort = useCallback((key: string) => {
@@ -168,7 +184,7 @@ export function Holdings() {
     setLoading(true);
     setError(null);
     const [h, s, a, d] = await Promise.all([
-      getHoldings(),
+      getHoldings(accountFilter),
       getSummary(),
       getAccounts(),
       getDeletedCount(),
@@ -183,7 +199,7 @@ export function Holdings() {
     if (a.ok) setAccounts(a.data.accounts);
     setDeletedCount(d.ok ? d.data.total : 0);
     setLoading(false);
-  }, []);
+  }, [accountFilter]);
 
   // Full refresh after a mutation — both the core reads and the current txn window.
   const reload = useCallback(async () => {
@@ -365,7 +381,20 @@ export function Holdings() {
 
       {/* Holdings table */}
       <div className="hold__section">
-        <h2 className="hold__h2">Holdings</h2>
+        <div className="hold__bar">
+          <h2 className="hold__h2">Holdings</h2>
+          {accountFilter != null && (
+            <button
+              type="button"
+              className="hold__chip"
+              onClick={clearAccountFilter}
+              aria-label={`Clear account filter: ${accounts.find((a) => a.id === accountFilter)?.name ?? `account #${accountFilter}`}`}
+            >
+              Account: {accounts.find((a) => a.id === accountFilter)?.name ?? `#${accountFilter}`}
+              <span className="hold__chipx" aria-hidden="true">×</span>
+            </button>
+          )}
+        </div>
         {loading ? (
           <EmptyState message="Loading holdings…" reason="Fetching the latest prices." />
         ) : error ? (

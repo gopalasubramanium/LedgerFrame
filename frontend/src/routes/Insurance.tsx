@@ -28,6 +28,8 @@ import {
   updatePolicy,
 } from "../api/insurance";
 import type { DocumentItem, InsuranceResp, Policy, PolicyIn, RenewalState } from "../api/insurance";
+import { createInstitution, fetchInstitutions } from "../api/accounts";
+import type { InstitutionRow } from "../api/accounts";
 import { EMDASH } from "../format/number";
 import "./Insurance.css";
 
@@ -122,16 +124,42 @@ export function Insurance() {
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState<Policy | null>(null);
 
+  const [institutions, setInstitutions] = useState<InstitutionRow[]>([]);
+
+  const reloadInstitutions = useCallback(async () => {
+    const r = await fetchInstitutions();
+    if (r.ok) setInstitutions(r.data.institutions);
+  }, []);
+
   const reload = useCallback(() => {
     setData(undefined);
     fetchInsurance().then((r) => setData(r.ok ? r.data : null));
-  }, []);
+    void reloadInstitutions();
+  }, [reloadInstitutions]);
   useEffect(() => reload(), [reload]);
 
-  // §9-5 — insurer typeahead: distinct insurers from the already-served policies (a convenience).
-  const insurers = useMemo(
-    () => [...new Set((data?.policies ?? []).map((p) => p.insurer).filter((x): x is string => Boolean(x)))].sort(),
-    [data],
+  // §16 follow-through (page-accounts §9-3): the insurer field is a MasterSelect over the DB-backed
+  // institution master — the same master accounts FK into (D-008) — superseding the old client-side
+  // typeahead (distinct-over-served-policies). Create-new POSTs to /institutions; the policy write
+  // resolves-or-creates by NAME anyway (Amendment F).
+  const institutionOptions = useMemo(
+    () => institutions.map((i) => ({ value: i.name, label: i.name })),
+    [institutions],
+  );
+  const pickInsurer = useCallback(
+    async (name: string) => {
+      setDraft((d) => (d ? { ...d, insurer: name } : d));
+      if (name && !institutions.some((i) => i.name === name)) {
+        const res = await createInstitution(name);
+        if (res.ok) {
+          setDraft((d) => (d ? { ...d, insurer: res.data.name } : d));
+          await reloadInstitutions();
+        } else {
+          toast.show({ message: res.error, tone: "warning" });
+        }
+      }
+    },
+    [institutions, reloadInstitutions, toast],
   );
   // §12in-3 — the per-policy renewal chip reads the SERVED state (no client threshold).
   const stateById = useMemo(() => {
@@ -341,8 +369,8 @@ export function Insurance() {
             <div className="ins__fieldrow">
               <label className="ins__field">
                 <span>Insurer</span>
-                <TextInput value={draft.insurer} onChange={(v) => setDraft({ ...draft, insurer: v })}
-                  maxLength={120} suggestions={insurers} aria-label="Insurer" />
+                <MasterSelect master="institution" value={draft.insurer ?? ""} onChange={pickInsurer}
+                  options={institutionOptions} allowCreate aria-label="Insurer" />
               </label>
               <label className="ins__field">
                 <span>Type</span>

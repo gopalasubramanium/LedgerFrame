@@ -226,7 +226,7 @@ export function AccountsMockup() {
     <div className="lf-page acct">
       <PageHeader
         title="Accounts"
-        subtitle="Manage accounts, entities and the institution master. Per-account value is a linked summary of the holdings reader — never a second figure."
+        subtitle="Manage accounts, entities and the institution master. Per-account value is a linked summary of your holdings — never a second figure."
       />
 
       <section className="lf-card acct__section" data-card="accounts">
@@ -283,7 +283,7 @@ export function AccountsEmptyMockup() {
     <div className="lf-page acct">
       <PageHeader
         title="Accounts"
-        subtitle="Manage accounts, entities and the institution master. Per-account value is a linked summary of the holdings reader — never a second figure."
+        subtitle="Manage accounts, entities and the institution master. Per-account value is a linked summary of your holdings — never a second figure."
       />
 
       <section className="lf-card acct__section" data-card="accounts">

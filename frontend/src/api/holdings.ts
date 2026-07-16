@@ -126,7 +126,13 @@ export interface ImportPreview {
 export interface DeletedCount { holdings: number; transactions: number; total: number; }
 export const getDeletedCount = () => apiGet<DeletedCount>("/portfolio/deleted-count");
 
-export const getHoldings = () => apiGet<HoldingsResponse>("/portfolio/holdings");
+// Amendment G (page-accounts §9-11): the Accounts page's "View holdings" drills down via
+// ?account= → this SCOPED reader (filter-not-recompute, the canonical value_portfolio output
+// filtered to one account_id). Unscoped when accountId is omitted.
+export const getHoldings = (accountId?: number | null) =>
+  apiGet<HoldingsResponse>(
+    accountId != null ? `/portfolio/holdings?account_id=${accountId}` : "/portfolio/holdings",
+  );
 export const getSummary = () => apiGet<SummaryResponse>("/portfolio/summary");
 
 // D-094 — the transactions ledger is windowed; sort/filter/paging run SERVER-SIDE

@@ -1093,6 +1093,41 @@ batch (delta notes on touched accepted surfaces). No page-local one-offs. `npm r
 
 ---
 
+## ACCOUNTS — PLAN DRAFTED, awaiting §9 one-pass (2026-07-16)
+
+**`docs/plans/page-accounts.md` written through §10 (verify-first) + §9 (NEEDS DECISION). No code.**
+The largest remaining page milestone — **two masters land here** (Entity CRUD D-065; Institution
+master D-008). Identity confirmed from specs: **Accounts** · `/accounts` · **Wealth** group ·
+**Worklist** template (`DESIGN-SYSTEM:229`, verified, not presumed); sidebar-density slot already
+reserved. §10 verify-first read the engine (four code-audit passes, file:line cites in the plan) and
+surfaced the load-bearing reality: **`AccountIn` omits BOTH `entity_id` and `cost_basis_method`** — the
+two headline features (D-064 entity assignment, D-018 cost-basis selector) have **no write path** and
+are §3b adds, not "wire the existing endpoint"; **Entity CRUD is a D-065 add** (only `GET /entities`
+exists, no delete-block); **the Institution master is greenfield** (both `accounts.institution` and
+`insurance_policy.insurer` are free text; no extensible master-with-CRUD exists anywhere — sector/tag
+are not tables); the `/accounts` rollup serves **raw float money** (D-105 display-string delta due);
+`?entity_id` filters on 15 readers but has **zero frontend callers** (dormant; R-35/R-33 park per-entity).
+
+**§9 = 14 numbered items (7 ⚑ load-bearing), UNRESOLVED — awaiting owner one-pass:**
+1. ⚑ Institution master — build + FK re-pointing migration (both columns, fold-not-destroy)
+2. ⚑ Institution **merge** — semantics (user-driven, no fuzzy) + scope (ship-now vs defer)
+3. ⚑ Institution selector — the **add-inline component** (MasterSelect data-source extension vs new control; §4 amendment)
+4. ⚑ Entity assignment writable on the account form (D-064; `AccountIn` +`entity_id`)
+5. ⚑ Cost-basis method writable + D-018 restatement/rebuild (`AccountIn` +`cost_basis_method`)
+6. ⚑ Entity CRUD (D-065) — POST/PATCH/DELETE + delete-block FK guard
+7. ⚑ Default **"Household"** entity — protected / renamable / deletable semantics
+8. ⚑ `?entity_id` scoping — **no entity switcher this milestone** (specs silent; entity is an account attribute, R-35 parked)
+9. Kind + currency write-validation — enforce (400) vs silent-coerce
+10. Money on the page (D-105) — served `*_display` strings + base-currency affix
+11. Account rollups as linked P-1 summaries — the drill-down link target (no `?account_id` holdings view today)
+12. CSV import ↔ account-creation seam — one canonical home (+ flag the silent-first-account fallback)
+13. GLOSSARY / SN-class sweep — 4 missing terms + the `fifo → "Fifo"` served-label fix
+14. Inherited platform standards (confirm-only)
+
+**STOP condition met — owner rules §9 one-pass; nothing above §9 resolved by the author.**
+
+---
+
 ## ESTATE — §9 CLOSED one-pass · Phase 0 DONE (2026-07-16)
 
 **§9 RESOLVED (owner one-pass, 2026-07-16): all ten items ACCEPTED as proposed + AMENDMENT E on 9-5.**

@@ -1018,11 +1018,28 @@ history.
    §11 (Phase 0) · §12 (gate) · §13 (Phases 1–3a).** **Phase 3b (owner walk) is the gate — not self-certified.**
    ⚠ Pre-existing (not mine): the `CashFlow.tsx:330` unhandled error fails the frontend `npm run check` —
    reproduces at `c0e9fb1`, out of scope, in `08-TECH-DEBT.md`.
-## NEXT
+## ESTATE — PLAN DRAFTED, awaiting §9 one-pass (2026-07-16)
 
-1. **Estate — `docs/plans/page-estate.md` (PLAN ONLY, verify-first).** Same shape as Insurance; Review's
-   estate signals are the pre-cut seam; `will_status` / `doc_status` vocabs already in MASTER-DATA per D-010.
-   **Nothing is built** until the plan's §9 is owner-ruled one-pass (the Insurance/Scenarios precedent).
+**`docs/plans/page-estate.md` is filled through §10 (verify-first) and §9 (NEEDS DECISION, PROPOSED but
+UNRESOLVED).** Part 0 doc-landing = **no-op** (all three Insurance/Scenarios-close mechanisms already landed,
+commit `15f682d`). Verify-first found **every reader frozen in the contract** (`/estate` + 7 [S]-gated writes;
+`API-CONTRACT.json:4143-4751`) — §3b is a short remove/behaviour/N-A list, no new endpoint. Three parallel
+Explore agents + direct source reads cited the whole surface (`app/services/estate.py`, `routes/estate.py`,
+`refdata.py:133-136`, `review.py:153-157`). **Nothing is built** until §9 is owner-ruled one-pass (the
+Insurance/Scenarios precedent). §9 = **10 items** (by number + topic):
+
+1. **`/estate/meta` removal** (D-005) — retire the leftover; `/refdata` already serves all four vocabs.
+2. **`?entity_id`** — honest-400 reject (household-only, D-063) vs leave-ignored.
+3. **Money / base-currency affix — N/A** (D-105) — recorded as chosen (no money on the page).
+4. **Staleness / confidence (A10) — N/A** — recorded as chosen (user records, no market inputs).
+5. **⚠ `relationship` field** — spec-vs-code divergence (D-010/D-063 say folded/dropped; code still serves it).
+6. **Contact `roles` multi-select** — component affordance (MasterSelect is single-select) → Switch rows vs amendment.
+7. **Readiness / will-state single derivation (A11)** — consistent-by-construction + equality test vs shared helper.
+8. **`_REVIEW_SOON_DAYS = 30`** — promote to PRODUCT-SPEC §5 D-059 table + same-batch code test.
+9. **GLOSSARY terminology gap** — author Will/Executor/Beneficiary/Guardian/Emergency contact/Readiness + status values FIRST.
+10. **Protected legal-advice bar + standing content guard** (D-055/§0) — ratify the served disclaimer + mechanise the guard.
+
+## NEXT
 2. Then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping; **also owns the Institution
    master §9-5 defers to it**) · **Reports (+ Pack)** · **Settings** · **Help · Legal** · the **AI-surfaces
    milestone** · **Voice** (definition still owed — only after the owner defines it, ROADMAP **R-32**) · then

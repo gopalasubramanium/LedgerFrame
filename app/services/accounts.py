@@ -97,7 +97,17 @@ async def accounts_report(session: AsyncSession, entity_id: int | None = None) -
 def _account_dict(a: Account) -> dict:
     return {"id": a.id, "name": a.name,
             "institution": (a.institution.name if a.institution else None),
-            "kind": a.kind, "currency": a.currency}
+            "kind": a.kind, "currency": a.currency, "entity_id": a.entity_id}
+
+
+async def _resolve_entity_id(session: AsyncSession, entity_id) -> int | None:
+    """§9-4/D-064: an entity_id must reference a real entity, else an honest 400 (never a silent
+    drop). None clears the assignment (account.entity_id is nullable — no ≥1-entity invariant)."""
+    if entity_id is None:
+        return None
+    if await session.get(Entity, entity_id) is None:
+        raise ValueError(f"No entity with id {entity_id} exists.")
+    return entity_id
 
 
 async def list_accounts(session: AsyncSession) -> list[dict]:
@@ -129,6 +139,8 @@ async def create_account(session: AsyncSession, data: dict) -> dict:
         currency=(data.get("currency") or get_settings().base_currency).upper()[:3],
     )
     a.institution = await _resolve_institution(session, data.get("institution"))
+    if "entity_id" in data:
+        a.entity_id = await _resolve_entity_id(session, data.get("entity_id"))
     session.add(a)
     await session.flush()
     return _account_dict(a)
@@ -137,11 +149,13 @@ async def create_account(session: AsyncSession, data: dict) -> dict:
 async def update_account(session: AsyncSession, aid: int, data: dict) -> dict:
     a = await session.get(Account, aid)
     if a is None:
-        raise ValueError("account not found")
+        raise LookupError("account not found")
     if data.get("name") and data["name"].strip():
         a.name = data["name"].strip()[:120]
     if "institution" in data:
         a.institution = await _resolve_institution(session, data.get("institution"))
+    if "entity_id" in data:
+        a.entity_id = await _resolve_entity_id(session, data.get("entity_id"))
     if data.get("kind") in ACCOUNT_KINDS:
         a.kind = data["kind"]
     if data.get("currency"):

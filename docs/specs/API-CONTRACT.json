@@ -77,6 +77,17 @@
             ],
             "title": "Currency"
           },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
           "institution": {
             "anyOf": [
               {

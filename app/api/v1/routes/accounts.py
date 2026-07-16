@@ -26,6 +26,7 @@ class AccountIn(BaseModel):
     institution: str | None = Field(default=None, max_length=120)
     kind: str = "brokerage"
     currency: str | None = Field(default=None, max_length=3)
+    entity_id: int | None = Field(default=None)  # §9-4/D-064 — assign the account to an entity
 
 
 @router.get("/accounts")
@@ -49,7 +50,10 @@ async def get_entities(session: AsyncSession = Depends(get_db)) -> dict:
 
 @router.post("/accounts", dependencies=[Depends(require_auth)])
 async def add_account(payload: AccountIn, session: AsyncSession = Depends(get_db)) -> dict:
-    res = await create_account(session, payload.model_dump())
+    try:
+        res = await create_account(session, payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc  # honest 400 on bad entity/kind/currency
     await session.commit()
     return {"ok": True, **res}
 
@@ -58,8 +62,10 @@ async def add_account(payload: AccountIn, session: AsyncSession = Depends(get_db
 async def edit_account(aid: int, payload: AccountIn, session: AsyncSession = Depends(get_db)) -> dict:
     try:
         res = await update_account(session, aid, payload.model_dump())
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc  # account not found
     except ValueError as exc:
-        raise HTTPException(404, str(exc)) from exc
+        raise HTTPException(400, str(exc)) from exc  # bad entity/kind/currency
     await session.commit()
     return {"ok": True, **res}
 

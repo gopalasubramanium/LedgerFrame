@@ -316,16 +316,18 @@ The `relationship` field is a spec-vs-code divergence — **⚠ §9-5**.
 
 *One commit per phase. Backend deltas (§3b) FIRST, then assembly, then tests.*
 
-- **Phase 0 — Contract deltas (§3b, gated on §9):** delete `GET /estate/meta`
+- **Phase 0 — ✅ DONE 2026-07-16 (see §11 record).** Contract deltas (§3b, gated on §9): delete `GET /estate/meta`
   (§9-1), confirm no consumer, regen `API-CONTRACT.json` + `docs/openapi.json`
   same commit, flip the `API-CONTRACT.md:73` row to ✅, drift check green;
   `?entity_id`→400 (§9-2, fail-first) IF ruled; promote `_REVIEW_SOON_DAYS` to
   PRODUCT-SPEC §5 + a same-batch code test (§9-8) IF ruled. Resolve `relationship`
   (§9-5) at the schema boundary before the editor is specced.
-- **Phase 0a — GLOSSARY + `/refdata` confirm (§9-9):** add the estate terms to
-  `GLOSSARY.md` FIRST, then the popover data; confirm the four vocabs already
-  serve `{value,label}` (they do). No new `/kitchen-sink` component unless §9-6
-  rules a `MultiSelect` amendment.
+- **Phase 0a — ✅ BUILT 2026-07-16, AWAITING OWNER GEOMETRY RATIFICATION.** GLOSSARY
+  + `/refdata` confirm (§9-9) landed in Phase 0. The **kitchen-sink Estate specimen**
+  (the geometry gate) is built: `frontend/src/routes/EstateMockup.tsx` + `Estate.css`,
+  mounted in `KitchenSink.tsx` — view at `/kitchen-sink` → "Estate — LAYOUT SPECIMEN".
+  Three frames (populated · all-empty · roles Switch multi-select). No new component
+  (§9-6 ruled Switch rows; MultiSelect declined). **Phase 1 blocked until ratified.**
 - **Phase 1 — Page assembly:** compose the ratified components on the Worklist
   geometry (readiness strip → profile card → contacts table + documents register
   → `[S]`-gated editors); honest empty/error states; served `disclaimer` bar.

@@ -1018,26 +1018,34 @@ history.
    §11 (Phase 0) · §12 (gate) · §13 (Phases 1–3a).** **Phase 3b (owner walk) is the gate — not self-certified.**
    ⚠ Pre-existing (not mine): the `CashFlow.tsx:330` unhandled error fails the frontend `npm run check` —
    reproduces at `c0e9fb1`, out of scope, in `08-TECH-DEBT.md`.
-## ESTATE — PLAN DRAFTED, awaiting §9 one-pass (2026-07-16)
+## ESTATE — §9 CLOSED one-pass · Phase 0 DONE · AWAITING OWNER GEOMETRY RATIFICATION (2026-07-16)
 
-**`docs/plans/page-estate.md` is filled through §10 (verify-first) and §9 (NEEDS DECISION, PROPOSED but
-UNRESOLVED).** Part 0 doc-landing = **no-op** (all three Insurance/Scenarios-close mechanisms already landed,
-commit `15f682d`). Verify-first found **every reader frozen in the contract** (`/estate` + 7 [S]-gated writes;
-`API-CONTRACT.json:4143-4751`) — §3b is a short remove/behaviour/N-A list, no new endpoint. Three parallel
-Explore agents + direct source reads cited the whole surface (`app/services/estate.py`, `routes/estate.py`,
-`refdata.py:133-136`, `review.py:153-157`). **Nothing is built** until §9 is owner-ruled one-pass (the
-Insurance/Scenarios precedent). §9 = **10 items** (by number + topic):
+**§9 RESOLVED (owner one-pass, 2026-07-16): all ten items ACCEPTED as proposed + AMENDMENT E on 9-5.**
+Recorded verbatim in `page-estate.md §9` (each row carries its → RULING; nothing struck) with Amendment E
+(fold-then-drop for `relationship`). **Phase 0 (backend-first) COMPLETE** — one delta per commit, each
+fail-first RED→GREEN, contract regen same-commit for shape changes; `make api-contract-check` green; **full
+backend suite 790 passed**; ruff clean. Evidence table in `page-estate.md §11`.
 
-1. **`/estate/meta` removal** (D-005) — retire the leftover; `/refdata` already serves all four vocabs.
-2. **`?entity_id`** — honest-400 reject (household-only, D-063) vs leave-ignored.
-3. **Money / base-currency affix — N/A** (D-105) — recorded as chosen (no money on the page).
-4. **Staleness / confidence (A10) — N/A** — recorded as chosen (user records, no market inputs).
-5. **⚠ `relationship` field** — spec-vs-code divergence (D-010/D-063 say folded/dropped; code still serves it).
-6. **Contact `roles` multi-select** — component affordance (MasterSelect is single-select) → Switch rows vs amendment.
-7. **Readiness / will-state single derivation (A11)** — consistent-by-construction + equality test vs shared helper.
-8. **`_REVIEW_SOON_DAYS = 30`** — promote to PRODUCT-SPEC §5 D-059 table + same-batch code test.
-9. **GLOSSARY terminology gap** — author Will/Executor/Beneficiary/Guardian/Emergency contact/Readiness + status values FIRST.
-10. **Protected legal-advice bar + standing content guard** (D-055/§0) — ratify the served disclaimer + mechanise the guard.
+Phase 0 deltas delivered (commits `7d15247` … `718abad`):
+1. **[9-1]** Deleted `GET /estate/meta`; `/refdata` is the single vocab source (removal by SHAPE). Contract regen'd; `API-CONTRACT.md:73` ✅.
+2. **[9-5 + Amendment E]** Retired `relationship` — migration `f2b7c1a9e304` folds it into `notes` before dropping (data-preserving); removed from `ContactIn`/`_contact_dict`/model; contract regen'd.
+3. **[9-2]** `?entity_id` → honest 400 on all 8 endpoints (`reject_entity_id` dep, plain-language copy). Contract regen'd (query param).
+4. **[9-7]** Equality test pinning the one doc-attention derivation (test-only, mutation-proven teeth).
+5. **[9-8]** `_REVIEW_SOON_DAYS = 30` added to PRODUCT-SPEC §5 D-059 + a behavioural code test (surfaces at 30d, silent at 31d).
+6. **[9-9]** Estate GLOSSARY terms authored spec-first, popover mirrored, parity green. **PROPOSED — ratify at the walk.**
+7. **[9-10]** STANDING legal-advice-language content guard (disclaimer RATIFIED VERBATIM); RED→GREEN mutation-proven.
+8. **[9-3 / 9-4]** Money/affix + staleness/confidence recorded **N/A (CHOSEN)**; typed `/estate` response DEFERRED (`08-TECH-DEBT.md`).
+
+**Phase 0a — kitchen-sink Estate specimen BUILT (the GEOMETRY GATE).** `frontend/src/routes/EstateMockup.tsx`
++ `Estate.css`, mounted in `KitchenSink.tsx` (bleed Section) — **view at `/kitchen-sink` → "Estate — LAYOUT
+SPECIMEN"**. Three frames: (a) populated register (7 contacts incl. one 3-role, long names; 10 documents,
+one MISSING + two OUTDATED; bare em-dash optional cells), (b) all-empty registers (EmptyState reason+CTA;
+profile `will_status none`), (c) the ROLES Switch multi-select (§9-6). Geometry: profile card → readiness
+COUNTS strip (no currency affix) → contacts DataTable → documents DataTable → ratified disclaimer once.
+
+**AWAITING OWNER GEOMETRY RATIFICATION.** **Phase 1 (page assembly) is BLOCKED** until the owner ratifies
+the specimen geometry by looking (`/kitchen-sink`). Out of scope until then: nav flip, `/estate` route,
+`overflow.spec.ts` route-array additions (all three), the no-money-string render guard (ships Phase 2).
 
 ## NEXT
 2. Then the standing queue, unchanged: **Accounts** (D-065, `entity_id` scoping; **also owns the Institution

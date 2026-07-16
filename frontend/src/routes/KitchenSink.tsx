@@ -9,6 +9,7 @@ import { HomeMockupFull } from "./HomeMockup";
 import { CashFlowMockup } from "./CashFlowMockup";
 import { ScenariosMockup } from "./ScenariosMockup";
 import { InsuranceMockup, InsuranceDocumentsChecklistSpecimen } from "./InsuranceMockup";
+import { EstateMockup, EstateRolesSpecimen } from "./EstateMockup";
 import {
   AllocationDonut,
   Clock,
@@ -732,6 +733,33 @@ export function KitchenSink() {
           </Specimen>
           <Specimen label="Insurance · documents checklist — composed Switch + TextInput, seeded with the four default labels (§9-8)">
             <InsuranceDocumentsChecklistSpecimen />
+          </Specimen>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        bleed
+        title="Estate — LAYOUT SPECIMEN (page-estate §9 / Phase 0a) — PROPOSED, AWAITING RATIFICATION"
+        note="THE GEOMETRY GATE. Static, unwired — ratified BY LOOKING before assembly (Phase 1 is BLOCKED until then). The proposed §-geometry: a profile card (will status LEADS · executor · will location · review dates · notes, [S]-gated Edit shown) → a readiness COUNTS strip (counts only, NO currency affix — there is no money on this page, §9-3) → the contacts DataTable (name · roles as served-label chips · phone · email · ⋯ RowMenu) → the documents DataTable (title · category label · status chip · location · review date · ⋯ RowMenu) → the RATIFIED disclaimer once at the foot (verbatim, §9-10). Real content region, real-shaped data: 7 contacts (one holding three roles, long hyphenated names), 10 documents (mixed categories; one MISSING, two OUTDATED). Honesty staged: attention-tone status chips (factual, not alarmist); blank OPTIONAL cells as BARE em dashes (user-data-absent — a reason pill is for an empty REGION, not an empty CELL, §12in-4). StatusChip tones factual: present = positive, missing/outdated = attention. Two more frames: the ALL-EMPTY registers (each EmptyState with reason + CTA; profile at will_status `none`), and the contact ROLES multi-select composed from Switch rows (§9-6, no new component)."
+      >
+        <div className="ks__stack">
+          <Specimen label="Estate · populated register (will executed; missing + outdated documents; bare em-dash optional cells)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <EstateMockup />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Estate · ALL-EMPTY registers — each EmptyState (reason + CTA); profile at will_status none (§9-1 honesty)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <EstateMockup variant="empty" />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Estate · contact ROLES multi-select — composed Switch rows inside the editor (§9-6, no new component)">
+            <EstateRolesSpecimen />
           </Specimen>
         </div>
       </Section>

@@ -58,7 +58,9 @@ function moneyStat(label: string, value: number, ccy: string, excluded?: number)
         <span className="rpt__affix">{ccy}</span>
       </span>
       {excluded !== undefined && excluded > 0 && (
-        <span className="rpt__excluded">{excluded} events excluded — trade-date FX unavailable</span>
+        <span className="rpt__excluded">
+          {excluded} event{excluded === 1 ? "" : "s"} excluded — trade-date FX unavailable
+        </span>
       )}
     </div>
   );
@@ -249,6 +251,16 @@ export function Reports() {
   const realisedRows = useMemo(() => (realised ? flattenRealised(realised) : []), [realised]);
   const lotRows = useMemo(() => (taxLots ? taxLotRows(taxLots) : []), [taxLots]);
 
+  // Both Year controls offer EVERY ledger year (the union of the two readers' served year lists), not
+  // only the years a reader happens to have populated. `realised.years` lists only years WITH sales, so
+  // without this an EMPTY year (transactions but no realised sale) would be unselectable and the ratified
+  // "No realised sales in {year}" EmptyState unreachable — the populated↔empty round-trip the owner
+  // staged in the specimen. Union → an empty year is selectable and answers "were there sales?" honestly.
+  const ledgerYears = useMemo(
+    () => [...new Set([...statementsYears, ...realisedYears])].sort((a, b) => b - a),
+    [statementsYears, realisedYears],
+  );
+
   return (
     <div className="lf-page rpt">
       <PageHeader
@@ -289,7 +301,7 @@ export function Reports() {
                     <Select
                       value={statementsYear}
                       onChange={(v) => void loadStatements(v)}
-                      options={yearOptions(statementsYears)}
+                      options={yearOptions(ledgerYears)}
                       aria-label="Realised figure and export year"
                     />
                   </span>
@@ -324,7 +336,7 @@ export function Reports() {
               <Select
                 value={realisedYear}
                 onChange={(v) => void loadRealised(v)}
-                options={yearOptions(realisedYears)}
+                options={yearOptions(ledgerYears)}
                 aria-label="Realised P/L year"
               />
             </span>

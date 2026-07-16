@@ -1093,6 +1093,35 @@ batch (delta notes on touched accepted surfaces). No page-local one-offs. `npm r
 
 ---
 
+## REPORTS — PLAN DRAFTED ⏸ AWAITING §9 ONE-PASS (2026-07-17)
+
+**`docs/plans/page-reports.md` is drafted through §10 (verify-first) + §9 (NEEDS DECISION). Nothing is
+built for Reports.** Reports (`/reports`, IA §82) owns statements + the Realised P/L report + open tax
+lots + server-side exports, and **links** the Reports Pack (`/reports/pack`, D-041/D-061 — the ONE
+sanctioned duplication, an artifact not an IA page).
+
+- **Verify-first found (§10):** the report readers (`statements_report`, `realised_gains_report`,
+  `tax_lots_report`) + their CSVs **already exist** — EXCEPT **no tax-lots CSV** (§9-4); and the CSVs
+  **already shed their served disclaimers** (realised-gains.csv drops the disclaimer + trade-date-FX
+  total + excluded-events count; attribution.csv drops its disclaimer; statements.csv partial) — a
+  **shipping Guarantee-3 / D-020/D-076 / D-077 hole** (§9-5). Every report reader honours `entity_id`
+  **server-side**; **none accepts `account_id`**; `?entity_id` stays UI-**dormant** (accounts §9-8).
+- **Declined-exports inventory: 7 pages** declined a per-page export pointing at Reports (Net worth,
+  Pricing Health, Review, Heatmap, Scenarios, Cash flow, Policy) — collected as a table (§10-2), each
+  dispositioned in §9-3 (Pack-delivered or re-declined; none silently dropped).
+- **§9 has 13 OPEN items** — ⚑ load-bearing: **9-1** Pack rendering mechanism (spec-SILENT: print
+  stylesheet / server HTML / PDF), **9-2** per-entity composition (server-composed sections, NOT a
+  switcher — first server-side consumer of dormant `entity_id`), **9-3** the 7 declined-export
+  dispositions, **9-5** export-disclaimer honesty fix. Others: 9-4 tax-lots CSV, 9-6 template
+  (Overview per §3 vs the worklist note), 9-7 `long_term_days` control, 9-8 table dataset-size, 9-9
+  GLOSSARY gaps ("Report"/"Statement" singular; "Realised gains" is deprecated), 9-10 AI helper
+  deferred, 9-11 Pack ship-this-milestone-or-phase, 9-12 Pack reader list, 9-13 attribution ownership.
+- **⏸ STOP — AWAITING OWNER §9 ONE-PASS.** No §3b delta (all contingent on §9); no build until passed.
+- **Part 0 (P-5, batched here, SHIPPED `c888000`):** the brand mark now rides the **mobile** header too
+  (one `BrandLockup`); DESIGN-SYSTEM §5.6 **PROPOSED → RATIFIED**. See page-reports Part 0 + page-chrome §14.
+
+---
+
 ## ACCOUNTS — DONE ✅ (page ACCEPTED, owner, 2026-07-16)
 
 **`/accounts` is complete and owner-accepted.** The owner **re-walked both journeys live** on the reset,
@@ -1109,7 +1138,8 @@ items (the §9-5 restatement wording · the reworded subtitle) **ratified as shi
   builder (Amendment G, §14ac-2/5); served money display strings + base affix (§9-10);
 - **MasterSelect data source → DB-backed master** (§9-3, DESIGN-SYSTEM §5.1 clarification, no new component);
 - **the brand mark "the double rule"** (P-4) — `BrandMark` + sidebar lockup + theme-adaptive favicon
-  (DESIGN-SYSTEM §5.6, PROPOSED — owner ratifies from the close-out screenshots).
+  (DESIGN-SYSTEM §5.6). *(Now RATIFIED 2026-07-17 via P-5 — the mark also rides the mobile header through
+  one shared `BrandLockup`; §5.6 flipped PROPOSED → RATIFIED. See the REPORTS block above / page-chrome §14.)*
 
 **Close bookkeeping — changed-file table (`git diff --stat 1e371c9..HEAD`, grouped):**
 

@@ -1,0 +1,486 @@
+# page-reports — Reports (`/reports`) build plan
+
+**Status: PLAN DRAFTED — awaiting §9 one-pass (owner). No code beyond Part 0 (P-5 mobile
+brand fix). Resolve NOTHING in §9 before the owner passes it.**
+
+This plan is a *derivation from the specs*, not a fresh design. Every section cites the
+spec it is copied from. Where the specs under-specify, the item is a **NEEDS DECISION**
+(§9), surfaced to the owner **before** build — not improvised mid-build.
+
+---
+
+## PART 0 — P-5: the brand mark rides the MOBILE header too (SHIPPED, commit `c888000`)
+
+**Not part of the Reports build — a platform fix batched with this planning session.** The
+desktop sidebar carried the BrandMark lockup; the mobile top bar rendered a bare
+"LedgerFrame" with no mark (owner walk 2026-07-17), because the shell had **two hand-built
+lockups** and only one got the mark.
+
+- **Fix at the standard:** ONE **`BrandLockup`** component (`frontend/src/components/ui/BrandLockup.tsx`)
+  — BrandMark + wordmark at the ratified geometry/sizing (mark at the wordmark cap height,
+  `aria-hidden` mark, wordmark the accessible name) — consumed by **BOTH** the sidebar brand
+  row and the mobile header. `brand.css` moves the lockup geometry to a surface-agnostic
+  `.lf-brandlockup*`; each host supplies its own padding/font (the wordmark inherits it), so
+  the sidebar-density row-height math (page-chrome §13/P-3) is untouched.
+- **Guard** (`frontend/e2e/mobile-brand.spec.ts`, in `npm run check`; MEDIA-QUERY / real-viewport
+  territory — the mobile header shows only below the 900px D-102 breakpoint, which jsdom cannot
+  evaluate): at **320 and 375, both themes** the mobile brand is visible, the `svg.lf-brandmark`
+  is painted to the **left** of the wordmark, the mark is `aria-hidden`, the accessible name is
+  "LedgerFrame". **Fail-first proven** — all four RED on the bare mobile header (`hasMark` false
+  while `brandVisible` true), GREEN once both surfaces share `BrandLockup`.
+- **Suites GREEN** — `npm run check` **EXIT 0** from `frontend/` (250 passed = vitest + all
+  Playwright, incl. `AppShell.test.tsx`, `sidebar-density.spec.ts`, `overflow.spec.ts`,
+  `mobile-brand.spec.ts`). **DESIGN-SYSTEM §5.6** gains the `BrandLockup` row + the one-lockup
+  rule and flips **PROPOSED → RATIFIED**. Shell record delta: page-chrome §14.
+- **Mobile-header screenshot:** `docs/plans/assets/p5-mobile-header.png` — renders
+  `☰ · [double-rule mark] LedgerFrame · ⋯ · clock` at 375px.
+
+---
+
+**Governing rules (CLAUDE.md + ratified milestone) apply verbatim — see TEMPLATE-page-build.md.**
+Reports is **read/export-only** (no user input mutates data), so the mutation-oriented rules
+(request-body assertion, round-trip import, [S] writes) are recorded as **chosen absences**
+below where they would otherwise apply.
+
+---
+
+## 1. IDENTITY
+
+*Source: INFORMATION-ARCHITECTURE.md §2 (page map), §3 (nav); DESIGN-SYSTEM.md §3 (templates).*
+
+| Field | Value | Spec ref |
+|-------|-------|----------|
+| Page name (H1 = nav label = route) | **Reports** | IA §2 (`INFORMATION-ARCHITECTURE.md:82`), D-022 |
+| Route | `/reports` | `INFORMATION-ARCHITECTURE.md:82` |
+| Nav group | **Reports** (group 5; **Reports listed before Pricing Health** within it) | `INFORMATION-ARCHITECTURE.md:104-111` (`:108`) |
+| Page template | **Overview** (per the §3 mapping) — **⚑ see §9-6:** the TEMPLATE "Reports-group pages are worklist-shaped" note is Pricing-Health-specific, not Reports | `DESIGN-SYSTEM.md:227` (Overview list includes "…Reports"); Pricing Health is worklist `DESIGN-SYSTEM.md:229` |
+| Rotation eligibility | Not a rotation page (Reports is a deliberately-visited records/export surface) | IA §3 (D-044) |
+| One-line purpose | "Statements, Realised P/L report, tax lots; server-side exports." | IA §2 (`INFORMATION-ARCHITECTURE.md:82`) |
+
+**The Reports Pack (`/reports/pack`) is NOT this page** — it is a **sanctioned artifact, not an
+IA page** (`INFORMATION-ARCHITECTURE.md:92`, D-038), reachable **from Reports only** (D-041/D-061).
+Its ownership block is quoted verbatim in §2; its rendering mechanism and scope are the
+load-bearing §9 items.
+
+---
+
+## 2. OWNERSHIP TABLE
+
+*Copied from INFORMATION-ARCHITECTURE.md §5 (per-page ownership, `:343-351`). Never re-derived.*
+
+**Owns (canonical, authoritative, fully explained on this page)** — verbatim from `INFORMATION-ARCHITECTURE.md:343-351`:
+
+> ### Reports (`/reports`) — D-060
+> - **Owns:** statements (income / fees / cash flow / realised-vs-unrealised);
+>   the **Realised P/L report** — headings per D-026, **both** realised totals
+>   (current-FX caveated + trade-date-FX with excluded-events count); open tax
+>   lots; exports **server-side** (P-5). `long_term_days` stays a **neutral
+>   user-set threshold** (Product Guarantee 4). The "explain this report" AI
+>   helper rides the **P-6 pipeline only** (D-060).
+> - **Links:** Reports Pack (from Reports only, D-041/D-061).
+
+**Summarises (other pages' info — via the named reader, linked, never recomputed):**
+
+| Summary shown | Canonical page | Shared reader reused | Link target |
+|---------------|----------------|----------------------|-------------|
+| *(none)* — the IA ownership block for Reports has **no `Summarises` line** (`INFORMATION-ARCHITECTURE.md:343-351`); every figure Reports shows is a figure it **owns**. | — | — | — |
+
+**Recorded absence (P-1):** Reports **owns** its statements / Realised P/L / tax-lots figures
+outright — it is a canonical home, not a summariser. The one figure that is another page's
+canonical output and appears in an **export** context is **return attribution** (Portfolio's
+canonical reader, `page-portfolio §12-6b`) — see §9-13 for whether Reports links or re-homes it.
+
+**Links to:**
+- **Reports Pack** (`/reports/pack`) — from Reports **only** (D-041/D-061; `INFORMATION-ARCHITECTURE.md:344,92`).
+
+**Enforcement corollary (P-1/D-031):** Reports adds no figure its readers do not already produce
+— every number is a canonical-reader output rendered as the backend served it (no frontend money
+math). The Pack **composes canonical readers, never re-derives** (`INFORMATION-ARCHITECTURE.md:355-358`,
+D-061) — quoted in §10-4.
+
+**The Reports Pack — verbatim ownership (`INFORMATION-ARCHITECTURE.md:353-358`, load-bearing, do not drift):**
+
+> ### Reports Pack (`/reports/pack`) — D-038, D-061
+> - **Nature:** the one sanctioned duplication — a print-optimised artifact, not an
+>   IA page. Consolidated section (net-worth trend + review) then **per-entity
+>   sections** (P-3): net worth, drift, realised, risk + attribution. Composed
+>   **from canonical readers**, disclaimers preserved. Reachable from Reports only.
+
+**The exception status (`INFORMATION-ARCHITECTURE.md:41-49`, verbatim):**
+
+> **The Reports Pack exception (D-038, verbatim):**
+> > **Reports Pack = the one sanctioned duplication**: a print/export artifact
+> > composed from canonical readers, disclaimers preserved — not a page in the
+> > IA sense.
+> The Reports Pack is therefore excluded from the canonical-home discipline: it is
+> an artifact assembled from the canonical readers, not a page that owns or
+> re-derives anything (D-061).
+
+---
+
+## 3. API SURFACE
+
+*Source: API-CONTRACT.json (frozen baseline) + API-CONTRACT.md delta table. Router:
+`app/api/v1/routes/portfolio.py`; services: `app/services/`.*
+
+### 3a. Endpoints consumed (already in the frozen contract)
+
+All the report readers and their CSV exports **already exist** in the frozen baseline (copied
+in Phase A, frozen Phase C). Verify-first confirms shapes from the reader code (§10).
+
+| Method + path | Purpose on this page | Params | Response shape pinned? |
+|---------------|----------------------|--------|------------------------|
+| `GET /portfolio/statements` | Statements section (income / fees / cash flow / realised-vs-unrealised) | `year?`, `entity_id?` (`portfolio.py:1046-1054`) | Served dict `statements_report` (`statements.py:109-148`) — keys listed §10-3. **Typed?** verify (`response_model` strips undeclared keys — TEMPLATE §3b note). |
+| `GET /portfolio/statements.csv` | Statements export | `year?`, `entity_id?` (`portfolio.py:1057-1064`) | `PlainTextResponse` text/csv, `statements_csv` (`statements.py:151-172`) — **partial** caveat only (§9-5) |
+| `GET /portfolio/realised-gains` | Realised P/L report — both totals + excluded count | `year?`, `long_term_days=365`, `entity_id?` (`portfolio.py:974-981`) | Served dict `realised_gains_report` (`tax.py:352-370`) — keys §10-3 |
+| `GET /portfolio/realised-gains.csv` | Realised P/L export | `year?`, `long_term_days=365`, `entity_id?` (`portfolio.py:993-1000`) | text/csv `realised_gains_csv` (`tax.py:400-416`) — **drops** disclaimer + historical-FX total + excluded count (§9-5) |
+| `GET /portfolio/tax-lots` | Open tax-lots section | `long_term_days=365`, `entity_id?` (`portfolio.py:984-990`) | Served dict `tax_lots_report` (`tax.py:396-397`) — keys §10-3. **No `.csv` sibling** (§9-4) |
+| `GET /portfolio/attribution.csv` | (Pack / attribution export — Portfolio-owned; §9-13) | `days=365`, `entity_id?` (`portfolio.py:345-375`) | text/csv — **drops** `_ATTRIB_DISCLAIMER` (§9-5) |
+
+*(Holdings CSV `GET /portfolio/holdings.csv` and Transactions CSV `GET /portfolio/transactions.csv`
+are **already delivered on their own pages** — Holdings — and are **not** re-homed here; see §10 inventory.)*
+
+### 3b. Contract deltas (needed but not in the baseline — BUILD BACKEND-FIRST)
+
+**Each row below is CONTINGENT on a §9 resolution — do not build any until §9 is passed.** `kind`
+∈ add / rename / remove / reshape.
+
+| kind | Endpoint (current → intended) | Decision | Why this page needs it |
+|------|-------------------------------|----------|------------------------|
+| add | *(none)* → `GET /portfolio/tax-lots.csv` | §9-4 | Reports owns "open tax lots; exports server-side" but only the JSON reader exists (`portfolio.py:984-990`); a tax-lots export needs a CSV builder. **Contingent on §9-4.** |
+| reshape | `GET /portfolio/realised-gains.csv` (drops honesty payload) → carries the disclaimer + `base_realised_total_historical_fx` + `realised_fx_events_excluded` | §9-5 | An export that sheds its disclaimers is a **Guarantee-3 / D-020/D-076 violation**; the honest trade-date-FX total + excluded-events count live only in the JSON reader (`tax.py:360-369`), never in the CSV (`tax.py:400-416`). **Contingent on §9-5.** |
+| reshape | `GET /portfolio/attribution.csv` (no disclaimer) → carries `_ATTRIB_DISCLAIMER` | §9-5 | `_ATTRIB_DISCLAIMER` exists (`analytics.py:457-463`) but the CSV builder never writes it (`portfolio.py:364-373`). **Contingent on §9-5 + §9-13.** |
+| reshape | `GET /portfolio/statements.csv` (partial caveat) → carries the full D-077 "for your accountant / not tax advice" disclaimer | §9-5 | CSV emits only the top-line current-FX caveat (`statements.py:159`); the fuller reader disclaimer (`statements.py:146-147`) does not reach the file. **Contingent on §9-5.** |
+| add (⚑) | *(none)* → the **Reports Pack** render/export path (`/reports/pack`) | §9-1, §9-2 | The Pack is spec-silent on its rendering mechanism (print stylesheet / server HTML / PDF — §10-4) and requires **server-side per-entity composition** (first server-side consumer of the dormant `entity_id`). Shape unknowable until §9-1/§9-2 resolve. **Contingent.** |
+
+**⚑ Verify-first divergence flags (§10):** the biggest premise-vs-reality gaps are (a) the CSVs
+**already shed disclaimers today** (a shipping honesty hole, §9-5), (b) **no tax-lots CSV exists**
+(§9-4), and (c) the Pack's **rendering mechanism is spec-silent** (§9-1). None was assumed away.
+
+---
+
+## 4. COMPONENTS
+
+*Source: DESIGN-SYSTEM.md §5 (ratified inventory). List only ratified components.*
+
+| Ratified component | Role on this page | Data source | Prop/state not exercised at kitchen-sink |
+|--------------------|-------------------|-------------|------------------------------------------|
+| **PageHeader** | Reports H1 + intro | static | — |
+| **DataTable** | Statements sub-tables, Realised P/L events, open tax-lots rows | **real** (`/portfolio/statements`, `/portfolio/realised-gains`, `/portfolio/tax-lots`) | — |
+| **EmptyState** | Empty year / no realised gains / no open lots — each with a **reason** (Guarantee 3) | real | — |
+| **Skeleton** | Per-section progressive loading (each reader owns its card's state — §12-8) | real | — |
+| **Button** | Server-side export controls (one per artifact; `apiDownload` link, journey-guarded) | real (CSV endpoints) | download/`apiDownload` link behaviour (as Holdings §9) |
+| **Select** (user-record) | **Year** filter (over the reader's served `years` list) — **user data, not a master** → `Select`, not `MasterSelect` | real (`years` from the reader) | — |
+| **GlossaryTerm** / `[Help]` | "Tax lot", "Realised P/L", "Statements" popovers | mock glossary + `GLOSSARY.md` | see §9-9 (terminology gaps) |
+| **SummaryLink** / card-header link | The **Reports Pack** entry point (card-header top-right link, D-100) | route link | — |
+| **StalenessChip / ProvenanceBadge** | Only if the in-page figures carry staleness/provenance (holdings-derived) | real | — |
+
+**Data source (Holdings retrospective):** every table above is wired to a **real** report reader —
+there is no mock-backed affordance on this page. (The `[Help]` popover reads the mock glossary
+registry as everywhere; the canonical term store is `GLOSSARY.md` — §9-9.)
+
+**Affordances the ratified inventory lacks (amendment required before build — see §9):**
+- **The Reports Pack print/export layout** — the Pack "uses a **dedicated print layout, not one of
+  the four** templates" (`DESIGN-SYSTEM.md:235-236`); no ratified component covers a print artifact.
+  This is a **§9-1 component/mechanism gap**, not a normal page assembly.
+- **A `long_term_days` threshold control** *if* Reports exposes it editable (§9-7) — the Realised P/L
+  reader takes `long_term_days` but there is no ratified numeric-threshold input surfaced on a report
+  page; whether it is set here or read from Settings is §9-7.
+
+**Component usage rules honoured (DESIGN-SYSTEM §5/§6):**
+- **Entity references link directly (D-098)** — any symbol in a Realised P/L / tax-lots row links to
+  `/instrument/{symbol}`.
+- **Cards are LAYERED (D-100)** — each report section is a `.lf-card` with its content in a
+  `.lf-card__body`; the **Pack cross-link lives in the card header, top-right**.
+- **Scroll = content only, header outside (D-101)** — record tables keep the toolbar/header outside the
+  scroll; each `DataTable` caps at `60vh` and scrolls internally.
+
+**Tables — dataset-size posture (D-094):**
+- **Statements** sub-tables (income/fees/cash-flow by year): **bounded** (a handful of years) →
+  client-side sort/filter acceptable; revisit if a ledger ever spans >~50 years.
+- **Realised P/L events** and **open tax-lots**: **potentially unbounded / append-only** (grow with
+  trade history). Verify-first: the readers return the **full** grouped set in one dict today
+  (`tax.py:343-350`, `:386-394`) — no server-side paging on `/portfolio/realised-gains` or
+  `/portfolio/tax-lots`. **§9-8** records whether these need server-side paging (like Transactions,
+  D-094) or stay bounded-by-year (the `year` filter caps realised P/L; tax-lots has no year filter).
+
+---
+
+## 4b. PER-VARIANT FIELD & ACTION SPECS
+
+**Not applicable** — Reports has no entity with variants and **no data-entry form** (read/export only).
+No per-variant field/action matrix. **Deferred cross-milestone dependency:** the **"explain this
+report" AI helper** (D-060, P-6 pipeline) is **DEFERRED to the AI-surfaces milestone** with a visible
+placeholder note (mirroring the Instrument Detail explainer deferral, D-068) — §9-10.
+
+---
+
+## 5. VOCABULARIES
+
+*Source: MASTER-DATA.md. Every categorical field → its vocabulary + control.*
+
+| Field on this page | Vocabulary / master | Fixed or extensible | MASTER-DATA ref |
+|--------------------|---------------------|---------------------|-----------------|
+| **Year** filter | **user data** (the reader's served `years` list) — **`Select`, not `MasterSelect`** | user-record | n/a (not a master) |
+| **`long_term_days`** threshold (if surfaced — §9-7) | **user-set neutral integer** (Guarantee 4; **no jurisdiction presets**, D-077) | user setting | n/a |
+| **Entity** (Pack per-entity sections only) | **user-record** (entities) — server-composed sections, **NOT** an interactive `MasterSelect`/switcher (§9-2, accounts §9-8) | user-record | n/a |
+
+**No categorical MASTER-DATA field appears on this page** — Reports renders report readers; it has no
+enum-valued input. All "fields" above are user-record filters/thresholds (`Select` / numeric), never
+`MasterSelect`.
+
+---
+
+## 6. DECISIONS IN FORCE
+
+*Source: docs/audit/DECISIONS.md. Each decision that constrains this page.*
+
+| Decision | What it forbids / requires on this page |
+|----------|------------------------------------------|
+| **D-060** | Reports **owns** statements / Realised P/L / tax-lots; exports server-side; the AI helper rides the **P-6 pipeline only** (`DECISIONS.md:346`). |
+| **D-038** | Reports Pack is the **one sanctioned duplication** — a print/export artifact from canonical readers, **not a page in the IA sense** (`DECISIONS.md:290-294`). |
+| **D-041** | Reports (+ Pricing Health) enter the sidebar; the **Pack is reachable from Reports ONLY** (`DECISIONS.md:307-308`). |
+| **D-061** | Pack = consolidated + per-entity sections (P-3), print-optimised, **composed from canonical readers, disclaimers preserved**, reachable from Reports only (`DECISIONS.md:347`). |
+| **D-050 / P-5** | **All exports server-side**; the client never generates files (`DECISIONS.md:336`, `:51`). |
+| **D-026** | Realised report heading is **"Realised P/L report"**; "Realised gain(s)" is a deprecated term (`GLOSSARY.md:114`, `:299-300`) — the page must **not** label it "Realised gains" (§9-9). |
+| **D-020 / D-076** | Trade-date FX is **honestly `None`** for backdated trades; the trade-date-FX realised total shows an **excluded-events count** — and this **must travel into the export** (§9-5; PRODUCT-SPEC §4a). |
+| **D-077 / Guarantee 4** | **No jurisdiction tax logic ever**; `long_term_days` is a neutral user-set threshold; statements/realised outputs are **"for your accountant"** — the export must carry that disclaimer (§9-5). |
+| **D-105** | The backend serves **pre-formatted display strings**; the frontend renders them verbatim (readers carry a `disclaimer` display string — §10-3). |
+| **Guarantee 3** | Every empty region shows a **reason**; insufficient inputs render "—", never fabricated; a **stale/excluded** value is flagged, never hidden. |
+| **P-1 / D-031** | Every figure has ONE canonical home; Reports owns its figures and **links** the Pack; the Pack **never re-derives** (composes readers). |
+| **P-3** | Per-entity Pack sections are a **filter of a canonical reader**, not a duplicate — server-composed, not a client switcher (§9-2). |
+| **D-098** | Symbols/entities in report rows **link** to their entity-detail page. |
+| **D-094** | Each table declares its dataset-size assumption + sort/filter location (§4, §9-8). |
+
+---
+
+## 7. ACCEPTANCE CRITERIA
+
+*Written as checkable statements. Read/export-only page — mutation criteria are recorded absences.*
+
+- [ ] **Happy path:** `/reports` renders the statements, Realised P/L report, and open-tax-lots
+      sections, each from its canonical reader, with the **Reports Pack** entry link (card header).
+- [ ] **Empty state (Guarantee 3):** empty year, **no realised gains**, and **no open lots** each show
+      a **reason**, never a blank or a fabricated zero.
+- [ ] **Error state:** a failing reader skeletons then shows an honest per-section error with retry
+      (progressive per-card loading, §12-8) — the page never blocks on the slowest reader.
+- [ ] **Stale / low-confidence:** any holdings-derived figure flags staleness; realised totals show the
+      **current-FX caveat AND the trade-date-FX excluded-events count** (D-020/D-076) **in-page**.
+- [ ] **Disclaimers travel INTO the exports (⚑ §9-5):** every CSV carries its on-screen disclaimer —
+      the D-077 "for your accountant / not tax advice" line, the current-FX caveat, and the trade-date-FX
+      excluded-count. An export that sheds a disclaimer **fails this criterion** (Guarantee violation).
+- [ ] **Export journey-guard (page-accounts §14ac-2):** clicking each real Export control triggers the
+      **server-side** download of the intended artifact (assert the request URL/params, not just a
+      handler call); no client-side file generation (P-5).
+- [ ] **Negative / large / long-name data** render correctly (tabular figures, no overflow).
+- [ ] **Both densities + both themes** correct; interactive OPEN states (the year `Select` popup)
+      verified in light AND dark.
+- [ ] **Keyboard + WCAG AA** (focus ring, aria-sort, labels).
+- [ ] **No frontend money math** — every figure is a backend-served string/number (D-105).
+- [ ] **Terms match GLOSSARY** (with the §9-9 additions); the label is **"Realised P/L report"**, never
+      "Realised gains" (D-026).
+- [ ] **Tables (D-094):** statements bounded (client-side); realised/tax-lots per §9-8 disposition.
+- [ ] **Rendered layout verification (overflow suite, ADR-0004):** extend `e2e/overflow.spec.ts` to cover
+      `/reports` — zero horizontal overflow at 320/375/900/1366 × both themes; only `.lf-shell__content`
+      scrolls vertically.
+- [ ] **Copy hygiene (page-chrome §11-8):** no decision ID / `server-side` / endpoint name in any
+      user-facing string; a changed label updated app-wide.
+- [ ] **Recorded absence — writes:** Reports performs **no mutation** → no `[S]` PIN gate, no
+      request-body assertion, no round-trip import test (D-095). This is the **chosen absence**, stated
+      so the next reader does not treat it as a gap.
+- [ ] **The Pack (⚑ §9-1/§9-2/§9-11):** acceptance criteria for `/reports/pack` are **deferred to its §9
+      resolutions** — its rendering mechanism, per-entity composition, and whether it ships this
+      milestone are all open. Disclaimers-preserved and composed-from-readers (D-061) are the fixed
+      invariants any resolution must honour.
+
+---
+
+## 8. BUILD PHASES
+
+*One commit per phase. Backend deltas (§3b) FIRST — but ALL §3b rows are contingent on §9. **No phase
+starts until §9 is passed.***
+
+- **Phase 0 — Contract deltas (§3b, each contingent on its §9 item):** build backend-first, regenerate
+  `API-CONTRACT.json` + `docs/openapi.json` same commit, drift green. Candidates: tax-lots CSV (§9-4);
+  the disclaimer-carrying CSV reshapes (§9-5); the Pack path (§9-1/§9-2). **A same-batch code test pins
+  every reshaped CSV's disclaimer rows** (TEMPLATE §3b value-test note).
+- **Phase 1 — Page assembly:** compose the ratified components; wire to the readers; honest
+  empty/error/stale states; progressive per-card loading; the Pack entry link.
+- **Phase 2 — Tests:** render/acceptance tests; extend `e2e/overflow.spec.ts` for `/reports`; drift +
+  typecheck + lint green.
+- **Phase 3a — Scripted pre-pass (GREEN before the walk):** drive `/reports` in both themes across the
+  breakpoints on the live app + real backend; every section out of skeleton; **prove each export
+  download carries its disclaimers** (the ⚑ honesty case); fix everything surfaced first.
+- **Phase 3b — Owner acceptance walk (LIVE, judgment items only):** copy/semantics/the Pack rendering
+  decision. The owner closes the phase.
+- **Close ritual:** record the close (plan retrospective + `RATIFICATION.md §6`), strike-check every
+  §9 item against the diff, **push** before the owner re-uploads.
+
+---
+
+## 10. VERIFY-FIRST RECORD (file:line)
+
+*Read the engine before assuming shapes (D-019). Every claim cites the code/spec.*
+
+### 10-1. The CSV / export endpoints that exist today
+
+Router: `app/api/v1/routes/portfolio.py`. **Six** CSV endpoints, all `GET`, `PlainTextResponse`,
+`media_type="text/csv"` (none stream):
+
+| Export | Path | Params (honest) | Emits disclaimer in file? | Staleness/provenance in file? |
+|--------|------|-----------------|---------------------------|-------------------------------|
+| Statements | `GET /portfolio/statements.csv` (`portfolio.py:1057`) | `year?`, `entity_id?` | **Partial** — only the top-line current-FX caveat (`statements.py:159`); the full D-077 line (`statements.py:146-147`) is **dropped** | No |
+| Realised P/L | `GET /portfolio/realised-gains.csv` (`portfolio.py:993`) | `year?`, `long_term_days=365`, `entity_id?` | **NO** — no disclaimer, no historical-FX total, no excluded count (`tax.py:400-416`) | No |
+| Tax lots | *(NONE — JSON only, `portfolio.py:984`)* | — | — | — |
+| Attribution | `GET /portfolio/attribution.csv` (`portfolio.py:345`) | `days=365`, `entity_id?` | **NO** — `_ATTRIB_DISCLAIMER` exists (`analytics.py:457-463`) but is never written (`portfolio.py:364-373`) | No |
+| Holdings *(delivered on Holdings; not re-homed)* | `GET /portfolio/holdings.csv` (`portfolio.py:186`) | none | No | **YES** — `is_stale`, `valuation_method` (`portfolio.py:512-527`) |
+| Transactions *(delivered on Holdings; not re-homed)* | `GET /portfolio/transactions.csv` (`portfolio.py:196`) | none (full dump) | No | No (raw ledger) |
+
+**Existing frontend links to these:** the only wired CSV exports in `frontend/src/` are Holdings' own
+(`page-holdings §9`, Export → `apiDownload`); **no frontend surface links statements/realised/tax-lots/
+attribution CSVs today** — Reports is their first UI consumer. What Reports **adds vs links:** it must
+surface the statements / realised / tax-lots exports (and decide attribution, §9-13), and (per §9) add
+the missing tax-lots CSV + the disclaimer reshapes.
+
+### 10-2. The declined-exports inventory (grep DECLINED + D-061 across CURRENT.md, page plans §9, DECISIONS.md)
+
+**7 pages declined a per-page export pointing at Reports.** None may be silently dropped — each is
+delivered by the Pack or re-declined in §9-3.
+
+| # | Source (file:line) | Page/surface | Export declined | Rationale (quote) | Names D-061 (Pack)? |
+|---|--------------------|--------------|-----------------|-------------------|---------------------|
+| 1 | `page-net-worth.md:300-301` | Net worth (ND-14) | Per-page CSV | "**DECLINED, not deferred** … exports are **Reports** territory (D-038/D-050)" | No (D-038/D-050) |
+| 2 | `page-pricing-health.md:243-244` | Pricing Health (ND-12) | Diagnostics CSV | "**DECLINED** — no CSV here; exports are the **Reports page's** territory" | No |
+| 3 | `page-review.md:284-285` | Review (ND-10) | Per-page export | "**DECLINED** … export is **Reports territory**" | No |
+| 4 | `page-heatmap.md:286,350` | Heatmap (ND-6a) | Treemap export | "**NO export here (DECLINED)** — **Reports territory**"; draft redirects any export to the already-delivered `/portfolio/holdings.csv` | No |
+| 5 | `page-scenarios.md:303,329` | Scenarios (§9-12) | `/scenarios` export | "**DECLINE** … the **Reports Pack (D-061)** is the home, decided at the **Reports plan**" | **Yes (D-061)** |
+| 6 | `page-cash-flow.md:344,371` | Cash flow (§9-14) | Planning export | "**DECLINE** — the **Reports Pack (D-061)** is the export home, composed from these canonical readers" | **Yes (D-061)** |
+| 7 | `page-policy.md:500,536` | Policy (§9-20) | `/policy` drift export | "**DECLINE.** Drift's export home is the **Reports Pack (D-061)**, composed from this page's canonical reader" | **Yes (D-061)** |
+
+**Inventory count: 7 declined exports across 7 pages.** Three (Scenarios / Cash flow / Policy) name the
+**Reports Pack (D-061)** as the home explicitly; four (Net worth / Pricing Health / Review / Heatmap)
+say "Reports territory" via D-038/D-050 without naming D-061 — those four are the ones most at risk of
+silent drop and must be explicitly dispositioned in §9-3.
+
+**Already-delivered exports Reports does NOT re-home:** Holdings CSV (`portfolio/holdings.csv`, D-050,
+`page-holdings §9`), Transactions CSV (`portfolio/transactions.csv`, round-trip), Realised P/L CSV +
+Return-attribution CSV pinned on Portfolio (`page-portfolio §12-6b`, `API-CONTRACT.json:9031`).
+
+### 10-3. Statements / Realised P/L / tax-lots readers (served shapes + display strings + disclaimers)
+
+- **`statements_report`** (`app/services/statements.py:46-148`) — `(session, year=None, entity_id=None) → dict`.
+  Keys (`:109-148`): `base_currency, years, year, income{dividend,interest,total,ttm_total,by_currency[],by_symbol[]},
+  fees{commissions,taxes,total,by_year[]}, cashflow{deposits,withdrawals,net,by_year[]}, income_by_year[],
+  realised_unrealised{realised,unrealised}, disclaimer`. **Display string (D-105):** `disclaimer`
+  (`:146-147`) — *"Organisation for review / your accountant — not tax or financial advice. Base-currency
+  figures use current FX and are indicative, not for filing."*
+- **`realised_gains_report`** (`app/services/tax.py:284-370`) — `(session, year=None, long_term_days=365,
+  entity_id=None) → dict`. Keys (`:352-370`): `year, years, long_term_days, base_currency, currency_groups[],
+  base_realised_total_current_fx, base_realised_total_historical_fx, realised_fx_events_excluded, disclaimer`.
+  Each group (`:343-350`): `currency, realised_total, short_term, long_term, income, events[]`; each event
+  (`:315-323`): `symbol, name, sell_date, acquired_date, quantity, proceeds, cost, gain, holding_days,
+  long_term`. Honest-NULL: `gain_base_historical` returns `None` when a leg lacks a stored rate (`:70-78`),
+  incrementing `realised_fx_events_excluded` (`:326-328`). Engine: `fifo_report` (`tax.py:94-182`) — pure
+  FIFO/average replay (the valuation `compute_fifo` is a different, untouched function, `tax.py:5-6`).
+  **Display string:** `disclaimer` (`:362-369`).
+- **`tax_lots_report`** (`app/services/tax.py:373-397`) — `(session, long_term_days=365, entity_id=None) → dict`.
+  Keys (`:396-397`): `long_term_days, lots[], disclaimer`; each lot (`:386-394`): `symbol, name,
+  acquired_date, quantity, unit_cost, cost, currency, holding_days, long_term`. **Display string:**
+  `disclaimer` = *"Open lots by FIFO. Organisation only — not tax advice."* (`:397`). **No CSV sibling** (§9-4).
+
+### 10-4. The Pack's composition + "print-optimised" mechanics
+
+- **Composition** (`INFORMATION-ARCHITECTURE.md:353-358`, quoted §2): consolidated section (net-worth
+  trend + review) then **per-entity sections (P-3): net worth, drift, realised, risk + attribution**,
+  composed **from canonical readers**, disclaimers preserved.
+- **Per-entity ≠ switcher.** No frontend entity switcher exists; `?entity_id` is **dormant** with **zero
+  frontend callers** (`page-accounts.md:333`, §9-8 ACCEPTED: "entity is an **account attribute, not** a
+  page filter; the `?entity_id` param stays **dormant** … **no switcher**"). The 15 portfolio readers
+  **do** filter by `entity_id` server-side (`accounts.py:36`; §10-5). **So the Pack's per-entity sections
+  are SERVER-COMPOSED sections in an artifact — the backend iterates entities and calls the readers with
+  `entity_id` — NOT an interactive switcher.** The Pack would be the **first server-side consumer** of the
+  dormant param (§9-2), consistent with P-5 server-side exports.
+- **"Print-optimised" is SPEC-SILENT on mechanism.** The specs say only: "a **print/export artifact**"
+  (`IA:43`), "a **print-optimised artifact**" (`IA:355`), "**print-optimised**" (`DECISIONS.md:347`), "a
+  **print artifact**, not a template page" (`DESIGN-SYSTEM.md:222-223`), "a dedicated **print layout**,
+  not one of the four" (`DESIGN-SYSTEM.md:235-236`). **Nowhere** is a `@media print` stylesheet vs
+  server-rendered HTML vs PDF chosen. → **§9-1 (⚑ load-bearing).**
+
+### 10-5. `entity_id` / `account_id` honesty on the export endpoints
+
+The one filter primitive is `entity_account_filter(model, entity_id)` (`portfolio.py:255-266`) — scopes by
+the owning account's `entity_id`, **no-op when None**, and **handles only `entity_id`, never `account_id`**.
+
+| Endpoint | `entity_id` | `account_id` |
+|----------|-------------|--------------|
+| `statements` / `statements.csv` | **Honoured** (`portfolio.py:1046-1064`; `statements.py:50-52`) | **Absent** |
+| `realised-gains` / `realised-gains.csv` | **Honoured** (`portfolio.py:974-1000`; `tax.py:254-256,291`) | **Absent** |
+| `tax-lots` | **Honoured** (`portfolio.py:984-990`; `tax.py:378`) | **Absent** |
+| `attribution.csv` | **Honoured** (`portfolio.py:347,361`) | **Absent** |
+| `holdings.csv` / `transactions.csv` | **Absent** | **Absent** (transactions = deliberate full dump) |
+| `scenarios` (context) | **REJECTED 400** (household-scoped, `portfolio.py:1013-1014`) | **Absent** |
+
+**Honest posture:** every report reader honours `entity_id` server-side but **no report accepts
+`account_id`** — per-account report scoping does not exist. `holdings.account_id` is a **dormant reader
+param** with no UI consumer (`portfolio.py:171-174`). This is why the Pack's per-entity composition is
+feasible server-side today (entity_id works) while any per-account report scoping is out of scope (§9-8).
+
+### 10-6. Money / staleness travelling into the exports
+
+Confirmed against the CSV builders: **only Holdings CSV** carries staleness/provenance (`is_stale`,
+`valuation_method`, `portfolio.py:512-527`). The **statements / realised / attribution** CSVs emit **bare
+numbers with at most a partial caveat** (§10-1). The rich provenance JSON (`GET /portfolio/pricing-health`,
+`portfolio.py:205-224`) is not folded into any report export. **An export that sheds its served
+disclaimers is a Guarantee-3 / D-020/D-076 violation** — the current CSVs already do (§9-5).
+
+### 10-7. SN-class vocabulary sweep + GLOSSARY gaps + inherited platform standards
+
+- **GLOSSARY (`GLOSSARY.md`):** **EXISTS** — "Reports Pack" (`:278`), "Statements" (plural, `:204`),
+  "Tax lot / Open lot" (`:65`), "Realised P/L" (`:114`). **MISSING / gaps** — no standalone **"Report"**
+  entry; **"Statement"** (singular) is undefined (only plural "Statements"); **"Realised gains" is a
+  DEPRECATED term** that must normalise to "Realised P/L" (D-026, `:299-300`) — the page must not use it.
+  → **§9-9.** (Per page-heatmap §13-1, any new term ships to `GLOSSARY.md` **first**, then the popover
+  data, guarded by `test_glossary_parity.py`.)
+- **Inherited platform standards:** inset guard route + overflow arrays (extend `overflow.spec.ts` for
+  `/reports`); D-098 entity links; D-100 layered cards; D-101 header-outside-scroll; D-094 table posture.
+  **`[S]` writes — NONE:** Reports is read/export-only; **recorded chosen absence** (§7), no PIN gate.
+
+### 10-8. ⚑ Divergence flags (premise vs reality)
+
+1. **The CSVs already shed disclaimers today** (§10-1/§10-6) — a **shipping honesty hole**, not a new
+   feature; caught by reading the builders. → §9-5.
+2. **No tax-lots CSV exists** — the reader is JSON-only (`portfolio.py:984-990`). → §9-4.
+3. **The Pack rendering mechanism is spec-silent** (§10-4). → §9-1.
+4. **The TEMPLATE "Reports-group pages are worklist-shaped" note** conflicts with **DESIGN-SYSTEM §3**,
+   which lists Reports under **Overview** (`:227`) and Pricing Health under Worklist (`:229`) — the two
+   group members use **different** templates, so the generalisation does not hold for Reports. → §9-6.
+
+---
+
+## 9. NEEDS DECISION — OPEN (owner one-pass required before ANY build)
+
+*Do not improvise a resolution; do not start build on any item still open. PROPOSED resolutions are for
+the owner to approve. ⚑ marks the load-bearing items named in the task.*
+
+| # | Item | Why it blocks / what's needed | Proposed resolution (for owner to approve) |
+|---|------|-------------------------------|--------------------------------------------|
+| **9-1 ⚑** | **The Reports Pack's rendering mechanism** — print stylesheet / server-rendered HTML / PDF? | Spec is **SILENT** (§10-4): "print-optimised / print layout" with no mechanism chosen. The whole Pack build (a §3b add) and its component gap (§4) hinge on this; P-5 requires server-side exports. | **Server-rendered, print-optimised HTML at `/reports/pack`** (a dedicated backend-composed HTML route with a `@media print` stylesheet), **not** a client route and **not** a new PDF dependency (no ADR for a PDF lib without owner sign-off). The browser's print-to-PDF is the export path; keeps P-5 (server composes the artifact) and adds no dependency. Confirm, or choose PDF (needs an ADR). |
+| **9-2 ⚑** | **The Pack's per-entity composition** — how are per-entity sections produced given there is NO entity switcher? | `?entity_id` is **dormant, zero frontend callers** (accounts §9-8); readers filter by it **server-side** (§10-5). The Pack would be the **first server-side consumer**. Must reconcile with the accounts no-switcher ruling. | **Server-composed sections:** the Pack backend iterates the user's entities and calls each canonical reader with `entity_id`, emitting a fixed section per entity — an **artifact section, not an interactive switcher** (honours accounts §9-8: no page-level switcher invented; the param stays UI-dormant, consumed only server-side inside the artifact). |
+| **9-3 ⚑** | **Disposition of each of the 7 declined per-page exports** (§10-2) — delivered by the Pack, or re-declined? None may be silently dropped. | Scenarios/Cash flow/Policy named the **Pack (D-061)**; Net worth/Pricing Health/Review/Heatmap said "Reports territory" without naming it. | **Delivered by the Pack, not as standalone per-page CSVs:** drift (Policy), net-worth trend + review (Net worth/Review), scenarios (Scenarios), cash-flow (Cash flow) are exactly the Pack's consolidated + per-entity sections (§2) — composed from those pages' canonical readers. **Pricing Health diagnostics + Heatmap treemap are RE-DECLINED** (a diagnostics table and a non-tabular treemap are not report artifacts; Heatmap already redirects to the delivered `holdings.csv`). Record all 7 dispositions in the build. |
+| **9-4** | **No tax-lots CSV export exists** (JSON only, `portfolio.py:984-990`) — does Reports offer a tax-lots export? | Reports "owns … open tax lots; exports server-side" (D-060) but the export endpoint is missing → a §3b **add**, backend-first. | **Add `GET /portfolio/tax-lots.csv`** (a `tax_lots_csv` builder mirroring `realised_gains_csv`, columns = the lot keys + the disclaimer row per §9-5), backend-first, regenerating the contract in the same commit. |
+| **9-5 ⚑(honesty)** | **The report CSVs shed their served disclaimers today** (§10-1/§10-6) — realised-gains.csv drops the disclaimer + `base_realised_total_historical_fx` + `realised_fx_events_excluded`; attribution.csv drops `_ATTRIB_DISCLAIMER`; statements.csv carries only a partial caveat. | An export that sheds its disclaimers is a **Guarantee-3 / D-020/D-076 / D-077 violation** — the honest trade-date-FX total + excluded count + "for your accountant" line live only on-screen. | **Reshape all report CSVs (backend-first) to carry their served disclaimers**: realised-gains.csv gains a disclaimer block + the historical-FX total + excluded-events count row; attribution.csv gains `_ATTRIB_DISCLAIMER`; statements.csv gains the full D-077 line. **Same-batch code tests pin the disclaimer rows** (TEMPLATE §3b value-test note). Fixes a shipping hole regardless of the rest of the page. |
+| **9-6** | **Page template — Overview (§3) vs the TEMPLATE "Reports-group worklist" note** (§10-8 divergence). | §1 must cite a template; the two guidances conflict, and the choice shapes assembly (dashboard vs records worklist). | **Overview** per the authoritative `DESIGN-SYSTEM.md:227` mapping — the page is a composed surface of owned sections + the Pack link; the "Reports-group worklist" note describes **Pricing Health** (the worklist group-mate, `:229`), not Reports. No DESIGN-SYSTEM amendment needed. |
+| **9-7** | **`long_term_days` control** — is the neutral threshold **editable on Reports**, or read-only from Settings? | The Realised P/L + tax-lots readers take `long_term_days=365` (Guarantee 4, neutral, no presets). No ratified numeric-threshold input is surfaced on a report page. | **Read from the user setting, shown read-only on Reports** with a link to Settings (keeps one canonical home for the threshold; avoids a new input component). If the owner wants it adjustable in-page, that is a component amendment (a `Select`/numeric over allowed values) — owner call. |
+| **9-8** | **Realised P/L / tax-lots table dataset-size posture (D-094)** — bounded-by-year, or server-side paging? | The readers return the **full** grouped set in one dict (`tax.py:343-350,:386-394`); no server-side paging exists on these endpoints (unlike Transactions, D-094). Unbounded trade history could grow these. | **Bounded-by-filter, client-side** for now: Realised P/L is capped by the **year** filter; tax-lots is open lots only (bounded by holdings). Record the assumption + a **revisit threshold** (server-side paging if a single year's realised events or open lots exceed ~1,000 rows), mirroring the Holdings D-094 posture. **No per-account scoping** (no report accepts `account_id`, §10-5). |
+| **9-9** | **Terminology gaps (GLOSSARY)** — no standalone "Report"; "Statement" (singular) undefined; "Realised gains" is deprecated. | CLAUDE.md hard rule: every shown term exists in `GLOSSARY.md` with exact spelling; page-heatmap §13-1 requires the spec store first. | **Add to `GLOSSARY.md` first** (then popover data, guarded by `test_glossary_parity.py`): **"Report"** (a composed statements/Realised-P/L/tax-lots view — for your accountant), and confirm **"Statements"** (plural) is the label used (avoid the singular). **Never** label anything "Realised gains" — use **"Realised P/L report"** (D-026). |
+| **9-10** | **The "explain this report" AI helper** (D-060, P-6 pipeline). | The reader ownership names it, but AI surfaces are a later milestone (D-067/C-2 deferred; Instrument Detail explainer deferred D-068). | **DEFERRED to the AI-surfaces milestone** with a visible placeholder note + a recorded pending decision (D-060 stays intact) — never silently dropped. Not built this milestone. |
+| **9-11** | **Does the Pack (`/reports/pack`) ship THIS milestone, or is it phased after the Reports page?** | The Pack is the largest, most spec-silent piece (§9-1/§9-2); the Reports page (statements/realised/tax-lots + exports) is buildable independently once §9-4/§9-5 resolve. | **Phase it:** ship the **Reports page + the export honesty fixes (§9-4/§9-5) first** (self-contained, closes a shipping hole); build the **Pack as a second milestone** once §9-1/§9-2 are ratified. Owner confirms sequencing. |
+| **9-12** | **Pack scope confirmation** — the exact sections + the readers each composes. | D-061 lists "net worth, drift, realised, risk + attribution" per entity + a consolidated section; the plan must name the reader per section before build. | **Consolidated:** net-worth trend reader + review reader. **Per-entity:** `value_portfolio` (net worth), policy-drift reader, `realised_gains_report` (realised), risk reader, attribution reader — each called with `entity_id` server-side (§9-2). Confirm the reader list; no re-derivation (D-061). |
+| **9-13** | **Attribution CSV ownership (P-1)** — attribution is Portfolio's canonical export (`page-portfolio §12-6b`); does Reports link it, re-home it, or only use it inside the Pack? | `attribution.csv` exists and is Portfolio-owned; Reports must not create a second canonical home. | **Reports does not re-home attribution as a standalone export** — attribution appears **only inside the Pack's per-entity "risk + attribution" section** (composed from the canonical reader, §9-12). Its standalone CSV stays Portfolio's. The §9-5 disclaimer fix to `attribution.csv` still applies (it's a shared honesty fix). |
+
+---
+
+**Sign-off to start build:** §9 has **13 OPEN items** (⚑ load-bearing: 9-1 Pack rendering, 9-2 per-entity
+composition, 9-3 declined-export dispositions, 9-5 export honesty) · §3b deltas are **all contingent on
+§9** · the Pack print layout (§4) needs §9-1 before it can be built. **No build starts until the owner
+passes §9.**

@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import SUPPORTED_CURRENCIES, get_settings
+from app.core.money import format_money_display
 from app.models import Account, Entity, Transaction
 from app.services.confidence import score_holding
 from app.services.institutions import get_or_create_institution
@@ -30,10 +31,6 @@ ZERO = Decimal("0")
 ACCOUNT_KINDS = ["brokerage", "bank", "retirement", "wallet", "property", "manual", "other"]
 # Cost-basis method vocab (D-018; MASTER-DATA §2) — the single source refdata imports.
 COST_BASIS_METHODS = ["fifo", "average"]
-
-
-def _f(x: Decimal, p: int = 0) -> float:
-    return float(round(x, p))
 
 
 async def accounts_report(session: AsyncSession, entity_id: int | None = None) -> dict:
@@ -85,7 +82,11 @@ async def accounts_report(session: AsyncSession, entity_id: int | None = None) -
             "kind": a.kind if a else "brokerage",
             "currency": a.currency if a else base,
             "cost_basis_method": a.cost_basis_method if a else "fifo",
-            "value": _f(g["value"]),
+            # Money is a SERVED display string (D-105) formatted via the platform path — no more
+            # whole-unit `_f` rounding. The rollup is in BASE currency (Σ market_value_base), so it
+            # is bare (§12in-1); the account's native holdings currencies ride the `currencies` chips.
+            "value": float(round(g["value"], 2)),
+            "value_display": format_money_display(g["value"]),
             "holdings": g["count"],
             "asset_classes": [c for c, _v in classes[:4]],
             "currencies": sorted(g["currencies"]),
@@ -94,7 +95,10 @@ async def accounts_report(session: AsyncSession, entity_id: int | None = None) -
             "last_activity": (la.date().isoformat() if la else None),
         })
     out.sort(key=lambda x: x["value"], reverse=True)
-    return {"base_currency": base, "total": _f(val.total_value), "count": len(out),
+    return {"base_currency": base,
+            "total": float(round(val.total_value, 2)),
+            "total_display": format_money_display(val.total_value),
+            "count": len(out),
             "accounts": out,
             "disclaimer": "Your holdings grouped by account / institution — reporting only. Base "
                           "values use current FX; 'last activity' is your latest recorded transaction."}

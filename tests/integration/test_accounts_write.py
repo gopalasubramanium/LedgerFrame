@@ -78,3 +78,15 @@ async def test_patch_out_of_vocab_kind_rejected(app_client):
     bad = await app_client.patch(f"/api/v1/accounts/{aid}", json={"name": "K2", "kind": "nope"})
     assert bad.status_code == 400
 
+
+
+# --- §9-10: money on the page is a served display string (D-105) ------------ #
+async def test_accounts_report_serves_display_strings(app_client):
+    rep = (await app_client.get("/api/v1/accounts")).json()
+    # Envelope: base_currency + a served total_display string (today: raw float `total` only → RED).
+    assert rep["base_currency"]
+    assert isinstance(rep["total_display"], str)
+    # Per account: a served value_display string, formatted with grouped thousands + 2dp.
+    acc = rep["accounts"][0]
+    assert isinstance(acc["value_display"], str)
+    assert "." in acc["value_display"]  # 2dp platform display path, not whole-unit _f rounding

@@ -1093,6 +1093,42 @@ batch (delta notes on touched accepted surfaces). No page-local one-offs. `npm r
 
 ---
 
+## ACCOUNTS — PHASE 1+2+3a GREEN ⏸ AWAITING OWNER WALK (Phase 3b) (2026-07-16)
+
+**Geometry gate ✅ RATIFIED WITH CONDITION (owner, 2026-07-16)** — one condition (§12ac-1: the
+accounts-table Value header carries the SERVED `base_currency`, never hardcoded) + four acceptances
+(§12ac-2..5: cost-basis label on every account · RowMenu "View holdings" · StatusChip unused · the
+subtitle/EmptyStates/three dialog bodies are protected copy). Recorded in `page-accounts.md §12ac`.
+
+**Phase 1 (assembly) + Phase 2 (tests) + Phase 3a (scripted pre-pass) DONE — build record in
+`page-accounts.md §13`.** `routes/Accounts.tsx` composes the ratified geometry live: the accounts
+DataTable spine (institution · kind · currency · cost basis · entity · **Value({served base})** · ⋯
+RowMenu View-holdings/Edit/Delete) + footer Σ → Entities card → Institution master card (served
+referenced-by counts). [S]-gated editors; the **§9-3 MasterSelect data-source extension goes LIVE**
+(institution select reads the DB master; Create-new POSTs to `/institutions`); the §9-5 cost-basis
+restatement warning is interposed before the PATCH (wording PROPOSED). Deferred halves landed: the
+**Holdings `?account=` chip** (Amendment G; delta note `page-holdings.md`), the **Insurance insurer →
+MasterSelect** (delta note `page-insurance.md §16a`), the **demo seed** (entities + institutions + wired
+accounts + a merge pair; `test_demo_seed_accounts.py`), nav flip + route + all three overflow arrays.
+One backend delta (`GET /institutions` serves `account_count`/`policy_count`; contract regen, 130 paths).
+
+- **Suites:** `npm run check` (from `frontend/`) **EXIT 0** — 239 Vitest + 246 Playwright (incl.
+  `/accounts` overflow/inset at 320/375/900/1366 × both themes). Backend `pytest` **829 passed**;
+  `test_copy_hygiene` 70 green; `make api-contract-check` green.
+- **Phase-3a pre-pass** (`e2e/smoke/accounts-smoke.spec.ts`, DEV-ONLY): **13/13 parts GREEN, 0 console
+  errors** on the RESET, demo-seeded instance — served Value header, footer Σ tile-integrity, served
+  FIFO label, full [S] CRUD (inline-created institution LIVE POST; cost-basis change → warning →
+  rebuild), entity add/rename/delete-blocked, institution rename + a **REAL merge**, Amendment-G
+  drill-down, containment + geometry both themes × 4 breakpoints. Touched-page smokes GREEN:
+  `insurance-smoke`, `net-worth-smoke`, `portfolio-smoke` (two cold-boot flakes cleared on retry — not
+  regressions). Holdings has no smoke (covered by accounts-smoke Part 10 + the unit round-trip).
+
+**⏸ STOP — AWAITING OWNER WALK (Phase 3b, next session).** Walk URL: `http://127.0.0.1:5173/#/accounts`
+on the reset, demo-seeded instance. Judgment items: the §9-5 restatement wording (PROPOSED); the
+copy-hygiene-reworded subtitle; whether Merge/Rollup want on-page [Help] popovers. **Not self-certified.**
+
+*(Prior status, retained for the record:)*
+
 ## ACCOUNTS — PHASE 0a DONE ⏸ AWAITING OWNER GEOMETRY RATIFICATION at /kitchen-sink (2026-07-16)
 
 **§9 RESOLVED (owner one-pass, 2026-07-16): ALL FOURTEEN items ACCEPTED as proposed + Amendments F/G/H +

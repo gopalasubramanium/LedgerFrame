@@ -3,9 +3,10 @@
 > **STATUS: §9 RESOLVED one-pass (owner, 2026-07-16). PHASE 0 DONE (backend-first, 11
 > commits; evidence per commit in §11). PHASE 0a ✅ RATIFIED WITH CONDITION (owner,
 > 2026-07-16 — one condition §12ac-1, four acceptances §12ac-2..5; gate record in §12ac).
-> PHASE 1 (assembly) + PHASE 2 (tests) + PHASE 3a (scripted pre-pass) IN PROGRESS — build
-> record in §13. PHASE 3b (owner walk) is the next session, NOT this one.** Copied
-> from `TEMPLATE-page-build.md`; every §1–§8
+> PHASE 1 (assembly) + PHASE 2 (tests) + PHASE 3a (scripted pre-pass) ✅ DONE / GREEN —
+> build record in §13; `npm run check` EXIT 0, backend 829 passed, accounts-smoke 13/13
+> parts + 0 console errors. ⏸ AWAITING OWNER WALK (Phase 3b) — the next session, NOT this
+> one.** Copied from `TEMPLATE-page-build.md`; every §1–§8
 > row cites the spec it derives from. This is the largest remaining page milestone —
 > **two masters land here** (Entity CRUD, D-065; Institution master, D-008) — so §9
 > was deliberately long.
@@ -628,3 +629,122 @@ copy + affordance by looking, the live modals wire in Phase 1.
 **✅ RATIFIED WITH CONDITION (owner, 2026-07-16) — see §12ac above.** The geometry PROPOSED here was
 walked at `/kitchen-sink` and signed off with one condition (§12ac-1, served Value header) and four
 acceptances (§12ac-2..5). **Phase 1 is UNBLOCKED** — build record follows in §13.
+
+---
+
+## 13. BUILD RECORD — Phases 1 → 2 → 3a (2026-07-16)
+
+*Phase 1 assembly + Phase 2 tests + the Phase-3a scripted pre-pass on a RESET, demo-seeded instance.
+Green suites are the entry ticket, NOT acceptance — the owner walk (Phase 3b) is a separate session.*
+
+### 13-1. Backend delta (Phase-1, backend-first) — institution referenced-by counts
+
+The ratified geometry (§12-1 institution master card) and the merge consequence (§12ac-5, **served**
+counts "not client-derived") both need per-institution reference counts, which `GET /institutions`
+did **not** serve (only `{id,name}`). `InstitutionOut` gains `account_count` + `policy_count`;
+`list_institutions` groups a COUNT over **both** FK tables (`accounts` + `insurance_policy`) in one
+pass per table. **RED before:** `test_institution_list_serves_referenced_by_counts` KeyErrors on the
+`{id,name}`-only shape → GREEN. Contract regenerated same-commit (drift green). Commit `78aac5c`.
+
+### 13-2. Phase 1 — page assembly (commit `03e629e`)
+
+- `frontend/src/api/accounts.ts` — typed client: accounts CRUD, entities CRUD, institutions CRUD +
+  merge; served shapes verbatim; `institution`/`insurer` are **NAME** strings (resolve-or-create).
+- `Accounts.tsx` + `.css` to the ratified frames. The rollup reader (`/accounts`) omits `entity_id`,
+  so the spine **joins `/accounts/list`** for it (and the editable attrs); the null-id
+  "account-less holdings" bucket renders read-only. **§12ac-1 CONDITION wired:** the Value header is
+  `Value (${report.base_currency})`, composed from the served base. Labels render via
+  `useLabelFor` (served `/refdata` labels verbatim — FIFO via the §9-13 override). Footer Σ =
+  `total_display` + the base affix once. EmptyStates + FK-block dialog bodies + merge consequence are
+  the §12ac-5 protected copy, rendered verbatim with **served/real** counts.
+- **[S]-gated editors** (ambient PIN, D-103): account Dialog `size="lg"`; the **§9-3 data-source
+  extension goes LIVE** — `MasterSelect` gains an `options` prop so the institution select reads the
+  **DB-backed master**, and Create-new POSTs to `/institutions` (parent `onChange`) then re-selects
+  the canonical row. Entity editor, institution rename, user-driven merge.
+- **§9-5 cost-basis change warning:** editing `cost_basis_method` on an account **with history**
+  (`last_activity != null`) interposes a restatement ConfirmDialog **before** the PATCH — **wording
+  PROPOSED** ("…realised and unrealised figures will change…"), the owner ratifies it at the walk.
+- GlossaryTerm [Help] on the **Account kind** + **Cost-basis method** editor labels (parity green).
+  Merge/Rollup appear only as an action label / dialog title (strings) — glossary-defined, not
+  surfaced as on-page popovers; revisit at the walk if the owner wants them.
+
+**Deferred halves (commit `688b224`):**
+1. **Holdings account chip (Amendment G):** "View holdings" → `#/holdings?account=<id>`; Holdings reads
+   the param (`useSearchParams`), fetches the **scoped reader** (`getHoldings(accountId)`), shows a
+   clearable chip. Dated delta note in `page-holdings.md`.
+2. **Insurance insurer → MasterSelect over the master** (superseded the typeahead). Dated delta note in
+   `page-insurance.md §16a`.
+3. **Demo seed (§10-5):** entities (Household + Rajan Family Trust + Meera Iyer) + institutions wired to
+   every account (Saxo Markets / Citibank Singapore / Citibank — a near-duplicate merge pair with a real
+   reference); demo `cash` kind → `bank` (was out of `ACCOUNT_KINDS`). `reset-demo-data.sh` re-seeds via
+   `seed_demo_data` automatically. New `test_demo_seed_accounts.py`.
+4. Nav flip `/accounts` → `built:true`; route wired; `/accounts` into **all three** `overflow.spec.ts`
+   arrays; two chrome/shell tests repointed to `/reports` as the unbuilt fixture.
+
+**Copy-hygiene deviation (recorded):** the ratified subtitle's "…the holdings **reader**…" tripped the
+governance-speak guard (`test_copy_hygiene.py` — "reader" is architecture-speak). Reworded to "…a linked
+summary of **your holdings** — never a second figure." The ratified tail (§12ac-5) is preserved; the
+change is protected-copy-adjacent, **owner confirms the reworded subtitle at the walk**. The specimen
+`AccountsMockup.tsx` was reworded identically for parity.
+
+### 13-3. Phase 2 — tests (commit `977b27e`; `npm run check` EXIT 0)
+
+`Accounts.test.tsx` (9) — each guard proven:
+- **§12ac-1** — a **non-SGD (INR)** fixture: the header reads `Value (INR)` and `Value (SGD)` is absent
+  (**RED if hardcoded**).
+- **served labels** — the FIFO cell renders "FIFO", never the titleizer's "Fifo".
+- **em-dash** entity-less cell; **footer Σ** == `total_display` == Σ rendered value rows (tile-integrity).
+- **EmptyStates**; **entity + institution FK-block bodies verbatim** (§12ac-5) with served counts + merge
+  offered; **merge consequence** renders the duplicate's **served** counts and calls the endpoint once
+  with `(survivor, duplicate)`; **live master round-trip** (Create-new POSTs, the row appears) +
+  **FAIL-FIRST** (a rejecting POST → the institution is NOT added).
+`Holdings.test.tsx` (+1) — Amendment-G `?account=` scopes the reader; chip param → chip → clear (unscoped).
+
+**Suites:** `npm run check` (from `frontend/`) **EXIT 0** — lint · typecheck · tokens · **239 Vitest** ·
+**246 Playwright** (overflow/inset/tile-integrity incl. `/accounts` at 320/375/900/1366 × both themes).
+Backend `pytest`: **829 passed** (+2: institution counts, seed wiring); `test_copy_hygiene` 70 green;
+`make api-contract-check` green (130 paths; the institution counts are a field add on `InstitutionOut`).
+
+### 13-4. Phase 3a — scripted pre-pass (`e2e/smoke/accounts-smoke.spec.ts`, commit `6d31d4a`)
+
+DEV-ONLY (`testIgnore: **/smoke/**`), driven against a **RESET, demo-seeded** live instance
+(backend 127.0.0.1:8321 + frontend 127.0.0.1:5173), **both themes × 320/375/900/1366**. All 13 parts
+GREEN, **0 console errors**:
+
+| Part | What it drove | Result |
+|------|---------------|--------|
+| 1 | seeded register (3 accounts, 11 institutions, 3 entities; base SGD) | ✅ |
+| 2 | §12ac-1 — Value header follows the served base: `Value (SGD)` | ✅ |
+| 3 | tile-integrity — footer Σ `796,168.86` == Σ rendered value rows | ✅ |
+| 4 | served label — "FIFO" present, "Fifo" absent (case-sensitive) | ✅ |
+| 5 | add account with an **inline-created institution** (LIVE POST to `/institutions`) | ✅ |
+| 6 | cost-basis change on the seeded account **with transactions** → warning → rebuild | ✅ |
+| 7 | delete the smoke account (the account row clears; the institution stays in the master) | ✅ |
+| 8 | entity add/rename; Household delete correctly **FK-blocked** (ratified body) | ✅ |
+| 9 | institution rename + a **REAL merge** (Citibank → Citibank Singapore, re-points a real account) | ✅ |
+| 10 | Amendment-G drill-down: "View holdings" → `?account=` chip → clear | ✅ |
+| 12 | containment at 320..1366 — no cell clips WITHOUT truncation (ellipsis is honest, §7) | ✅ |
+| 13 | both themes × 4 breakpoints — 0 h-overflow, single vertical scroll region | ✅ |
+
+**Note (Part 6):** the base **total** is unchanged by the restatement (`796,168.86 → 796,168.86`) — a
+cost-basis method change moves **realised/unrealised gains**, not the current market value; the live
+evidence is the warning firing + the served restatement message (the realised-figure movement is pinned
+by the backend fail-first test, §11 commit 5). The **containment guard** correctly excepts
+`lf-table__td--trunc` cells: a long institution name (e.g. "Chubb Insurance Singapore") truncates with an
+ellipsis at 320px — that is the ratified behaviour (§7 "long names truncate, not overflow"), not a clip.
+
+**Touched accepted-page smokes re-run GREEN:** `insurance-smoke` ✅ (drives the insurer MasterSelect
+against the live master), `net-worth-smoke` ✅, `portfolio-smoke` ✅. Two **cold-boot flakes** (a one-time
+net-worth 500 and a portfolio attribution-label timeout on the **first** request after a reset) **cleared
+on retry** — all core endpoints return 200, Portfolio is untouched by this branch, so neither is a
+regression. Holdings has **no** dedicated smoke; its Amendment-G chip is covered by accounts-smoke Part 10
++ the `Holdings.test.tsx` unit round-trip.
+
+### 13-5. STOP — AWAITING OWNER WALK (Phase 3b, next session)
+
+Pre-pass GREEN is the entry ticket, **not** acceptance. **Walk URL:** `http://127.0.0.1:5173/#/accounts`
+on the **reset, demo-seeded** instance (Household + Rajan Family Trust + Meera Iyer; Saxo Markets /
+Citibank Singapore / Citibank + 8 seeded insurers; the Citibank/Citibank-Singapore merge pair intact).
+**Judgment items for the owner:** the §9-5 restatement wording (PROPOSED); the reworded subtitle
+(copy-hygiene, §13-2); whether Merge/Rollup want on-page [Help] popovers. **Do NOT self-certify; do not
+start 3b.**

@@ -16,6 +16,7 @@ from app.core.config import SUPPORTED_CURRENCIES
 from app.models import AssetClass, TxnType
 from app.schemas.common import EntitlementStatus, ValuationMethod
 from app.services.accounts import ACCOUNT_KINDS, COST_BASIS_METHODS
+from app.services.entities import ENTITY_KINDS
 from app.services.estate import (
     CONTACT_ROLES,
     DOC_CATEGORIES,
@@ -77,7 +78,7 @@ def _labeled(values: list[str], overrides: dict[str, str] | None = None) -> list
 # Authored / no-single-code-home vocabularies (MASTER-DATA §2/§4).
 _ASSET_SUBCLASS = ["crypto", "derivative", "equity", "etf", "mutual_fund", "reit"]  # DEF-2 §2 †
 _LIQUIDITY_PROFILE = ["listed", "redeemable", "locked", "illiquid", "manual"]  # §2
-_ENTITY_KIND = ["self", "spouse", "trust", "company", "other"]  # §2
+_ENTITY_KIND = ENTITY_KINDS  # §2 — single source (Amendment H, the policy_status pattern)
 _CONTRIBUTION_FREQUENCY = ["monthly", "quarterly", "annual", "once"]  # §2
 _CONTRIBUTION_KIND = ["invest", "withdraw", "prepay"]  # §2
 _COST_BASIS_METHOD = COST_BASIS_METHODS  # §2 (v2 lanes; `spec` is ROADMAP R-6) — single source

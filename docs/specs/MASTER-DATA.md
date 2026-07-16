@@ -55,7 +55,7 @@ D-010; `02` = from the schema audit.
 | **TxnType** | `transactions.type` | 11 | `buy, sell, dividend, interest, deposit, withdrawal, fee, split, bonus, merger, transfer` | D-010 |
 | **AssetClass** | `instruments.asset_class`, `holdings.asset_class` | 13 | `equity, etf, mutual_fund, bond, cash, fixed_deposit, commodity, crypto, property, private, retirement, liability, other` | D-010 |
 | **liquidity_profile** | `instruments.liquidity_profile` | 5 | `listed, redeemable, locked, illiquid, manual` | D-010 |
-| **Entity.kind** | `entities.kind` | 5 | `self, spouse, trust, company, other` | D-010 |
+| **Entity.kind** | `entities.kind` | 5 | `self, spouse, trust, company, other` | D-010 · write-enforced (page-accounts §9-6/H) |
 | **Goal.basis** | `goals.basis` | 3 | `net_worth, liquid, none` | D-010 |
 | **Obligation.recurrence** | `obligations.recurrence` | 4 | `once, monthly, quarterly, annual` | D-010 |
 | **Obligation.kind** | `obligations.kind` | 2 | `expense, income` | D-010 |

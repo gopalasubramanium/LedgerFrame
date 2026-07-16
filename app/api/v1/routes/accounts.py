@@ -17,6 +17,7 @@ from app.services.accounts import (
     list_entities,
     update_account,
 )
+from app.services.entities import create_entity, delete_entity, update_entity
 
 router = APIRouter()
 
@@ -42,11 +43,50 @@ async def get_accounts_list(session: AsyncSession = Depends(get_db)) -> dict:
     return {"accounts": await list_accounts(session), "kinds": ACCOUNT_KINDS}
 
 
+class EntityIn(BaseModel):
+    name: str = Field(max_length=80)
+    kind: str | None = Field(default=None)  # §9-6/Amendment H — entity_kind vocab
+
+
 @router.get("/entities")
 async def get_entities(session: AsyncSession = Depends(get_db)) -> dict:
     """§4.7 list ownership entities (id · name · kind) — metadata only, for per-entity report
     sections in the quarterly pack. No valuation or recompute."""
     return {"entities": await list_entities(session)}
+
+
+@router.post("/entities", dependencies=[Depends(require_auth)])
+async def add_entity(payload: EntityIn, session: AsyncSession = Depends(get_db)) -> dict:
+    try:
+        res = await create_entity(session, payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc  # out-of-vocab kind
+    await session.commit()
+    return {"ok": True, **res}
+
+
+@router.patch("/entities/{eid}", dependencies=[Depends(require_auth)])
+async def edit_entity(eid: int, payload: EntityIn, session: AsyncSession = Depends(get_db)) -> dict:
+    try:
+        res = await update_entity(session, eid, payload.model_dump())
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await session.commit()
+    return {"ok": True, **res}
+
+
+@router.delete("/entities/{eid}", dependencies=[Depends(require_auth)])
+async def remove_entity(eid: int, session: AsyncSession = Depends(get_db)) -> dict:
+    try:
+        await delete_entity(session, eid)
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc  # FK-blocked: accounts still reference it
+    await session.commit()
+    return {"ok": True}
 
 
 @router.post("/accounts", dependencies=[Depends(require_auth)])

@@ -27,13 +27,31 @@ def normalize_institution_name(raw: str | None) -> tuple[str, str]:
     return display, display.casefold()
 
 
-def _institution_dict(i: Institution) -> dict:
-    return {"id": i.id, "name": i.name}
+def _institution_dict(i: Institution, accounts: int = 0, policies: int = 0) -> dict:
+    # page-accounts §12-1 / §12ac: the master card renders the referenced-by counts, and the merge
+    # consequence line reads the SERVED counts of the chosen duplicate (not client-derived, §12ac-5).
+    return {"id": i.id, "name": i.name, "account_count": accounts, "policy_count": policies}
+
+
+async def _reference_counts(session: AsyncSession) -> dict[int, list[int]]:
+    """``{institution_id: [account_count, policy_count]}`` across BOTH FK columns in one pass per
+    table (the same tables the delete guard counts). Empty before the FK columns exist (commit 3)."""
+    counts: dict[int, list[int]] = {}
+    if not await _fk_columns_present(session):
+        return counts
+    for idx, table in enumerate(_REFERENCING_TABLES):
+        rows = (await session.execute(
+            text(f"SELECT institution_id, COUNT(*) FROM {table} "
+                 f"WHERE institution_id IS NOT NULL GROUP BY institution_id"))).all()
+        for iid, n in rows:
+            counts.setdefault(iid, [0, 0])[idx] = int(n)
+    return counts
 
 
 async def list_institutions(session: AsyncSession) -> list[dict]:
     rows = (await session.execute(select(Institution).order_by(Institution.name))).scalars().all()
-    return [_institution_dict(i) for i in rows]
+    counts = await _reference_counts(session)
+    return [_institution_dict(i, *counts.get(i.id, [0, 0])) for i in rows]
 
 
 async def get_or_create_institution(session: AsyncSession, raw_name: str | None) -> Institution:

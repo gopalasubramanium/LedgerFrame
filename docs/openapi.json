@@ -1020,6 +1020,11 @@
       },
       "InstitutionOut": {
         "properties": {
+          "account_count": {
+            "default": 0,
+            "title": "Account Count",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -1027,6 +1032,11 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "policy_count": {
+            "default": 0,
+            "title": "Policy Count",
+            "type": "integer"
           }
         },
         "required": [

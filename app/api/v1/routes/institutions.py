@@ -31,6 +31,8 @@ class InstitutionIn(BaseModel):
 class InstitutionOut(BaseModel):
     id: int
     name: str
+    account_count: int = 0  # §12-1: referenced-by counts drive the master card + the merge consequence
+    policy_count: int = 0
 
 
 class InstitutionListOut(BaseModel):

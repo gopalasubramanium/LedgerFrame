@@ -47,6 +47,22 @@ async def test_institution_crud_and_first_seen_casing_collapse(app_client):
     assert "DBS Bank" not in remaining
 
 
+async def test_institution_list_serves_referenced_by_counts(app_client):
+    # §12-1 / §12ac-5: GET /institutions serves per-institution account_count + policy_count so the
+    # master card renders them and the merge consequence reads the SERVED counts (not client-derived).
+    # RED before the reshape: the served rows carried only {id, name}.
+    await app_client.post("/api/v1/accounts", json={"name": "A1", "institution": "CountBank"})
+    await app_client.post("/api/v1/accounts", json={"name": "A2", "institution": "CountBank"})
+    row = next(i for i in (await app_client.get("/api/v1/institutions")).json()["institutions"]
+               if i["name"] == "CountBank")
+    assert row["account_count"] == 2
+    assert row["policy_count"] == 0
+    # AIA Singapore is seeded from a demo policy (Amendment F fold) → at least one policy reference.
+    aia = next(i for i in (await app_client.get("/api/v1/institutions")).json()["institutions"]
+               if i["name"] == "AIA Singapore")
+    assert aia["policy_count"] >= 1
+
+
 async def test_institution_rename_blocks_name_clash(app_client):
     a = (await app_client.post("/api/v1/institutions", json={"name": "OCBC"})).json()["id"]
     (await app_client.post("/api/v1/institutions", json={"name": "UOB"}))

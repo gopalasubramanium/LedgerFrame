@@ -99,6 +99,21 @@ test("the profile card leads with the will-status chip (served label + factual t
   expect(within(profile).getByText("Priya Raghunathan-Venkataraman")).toBeTruthy();
 });
 
+// §14es-1 (walk finding, theme uniformity) — the profile-card Edit button must carry its action's
+// lucide icon (Pencil) beside the text, exactly like the sibling "Add contact"/"Add document"
+// buttons and Policy's "Set/Edit policy" (the ratified Button icon+label treatment, DESIGN-SYSTEM
+// §5.4). The icon is DECORATIVE (aria-hidden) so the accessible name stays exactly "Edit".
+test("§14es-1 — the profile Edit button carries a lucide icon AND its accessible name is 'Edit'", async () => {
+  const { container } = renderPage();
+  await screen.findByText("Executed");
+  const profile = container.querySelector('[data-card="profile"]') as HTMLElement;
+  const edit = within(profile).getByRole("button", { name: "Edit" });
+  // the accessible name is exactly "Edit" (the icon must be aria-hidden, not part of the name)
+  expect(edit.textContent).toBe("Edit");
+  // …and it carries an icon glyph (lucide renders an <svg>), matching the platform button anatomy
+  expect(edit.querySelector("svg")).toBeTruthy();
+});
+
 test("§12es-3 — will_status `none` renders the SERVED label 'Not recorded', never 'None'", async () => {
   mockedFetch.mockResolvedValueOnce({ ok: true as const, data: { ...DATA, profile: { ...DATA.profile, will_status: "none" } } });
   const { container } = renderPage();

@@ -376,6 +376,15 @@ recorded. **Both page-local copies (`.rv__markbtn`/`.rv__markicon`, `.pol__btn`)
 DELETED.** A centred inline-flex row with a token gap, so the icon lands on the label's **optical centre**
 instead of baseline-aligning against it.
 
+**Button anatomy — a labelled action button carries its action's lucide icon (RATIFIED 2026-07-16,
+page-estate §14es-1 walk).** A primary/header action `Button` (page-header `actions` or a card-header
+action) carries a **lucide icon + text label** — **`Plus` for add, `Pencil` for edit** (the §5.5 icon map) —
+never text alone. The icon is **decorative (`aria-hidden`, `focusable="false"`, emitted by the component)**;
+the **text child is the accessible name**. This governs the `Button` component (a labelled control); the
+**icon-only** page-header pattern below (`.lf-iconbtn`, no text) is a distinct surface and is unaffected.
+The owner named this standard by asking for it at the Estate walk — a page-local text-only button is a
+uniformity defect, fixed to the standard, not to the page.
+
 **THE TABLE HEADER PAINTS EDGE-TO-EDGE (RATIFIED 2026-07-15, page-cash-flow §12cf1-1).** `scrollbar-gutter:
 stable` reserves a strip the `<table>` cannot cover, so the header fill stopped short of the right border and
 the card showed through the top-right corner — **filled on the left, empty on the right**. The header band is

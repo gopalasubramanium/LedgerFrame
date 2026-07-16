@@ -661,7 +661,10 @@ Ran against the live app (`5173`) + real backend (`8321`) on a demo-seeded estat
 - **`npm run check` EXIT 0** (227 vitest + 228 Playwright, incl. `/estate` overflow + page-inset
   + shared-shell). Full backend suite **795 passed**. `ruff`/token-drift/`tsc`/`eslint` clean.
 
-### 13-5. STATUS — Phase 3a GREEN, AWAITING OWNER WALK (Phase 3b)
+### 13-5. STATUS — Phase 3a GREEN → OWNER WALK DONE (Phase 3b ACCEPTED 2026-07-16, see §14)
+
+> **Superseded by §14:** the owner walk ran 2026-07-16 — ONE finding (§14es-1, fixed), everything
+> else accepted, milestone CLOSED. The record below is the pre-walk entry-ticket state, kept as-is.
 
 The pre-pass is the **entry ticket**, not acceptance. Judgment items reserved for the owner walk
 (Phase 3b): the §9-9 GLOSSARY terms marked **PROPOSED** (ratify at the walk); the copy feel of the
@@ -673,3 +676,69 @@ overall geometry/feel of the wired page vs the specimen. **Not self-certified.**
 documents incl. one MISSING + one OUTDATED). *(Note: the pre-pass edited the seeded profile
 executor to "Priya R-V (edited)" during its CRUD leg; re-seed via `seed_estate` or
 `reset-demo-data.sh` for a pristine walk.)*
+
+---
+
+## 14. OWNER WALK (Phase 3b) — **ACCEPTED 2026-07-16 · ONE FINDING · MILESTONE CLOSED**
+
+*The owner drove the real rendered `/estate` (2026-07-16, live app + real backend, demo-seeded
+register). **ONE finding (§14es-1); everything else accepted** — the §12es-1 geometry (will status
+LEADS the profile card, counts-only readiness strip), the §12es-2 subtitle + EmptyState copy (re-
+confirmed live), the served-label chips, the disclaimer bar, and the §9-9 GLOSSARY terms. The
+acceptance was **contingent on the §14es-1 fix**; this batch delivered it. **§14 → CLOSED.***
+
+### §14es-1 — the profile-card Edit button broke button anatomy (bug, theme uniformity) → **FIXED + ACCEPTED (contingent, owner 2026-07-16)**
+
+**Finding.** The Estate profile card's **"Edit"** button was **text-only**, while every other action
+button on the platform carries a lucide **icon + text**: Estate's own *Add contact* / *Add document*
+(`Plus`, `Estate.tsx:281/309`), Policy's *Set/Edit policy* (`Pencil`, `Policy.tsx:218/261`), Cash
+flow's *Add …* (`Plus`). A lone text-only action button on one card is a **uniformity defect**.
+
+**Fixed platform-standard-first (the §14in-6 lesson — a standard beats a page fix):**
+
+1. **Precedent verified.** Policy composes `<Button variant="primary" icon={Pencil} …>` — the ratified
+   `Button` icon+label treatment (`Button.tsx:35-49`): the component emits `{Icon && <Icon
+   aria-hidden="true" focusable="false" />}` **before** the text child, so the **icon is decorative**
+   and the **text child is the accessible name** (`children` is the MANDATORY label, `Button.tsx:9`).
+2. **DESIGN-SYSTEM button-anatomy line added + RATIFIED** (the owner named the standard by asking for
+   it). New line under the §5.4 `Button` amendment (`DESIGN-SYSTEM.md`): *a primary/header action
+   `Button` carries a lucide icon + text label — `Plus` for add, `Pencil` for edit — icon decorative
+   (`aria-hidden`), the text child is the accessible name*; scoped to the labelled `Button` (the
+   icon-only `.lf-iconbtn` page-header pattern is a distinct surface, explicitly unaffected).
+   **RATIFIED 2026-07-16, page-estate §14es-1 walk.**
+3. **Estate Edit → `Pencil` + "Edit"** (`Estate.tsx:238`, `import { Pencil, Plus } from "../icons"`),
+   composed **identically** to the Policy precedent. **Platform sweep for other text-only header
+   action buttons on ACCEPTED pages:** clean — CashFlow (`Add …`), Policy (`Set/Edit policy`), and
+   Estate's own `Add contact`/`Add document` **all already carry their icon**. The one residual
+   text-only add is Insurance's **inline dialog list-composer** ("Add" beside a TextInput inside the
+   policy-documents checklist, `Insurance.tsx:428`) — a **form-internal add-to-list control, NOT a
+   header/primary action**, so it falls **outside** the ratified anatomy scope. **Listed as a
+   borderline retrofit candidate for the owner's future call; NOT changed in this batch** (accepted
+   page).
+4. **Guard (fail-first, RED→GREEN).** `Estate.test.tsx::"§14es-1 — the profile Edit button carries a
+   lucide icon AND its accessible name is 'Edit'"` — asserts the Edit button **contains an `<svg>`**
+   AND its **accessible name is exactly "Edit"**. **RED** on today's text-only button (`svg` = null);
+   **GREEN** after the fix. Estate render suite **11/11 GREEN**; **`npm run check` EXIT 0** (run from
+   `frontend/`: lint + typecheck + token-drift + 227 vitest + 228 Playwright overflow/inset/shell).
+5. **Screenshot (the re-walk substitute for a one-button fix — owner pre-accepted contingent on it):**
+   profile card, **light + dark**, at `frontend/e2e/smoke/artifacts/estate-profile-edit-{light,dark}.png`
+   — the `Pencil` glyph rides beside "Edit" top-right of the card in both themes; live probe confirmed
+   `svg` present, accessible text exactly "Edit".
+
+### §14 close-out — PROPOSED → RATIFIED sweep + acceptance
+
+- **§9-9 GLOSSARY terms → RATIFIED** (owner walk 2026-07-16): Will · Will status · Executor ·
+  Beneficiary · Guardian · Emergency contact · Readiness (status values ride their parent). The
+  PROPOSED marker in `GLOSSARY.md` (Estate-terms block) is flipped to **RATIFIED**; parity suite
+  (`test_glossary_parity.py`) green after the edit.
+- **§12es-2 copy** (subtitle + both EmptyStates) — **ratified-as-shipped** at the walk (already
+  ratified-as-shown at §12; re-confirmed live, rendered verbatim, unchanged).
+- **`will_status:none` → "Not recorded"** served-label note (`MASTER-DATA.md §2`) — already **ratified**
+  at the §12es-3 specimen walk; the wired-page walk **confirmed it shipped** (the served `/refdata`
+  label reaches the DOM; all four estate vocabs render served labels verbatim).
+- **Central close row** logged in `RATIFICATION.md §6` (the Insurance-onward convention).
+- **No ⏸ remains** in this plan (the sole `⏸` occurrence is the §12 *historical* "⏸ → RATIFIED"
+  transition note, not an open gate).
+
+**Acceptance:** **Owner, 2026-07-16 (live walk).** One finding (§14es-1), fixed + evidenced above;
+everything else accepted. **§14 CLOSED. page-estate milestone CLOSED.**

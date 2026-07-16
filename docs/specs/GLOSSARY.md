@@ -250,8 +250,8 @@ The canonical term for the payout amount is **"Cover"** — LedgerFrame does **n
 ### Estate terms (page-estate §9-9)
 
 The Estate page is a **readiness register, never legal or estate-planning advice**. Status
-values ride their parent term's entry (no per-value rows). **PROPOSED 2026-07-16 (page-estate
-§9-9) — ratify at the owner walk.**
+values ride their parent term's entry (no per-value rows). **RATIFIED 2026-07-16, owner walk
+(page-estate §9-9 authored → §14 walk).** Parity suite green (`test_glossary_parity.py`).
 
 | Term | Canonical definition |
 |------|----------------------|

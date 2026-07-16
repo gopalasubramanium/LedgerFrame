@@ -1018,7 +1018,7 @@ history.
    §11 (Phase 0) · §12 (gate) · §13 (Phases 1–3a).** **Phase 3b (owner walk) is the gate — not self-certified.**
    ⚠ Pre-existing (not mine): the `CashFlow.tsx:330` unhandled error fails the frontend `npm run check` —
    reproduces at `c0e9fb1`, out of scope, in `08-TECH-DEBT.md`.
-## ESTATE — §12 geometry RATIFIED · Phase 1/2/3a DONE · Phase 3a GREEN, AWAITING OWNER WALK (2026-07-16)
+## ESTATE — CLOSED ✅ · owner walk ACCEPTED (2026-07-16) · §14es-1 fixed, milestone done
 
 **§12 SPECIMEN GEOMETRY RATIFIED (owner, 2026-07-16)** — two rulings + one Phase-1 condition, recorded
 verbatim in `page-estate.md §12`:
@@ -1047,10 +1047,15 @@ single-vertical-scroll at 320/375/900/1366 × both themes. `review-smoke` re-run
 shared `estate_signals()` seam holds). `npm run check` **EXIT 0** (227 vitest + 228 Playwright); backend suite
 **795 passed**; ruff/tsc/eslint/token-drift clean.
 
-**AWAITING OWNER WALK (Phase 3b) — NOT self-certified.** URL: `http://127.0.0.1:5173/#/estate` on the
-demo-seeded instance. Judgment items for the walk: §9-9 GLOSSARY terms (PROPOSED → ratify), copy/geometry feel
-vs the specimen. Evidence table + §12es-3 before/after verdict in `page-estate.md §13`. Do NOT start 3b until
-the owner drives it.
+**OWNER WALK (Phase 3b) DONE — ACCEPTED 2026-07-16.** The owner walked `/estate`: **ONE finding**,
+everything else accepted. **§14es-1** (theme uniformity) — the profile-card Edit button was **text-only**
+while every sibling action button (Add contact/Add document, Policy's Set/Edit policy) carries a lucide
+icon + text. Fixed to the platform standard: Edit → **`Pencil` icon + "Edit"** (icon decorative
+`aria-hidden`; text is the accessible name), and the **button-anatomy standard RATIFIED** in DESIGN-SYSTEM
+§5.4. Guard `Estate.test.tsx::§14es-1` RED (text-only, no svg) → GREEN; `npm run check` **EXIT 0**;
+profile-card screenshots (light+dark) in `e2e/smoke/artifacts/`. **§9-9 GLOSSARY terms RATIFIED**
+(PROPOSED→ratified, parity green). Full record: `page-estate.md §14`; central close row in
+`RATIFICATION.md §6`. **Milestone CLOSED — not self-certified; owner-accepted.**
 
 ---
 

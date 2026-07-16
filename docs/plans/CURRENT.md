@@ -1093,7 +1093,7 @@ batch (delta notes on touched accepted surfaces). No page-local one-offs. `npm r
 
 ---
 
-## REPORTS — §9 CLOSED ✅ · PHASE 0 DONE · Phase 0a specimen NEXT ⏸ (2026-07-17)
+## REPORTS — §9 CLOSED ✅ · PHASE 0 DONE · Phase 0a specimen BUILT ⏸ AWAITING GEOMETRY RATIFICATION (2026-07-17)
 
 **Owner passed §9 one-pass 2026-07-17 — all 13 items ACCEPTED as proposed + Amendments I/J/K + Recording
 Notes 1/2 (page-reports §9).** The **Phase 0 export-honesty spine is built** (backend-first, one delta per
@@ -1119,6 +1119,11 @@ Phase 1 is BLOCKED until the owner ratifies the Phase-0a geometry specimen.
   server-composed per-entity sections (dormant `entity_id`, no switcher), **no new PDF dependency without
   an ADR**. **The Pack entry point does NOT ship on the Reports page this milestone** (Amendment K
   corollary — D-041 preserved, recorded not rendered). No AI-helper placeholder (Amendment K, D-060 intact).
+- **Phase 0a specimen BUILT (page-reports §12):** `/kitchen-sink` → "Reports — LAYOUT SPECIMEN" — the
+  OVERVIEW geometry (Statements → Realised P/L report → Open tax lots; served disclaimers travel-noted;
+  read-only threshold per Amendment J; BOTH realised base totals + the non-zero excluded-count; NO Pack
+  entry point + NO AI placeholder per Amendment K; two honesty frames). `ReportsMockup.tsx` + `Reports.css`.
+  Both themes captured under `docs/plans/assets/reports-specimen*.png`. frontend `npm run check` EXIT 0.
 - **⏸ STOP — AWAITING OWNER GEOMETRY RATIFICATION of the Phase-0a specimen** (page-reports §12). No Phase 1.
 - **Part 0 (P-5, batched here, SHIPPED `c888000`):** the brand mark now rides the **mobile** header too
   (one `BrandLockup`); DESIGN-SYSTEM §5.6 **PROPOSED → RATIFIED**. See page-reports Part 0 + page-chrome §14.

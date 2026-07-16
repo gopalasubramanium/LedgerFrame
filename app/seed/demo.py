@@ -14,6 +14,9 @@ from app.core.money import D
 from app.models import (
     Account,
     AssetClass,
+    EstateContact,
+    EstateDocument,
+    EstateProfile,
     Holding,
     Instrument,
     InsurancePolicy,
@@ -41,6 +44,62 @@ _DEMO_TXNS = [
 
 
 SEED_FLAG_KEY = "demo_seed_done"
+
+
+async def seed_estate(session: AsyncSession) -> None:
+    """Seed the estate & document readiness register (page-estate) — a realistic household so the
+    page renders POPULATED, exercising every honesty case live: a will marked EXECUTED (the profile
+    chip leads, §12es-1); a review due SOON so the _REVIEW_SOON_DAYS=30 signal surfaces (§9-8); a
+    MULTI-ROLE contact + contacts with blank phone/email (bare em dashes, §12in-4); and a document
+    register with one MISSING + one OUTDATED (attention chips) among present ones. Roles/category/
+    status render from the SERVED /refdata labels. Extracted so the Phase-3a pre-pass can populate a
+    reset instance without re-running the whole demo seed."""
+    import json as _est_json
+    from datetime import timedelta as _td
+
+    today = datetime.now(UTC).date()
+
+    def _iso(days: int) -> str:
+        return (today + _td(days=days)).isoformat()
+
+    session.add(EstateProfile(
+        will_status="executed",
+        will_location="Home safe (fireproof box)",
+        executor="Priya Raghunathan-Venkataraman",
+        last_reviewed=_iso(-180),           # reviewed six months ago
+        next_review_date=_iso(20),          # due in 20 days → within 30 → the review-soon signal fires (§9-8)
+        notes="Solicitor: Wong & Partners. Signed copies held by the executor and in the bank locker.",
+    ))
+
+    # name, roles[], phone, email  (blank phone/email → bare em dash on the page)
+    _seed_contacts = [
+        ("Priya Raghunathan-Venkataraman", ["executor", "beneficiary", "emergency"], "+65 9123 4567", "priya.rv@example.com"),  # multi-role
+        ("Arjun Mehta", ["nominee", "beneficiary"], "+65 8234 5678", "arjun.mehta@example.com"),
+        ("Lakshmi Narasimhan", ["guardian"], "+65 8345 6789", None),                 # no email → em dash
+        ("David Okonkwo-Williams", ["emergency"], None, "d.okonkwo@example.com"),     # no phone → em dash
+        ("Chen Wei", ["beneficiary"], "+65 8456 7890", "chen.wei@example.com"),
+        ("Fatima Al-Rashid", ["nominee", "guardian"], "+65 8567 8901", "fatima.ar@example.com"),
+        ("Sanjay Gupta", ["executor"], "+65 8678 9012", None),                        # no email → em dash
+    ]
+    for name, roles, phone, email in _seed_contacts:
+        session.add(EstateContact(name=name, roles=_est_json.dumps(roles), phone=phone, email=email))
+
+    # title, category, status, location, review_date  (one MISSING + one OUTDATED; blank location/review → em dash)
+    _seed_documents = [
+        ("Last Will and Testament", "will", "present", "Home safe (fireproof box)", _iso(365)),
+        ("Term Life Policy Schedule", "insurance", "present", "Filing cabinet A", _iso(110)),
+        ("Property Title Deed (Apartment)", "property", "present", "Bank safe-deposit locker", None),
+        ("Home Loan Agreement", "loan", "outdated", "Bank safe-deposit locker", _iso(-130)),   # OUTDATED (attention)
+        ("Passport (primary holder)", "identity", "present", "Home safe", _iso(900)),
+        ("Passport (spouse)", "identity", "missing", None, None),                              # MISSING (attention)
+        ("Bank Account Details", "bank", "present", "Password manager", None),
+        ("Income Tax Returns 2025", "tax", "present", "Cloud drive", None),
+        ("Medical Directive / Living Will", "medical", "present", "Home safe", None),
+        ("Vehicle Registration", "other", "present", "Glovebox", None),
+    ]
+    for title, category, status, location, review in _seed_documents:
+        session.add(EstateDocument(title=title, category=category, status=status,
+                                   location=location, review_date=review))
 
 
 async def seed_demo_data(session: AsyncSession) -> bool:
@@ -214,6 +273,8 @@ async def seed_demo_data(session: AsyncSession) -> bool:
             documents=(_ins_json.dumps([{"label": "Policy schedule", "have": True},
                                         {"label": "Premium receipts", "have": False}]) if docs else None),
         ))
+
+    await seed_estate(session)
 
     session.add(Setting(key=SEED_FLAG_KEY, value="1"))
     await session.flush()

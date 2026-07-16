@@ -8,6 +8,14 @@ export interface GlossaryEntry {
 }
 
 export const GLOSSARY: Record<string, GlossaryEntry> = {
+  // Reports (page-reports §9-9). Added to docs/specs/GLOSSARY.md FIRST, then here — the two-store
+  // rule; tests/unit/test_glossary_parity.py polices the spellings. "Statements" (plural) is the
+  // confirmed label; copy uses "Realised P/L report", never the deprecated "Realised gains" (D-026).
+  "term-report": {
+    term: "Report",
+    definition:
+      "A composed, read-only view of your recorded data for organisation and review — the Reports page brings together Statements, the Realised P/L report, and open tax lots, with server-side exports whose disclaimers travel into the file. For your accountant — not tax or financial advice.",
+  },
   // Accounts (page-accounts §9-13). Added to docs/specs/GLOSSARY.md FIRST, then here — the
   // two-store rule; tests/unit/test_glossary_parity.py polices the spellings.
   "term-account-kind": {

@@ -31,3 +31,21 @@ async def test_statements_income_fees_and_cashflow(app_client):
 
     csv = (await app_client.get("/api/v1/portfolio/statements.csv", params={"year": 2026})).text
     assert "Income by year" in csv and "Cash flow by year" in csv and "Fees by year" in csv
+
+
+def test_statements_csv_carries_the_full_D077_disclaimer():
+    """§9-5 (page-reports, honesty — fail-first, pinned): the export must carry the FULL served
+    D-077 disclaimer (the "for your accountant / not tax or financial advice" line), not only the
+    partial current-FX caveat it shipped. RED on the pre-§9-5 builder."""
+    from app.services.statements import statements_csv
+
+    rep = {
+        "base_currency": "SGD",
+        "income_by_year": [{"year": 2026, "dividend": 500.0, "interest": 200.0, "total": 700.0}],
+        "fees": {"by_year": [{"year": 2026, "commissions": 50.0, "taxes": 0.0, "total": 50.0}]},
+        "cashflow": {"by_year": [{"year": 2026, "deposits": 10000.0, "withdrawals": -3000.0, "net": 7000.0}]},
+        "disclaimer": ("Organisation for review / your accountant — not tax or financial advice. "
+                       "Base-currency figures use current FX and are indicative, not for filing."),
+    }
+    text = statements_csv(rep)
+    assert rep["disclaimer"] in text

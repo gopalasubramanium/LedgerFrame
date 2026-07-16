@@ -157,6 +157,11 @@ def statements_csv(rep: dict) -> str:
     w = csv.writer(buf)
     base = rep["base_currency"]
     w.writerow([f"LedgerFrame statements (base {base}, current FX — indicative, not for filing)"])
+    # §9-5 (page-reports, honesty): the export previously carried ONLY the top-line current-FX
+    # caveat above; the fuller served D-077 disclaimer ("for your accountant / not tax or financial
+    # advice") lived in the reader but never reached the file. Write it verbatim so the export
+    # carries the same disclaimer the on-screen statements show.
+    w.writerow([rep["disclaimer"]])
     w.writerow([])
     w.writerow(["Income by year", "Dividends", "Interest", "Total"])
     for r in rep["income_by_year"]:

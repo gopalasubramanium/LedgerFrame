@@ -1355,6 +1355,57 @@
         "title": "MapKiteIn",
         "type": "object"
       },
+      "MergeIn": {
+        "properties": {
+          "duplicate_id": {
+            "title": "Duplicate Id",
+            "type": "integer"
+          },
+          "survivor_id": {
+            "title": "Survivor Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "survivor_id",
+          "duplicate_id"
+        ],
+        "title": "MergeIn",
+        "type": "object"
+      },
+      "MergeOut": {
+        "properties": {
+          "duplicate_id": {
+            "title": "Duplicate Id",
+            "type": "integer"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "repointed": {
+            "title": "Repointed",
+            "type": "integer"
+          },
+          "survivor_id": {
+            "title": "Survivor Id",
+            "type": "integer"
+          },
+          "survivor_name": {
+            "title": "Survivor Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "survivor_id",
+          "duplicate_id",
+          "survivor_name",
+          "repointed"
+        ],
+        "title": "MergeOut",
+        "type": "object"
+      },
       "ObligationIn": {
         "properties": {
           "amount": {
@@ -5712,6 +5763,82 @@
           }
         },
         "summary": "Add Institution",
+        "tags": [
+          "institutions"
+        ]
+      }
+    },
+    "/api/v1/institutions/merge": {
+      "post": {
+        "description": "User-driven merge (\u00a79-2): fold the duplicate into the survivor, re-pointing both FK\ncolumns in one transaction. No fuzzy matching \u2014 the caller names both explicitly.",
+        "operationId": "post_institution_merge_api_v1_institutions_merge_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Institution Merge",
         "tags": [
           "institutions"
         ]

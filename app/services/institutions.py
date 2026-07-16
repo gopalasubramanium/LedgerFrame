@@ -90,6 +90,38 @@ async def institution_reference_count(session: AsyncSession, iid: int) -> int:
     return total
 
 
+async def _repoint_institution_refs(session: AsyncSession, from_id: int, to_id: int) -> int:
+    """Re-point every referencing row from ``from_id`` to ``to_id`` across BOTH FK columns
+    (accounts + insurance_policy). Tolerant of the pre-commit-3 state (no FK columns yet →
+    nothing to re-point); the referencing-row re-point is proven once the columns exist."""
+    if not await _fk_columns_present(session):
+        return 0
+    n = 0
+    for table in _REFERENCING_TABLES:
+        res = await session.execute(
+            text(f"UPDATE {table} SET institution_id = :to WHERE institution_id = :frm"),
+            {"to": to_id, "frm": from_id})
+        n += res.rowcount or 0
+    return n
+
+
+async def merge_institutions(session: AsyncSession, survivor_id: int, duplicate_id: int) -> dict:
+    """User-driven merge (§9-2): the caller names the survivor + the duplicate — NO fuzzy
+    auto-detection. One transaction re-points both FK columns off the duplicate onto the
+    survivor and deletes the duplicate row."""
+    if survivor_id == duplicate_id:
+        raise ValueError("Pick two different institutions to merge.")
+    survivor = await session.get(Institution, survivor_id)
+    duplicate = await session.get(Institution, duplicate_id)
+    if survivor is None or duplicate is None:
+        raise LookupError("Institution not found.")
+    repointed = await _repoint_institution_refs(session, duplicate_id, survivor_id)
+    await session.delete(duplicate)
+    await session.flush()
+    return {"survivor_id": survivor_id, "duplicate_id": duplicate_id,
+            "survivor_name": survivor.name, "repointed": repointed}
+
+
 async def delete_institution(session: AsyncSession, iid: int) -> None:
     """Delete blocked while any account/policy references it (§9-1; MASTER-DATA §7) — the honest
     served 400 offers merge instead (the account-delete-guard precedent)."""

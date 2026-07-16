@@ -55,3 +55,31 @@ async def test_institution_rename_blocks_name_clash(app_client):
 async def test_institution_missing_id_is_404(app_client):
     assert (await app_client.patch("/api/v1/institutions/999999", json={"name": "X"})).status_code == 404
     assert (await app_client.delete("/api/v1/institutions/999999")).status_code == 404
+
+
+# --- merge (§9-2, user-driven) -------------------------------------------- #
+async def test_institution_merge_folds_duplicate_into_survivor(app_client):
+    # User-driven: the caller names the survivor + the duplicate explicitly (no fuzzy detect).
+    s = (await app_client.post("/api/v1/institutions", json={"name": "DBS"})).json()["id"]
+    d = (await app_client.post("/api/v1/institutions", json={"name": "DBS Bank"})).json()["id"]
+
+    m = await app_client.post("/api/v1/institutions/merge",
+                              json={"survivor_id": s, "duplicate_id": d})
+    assert m.status_code == 200, m.text
+    assert m.json()["survivor_name"] == "DBS"
+
+    # The duplicate row is gone; the survivor remains — one transaction.
+    names = [i["name"] for i in (await app_client.get("/api/v1/institutions")).json()["institutions"]]
+    assert names == ["DBS"]
+    # (Re-pointing of referencing accounts/policies is proven in commit 3, once the
+    #  institution_id FK columns exist — see test_institution_migration.py.)
+
+
+async def test_institution_merge_rejects_same_and_missing(app_client):
+    s = (await app_client.post("/api/v1/institutions", json={"name": "OCBC"})).json()["id"]
+    same = await app_client.post("/api/v1/institutions/merge",
+                                 json={"survivor_id": s, "duplicate_id": s})
+    assert same.status_code == 400
+    missing = await app_client.post("/api/v1/institutions/merge",
+                                    json={"survivor_id": s, "duplicate_id": 999999})
+    assert missing.status_code == 404

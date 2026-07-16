@@ -17,6 +17,7 @@ from app.services.institutions import (
     delete_institution,
     get_or_create_institution,
     list_institutions,
+    merge_institutions,
     rename_institution,
 )
 
@@ -42,6 +43,19 @@ class InstitutionWriteOut(BaseModel):
     name: str
 
 
+class MergeIn(BaseModel):
+    survivor_id: int
+    duplicate_id: int
+
+
+class MergeOut(BaseModel):
+    ok: bool
+    survivor_id: int
+    duplicate_id: int
+    survivor_name: str
+    repointed: int
+
+
 class OkOut(BaseModel):
     ok: bool
 
@@ -60,6 +74,21 @@ async def add_institution(payload: InstitutionIn, session: AsyncSession = Depend
         raise HTTPException(400, str(exc)) from exc
     await session.commit()
     return {"ok": True, "id": inst.id, "name": inst.name}
+
+
+@router.post("/institutions/merge", dependencies=[Depends(require_auth)], response_model=MergeOut)
+async def post_institution_merge(payload: MergeIn,
+                                 session: AsyncSession = Depends(get_db)) -> dict:
+    """User-driven merge (§9-2): fold the duplicate into the survivor, re-pointing both FK
+    columns in one transaction. No fuzzy matching — the caller names both explicitly."""
+    try:
+        res = await merge_institutions(session, payload.survivor_id, payload.duplicate_id)
+    except LookupError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await session.commit()
+    return {"ok": True, **res}
 
 
 @router.patch("/institutions/{iid}", dependencies=[Depends(require_auth)],

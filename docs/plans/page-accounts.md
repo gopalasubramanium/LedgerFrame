@@ -472,7 +472,7 @@ it, with cites. Contract regen (`make api-contract-check`) and both suites' stat
 | # | Commit (delta) | Decision | Fail-first RED (cause + cite) | GREEN (what closed it) | Contract |
 |---|----------------|----------|-------------------------------|------------------------|----------|
 | 1 | institutions table + typed CRUD | 9-1 | `test_institutions.py` RED — no `/institutions` route (405 on PATCH, KeyError `id` on POST) | `Institution` model + `services/institutions.py` (normalize/resolve-or-create/rename/FK-block delete) + typed router; 4/4 GREEN. First-seen-casing collapse ("DBS "/"dbs" → one row) proven. | regen ✅ 127→128 paths |
-| 2 | merge endpoint (user-driven) | 9-2 | _pending_ | _pending_ | _pending_ |
+| 2 | merge endpoint (user-driven) | 9-2 | merge tests RED — no `/institutions/merge` route (405) | `POST /institutions/merge {survivor_id,duplicate_id}`: one txn re-points both FK cols (tolerant pre-commit-3) + deletes duplicate; same-id→400, missing→404; 6/6 GREEN. Referencing-row re-point proven in commit 3. | regen ✅ 128→129 paths |
 | 3 | 3-step FK re-point migration + DROP both String cols | 9-1+F | _pending_ | _pending_ | _pending_ |
 | 4 | `AccountIn.entity_id` | 9-4 | _pending_ | _pending_ | _pending_ |
 | 5 | `AccountIn.cost_basis_method` + rebuild-on-change | 9-5 | _pending_ | _pending_ | _pending_ |

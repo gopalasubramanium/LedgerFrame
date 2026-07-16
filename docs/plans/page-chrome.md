@@ -533,3 +533,32 @@ is small enough to fit whole).
 **P-1 also touches the chrome centrally** (icon-only `.lf-iconbtn` bar controls are a **distinct surface**
 and are **unaffected** — they keep `--icon-size`; only labelled `.lf-btn` icons shrink to font-size). See
 CURRENT.md for the platform-polish batch summary.
+
+## §14 — post-close platform polish delta (P-5, 2026-07-17)
+
+**The shell is CLOSED/signed-off; this is a dated delta note on the foundational accepted surface,
+recorded per the platform-batch convention.**
+
+**P-5 — the brand mark rides the MOBILE header too (owner walk 2026-07-17; DESIGN-SYSTEM §5.6).** The
+desktop sidebar carried the BrandMark lockup, but the **mobile top bar rendered a bare "LedgerFrame"** with
+no mark — because the shell had **two hand-built lockups** (`.lf-sidebar__brand` and `.lf-topbar__brand`)
+and only the sidebar one got the mark when P-4 landed.
+
+- **Fix at the standard: ONE `BrandLockup` component** (`components/ui/BrandLockup.tsx`) — BrandMark +
+  wordmark, the ratified geometry/sizing (mark at the wordmark cap height, `aria-hidden` mark, wordmark as
+  the accessible name). Consumed by **BOTH** the sidebar brand row and the mobile header; neither
+  hand-builds its own pairing any more. `brand.css` moves the lockup geometry from `.lf-sidebar__*` to a
+  surface-agnostic `.lf-brandlockup*`; each host surface still supplies its own padding + font (the wordmark
+  inherits it), so the sidebar-density row-height math (§13/P-3) is untouched.
+- **Guard (`e2e/mobile-brand.spec.ts`, in `npm run check`; MEDIA-QUERY / real-viewport territory — the
+  mobile header shows only below the 900px D-102 breakpoint, which jsdom cannot evaluate).** At **320 and
+  375, both themes**: the mobile top-bar brand is visible, contains the `svg.lf-brandmark` painted
+  (non-zero box) sitting to the **left** of the wordmark, the mark is `aria-hidden`, and the accessible name
+  is exactly "LedgerFrame". **Fail-first proven** — all four RED on the bare mobile header (`hasMark` false
+  while `brandVisible` true, isolating the missing mark), GREEN once both surfaces share `BrandLockup`.
+- **Suites re-run GREEN** (`npm run check` **EXIT 0** from `frontend/`: 250 passed = vitest + all Playwright,
+  incl. the shell `AppShell.test.tsx` sidebar-lockup pin, `sidebar-density.spec.ts`, `overflow.spec.ts`, and
+  the new `mobile-brand.spec.ts`). Kitchen-sink §5.6 specimen swapped to `<BrandLockup />`.
+- **DESIGN-SYSTEM §5.6** gains the **`BrandLockup` row + the one-lockup rule** and flips **PROPOSED →
+  RATIFIED** (the owner approved the mark at P-4; the mobile fix completes it). Mobile-header screenshot in
+  the P-5 report / `docs/plans/page-reports.md` Part 0 record.

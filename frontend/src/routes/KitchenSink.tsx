@@ -20,6 +20,7 @@ import {
 } from "./AccountsMockup";
 import {
   AllocationDonut,
+  BrandLockup,
   BrandMark,
   Clock,
   Combobox,
@@ -1073,14 +1074,12 @@ export function KitchenSink() {
         note="page-chrome Phase 0a (C-1): the app SHELL. Slim calm TopBar (D-066) with ICON-ONLY display controls (theme/density/contrast/motion) + the rotation toggle (D-044) right-aligned, Clock + DemoBadge; brand shows in the bar only at narrow widths (sidebar carries it at laptop+ — one brand at a time). StaleBanner/UpdateBanner are full-width status strips BELOW the bar, only when active. Sidebar shows all six D-043 group headers, with only BUILT pages as entries. LockScreen = D-002 access lock. STATEFUL-ICON RULE (lucide, ADR-0003): click each icon toggle — a state-distinct icon per state (theme sun/moon/monitor, density, contrast, motion, rotation), tooltip names it. The Detail toggle was REMOVED (page-home §9-15) — the Home layout is a Settings control. Ratify in both themes/densities/contrast + a narrow width; hover for tooltips."
       >
         <div className="ks__stack">
-          <Specimen label='Brand mark "the double rule" (P-4) — the sidebar lockup + the mark at a few sizes; frame + entry are currentColor, the double rule is the accent token (both themes)'>
+          <Specimen label='Brand mark "the double rule" (P-4) — the ONE lockup (sidebar + mobile header both consume it, §5.6) + the mark at a few sizes; frame + entry are currentColor, the double rule is the accent token (both themes)'>
             <div className="ks__row" style={{ alignItems: "center", gap: "var(--space-6)" }}>
               <span
-                className="lf-sidebar__brand"
                 style={{ fontSize: "var(--font-size-16)", fontWeight: "var(--weight-semibold)" }}
               >
-                <BrandMark className="lf-sidebar__brandmark" />
-                <span className="lf-sidebar__brandword">LedgerFrame</span>
+                <BrandLockup />
               </span>
               <BrandMark size="1em" />
               <BrandMark size="1.5em" />

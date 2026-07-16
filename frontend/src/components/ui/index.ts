@@ -72,6 +72,8 @@ export type { GlossaryTermProps } from "./GlossaryTerm";
 // Ratify at the kitchen-sink look before shell assembly (C-1).
 export { BrandMark } from "./BrandMark";
 export type { BrandMarkProps } from "./BrandMark";
+export { BrandLockup } from "./BrandLockup";
+export type { BrandLockupProps } from "./BrandLockup";
 export { Sidebar } from "./Sidebar";
 export type { SidebarProps } from "./Sidebar";
 export { NAV_GROUPS } from "./nav";

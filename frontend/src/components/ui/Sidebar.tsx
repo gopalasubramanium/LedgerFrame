@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import "./chrome.css";
-import { BrandMark } from "./BrandMark";
+import { BrandLockup } from "./BrandLockup";
 import { NAV_GROUPS } from "./nav";
 import type { NavGroup } from "./nav";
 
@@ -67,8 +67,7 @@ export function Sidebar({
         aria-label="Primary"
       >
         <div className="lf-sidebar__brand">
-          <BrandMark className="lf-sidebar__brandmark" />
-          <span className="lf-sidebar__brandword">LedgerFrame</span>
+          <BrandLockup />
         </div>
         <div className="lf-sidebar__nav">
           {groups.map((group) => {

@@ -7,17 +7,31 @@
   vertical-align: middle;
 }
 
-/* Sidebar brand lockup: [mark] LedgerFrame. The mark is sized to the wordmark's cap
-   height and the row centres on the text baseline, so the lockup reads as one unit and
-   the row height stays TEXT-driven — the nav-density math (§5.5) is untouched. */
-.lf-sidebar__brand {
-  display: flex;
+/* The ONE brand lockup: [mark] LedgerFrame (DESIGN-SYSTEM §5.6). The single ratified
+   pairing of the mark + wordmark, consumed by BOTH the sidebar brand row and the mobile
+   top bar — a surface never hand-builds its own (the mobile header once shipped bare, no
+   mark; owner walk 2026-07-17). The mark is sized to the wordmark's cap height and the
+   row centres on the baseline, so the lockup reads as one unit and the row height stays
+   TEXT-driven — the nav-density math (§5.5) is untouched. Each host surface
+   (`.lf-sidebar__brand` / `.lf-topbar__brand`) supplies the padding + font; the wordmark
+   inherits that font, so per-surface sizing stays local. */
+.lf-brandlockup {
+  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
-.lf-sidebar__brandmark {
-  /* ~cap height of the 16px semibold wordmark; ≤ the text line box, so the pinned brand
+.lf-brandlockup__mark {
+  /* ~cap height of the 16px semibold wordmark; ≤ the text line box, so a pinned brand
      row does not grow (the sidebar-density guard stays green). */
   width: 1.15em;
   height: 1.15em;
+}
+.lf-brandlockup__word {
+  /* Wordmark inherits its host's font (sidebar/topbar both set size-16 semibold); it only
+     needs to truncate gracefully if a surface is ever too narrow. */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

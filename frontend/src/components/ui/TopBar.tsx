@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "./chrome.css";
 import "./structure.css";
 import { RotateCw, Ban, Menu, MoreHorizontal } from "../../icons";
+import { BrandLockup } from "./BrandLockup";
 
 // Stateful-icon rule (DESIGN-SYSTEM §5.5, lucide ADR-0003): each toggle shows a
 // state-distinct icon; the tooltip names the state ("Function: state") and the
@@ -96,7 +97,9 @@ export function TopBar({
           <Menu aria-hidden="true" />
         </button>
       )}
-      <div className="lf-topbar__brand">LedgerFrame</div>
+      <div className="lf-topbar__brand">
+        <BrandLockup />
+      </div>
 
       <div className="lf-topbar__right">
         {/* Inline at laptop+ */}

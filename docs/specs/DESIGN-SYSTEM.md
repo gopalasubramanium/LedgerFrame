@@ -612,7 +612,7 @@ visible countdown bar; ARIA live-region (`role="status"`, `aria-live="polite"`);
 countdown + entrance animation disabled under reduced motion (the dismiss timer
 still fires). It carries **no figure and no provenance** — status only.
 
-### 5.6 Brand — the platform mark, "the double rule" (PROPOSED 2026-07-17, page-accounts P-4; ratify from the close-out screenshots)
+### 5.6 Brand — the platform mark, "the double rule" (RATIFIED 2026-07-17, page-accounts P-4 + page-reports P-5)
 
 The **LedgerFrame brand mark** is a rounded square frame containing **one entry line** and a
 right-aligned **double rule**. The double rule is the bookkeeping mark ruled under a **verified final
@@ -621,13 +621,25 @@ balance** — the whole product's promise (an honest, closed ledger) drawn in on
 | Component | Props (surface) | Usage rules |
 |-----------|-----------------|-------------|
 | **BrandMark** | `size?` (default `1.25em`), `className?` | The inline SVG mark. **Geometry is fixed** (`viewBox 0 0 24 24`, `stroke-linecap: round`, stroke-width 2): frame `rect x=3 y=3 w=18 h=18 rx=5`; entry `M7.5 9 h9`; double rule `M10.5 13.75 h6` + `M10.5 16.25 h6`. **Colour:** frame + entry are **`currentColor`** (inherit the surrounding text colour → both themes with zero overrides); the **double rule is the `--accent` token** (themed). **Decorative (`aria-hidden`)** — the wordmark beside it is the accessible name. |
+| **BrandLockup** | `className?` (host positioning class) | The **ONE brand lockup**: `[mark] LedgerFrame` — the single ratified pairing of BrandMark + the wordmark. The mark is sized to the wordmark's **cap height** (`1.15em`) so the row height stays **text-driven** (nav-density math §5.5 untouched). The mark is decorative (`aria-hidden`); the wordmark is the accessible name, so the lockup reads as one "LedgerFrame". The host surface supplies padding + font (the wordmark inherits it); the lockup owns the internal mark↔wordmark geometry. |
 
-**Usage.** Two surfaces only: the **sidebar brand lockup** (`[mark] LedgerFrame`, mark sized to the
-wordmark cap height so the row height stays text-driven — the nav-density math §5.5 is untouched) and the
-**favicon** (`favicon.svg`, theme-adaptive via `prefers-color-scheme` — frame/entry near-black on a light
-tab, near-white on a dark tab, the double rule in the accent; 32/180 PNG fallbacks + `index.html` link
-tags). **Never distorted** (always square, geometry fixed) and **never recoloured** beyond
-`currentColor` + the accent. Specimen at `/kitchen-sink` (§5.5 chrome section), both themes.
+**The one-lockup rule (RATIFIED 2026-07-17, page-reports P-5).** Every surface that shows the brand
+consumes **`BrandLockup`** — a surface **never hand-builds its own** `[mark] wordmark` pairing. This rule
+was added because there were **two hand-built lockups** (the sidebar brand row and the mobile top bar) and
+only one carried the mark: the **mobile header shipped a bare "LedgerFrame"** with no mark (owner walk
+2026-07-17), while the sidebar carried the double rule. Two lockups, one glyph — a drift a single component
+forecloses. Both the **sidebar brand row** (`.lf-sidebar__brand`, laptop+) and the **mobile top bar**
+(`.lf-topbar__brand`, below the 900px D-102 breakpoint) now render `<BrandLockup />`; exactly one is ever
+visible (D-066).
+
+**Usage.** The lockup rides **two surfaces** (sidebar brand row + mobile top bar); the mark alone also
+drives the **favicon** (`favicon.svg`, theme-adaptive via `prefers-color-scheme` — frame/entry near-black on
+a light tab, near-white on a dark tab, the double rule in the accent; 32/180 PNG fallbacks + `index.html`
+link tags). **Never distorted** (always square, geometry fixed) and **never recoloured** beyond
+`currentColor` + the accent. Specimen at `/kitchen-sink` (§5.5 chrome section), both themes. **Guarded:**
+`AppShell.test.tsx` pins the sidebar lockup (svg + accessible name "LedgerFrame"); `e2e/mobile-brand.spec.ts`
+pins the **mobile** lockup at real mobile viewports (320/375, both themes) — the svg rides beside the
+wordmark, accessible name "LedgerFrame".
 
 ---
 

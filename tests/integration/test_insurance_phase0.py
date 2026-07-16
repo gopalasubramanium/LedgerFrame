@@ -7,7 +7,7 @@ Each test is written to be RED on the pre-delta code and GREEN after the delta i
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 
 async def _base(app_client) -> str:

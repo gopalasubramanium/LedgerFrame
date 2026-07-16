@@ -206,6 +206,15 @@ any undeclared key** — and the Phase-0 batch *added* served fields (`*_display
 the moment a strip vanishes a field unnoticed. When done, as its own change, with an assertion that every
 served key survives.
 
+## `/estate` untyped — `response_model` DEFERRED (page-estate §3b, 2026-07-16)
+
+`GET /api/v1/estate` returns a bare `dict` (`{profile, contacts[], documents[], readiness, disclaimer}`);
+its shape is pinned by **values** (tests), not by the OpenAPI contract. Typing it is **deferred** for the
+§12mk3-2 reason a `response_model` **silently strips any undeclared key** — the same hazard the Policy and
+Scenarios deferrals record. Estate's Phase 0 only **removed** a surface (`/estate/meta`) and **retired** a
+field (`relationship`); it added no served field, so the status quo (untyped, value-pinned) blocks nothing.
+When done, as its own change, with an assertion that every served key survives.
+
 ## Input-quality helper duplicated across readers (recorded 2026-07-15)
 
 The Gate-A10 *(stale, low-confidence)* input-quality logic now lives in **`confidence.portfolio_input_quality`

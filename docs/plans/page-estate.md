@@ -132,8 +132,8 @@ Note verbs: create = `POST`, edit = **`PATCH`**, delete = `DELETE`, profile =
 | **remove ✅** | `GET /api/v1/estate/meta` → **DELETED** (vocab lives on `/refdata`) | **§9-1** (D-005) | **DELIVERED 2026-07-16.** No consumer (grep clean); deleted; contract regen same commit (`API-CONTRACT.json`/`openapi.json` no longer carry the path); drift check green. Removal proven by SHAPE (`test_estate_phase0.py::test_estate_meta_endpoint_removed_by_shape`, RED→GREEN). |
 | **behaviour ✅** | `GET /api/v1/estate` + writes — **`?entity_id` REJECTED (400)** | **§9-2** | **DELIVERED 2026-07-16.** Shared `reject_entity_id` dependency on **all 8 endpoints** (read + 7 writes), ordered before `require_auth`; plain-language *"the estate register is household-scoped: it cannot be filtered to one entity"* (no decision IDs in served copy). The added `entity_id` query param regen'd the contract same commit. Fail-first `test_estate_phase0::test_entity_id_rejected_with_400_on_every_endpoint` RED (silent 200)→GREEN. |
 | **behaviour / spec ✅** | `review.py` estate signal + `estate.py` — **`_REVIEW_SOON_DAYS = 30` promoted to a named-constant table row + same-batch code test** | **§9-8** (D-059) | **DELIVERED 2026-07-16.** Added to PRODUCT-SPEC §5 D-059 table (value 30, rationale: one month's notice before a scheduled estate review, mirroring `_INSURANCE_SOON_DAYS`). Same-batch behavioural test `test_estate_phase0::test_review_soon_days_threshold_is_30_per_spec` pins the SERVED threshold (surfaces at 30d, silent at 31d); teeth proven (constant→31 = RED). |
-| **N/A (recorded, not built)** | `GET /api/v1/estate` — **NO `*_display` money strings; NO base-currency affix** | **§9-3** (D-105) | There is **no money field anywhere** on this page (§10-4). D-105 served-display-strings and the base-currency affix are **N/A by construction** — recorded as a chosen decision so the absence is deliberate, not missed. |
-| **N/A (recorded, not built)** | `GET /api/v1/estate` — **NO staleness / confidence annotation** | **§9-4** (A10) | No market inputs; every field is a user record (§10-4). A10 staleness/confidence is **N/A by construction** — recorded, not silently skipped. |
+| **N/A ✅ (recorded)** | `GET /api/v1/estate` — **NO `*_display` money strings; NO base-currency affix** | **§9-3** (D-105) | **RECORDED 2026-07-16 (§11-N/A).** No money field anywhere (§10-4); readiness tiles are counts. The no-money-string render guard ships with the Phase 2 page tests. |
+| **N/A ✅ (recorded)** | `GET /api/v1/estate` — **NO staleness / confidence annotation** | **§9-4** (A10) | **RECORDED 2026-07-16 (§11-N/A).** No market inputs; every field is a user record (§10-4). |
 | **doc-only ✅** | **API-CONTRACT.md** — `/estate/meta` `remove` row flipped to **✅ delivered** | **§9-1** | Done 2026-07-16, same-commit contract regen (freeze rule). |
 
 **Note (typed response).** `/estate` returns a bare `dict`. **Typing is
@@ -457,6 +457,46 @@ a from-scratch Worklist assembly on the Insurance/Cash flow patterns.
 
 ---
 
-**Sign-off to start build:** §9's ten items resolved owner one-pass · §3b deltas
-approved · no §4 affordance (the roles multi-select, §9-6) requires an unresolved
-amendment.
+## 11. PHASE-0 RECORD (backend-first; delivered 2026-07-16)
+
+*Every §9 ruling executed backend-first, one delta per commit, each fail-first and proven
+RED on the real cause before the fix (RED→GREEN, or a mutation proof where the mechanism IS
+the test). Contract regen rode the same commit as any shape change; `make api-contract-check`
+green throughout. Tests live in `tests/integration/test_estate_phase0.py` (app/service level)
+and `tests/integration/test_db_migrate.py` (the Amendment-E migration).*
+
+| # | Delta | Files (impl) | Guard (RED→GREEN) | Contract |
+|---|-------|--------------|-------------------|----------|
+| **9-1** | Delete `GET /estate/meta`; `/refdata` is the single vocab source | `routes/estate.py` (endpoint + unused imports removed) | `test_estate_meta_endpoint_removed_by_shape` — discriminates by SHAPE (meta keys served → RED; gone → GREEN) | regen'd; `estate/meta` gone from `API-CONTRACT.json`/`openapi.json`; `API-CONTRACT.md:73` row ✅ |
+| **9-5 + E** | Retire `relationship` (fold-then-drop) | migration `f2b7c1a9e304`; `models/__init__.py:560-` (col removed); `estate.py` `_contact_dict`/`_apply_contact`; `routes/estate.py` `ContactIn` | `test_served_contact_has_no_relationship_field` (served shape); `test_db_migrate::test_upgrade_from_prior_head_folds_relationship_into_notes_then_drops` (Asha: `notes\nRelationship: sister`; Ravi: folded line; Meera: untouched); `test_estate_relationship_column_absent_after_migrations` | regen'd (`ContactIn` shape); `relationship` gone from the contract |
+| **9-2** | `?entity_id` → honest 400 on all 8 endpoints | `routes/estate.py` `reject_entity_id` dep (ordered before `require_auth`) | `test_entity_id_rejected_with_400_on_every_endpoint` — silent 200 → RED; 400 "household-scoped" (no decision IDs) → GREEN | regen'd (`entity_id` query param on 8 paths) |
+| **9-7** | Equality test pinning the one doc-attention derivation | *(test-only, no refactor)* | `test_doc_attention_count_is_one_derivation` — mutation of `estate_signals` predicate → RED; revert → GREEN | none |
+| **9-8** | `_REVIEW_SOON_DAYS = 30` → PRODUCT-SPEC §5 D-059 row + code test | `PRODUCT-SPEC.md §5` (new row) | `test_review_soon_days_threshold_is_30_per_spec` — surfaces at 30d, silent at 31d; drift const→31 → RED | none (constant) |
+| **9-9** | GLOSSARY terms authored spec-first, popover mirrored | `GLOSSARY.md` (7 terms, status values ride parents) → `frontend/src/mocks/glossary.ts` | `test_glossary_parity.py` green (44); `test_help` advisory guard green. Marked **PROPOSED** — ratify at the walk | none |
+| **9-10** | STANDING legal-advice-language content guard | *(test-only; disclaimer RATIFIED VERBATIM, not reworded)* | `test_no_advice_language_in_served_estate_copy` — scans the disclaimer + 400 msg + all 5 `estate_signals` templates; inserting an advice phrase into the disclaimer → RED; restore → GREEN | none |
+
+### 11-N/A — chosen decisions recorded (not built), per the §9 rulings
+
+- **9-3 — money / base-currency affix: N/A (CHOSEN).** There is no money field anywhere on this
+  page (§10-4): readiness tiles are **counts**. No `*_display` strings, no base-currency affix. The
+  **no-money-string render guard** (asserts no money-formatted string renders on the page) ships
+  with the **Phase 2 page tests**, not Phase 0 — noted here so it is a decision, not an omission.
+- **9-4 — staleness / confidence (A10): N/A (CHOSEN).** No market inputs; every field is a user
+  record. No staleness/confidence annotation. The honesty burden here is empty-state reasons + the
+  §9-10 advice guard, not freshness.
+- **Typed `/estate` response — DEFERRED.** Logged in `08-TECH-DEBT.md` (page-estate §3b) alongside
+  the Policy/Scenarios deferrals; Phase 0 only removed/retired surfaces, added no served field.
+
+### 11-carry — honesty carry-overs binding the Phase-0a specimen
+
+- **§12in-4 (carried over):** blank OPTIONAL fields that are **user-data-absent** render as **bare
+  em dashes** (no "reason" pill — a reason is for an empty *region*, not an empty *cell*). Empty
+  *registers* (no contacts / no documents / will `none`) each still show an **EmptyState with reason
+  + CTA**. The specimen stages both.
+
+---
+
+**Sign-off to start build:** §9's ten items resolved owner one-pass (2026-07-16, all ACCEPTED +
+Amendment E) · §3b deltas **delivered** (Phase 0 complete, evidence above) · no §4 affordance (the
+roles multi-select, §9-6 → Switch rows) requires an unresolved amendment. **Phase 1 is BLOCKED
+until the owner ratifies the Phase-0a specimen geometry at `/kitchen-sink`.**

@@ -1,9 +1,9 @@
 # page-reports — Reports (`/reports`) build plan
 
-**Status: §9 RESOLVED (owner one-pass 2026-07-17 — ALL THIRTEEN ACCEPTED + Amendments I/J/K +
-Recording Notes 1/2). Phase 0 (backend-first export-honesty spine) DONE. Phase 0a specimen
-PROPOSED — AWAITING OWNER GEOMETRY RATIFICATION. Phase 1 (page assembly) is BLOCKED until the
-owner ratifies the specimen. See §9 (rulings), §11 (Phase-0 evidence), §12 (specimen).**
+**Status: §9 RESOLVED (owner one-pass 2026-07-17) + §12 GEOMETRY GATE RATIFIED WITH CONDITIONS (owner
+2026-07-17). Phase 0 (export-honesty spine) DONE · Phase 1 (assembly) + Phase 2 (tests) + Phase 3a
+(scripted pre-pass) DONE — GREEN, AWAITING THE OWNER WALK (Phase 3b). Phase 3b NOT started (no
+self-certification). See §9 (rulings), §11 (Phase-0 evidence), §12 (gate ruling), §13 (build record).**
 
 This plan is a *derivation from the specs*, not a fresh design. Every section cites the
 spec it is copied from. Where the specs under-specify, the item is a **NEEDS DECISION**
@@ -631,6 +631,85 @@ struck); each item's Phase-1 disposition is in §13.
 
 ---
 
-## 13 — PHASE 1/2/3a BUILD RECORD
+## 13 — PHASE 1/2/3a BUILD RECORD (2026-07-17)
 
-*(populated during this session — see the end of the file for the running record)*
+**Phase 1 (assembly) + Phase 2 (tests) + Phase 3a (scripted pre-pass) DONE — GREEN, AWAITING THE OWNER
+WALK. Phase 3b NOT started (no self-certification).** Commits: `3280d00` (§12 + backend deltas) ·
+`5a4e037` (Phase 1 + 2) · `233e640` (Phase 3a). `npm run check` from `frontend/` **EXIT 0** (251 vitest
++ 262 Playwright). Full backend suite **845 passed**; `make api-contract-check` **GREEN** (no path change).
+
+### 13-1. Backend honesty deltas the §12 conditions forced (fail-first RED → GREEN)
+
+| Δ [cond] | Fail-first RED (real cause) | GREEN (pin) | file:line |
+|----------|-----------------------------|-------------|-----------|
+| statements realised served at 2dp = the realised reader's total [§12rp-3] | `test_statements_realised_equals_the_realised_gains_reader` RED on the pre-ruling `_f` **default p=0** — statements served **804.0** while the realised reader served **804.5** (cents dropped, the two surfaces disagreed) | `_f(…, 2)` so `statements_report(Y).realised_unrealised.realised == realised_gains_report(Y).base_realised_total_current_fx`; **verified LIVE (both 804.50 SGD)** | `statements.py:143`; reader call `:106`; `_f` `:42-43` |
+| statements.csv honours the scoped year [§12rp-1] | `test_statements_csv_honours_the_selected_year` RED on the pre-ruling builder — the file carried **no year anywhere**, so the two years produced identical text and the Year control governed a file it could not change | title + a **Selected-year summary block** + the **filename** now carry the year; the by-year rollup stays all-years | `statements.py:151-177`; filename `portfolio.py:1082-1085` |
+
+### 13-2. §12rp-3 VERDICT (the one-truth evidence)
+
+**ONE derivation, reshaped to render identically.** `statements_report` computes its realised figure by
+**calling `realised_gains_report`** (`statements.py:106`) and consuming `base_realised_total_current_fx`
+(`statements.py:143`) — there is no second code path. The only defect was a **lossy re-round** (`_f`
+default `p=0`); serving it at 2dp makes the two surfaces byte-identical, and a **fail-first backend
+equality test pins it** (RED on p=0, GREEN at p=2). The Reports page renders the Statements Realised stat
+from `realised_unrealised.realised` and the Realised P/L current-FX total from the realised reader — proven
+equal on-screen (both **804.50 SGD** live) and in the render test.
+
+### 13-3. Phase 1 assembly (`5a4e037`)
+
+`frontend/src/api/reports.ts` (typed clients + export paths) · `Reports.tsx` + `Reports.css` (three D-100
+cards per the RATIFIED geometry) · `nav.ts` (`/reports` → `built:true`) · `AppRoutes.tsx` (route) ·
+`glossary.ts` (`term-statements` / `term-realised-pl` / `term-tax-lot` popover mirrors — spec spellings in
+`GLOSSARY.md`, parity policed) · `overflow.spec.ts` (`/reports` in all three route arrays) ·
+`AppShell.test`/`chrome.test` updated (Reports is now a built route/nav entry).
+- **§12rp-1:** the Statements TABLE is all-years; a bordered SCOPED GROUP (`data-scope="statements-year"`,
+  labelled *"Realised figure & export — for year"*) holds the Year control + Realised stat + Export,
+  visibly NOT a table filter.
+- **§12rp-2:** the Realised P/L table carries a per-row **Currency** column — the SAME pattern the
+  open-tax-lots table uses (live: tax-lots spans **USD / SGD / INR**).
+- **§12rp-4:** the subtitle, both EmptyState wordings, the travel captions and the section order render
+  verbatim (protected copy); the served disclaimers render VERBATIM (D-105).
+- **Amendment J** read-only threshold (365, no input); **Amendment K** — NO Pack entry point, NO AI
+  placeholder. **[S]-gate absence recorded** (the Estate §9-3 pattern): Reports is read/export-only — no
+  mutation, so no PIN gate, no request-body assertion, no round-trip import test. Absence as a decision.
+
+### 13-4. Phase 2 tests — the artifact-guard RED proof is the headline
+
+- **Render guards** (`Reports.test.tsx`, 9): §12rp-1 all-years table + Year-scoped stat/export (BOTH
+  behaviours), §12rp-2 per-row currency, §12rp-3 one-truth, both base totals + the non-zero excluded
+  count (and HIDDEN at zero), verbatim disclaimers + travel captions, read-only threshold (no input),
+  EmptyStates, honest per-card error.
+- **⚑ Artifact-level JOURNEY guards** (`e2e/smoke/reports-artifact-smoke.spec.ts`, DEV-ONLY): for EACH
+  Export control, Playwright clicks the REAL button, captures the DOWNLOAD, and asserts INSIDE the file —
+  the served disclaimer; for `realised-gains.csv` the trade-date-FX total + excluded-count rows; for
+  `statements.csv` the scoped year in BOTH content and filename. **FAIL-FIRST PROOF:** a test routes a
+  **stubbed statements.csv stripped of the disclaimer** and asserts the downloaded bytes do NOT contain
+  it — proving the guard reads the **file**, not the DOM (which shows the disclaimer regardless). Live:
+  **4/4 GREEN incl. the fail-first.**
+
+### 13-5. Phase 3a — scripted pre-pass (GREEN, on a reset demo-seeded instance)
+
+`e2e/smoke/reports-smoke.spec.ts` (DEV-ONLY) drove the LIVE app + real backend:
+- **both themes × 320/375/900/1366:** containment (doc + `.lf-shell__content` h-overflow ≤ 1px), one
+  vertical scroll region, every card OUT of skeleton, **0 console errors** — 8/8 GREEN.
+- **year round-trip** (populated **2024** ↔ empty **2023**): the empty year shows the ratified EmptyState
+  and keeps the filter + Export + disclaimer alive; round-trips back — GREEN.
+- **symbol link** (`AAPL` in a report row) lands on **Instrument Detail** (D-098) — GREEN.
+- Screenshots: `e2e/smoke/artifacts/reports-{light,dark}-1366.png`.
+- **Pre-pass finding, FIXED in-session (`233e640`):** the Realised Year dropdown offered only
+  `realised.years` (years WITH sales), so an empty year was unselectable and the ratified EmptyState +
+  round-trip were unreachable. Fix: both Year controls offer the **union** of the two readers' year lists
+  (all ledger years). Also pluralised the excluded caveat ("1 event" vs "N events").
+
+### 13-6. Walk-data observation (for Phase 3b — NOT a defect)
+
+The demo seed has a **single realised sale** (AAPL, 2024) with **no stored trade-date FX rate**, so the
+Realised P/L card shows current-FX **804.50 SGD** vs trade-date-FX **0.00 SGD** with *"1 event excluded"*.
+This is honest (the one event genuinely lacks a stored rate) but a **thin/degenerate divergence**. The
+per-row Currency column is richly exercised by the **open-tax-lots** table (USD/SGD/INR); the realised
+table shows one currency. If the owner wants a richer walk artifact (both base totals non-zero + excluded
+> 0, multi-currency realised), that is a **demo-seed enrichment** (add a foreign-currency sale WITH a
+stored `fx_to_base` + keep one excluded) — seed changes unit-verified per the precedent. Recorded here as
+a judgment item; not built (no self-certification; the seed already exercises the excluded case).
+
+**STOP — Phase 3a GREEN, AWAITING OWNER WALK. Phase 3b is NOT this session.**

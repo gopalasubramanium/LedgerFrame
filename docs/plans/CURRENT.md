@@ -1093,12 +1093,44 @@ batch (delta notes on touched accepted surfaces). No page-local one-offs. `npm r
 
 ---
 
-## REPORTS — §9 CLOSED ✅ · PHASE 0 DONE · Phase 0a specimen BUILT ⏸ AWAITING GEOMETRY RATIFICATION (2026-07-17)
+## REPORTS — §9 CLOSED ✅ · §12 RATIFIED WITH CONDITIONS ✅ · Phase 1/2/3a GREEN ⏳ AWAITING OWNER WALK (2026-07-17)
+
+**Geometry gate RATIFIED WITH CONDITIONS (owner 2026-07-17, page-reports §12): §12rp-1 (Statements table
+all-years; the Year control scopes the Realised stat + `statements.csv` export), §12rp-2 (per-row Currency
+column on Realised P/L — the tax-lots precedent), §12rp-3 (Statements Realised == Realised P/L current-FX
+total — ONE truth), §12rp-4 (subtitle / EmptyStates / travel captions / order RATIFIED AS SHOWN).** The
+`/reports` page is **BUILT and pre-pass GREEN** — awaiting the owner acceptance walk (Phase 3b). Commits
+`3280d00` → `233e640`.
+
+- **Phase 1 (assembly)** — three D-100 cards (Statements all-years + scoped Year→Realised-stat+Export ·
+  Realised P/L with per-row currency + BOTH base totals + non-zero excluded count · Open tax lots), served
+  disclaimers verbatim + travel captions, read-only threshold (Amendment J), symbol links (D-098), honest
+  per-card empty/error states. NO Pack entry point + NO AI placeholder (Amendment K). `/reports`
+  `built:true`; typed `api/reports.ts`; glossary popover mirrors (parity green). **[S]-gate absence
+  recorded** (read/export-only — the Estate §9-3 pattern).
+- **§12rp-3 backend one-truth (fail-first)** — `statements_report` served its realised figure at whole
+  units (`_f` p=0) while deriving it from the realised reader's 2dp `base_realised_total_current_fx`; now
+  served at 2dp, pinned by a backend equality test. **§12rp-1** — `statements.csv` now carries the scoped
+  year (title + selected-year block + filename), pinned. No contract change.
+- **Phase 2** — 9 render guards + **artifact-level JOURNEY guards** (each Export downloaded and asserted
+  INSIDE the file; the fail-first stubbed-endpoint proof is the headline — the guard reads the file, not
+  the DOM); `/reports` added to `overflow.spec.ts`.
+- **Phase 3a pre-pass GREEN** (live app + reset demo seed): both themes × 320/375/900/1366 containment +
+  0 console errors; year round-trip (populated↔empty keeps filter+export+disclaimer alive); symbol →
+  Instrument Detail; all three download journeys green. **§12rp-3 verified LIVE** (804.50 == 804.50).
+  `npm run check` (frontend/) **EXIT 0**; backend **845 passed**; `api-contract-check` green.
+- **⏳ AWAITING OWNER WALK (Phase 3b) — NOT started (no self-certification).** Walk-data note: the demo has
+  a single realised sale with no stored trade-date FX, so trade-date-FX shows 0.00 vs current-FX 804.50
+  ("1 event excluded") — honest but thin; a richer seed is a Phase-3b judgment (page-reports §13-6).
+- **⚑ Amendment-I PENDING LEDGER UNTOUCHED** — the five Pack-delivered declined exports (Net worth /
+  Review / Scenarios / Cash flow / Policy) stay PENDING until the Pack milestone; closing the Reports page
+  does NOT close that debt (see the ledger block below).
+
+## REPORTS — §9 CLOSED ✅ · PHASE 0 DONE (2026-07-17, superseded by the block above)
 
 **Owner passed §9 one-pass 2026-07-17 — all 13 items ACCEPTED as proposed + Amendments I/J/K + Recording
 Notes 1/2 (page-reports §9).** The **Phase 0 export-honesty spine is built** (backend-first, one delta per
-commit, each fail-first RED on the real cause → GREEN with a pinning test). **No page assembly yet** —
-Phase 1 is BLOCKED until the owner ratifies the Phase-0a geometry specimen.
+commit, each fail-first RED on the real cause → GREEN with a pinning test).
 
 - **Phase 0 DONE (§11 evidence table):** (1) **realised-gains.csv** now leads with the served disclaimer +
   a current-FX / trade-date-FX totals block + the excluded-events count; (2) **attribution.csv** carries

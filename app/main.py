@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
@@ -203,6 +203,23 @@ def create_app() -> FastAPI:
         from app.core.metrics import render
 
         return PlainTextResponse(render(), media_type="text/plain; version=0.0.4; charset=utf-8")
+
+    # The Reports Pack — the one sanctioned print/export artifact (D-038/D-061; reports-pack §3b).
+    # A backend-composed, self-contained HTML document (inline CSS, no app JS, no external fetch —
+    # Pack-9). Registered HERE, BEFORE the SPA catch-all below, so the catch-all never shadows it.
+    # Access follows the platform read posture (`require_read_auth`, the same router-wide gate the
+    # API uses) — no bespoke one-route guard (Pack-9). It is IN the OpenAPI schema (the +1 contract
+    # path), unlike /metrics and the SPA catch-all.
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.api.deps import get_db
+
+    @app.get("/reports/pack", response_class=HTMLResponse, tags=["reports"],
+             dependencies=[Depends(require_read_auth)])
+    async def reports_pack(session: AsyncSession = Depends(get_db)) -> HTMLResponse:
+        from app.services.reports_pack import render_reports_pack
+
+        return HTMLResponse(await render_reports_pack(session))
 
     # Serve the built SPA in production. The dev server handles this in development.
     dist = settings_static_dir()

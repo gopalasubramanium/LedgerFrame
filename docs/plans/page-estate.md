@@ -742,3 +742,19 @@ flow's *Add …* (`Plus`). A lone text-only action button on one card is a **uni
 
 **Acceptance:** **Owner, 2026-07-16 (live walk).** One finding (§14es-1), fixed + evidenced above;
 everything else accepted. **§14 CLOSED. page-estate milestone CLOSED.**
+
+### §15 — post-close platform polish delta (platform batch P-2, 2026-07-16)
+
+**Estate is CLOSED; this is a delta note on a touched accepted surface, recorded per the platform-batch
+convention (Insurance §14in-6/§14in-7 precedent).**
+
+- **P-2 — profile Edit button → `variant="primary"` (owner walk 2026-07-16).** The profile-card **Edit**
+  was the **default (grey)** `Button` variant while every other header action — its own **Add contact** /
+  **Add document**, and Policy's **Set/Edit policy** — is the **primary (accent)** variant. Fixed to
+  `variant="primary"` (`Estate.tsx`, the `.est__edit` button). **Guard:** `Estate.test.tsx` gains
+  *"P-2 — the profile Edit button carries the primary (accent) variant"* asserting `.lf-btn--primary` on
+  the Edit button — **RED before, GREEN after** (proven). Screenshots (light + dark) in
+  `e2e/smoke/artifacts/polish-estate-header-*.png`. `estate-smoke` re-run GREEN (0 console errors).
+- **P-1 also lands here centrally** (no page code): the labelled `Button`'s icon now renders at the
+  button's font-size (DESIGN-SYSTEM §5.4), so the Estate Edit pencil is no longer oversized — a single
+  `.lf-btn svg` change, inherited (see CURRENT.md platform-polish batch + `page-chrome.md §13` for P-3).

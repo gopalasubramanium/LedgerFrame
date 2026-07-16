@@ -235,7 +235,7 @@ export function Estate() {
       <section className="lf-card est__profile" data-card="profile">
         <header className="est__cardhead">
           <h2 className="lf-card__title">Estate profile</h2>
-          {data && <Button className="est__edit" icon={Pencil} onClick={openProfileEdit}>Edit</Button>}
+          {data && <Button className="est__edit" variant="primary" icon={Pencil} onClick={openProfileEdit}>Edit</Button>}
         </header>
         <div className="lf-card__body">
           {data === undefined && <Skeleton lines={4} />}

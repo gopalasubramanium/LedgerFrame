@@ -494,3 +494,42 @@ and fits, but REVIEW-GUIDE has so far avoided dev-process notes — owner's call
 · the lucide icon set (`src/icons.ts`, ADR-0003) · the **page-action icon-button
 pattern** (DESIGN-SYSTEM §5.5) · the TickerStrip global footer · the Playwright overflow
 suite (ADR-0004) — all now platform-wide, available to every future page.
+
+## §13 — post-close platform polish delta (platform batch P-3, 2026-07-16)
+
+**The shell is CLOSED/signed-off; this is a dated delta note on the foundational accepted surface,
+recorded per the platform-batch convention.**
+
+**P-3 — the sidebar nav fits without scrolling (owner ruling 2026-07-16; DENSITY, not accordion).**
+The nav scrolled at normal desktop heights (the **SYSTEM group was cut off** at 1366×720). Owner ruling:
+**tighten the vertical rhythm so the WHOLE nav fits** — **accordion/collapsible groups DECLINED** with
+recorded rationale (hiding destinations adds a click per cross-group hop and harms orientation; the nav
+is small enough to fit whole).
+
+- **Designed for the FULL RD-9 nav, not today's.** `NAV_GROUPS` ships **6 groups + 19 planned items**
+  (Overview 1 · Wealth 4 · Markets 3 · Planning 6 · Reports 2 · System 3). The density math is sized for
+  all 19 so it is **not redone at Accounts/Settings/Help/Legal** — only 14 render today (built pages).
+- **Token-driven rhythm** (`tokens.css`): `--nav-item-pad-y` (`--space-1` → a **24px** row on 14/20 text),
+  `--nav-group-gap` (`--space-3`, 8px between the six groups), group captions hug their list
+  (`--nav-label-pad-y` 0, zero internal gap), tighter brand/nav padding. Full nav content ≈ **604px**.
+- **Structure (`chrome.css`):** brand + demo footer **pinned** (`flex-shrink:0`); `.lf-sidebar__nav` is
+  the **one** scroll region (`flex:1; min-height:0; overflow-y:auto`, themed per D-101); the sidebar shell
+  itself no longer scrolls. **Floor ≈ 640px** (nav only) / **≈ 680px** (with the demo footer): below it the
+  **items region alone scrolls with the brand pinned** — graceful, **never hidden groups**.
+- **Guards (`e2e/sidebar-density.spec.ts`, in `npm run check`; media-query territory — jsdom can't
+  measure):** at **1366×720** and **1024×700** the whole current nav fits with **no nav scrollbar**, the
+  last item is within the viewport, AND there is **measured headroom** for the (19 − current) still-to-ship
+  items + the demo footer (math stated in the assertion). A **docked short height (1024×460)** engages the
+  items-scroll degradation cleanly (nav is the sole scroller, brand pinned, no group hidden). Both themes.
+  **Fail-first proven** (all six RED on the pre-fix CSS). *(Off-canvas at ≤900px is already guarded by
+  `overflow.spec.ts`; the degradation of the DOCKED sidebar is exercised at 1024×460 — see the spec's note.)*
+- **Content inset unchanged.** Density lives entirely inside the fixed-width (15rem) sidebar; the
+  shell-owned page inset (DESIGN-SYSTEM §3.1) is untouched — `overflow.spec.ts` *"every page fills the
+  shell content box"* (measured at 1728) re-run **GREEN**.
+- **DESIGN-SYSTEM chrome section** gains the **"Sidebar nav density"** rule + the floor (§5.5).
+- **Shared-shell suite + page-inset guard re-run GREEN** (`npm run check` **EXIT 0**: 229 vitest + 234
+  Playwright). Full sidebar screenshot (every group visible @1366×720): `e2e/smoke/artifacts/polish-sidebar-*.png`.
+
+**P-1 also touches the chrome centrally** (icon-only `.lf-iconbtn` bar controls are a **distinct surface**
+and are **unaffected** — they keep `--icon-size`; only labelled `.lf-btn` icons shrink to font-size). See
+CURRENT.md for the platform-polish batch summary.

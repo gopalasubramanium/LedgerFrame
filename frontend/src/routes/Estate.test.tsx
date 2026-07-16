@@ -114,6 +114,17 @@ test("§14es-1 — the profile Edit button carries a lucide icon AND its accessi
   expect(edit.querySelector("svg")).toBeTruthy();
 });
 
+// P-2 (platform polish batch, 2026-07-16) — the profile Edit is a HEADER action, so it must use the
+// primary (accent) variant every other header action uses, incl. its own siblings Add contact / Add
+// document. It shipped as the default (grey) variant — a uniformity defect. RED before variant="primary".
+test("P-2 — the profile Edit button carries the primary (accent) variant, like its Add siblings", async () => {
+  const { container } = renderPage();
+  await screen.findByText("Executed");
+  const profile = container.querySelector('[data-card="profile"]') as HTMLElement;
+  const edit = within(profile).getByRole("button", { name: "Edit" });
+  expect(edit.classList.contains("lf-btn--primary")).toBe(true);
+});
+
 test("§12es-3 — will_status `none` renders the SERVED label 'Not recorded', never 'None'", async () => {
   mockedFetch.mockResolvedValueOnce({ ok: true as const, data: { ...DATA, profile: { ...DATA.profile, will_status: "none" } } });
   const { container } = renderPage();

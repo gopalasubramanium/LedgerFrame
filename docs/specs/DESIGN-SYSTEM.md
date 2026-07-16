@@ -385,6 +385,19 @@ the **text child is the accessible name**. This governs the `Button` component (
 The owner named this standard by asking for it at the Estate walk — a page-local text-only button is a
 uniformity defect, fixed to the standard, not to the page.
 
+**Icon SIZE in a labelled Button — it renders at the button's font-size, never larger (RATIFIED
+2026-07-16, platform polish batch P-1).** The lucide icon in a labelled `Button` renders at the
+**button's own font-size (cap-height aligned)** — **never larger than the text beside it**. It was
+`--icon-size` (**18px**) sitting on **13px** text (`--font-size-13`, the `.lf-btn` size), so the glyph
+read visibly oversized (sightings: Estate *Edit*, Policy *Set policy*). The fix is **central and
+single** — `.lf-btn svg { width/height: 1em }`: `1em` ties the glyph to `.lf-btn`'s own font-size, so
+every labelled icon button inherits it and there is **no per-page or per-call sizing** (a per-call
+`size` prop is a lie about what controls it — the §5.4 rule above). The **icon-only** `.lf-iconbtn`
+(bar controls, framed/primary page-action icon buttons) is a **distinct surface** and keeps the fixed
+`--icon-size` square, uniform hit area unchanged. **Guarded pixels-are-facts** (`e2e/icon-button.spec.ts`):
+the **rendered svg bounding height ≤ font-size + 1px** on a labelled Button — RED on the old 18px, GREEN
+at ~13px after; measured on the static kitchen-sink specimen (+ Review live), both themes.
+
 **THE TABLE HEADER PAINTS EDGE-TO-EDGE (RATIFIED 2026-07-15, page-cash-flow §12cf1-1).** `scrollbar-gutter:
 stable` reserves a strip the `<table>` cannot cover, so the header fill stopped short of the right border and
 the card showed through the top-right corner — **filled on the left, empty on the right**. The header band is
@@ -535,6 +548,27 @@ date + IANA timezone name live in the tooltip/`aria-label`.
 **DemoBadge placement (RATIFIED 2026-07-11, batch 2).** At laptop+ it renders in the
 **sidebar footer** (bottom-left); below the breakpoint it moves into the **top bar**.
 Never hidden while demo data is active.
+
+**Sidebar nav density — the WHOLE nav fits; accordion DECLINED (RATIFIED 2026-07-16, platform polish
+batch P-3).** The sidebar's vertical rhythm is tightened so the **entire RD-9 nav** — all six D-043
+groups + every planned item (Overview 1 · Wealth 4 · Markets 3 · Planning 6 · Reports 2 · System 3 =
+**19 items**) — fits at normal desktop heights with **NO scrollbar** (the SYSTEM group was being cut
+off). **Collapsible / accordion groups were DECLINED** with recorded rationale: hiding destinations
+adds a click per cross-group hop and harms orientation, and the nav is small enough to fit whole.
+Rhythm is **token-driven** (never per-page): `--nav-item-pad-y` (2px → a 24px row on 14/20 text),
+`--nav-group-gap` (8px between the six groups), the uppercase group caption hugs its list
+(`--nav-label-pad-y` 0, zero internal gap). **Structure:** the **brand and demo footer are PINNED**
+(`flex-shrink:0`) and `.lf-sidebar__nav` is the **one** scroll region (`flex:1; min-height:0;
+overflow-y:auto`, themed per D-101) — the sidebar shell itself never scrolls. **Floor ≈ 640px** (nav
+only) / **≈ 680px** (with the demo footer): below it the **items region alone scrolls with the brand
+pinned** — graceful degradation, **never hidden groups** at normal heights. The density math is sized
+for the **FULL** nav (19 items), not today's built count, so it is **not redone at Accounts/Settings**.
+**Guarded at real viewports** (`e2e/sidebar-density.spec.ts`, media-query territory — jsdom cannot
+measure): at **1366×720** and **1024×700** the whole current nav fits with no nav scrollbar AND with
+measured headroom for the still-to-ship items + footer; a short docked height engages the items-scroll
+degradation cleanly (brand pinned, no group hidden); both themes. The page **content inset is
+unchanged** — density lives entirely inside the fixed-width sidebar (the shell-owned inset guard,
+§3.1, still green).
 
 **Page-action icon-button pattern (RATIFIED 2026-07-11 — DESIGN-SYSTEM §5.5; §11-16).**
 The standard for page-header actions: **ALL** page-header actions are **icon-only

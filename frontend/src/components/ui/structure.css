@@ -233,12 +233,23 @@
   color: var(--accent);
   border-color: var(--accent);
 }
-/* lucide SVG icons (ADR-0003) size from the token + inherit currentColor, so they
-   follow the theme. Applies inside any button. */
-.lf-iconbtn svg,
-.lf-btn svg {
+/* lucide SVG icons (ADR-0003) inherit currentColor, so they follow the theme.
+   TWO surfaces, TWO sizings (DESIGN-SYSTEM §5.4 icon-in-labelled-Button amendment,
+   owner walk 2026-07-16 P-1):
+   - .lf-iconbtn = the ICON-ONLY chrome/page-action button (no text label). Its glyph
+     is the whole control, so it sizes to the fixed --icon-size (18px) square.
+   - .lf-btn = a LABELLED Button (icon + text). Its icon renders at the button's OWN
+     font-size (cap-height aligned), never larger than the text beside it: `1em` ties
+     the glyph to `.lf-btn`'s font-size (13px), so it tracks any button type and can
+     never out-size the label. Was --icon-size (18px) on 13px text — visibly oversized. */
+.lf-iconbtn svg {
   width: var(--icon-size);
   height: var(--icon-size);
+  flex-shrink: 0;
+}
+.lf-btn svg {
+  width: 1em;
+  height: 1em;
   flex-shrink: 0;
 }
 /* Page-action variant (§11-16): a visible bordered surface — not a ghost/naked icon. */

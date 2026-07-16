@@ -28,7 +28,10 @@ test.describe.serial("pricing health pre-pass (live)", () => {
     expect(rowCount, "per-holding diagnostics populated").toBeGreaterThan(0);
     // by-band table + status-count strip present (ND-6).
     await expect(page.locator(".ph__bandtable")).toBeVisible();
-    expect(await page.locator('[data-card="confidence"] .ph__chip').count(), "status/band chips render").toBeGreaterThan(0);
+    // Retargeted from the removed page-local `.ph__chip` → the ratified `.lf-statuschip` (StatusChip
+    // migration, page-policy §9-15) — this dev smoke's selector was missed when the guards were
+    // retargeted, so it had been red since that migration (pre-existing; not this batch).
+    expect(await page.locator('[data-card="confidence"] .lf-statuschip').count(), "status/band chips render").toBeGreaterThan(0);
     // §12ph1-3: the diagnostics DataTable caption is present for a11y but VISUALLY HIDDEN (the card
     // header already titles the table — no duplicate visible title).
     const cap = page.locator('[data-card="diagnostics"] table caption');

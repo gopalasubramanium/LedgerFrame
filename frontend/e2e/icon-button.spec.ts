@@ -1,25 +1,23 @@
 import { test, expect } from "@playwright/test";
 
-// §12po3-1 — ICON-IN-BUTTON SIZING (owner walk, Policy close-out).
+// ICON-IN-LABELLED-BUTTON SIZING (DESIGN-SYSTEM §5.4 amendment, owner walk 2026-07-16 P-1).
 //
-// The Policy pencil was hardcoded at 16px via lucide's `size` prop — OFF-TOKEN — on a button with no
-// flex/gap/centring, so it rode mis-sized and off the label's optical centre.
+// HISTORY, kept because it names exactly what the owner just ruled on. This guard was born at
+// §12po3-1 (Policy close-out): the pencil was hardcoded at 16px via lucide's `size` prop, OFF-TOKEN.
+// The FIRST version asserted "icon box == the button's font-size"; it went RED on an ALREADY-ACCEPTED
+// button, so it was walked back to "icon == the --icon-size TOKEN (18px)". That parked a known tension:
+// on a 13px-text button an 18px glyph reads visibly LARGER than the label.
 //
-// ⚠ My first version of this guard asserted "icon box == the button's font-size" and it went RED on
-// REVIEW — the button the owner has already ACCEPTED. That was me asserting a theory again (§13). The
-// ratified treatment is the `--icon-size` TOKEN (18px) with an inline-flex row and a token gap. So the
-// guard asserts PARITY WITH THE ACCEPTED PRECEDENT, which is what "conform to Mark-reviewed" means.
+// The owner has now RULED on that tension (P-1): the icon in a LABELLED Button renders at the button's
+// OWN font-size (cap-height aligned), NEVER larger than the text beside it — 1–2pt smaller than the old
+// 18px. The fix is central: `.lf-btn svg { width/height: 1em }` (the icon-only `.lf-iconbtn` keeps
+// --icon-size, a distinct surface). So this guard FLIPS: it now asserts the svg's rendered bounding
+// height is ≤ the button's font-size + 1px — RED on today's 18px oversize, GREEN at ~13px after.
 //
-// This is the 2nd icon+label button (Review · Policy). Per the centralization rule, the 3rd occurrence
-// EXTRACTS a shared treatment — recorded in the plan, not pre-emptively built here.
-// §9-13 — both buttons are now the RATIFIED `Button` component (`.lf-btn--icon`); the page-local
-// copies (.rv__markbtn, .pol__btn) are DELETED. The guard is RETARGETED at the shared class, not
-// removed — a migration that drops its guard is a migration that stops being proven.
 // ⚠ MEASURED IN THE GALLERY, NOT ON A LIVE PAGE. The CI e2e suite runs with NO BACKEND, so Policy
-// renders no action button at all (it has no policy to edit) and this guard TIMED OUT there — green
-// locally against a dev backend, red in the suite. A COMPONENT guard must not depend on a page
-// having data. The gallery specimen is static, so it can never render zero.
-// Review is kept as the live case: its button renders regardless of data.
+// renders no action button at all (it has no policy to edit) and this guard TIMED OUT there. A COMPONENT
+// guard must not depend on a page having data — the static kitchen-sink specimen can never render zero.
+// Review is kept as a second live case: its Mark-reviewed button renders regardless of data.
 const BUTTONS = [
   { name: "kitchen-sink · Button specimen", hash: "#/kitchen-sink", selector: ".lf-btn--icon" },
   { name: "review · Mark reviewed", hash: "#/review", selector: ".lf-btn--icon" },
@@ -27,7 +25,7 @@ const BUTTONS = [
 
 for (const theme of ["light", "dark"] as const) {
   for (const b of BUTTONS) {
-    test(`icon scales with the button's type · ${b.name} · ${theme}`, async ({ page }) => {
+    test(`labelled-button icon renders at the button's font-size · ${b.name} · ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 1366, height: 900 });
       await page.goto(`/${b.hash}`);
       await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
@@ -39,10 +37,8 @@ for (const theme of ["light", "dark"] as const) {
         const ib = svg.getBoundingClientRect();
         const cs = getComputedStyle(el);
         const bb = el.getBoundingClientRect();
-        const token = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--icon-size")) *
-          parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 * 16;
         return {
-          tokenPx: token,
+          fontSizePx: parseFloat(cs.fontSize),
           iconW: ib.width,
           iconH: ib.height,
           gap: parseFloat(cs.columnGap || "0"),
@@ -53,9 +49,13 @@ for (const theme of ["light", "dark"] as const) {
         };
       });
 
-      // The icon is the RATIFIED TOKEN size — never a magic pixel value passed per call site.
-      expect(Math.abs(m.iconW - m.tokenPx), `icon width ${m.iconW} == --icon-size ${m.tokenPx}`).toBeLessThanOrEqual(1);
-      expect(Math.abs(m.iconH - m.tokenPx), `icon height ${m.iconH} == --icon-size ${m.tokenPx}`).toBeLessThanOrEqual(1);
+      // THE RULING: the icon renders at the button's font-size (cap-height aligned), NEVER larger than
+      // the text beside it. `1em` on `.lf-btn svg` ties the two together. Pixels-are-facts (§13a): we
+      // assert the RENDERED svg bounding box, not the CSS value. (Old build: 18px on 13px text → RED.)
+      expect(m.iconH, `icon height ${m.iconH} ≤ font-size ${m.fontSizePx} + 1px`).toBeLessThanOrEqual(m.fontSizePx + 1);
+      expect(m.iconW, `icon width ${m.iconW} ≤ font-size ${m.fontSizePx} + 1px`).toBeLessThanOrEqual(m.fontSizePx + 1);
+      // …and it is not shrunk to nothing — it still reads as an icon (≥ ~70% of the text, cap-height band).
+      expect(m.iconH, `icon height ${m.iconH} is a real glyph, not collapsed`).toBeGreaterThanOrEqual(m.fontSizePx * 0.7);
       // Optically centred with the label, with a consistent gap — and the TEXT LABEL IS KEPT.
       expect(Math.abs(m.iconCentre - m.btnCentre), "icon is optically centred with the label").toBeLessThanOrEqual(1.5);
       expect(m.gap, "a consistent gap between icon and label").toBeGreaterThan(0);

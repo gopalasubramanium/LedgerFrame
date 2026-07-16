@@ -181,6 +181,15 @@
   /* Active nav-item rail (Sidebar is-active) — bolder than a hairline border so the
      active page reads at a glance (page-chrome Phase 0a re-ratify, 2026-07-11). */
   --nav-rail-width: 3px;
+  /* Sidebar nav DENSITY (chrome §5.5, owner ruling 2026-07-16 P-3): tighten the nav's
+     vertical rhythm so the WHOLE RD-9 nav (6 groups + 19 planned items) fits at normal
+     desktop heights with NO scrollbar — accordion/collapsible groups were DECLINED
+     (hiding destinations costs a click + orientation). Sized for the FULL nav, not
+     today's, so it isn't redone as pages ship. Below the ~640px floor the items region
+     scrolls with brand + footer pinned (graceful, never hidden groups). */
+  --nav-item-pad-y: var(--space-1);   /* link vertical padding → 24px row on 14/20 text */
+  --nav-group-gap: var(--space-3);    /* between the six D-043 groups */
+  --nav-label-pad-y: 0;               /* group label caption hugs its list; group-gap separates above */
   /* Icon-button (.lf-iconbtn) fixed square hit area — uniform across all bar controls
      and page-action buttons regardless of density (page-chrome Phase 3 batch 2). */
   --iconbtn-size: 2rem;

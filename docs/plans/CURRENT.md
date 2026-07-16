@@ -1057,6 +1057,40 @@ profile-card screenshots (light+dark) in `e2e/smoke/artifacts/`. **§9-9 GLOSSAR
 (PROPOSED→ratified, parity green). Full record: `page-estate.md §14`; central close row in
 `RATIFICATION.md §6`. **Milestone CLOSED — not self-certified; owner-accepted.**
 
+## PLATFORM POLISH BATCH — DONE ✅ (owner walk findings, 2026-07-16; Estate stays CLOSED)
+
+Three platform-level owner-walk findings, each fixed CENTRALLY at the standard and recorded as a platform
+batch (delta notes on touched accepted surfaces). No page-local one-offs. `npm run check` **EXIT 0** from
+`frontend/` (229 vitest + 234 Playwright); ALL page smokes re-run GREEN (icon change is platform-wide).
+
+- **P-1 — labelled Button icon sizes to the font (bug, §5.4 amendment).** The lucide icon in a labelled
+  `Button` rendered at `--icon-size` (**18px**) on **13px** text (`.lf-btn` = `--font-size-13`) — visibly
+  oversized (Estate *Edit*, Policy *Set policy*). Fixed CENTRALLY in the ratified Button's icon slot:
+  `.lf-btn svg { width/height: 1em }` — the glyph tracks the button's own font-size, cap-height aligned,
+  **never larger**; every labelled icon button inherits it (no per-page sizing). The **icon-only**
+  `.lf-iconbtn` (bar controls, page-action buttons) is a **distinct surface** and keeps `--icon-size`.
+  DESIGN-SYSTEM §5.4 amended (ONE rule). **Guard** (`e2e/icon-button.spec.ts`, retargeted from the old
+  "==18px token" assertion the owner overruled): rendered svg bounding height **≤ font-size + 1px** —
+  RED on 18px, GREEN at ~13px; both themes; kitchen-sink specimen + Review live. Fail-first proven.
+- **P-2 — Estate profile Edit → `variant="primary"` (bug).** Was the default (grey) variant while every
+  other header action (Add contact/document, Policy Set/Edit) is primary. `Estate.tsx` fixed; guard in
+  `Estate.test.tsx` (RED→GREEN). Dated delta note `page-estate.md §15`. Screenshots (light+dark) captured.
+- **P-3 — sidebar fits without scrolling (owner ruling: DENSITY, accordion DECLINED).** SYSTEM group was
+  cut off at normal heights. Tightened the nav's vertical rhythm via **tokens** (`--nav-item-pad-y`,
+  `--nav-group-gap`, `--nav-label-pad-y`) sized for the **FULL RD-9 nav (6 groups + 19 items)**, not
+  today's 14 — so it isn't redone at Accounts. Brand + demo footer **pinned**; `.lf-sidebar__nav` is the
+  one scroll region; below a **~640–680px floor** the items alone scroll with the brand pinned (never
+  hidden groups). DESIGN-SYSTEM §5.5 gains the nav-density rule + floor. **Guards**
+  (`e2e/sidebar-density.spec.ts`, real viewports, in `npm run check`): 1366×720 & 1024×700 fit with
+  measured headroom for the still-to-ship items + footer; 1024×460 engages degradation cleanly; both
+  themes; fail-first proven. **Content inset unchanged** — the page-inset guard (§3.1, measured at 1728)
+  re-run GREEN. Dated delta note `page-chrome.md §13`. Full-sidebar screenshot (every group @1366×720).
+- **Bonus hygiene:** a **pre-existing stale selector** in the dev-only `pricing-health-smoke` (`.ph__chip`
+  → the migrated `.lf-statuschip`, red since the page-policy §9-15 StatusChip extraction) was retargeted;
+  smoke GREEN. Not caused by this batch.
+
+**NEXT unchanged: Accounts** (see below).
+
 ---
 
 ## ESTATE — §9 CLOSED one-pass · Phase 0 DONE (2026-07-16)

@@ -10,10 +10,14 @@
   flex-shrink: 0;
   background: var(--surface-raised);
   border-right: var(--border-width) solid var(--border);
-  overflow-y: auto;
+  /* The sidebar itself never scrolls — the brand + footer are PINNED (flex-shrink:0) and
+     only `.lf-sidebar__nav` scrolls when the items don't fit (P-3 degradation, below the
+     ~640px floor). At normal desktop heights the whole nav fits and nothing scrolls. */
+  overflow: hidden;
 }
 .lf-sidebar__brand {
-  padding: var(--space-5) var(--space-5) var(--space-4);
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-5);
   font-size: var(--font-size-16);
   font-weight: var(--weight-semibold);
   color: var(--text-primary);
@@ -26,17 +30,25 @@
     display: none;
   }
 }
+/* The items region: it is the ONE thing that scrolls, and only when the nav can't fit
+   (below the ~640px floor — P-3). `flex:1 1 auto` + `min-height:0` lets it both fill the
+   column (pushing the footer to the bottom) AND shrink to a scroll region when short.
+   Rhythm is tightened via tokens so the WHOLE RD-9 nav fits at normal heights (P-3). */
 .lf-sidebar__nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-2) var(--space-3) var(--space-5);
+  gap: var(--nav-group-gap);
+  padding: var(--space-2) var(--space-3) var(--space-3);
 }
-/* Bottom-left footer (DemoBadge at laptop+ — §11-12). `margin-top:auto` pins it to
-   the bottom; hidden below the laptop breakpoint where the sidebar is off-canvas. */
+/* Bottom-left footer (DemoBadge at laptop+ — §11-12). PINNED (flex-shrink:0) so it stays
+   visible while the items region scrolls beneath a short viewport; hidden below the laptop
+   breakpoint where the sidebar is off-canvas. */
 .lf-sidebar__foot {
-  margin-top: auto;
-  padding: var(--space-4) var(--space-5);
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-5);
   border-top: var(--border-width) solid var(--border);
 }
 @media (max-width: 900px) {
@@ -47,10 +59,12 @@
 .lf-sidebar__group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  /* No internal gap — the caption hugs its list; the --nav-group-gap separates GROUPS. This
+     is the density lever that lets all 19 planned items + 6 captions fit (P-3). */
+  gap: 0;
 }
 .lf-sidebar__grouplabel {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--nav-label-pad-y) var(--space-3);
   font-size: var(--font-size-12);
   line-height: var(--line-12);
   font-weight: var(--weight-semibold);
@@ -61,8 +75,9 @@
 .lf-sidebar__link {
   display: block;
   /* Page entries are INDENTED under their group header (§5.5 amendment, PROPOSED 2026-07-11,
-     page-portfolio §12b-5) — visual hierarchy only; the active rail stays at the left edge. */
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-6);
+     page-portfolio §12b-5) — visual hierarchy only; the active rail stays at the left edge.
+     Vertical padding is the --nav-item-pad-y density token (P-3) → a 24px row. */
+  padding: var(--nav-item-pad-y) var(--space-3) var(--nav-item-pad-y) var(--space-6);
   border-radius: var(--radius-md);
   font-size: var(--font-size-14);
   line-height: var(--line-14);

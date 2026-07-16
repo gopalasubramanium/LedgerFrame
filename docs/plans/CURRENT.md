@@ -1141,6 +1141,45 @@ Scenarios / Cash flow / Policy) close **only at the Reports Pack milestone**; ac
 2. Then **Settings**, **Help · Legal**, **AI-surfaces**, **Voice** (R-32, definition still owed).
 3. **Gates C→F**, then **tag v2.0.0**.
 
+## REPORTS PACK — PLAN DRAFTED, awaiting §9 one-pass (2026-07-17)
+
+**`docs/plans/reports-pack.md` written — a MILESTONE plan for the sanctioned print/export artifact
+(the Pack is NOT an IA page, D-038). Filled through §10 (verify-first) + §9 (NEEDS DECISION). No
+code; nothing resolved.** Inherits the Reports-page rulings (9-1 server-rendered print HTML, no PDF
+dep · 9-2 server-composed per-entity via UI-dormant `entity_id` · 9-12 section→reader map · 9-13
+attribution Pack-only) — **cited, not re-decided**.
+
+- **Verify-first (§10, file:line):** the §9-12 map re-verified — 5 entity-aware readers
+  (`value_portfolio` `portfolio.py:392` · `compute_drift` `policy.py:108` · `realised_gains_report`
+  `tax.py:284` · `risk_metrics` `analytics.py:678` · `attribution` `analytics.py:560`) all honour
+  `entity_id` through the one `entity_account_filter` chokepoint and **degrade to zeros/empty/
+  `available=False` on an empty entity (none raise)**; the 2 consolidated readers (`net_worth_history`
+  `portfolio.py:894` · `review_report/centre` `review.py:86,285`) take **no** `entity_id`.
+  `list_entities` `accounts.py:160` already exists (docstring cites "the quarterly pack") but there is
+  **NO Household entity / no ≥1-entity invariant** (`entities.py:6-8`). Rendering: **no print palette
+  exists** (`tokens.css` has no `@media print`); a backend HTML route composes via `HTMLResponse` +
+  f-strings (**no Jinja2, no new dependency**) and must register **before** the SPA catch-all
+  (`main.py:212`).
+- **⚑ Amendment-I ledger-mapping table (§0):** 3 of the 5 Pack-delivered dispositions map cleanly to a
+  §9-12 section (Policy drift → per-entity drift · Net worth trend → consolidated · Review →
+  consolidated). **Scenarios and Cash flow do NOT** — both are **household-scoped** (Scenarios rejects
+  `entity_id` with a 400 by design, `portfolio.py:1043`; Cash flow has no entity seam, D-057) → the
+  expected ⚑ item. The milestone's close flips PENDING → DELIVERED against §0.
+- **§9 NEEDS DECISION — 9 items OPEN (6 ⚑):** **Pack-1 ⚑** Scenarios + Cash flow don't map to §9-12
+  (extend the consolidated section vs re-declare) · **Pack-2 ⚑** print palette (spec-first,
+  DESIGN-SYSTEM amendment) · **Pack-3 ⚑** empty-entity / empty-section treatment (Guarantee 3) ·
+  **Pack-4 ⚑** zero/single-entity degenerate case (no Household invariant) · **Pack-5 ⚑** artifact
+  header content + disclaimer coverage for the 3 disclaimer-less readers · **Pack-6 ⚑** section order ·
+  **Pack-7** GLOSSARY "Consolidated"/"Per-entity" (spec-first) · **Pack-8** does the export-artifacts
+  standard (`DESIGN-SYSTEM.md:430-442`) bind the print artifact · **Pack-9** access control +
+  self-containment of the backend HTML route (bypasses the SPA LockScreen).
+- **Geometry gate adapted for print:** the 0a specimen = the RENDERED PACK on real-shaped seed data,
+  ratified by the owner looking at BOTH the screen rendering AND Playwright `media: print` captures
+  (light print palette, page breaks, per-section disclaimers visible). Owner ratifies **print output**,
+  not app chrome.
+
+**The Amendment-I PENDING ledger stays OPEN** until this milestone closes.
+
 *(Prior Reports statuses below, retained for the record — superseded by the DONE entry above.)*
 
 ## REPORTS — §12 RATIFIED WITH CONDITIONS ✅ · Phase 1/2/3a GREEN (superseded by DONE ✅ above) (2026-07-17)

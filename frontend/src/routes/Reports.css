@@ -1,0 +1,121 @@
+/* Reports — GEOMETRY (page-reports §9 / Phase 0a, PROPOSED; ratify at the gate). OVERVIEW template
+   (§9-6, DESIGN-SYSTEM.md:227 — NOT worklist): a composed surface of THREE OWNED, STACKED sections —
+   Statements → Realised P/L report → Open tax lots. Each is a D-100 layered card (title + year filter
+   + Export control in the header, OUTSIDE the scroll, D-101), a DataTable body capped + scrolled
+   internally, and an in-page disclaimer caption that ALSO notes the disclaimer travels INTO the export
+   (the §9-5 honesty story, honest on both surfaces). Tokens only; composed ratified ui/. Money is
+   written AS SERVED (display strings, D-105) — the frontend computes nothing. NO Pack entry point
+   (Amendment K corollary) and NO AI-helper placeholder (Amendment K) — the specimen shows what SHIPS.
+   NOTE (TEMPLATE §7 media-query exception): any responsive reflow is a §13c pre-pass check at REAL
+   viewports (the fixed sidebar eats width), NOT a static-specimen claim — nothing is guarded here. */
+
+.rpt__section { min-width: 0; }
+
+/* Card header: title left, the controls (year filter + Export) right, one row. */
+.rpt__cardhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.rpt__cardhead .lf-card__title { margin: 0; font-size: var(--font-size-16); line-height: var(--line-16); }
+.rpt__controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.rpt__yearfield {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.rpt__yearlabel {
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+}
+
+/* Identity cell — the symbol is an accent LINK (D-098), the name a muted sibling; the whole cell
+   truncates (the column caps it). The Holdings identity-cell precedent (symbol + name in one column). */
+.rpt__ident { min-width: 0; }
+.rpt__name { color: var(--text-secondary); }
+.rpt__missing { color: var(--text-tertiary); }
+.rpt__symbol {
+  color: var(--accent);       /* symbols/entities LINK to their detail page (D-098) */
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+.rpt__symbol:hover { text-decoration: underline; }
+
+/* The neutral long-term threshold, shown READ-ONLY (Amendment J — no persisted setting exists; the
+   served default is rendered, never an input; no dead Settings link while Settings is unbuilt). */
+.rpt__threshold {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.rpt__thresholdvalue { color: var(--text-primary); font-weight: var(--weight-medium); }
+.rpt__thresholdnote { color: var(--text-tertiary); }
+
+/* Realised-totals block — BOTH base totals visible (current FX AND trade-date FX), and the
+   excluded-events count rendered when non-zero (D-020/D-076 — the honest divergence is shown, not
+   hidden). The value text nodes stay exactly the number so a tile-integrity read is possible. */
+.rpt__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+}
+.rpt__total {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.rpt__totallabel {
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+}
+.rpt__totalvalue {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  font-weight: var(--weight-medium);
+}
+.rpt__affix {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-12);
+  font-weight: var(--weight-regular);
+  margin-left: var(--space-1);
+}
+/* The excluded-events caveat rides the trade-date-FX total, in muted text — a caveat, never hidden. */
+.rpt__excluded {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-12);
+}
+
+/* In-page disclaimer caption — the served disclaimer shown on screen, plus the honest note that it
+   travels INTO the export file (§9-5). The disclaimer is rendered VERBATIM as the backend serves it. */
+.rpt__disclaimer {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-16);
+}
+.rpt__travels {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-tertiary);
+}

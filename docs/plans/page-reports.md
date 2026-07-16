@@ -552,3 +552,60 @@ recorded where they apply.*
 **Phase-0 gate:** `make api-contract-check` GREEN (131 paths) · backend report/CSV/glossary suites GREEN
 (see §11 rows) · **`08-TECH-DEBT.md` untouched — nothing to log** (no known-red on trunk). Frontend-check
 EXIT CODE is stated at the Phase-0a specimen (§12), the frontend-touching step.
+
+---
+
+## 12. PHASE 0a — LAYOUT SPECIMEN (the geometry gate) — PROPOSED, AWAITING RATIFICATION
+
+**A static, unwired specimen at `/kitchen-sink` → "Reports — LAYOUT SPECIMEN (page-reports §9 / Phase
+0a)". Phase 1 (page assembly) is BLOCKED until the owner ratifies this geometry BY LOOKING** (the
+page-home lesson: a correct widget list can still be a wrong page — geometry is a requirement a list
+cannot express). Files: `frontend/src/routes/ReportsMockup.tsx` + `Reports.css`, registered in
+`KitchenSink.tsx`.
+
+**Proposed geometry (OVERVIEW template — §9-6, `DESIGN-SYSTEM.md:227`, NOT worklist):** three OWNED,
+STACKED sections in reading order —
+
+1. **Statements** — year filter + Export → `statements.csv`; income/fees/cash-flow by year (a negative
+   net-cash-flow year shown honestly); realised-vs-unrealised for the selected year; the served
+   disclaimer in-page.
+2. **Realised P/L report** — year filter + Export → `realised-gains.csv`; the **`long_term_days` read-only
+   line** (Amendment J — served default 365, never an input); per-event table (symbol **links**, D-098;
+   a long instrument name **truncates**); **BOTH base totals VISIBLE** (current-FX 14,820.00 AND
+   trade-date-FX 13,905.00) with the **excluded-events count rendered because it is non-zero** ("2 events
+   excluded — trade-date FX unavailable", D-020/D-076); the served disclaimer in-page.
+3. **Open tax lots** — Export → `tax-lots.csv`; the read-only threshold line; the lots table (mixed
+   USD/INR, `cost == qty × unit_cost` served — tile-integrity); the served disclaimer in-page.
+
+Each section is a **D-100 layered card** whose header (title · year filter · Export) sits **OUTSIDE the
+scroll** (D-101); each disclaimer is **rendered VERBATIM as served (D-105) AND captioned "travels into
+the export (<file>.csv)"** — the §9-5 story honest on both surfaces. Export controls use the **§5.4
+anatomy** (Download icon + label). **NO Reports Pack entry point** (Amendment K phasing corollary — D-041
+preserved, recorded not rendered) and **NO AI-helper placeholder** (Amendment K, D-060 intact) — the
+specimen shows exactly what ships.
+
+**Honesty frames staged:** an **EMPTY YEAR** (Realised P/L for a year with no sales → `EmptyState` with a
+reason; the year filter + Export stay — an empty year's export is an honest empty file, not an error) and
+**NO OPEN LOTS** (`EmptyState`). The non-zero excluded-FX-events count is rendered in the populated frame;
+a long institution/symbol name truncates in the identity cell.
+
+**Frame = the REAL content region** (`ks__viewport--scroll`, 1440×724 = viewport − chrome − shell
+padding) fed **real-shaped data**, per the page-home gate-artifact rule. **Media-query / overflow regions
+are a §13c pre-pass check at REAL viewports** (the fixed sidebar eats width) — NOT claimed on this static
+specimen (TEMPLATE §7 exception); nothing responsive is guarded here.
+
+**Checks:** frontend `npm run check` **EXIT 0** from `frontend/` (250 passed = vitest + all Playwright,
+incl. `overflow.spec.ts`). Both themes captured: `docs/plans/assets/reports-specimen-{light,dark}.png`
+(the capped real content-region frame) + `reports-specimen-full-{light,dark}.png` (the full populated
+mockup, so the totals block + excluded-count + tax-lots are visible in one view).
+
+**STOP — owner ratifies the geometry before Phase 1.** Open questions for the walk: does the composed
+Overview reading order (Statements → Realised P/L → Open tax lots) lead correctly; is the read-only
+threshold line clear (Amendment J); do the in-page disclaimers + "travels into the export" captions read
+honestly without copy-hygiene leaks.
+
+**§11 evidence — Phase 0a row:**
+
+| # | Deliverable | Check | Where |
+|---|-------------|-------|-------|
+| 0a | Reports LAYOUT SPECIMEN (Overview; 3 stacked owned sections + 2 honesty frames; served disclaimers travel-noted; read-only threshold; no Pack / no AI) | frontend `npm run check` **EXIT 0** (250 passed) from `frontend/` | `/kitchen-sink` → "Reports — LAYOUT SPECIMEN"; `assets/reports-specimen*.png` |

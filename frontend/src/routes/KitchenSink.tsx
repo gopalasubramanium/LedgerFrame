@@ -19,6 +19,11 @@ import {
   AccountsMergeSpecimen,
 } from "./AccountsMockup";
 import {
+  ReportsMockup,
+  ReportsEmptyYearSpecimen,
+  ReportsNoOpenLotsSpecimen,
+} from "./ReportsMockup";
+import {
   AllocationDonut,
   BrandLockup,
   BrandMark,
@@ -806,6 +811,37 @@ export function KitchenSink() {
           </Specimen>
           <Specimen label="Honesty · MERGE dialog mid-flow — survivor + duplicate chosen ('DBS' ← 'DBS Bank'); re-point consequence stated plainly (§9-2; staged dialog body)">
             <AccountsMergeSpecimen />
+          </Specimen>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        bleed
+        title="Reports — LAYOUT SPECIMEN (page-reports §9 / Phase 0a) — PROPOSED, AWAITING RATIFICATION"
+        note="THE GEOMETRY GATE. Static, unwired — ratified BY LOOKING before assembly (Phase 1 is BLOCKED until then). The proposed §-geometry (OVERVIEW template — §9-6, DESIGN-SYSTEM.md:227, NOT worklist): THREE OWNED, STACKED sections — Statements → Realised P/L report → Open tax lots — each a D-100 layered card whose header (title · year filter · Export control) sits OUTSIDE the scroll (D-101), body is a DataTable, and footer is the SERVED disclaimer shown in-page AND noted to travel INTO the export file (the §9-5 honesty story — honest on BOTH surfaces). Real content region (1440×724 = viewport − chrome − shell padding), real-shaped data: multi-currency realised events + open lots, a long instrument name that TRUNCATES in the identity cell (symbol LINKS, D-098). Money is written AS SERVED (display strings, D-105) — the frontend computes nothing. Export controls use the §5.4 anatomy (Download icon + label): statements.csv · realised-gains.csv · tax-lots.csv — the three CSVs whose disclaimers Phase 0 made travel into the file. Realised totals show BOTH base totals (current FX AND trade-date FX) with the excluded-events count rendered because it is NON-ZERO (D-020/D-076 — the honest divergence is shown, not hidden). Tile-integrity: within each currency group short_term + long_term == realised_total, and the sum of the event gains == that group's realised_total. AMENDMENT J: the long-term threshold (365) is rendered READ-ONLY (no persisted setting exists — §10-9), never an input, no dead Settings link. AMENDMENT K (what SHIPS): NO Reports Pack entry point (the phasing corollary — D-041 preserved, recorded not rendered) and NO AI-helper placeholder (records only, D-060 intact). Two honesty frames: an EMPTY YEAR (no realised sales → EmptyState with a reason, Guarantee 3) and NO OPEN LOTS (EmptyState)."
+      >
+        <div className="ks__stack">
+          <Specimen label="Reports · populated (Statements → Realised P/L report → Open tax lots; each card: year filter + Export outside the scroll; BOTH realised base totals + the NON-ZERO excluded-events count; served disclaimers in-page + noted to travel into the CSVs; long name truncates; symbols link; threshold read-only)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <ReportsMockup />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Reports · honesty — EMPTY YEAR (Realised P/L for a year with no sales → EmptyState with a reason; year filter + Export stay; Guarantee 3)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <ReportsEmptyYearSpecimen />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Reports · honesty — NO OPEN LOTS (every parcel fully sold → EmptyState with a reason; Guarantee 3)">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <ReportsNoOpenLotsSpecimen />
+              </div>
+            </div>
           </Specimen>
         </div>
       </Section>

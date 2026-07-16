@@ -457,6 +457,27 @@ disclaimers is a Guarantee-3 / D-020/D-076 violation** — the current CSVs alre
    which lists Reports under **Overview** (`:227`) and Pricing Health under Worklist (`:229`) — the two
    group members use **different** templates, so the generalisation does not hold for Reports. → §9-6.
 
+### 10-9. ⚑ `long_term_days` persistence verdict (Amendment J — verify FIRST, file:line)
+
+**Amendment J requires the persistence question answered BEFORE any control is designed. Verdict:
+NO persisted user setting backs `long_term_days` anywhere in the codebase.** Evidence:
+
+| Where a setting could live | What's actually there | Verdict |
+|----------------------------|-----------------------|---------|
+| **Request param** | `long_term_days: int = Query(default=365, ge=0, le=3660)` on `realised-gains` (`portfolio.py:981`), `tax-lots` (`portfolio.py:990`), the new `tax-lots.csv` route (`portfolio.py:999`) and `realised-gains.csv` (`portfolio.py:1014`) | A per-request param defaulting to **365**, not a stored preference |
+| **Reader default** | `realised_gains_report(…, long_term_days: int = 365, …)` (`tax.py:285`, clamp `:289`); `tax_lots_report(…, long_term_days: int = 365, …)` (`tax.py:377`) | Hard default **365** when the param is absent |
+| **Env `Settings`** | `app/core/config.py:29-80` — `base_currency`, `timezone`, … **no `long_term_days` field** | Not an env setting |
+| **DB settings allow-list** | `_ALLOWED_KEYS` (`app/api/v1/routes/settings.py:23-39`) — 15 keys (`base_currency`, `timezone`, `first_run_complete`, …) — **`long_term_days` is NOT listed**; the generic `Setting` key/value model (`models/__init__.py:101`) stores no such key | Not a persisted DB setting; a PUT would be REJECTED (unknown-key 400) |
+| **Settings page** | Unbuilt (CURRENT.md NEXT list) | No UI seam exists yet |
+
+**Posture (Amendment J):** Reports renders the **SERVED default (365) READ-ONLY** — a display-only line
+(*"Long-term threshold: 365 days"*, neutral, Guarantee 4 / D-077, no jurisdiction presets), **not** an
+input. **NO settings store is built as a side effect.** The **Settings seam** is recorded here for the
+future: when Settings ships, add `long_term_days` to `_ALLOWED_KEYS` (with a numeric validator) and have
+the readers read the stored value as the default — at which point Reports' read-only line links to
+Settings (the accepted §9-7 resolution). Until then the read-only value is the served 365. **No code was
+written for 9-7** — the verdict is the deliverable.
+
 ---
 
 ## 9. NEEDS DECISION — RESOLVED (owner one-pass 2026-07-17)
@@ -524,3 +545,4 @@ recorded where they apply.*
 | 2 | **attribution.csv** gains the served `_ATTRIB_DISCLAIMER` [9-5 + Recording Note 1] | `test_attribution_csv_carries_served_disclaimer` RED — the reader served the disclaimer but the CSV builder never wrote it (a shed-disclaimer hole) | Builder leads with the served disclaimer, then the per-holding table; pin GREEN, existing `test_attribution_csv_export` updated for the lead block. Dated delta note in page-portfolio.md §12-6b (export stays Portfolio-owned, §9-13) | _(this commit)_ |
 | 3 | **statements.csv** carries the full D-077 disclaimer [9-5] | `test_statements_csv_carries_the_full_D077_disclaimer` RED — the file shipped only the top-line current-FX caveat; the served "for your accountant / not tax or financial advice" line never reached it | Builder writes the served `disclaimer` verbatim under the caveat line; pin GREEN | _(this commit)_ |
 | 4 | **add** `GET /portfolio/tax-lots.csv` [9-4], born with its disclaimer block [9-5] | `test_tax_lots_csv_exists_and_carries_its_disclaimer` RED — no route (404); the tax-lots reader was JSON-only | New `tax_lots_csv` builder (mirrors `realised_gains_csv`; lot-key columns; leads with the served disclaimer) + `GET /portfolio/tax-lots.csv` route. **Contract regenerated same commit — 130 → 131 paths; `make api-contract-check` GREEN.** Pin GREEN | _(this commit)_ |
+| 5 | **9-7 threshold persistence verdict** [9-7 + Amendment J] — records only | n/a (verify-first record) | **VERDICT: no persisted setting backs `long_term_days`** (§10-9, file:line) → served-default-365 **read-only** on Reports + the Settings seam recorded. **No code written** — the verdict is the deliverable | _(this commit)_ |

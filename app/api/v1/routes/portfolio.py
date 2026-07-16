@@ -995,6 +995,20 @@ async def tax_lots(long_term_days: int = Query(default=365, ge=0, le=3660),
     return await tax_lots_report(session, long_term_days=long_term_days, entity_id=entity_id)
 
 
+@router.get("/portfolio/tax-lots.csv", response_class=PlainTextResponse)
+async def tax_lots_export(long_term_days: int = Query(default=365, ge=0, le=3660),
+                          entity_id: int | None = Query(default=None),
+                          session: AsyncSession = Depends(get_db)) -> PlainTextResponse:
+    """§9-4 (page-reports): server-side open-tax-lots CSV export (D-050 / P-5). Born with its
+    disclaimer block (§9-5) — the served "organisation only, not tax advice" caveat travels into
+    the file. Mirrors the realised-gains export; the client never builds the file."""
+    from app.services.tax import tax_lots_csv, tax_lots_report
+
+    report = await tax_lots_report(session, long_term_days=long_term_days, entity_id=entity_id)
+    return PlainTextResponse(tax_lots_csv(report), media_type="text/csv", headers={
+        "Content-Disposition": 'attachment; filename="tax-lots.csv"'})
+
+
 @router.get("/portfolio/realised-gains.csv", response_class=PlainTextResponse)
 async def realised_gains_export(year: int | None = Query(default=None),
                                 long_term_days: int = Query(default=365, ge=0, le=3660),

@@ -428,3 +428,29 @@ def realised_gains_csv(report: dict) -> str:
                         e["sell_date"], e["acquired_date"], e["quantity"], e["proceeds"],
                         e["cost"], e["gain"], e["holding_days"], "yes" if e["long_term"] else "no"])
     return buf.getvalue()
+
+
+def tax_lots_csv(report: dict) -> str:
+    """Flatten an open-tax-lots report into CSV text (safe: no formula-injection prefixes).
+
+    §9-4 (page-reports — new export) + §9-5: BORN WITH ITS DISCLAIMER. The file leads with the
+    served disclaimer, then the per-lot table (the lot keys), so the tax-lots export carries the
+    same "organisation only — not tax advice" caveat the on-screen tax-lots section shows. Mirrors
+    ``realised_gains_csv`` so both report exports share one honest shape."""
+    import csv
+    import io
+
+    from app.services.csv_import import sanitize_cell
+
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow([f"LedgerFrame open tax lots (long-term threshold {report['long_term_days']} days)"])
+    w.writerow([sanitize_cell(report["disclaimer"])])
+    w.writerow([])
+    w.writerow(["symbol", "name", "acquired_date", "quantity", "unit_cost", "cost", "currency",
+                "holding_days", "long_term"])
+    for lot in report["lots"]:
+        w.writerow([sanitize_cell(lot["symbol"] or ""), sanitize_cell(lot["name"]),
+                    lot["acquired_date"], lot["quantity"], lot["unit_cost"], lot["cost"],
+                    lot["currency"], lot["holding_days"], "yes" if lot["long_term"] else "no"])
+    return buf.getvalue()

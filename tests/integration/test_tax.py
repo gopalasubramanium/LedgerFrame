@@ -145,6 +145,20 @@ def _sample_realised_report() -> dict:
     }
 
 
+async def test_tax_lots_csv_exists_and_carries_its_disclaimer(app_client):
+    """§9-4 (add) + §9-5 (born with its disclaimer, fail-first): GET /portfolio/tax-lots.csv exists,
+    serves text/csv with an attachment disposition, leads with the served disclaimer, and carries
+    the per-lot table header (the lot keys). RED before the route/builder exist (404 — the SPA does
+    not serve this API path, so the shape, not the status, discriminates)."""
+    r = await app_client.get("/api/v1/portfolio/tax-lots.csv")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/csv")
+    assert "attachment" in r.headers.get("content-disposition", "")
+    lines = r.text.splitlines()
+    assert any("not tax advice" in ln.lower() for ln in lines)   # the served disclaimer travels in
+    assert any(ln.startswith("symbol,name,acquired_date,quantity,unit_cost,cost") for ln in lines)
+
+
 def test_realised_gains_csv_carries_served_disclaimer_and_both_totals():
     """§9-5 (honesty — fail-first, pinned): the export must carry (a) the SERVED disclaimer
     verbatim, (b) the trade-date-FX (historical) base total row, and (c) the excluded-events

@@ -11790,6 +11790,100 @@
         ]
       }
     },
+    "/api/v1/portfolio/tax-lots.csv": {
+      "get": {
+        "description": "\u00a79-4 (page-reports): server-side open-tax-lots CSV export (D-050 / P-5). Born with its\ndisclaimer block (\u00a79-5) \u2014 the served \"organisation only, not tax advice\" caveat travels into\nthe file. Mirrors the realised-gains export; the client never builds the file.",
+        "operationId": "tax_lots_export_api_v1_portfolio_tax_lots_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "long_term_days",
+            "required": false,
+            "schema": {
+              "default": 365,
+              "maximum": 3660,
+              "minimum": 0,
+              "title": "Long Term Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Tax Lots Export",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
     "/api/v1/portfolio/transactions": {
       "get": {
         "description": "The transactions ledger, windowed. D-094: sort + filter run server-side over\nthe full non-deleted dataset; `total` reports its full size so the client can\nstate \"Showing X\u2013Y of Z\" and never silently truncate. Default: most-recent\nfirst. The full-dataset CSV export (statements/holdings, D-050) is unaffected \u2014\nit ignores this window entirely.",

@@ -153,3 +153,62 @@ async def test_review_soon_days_threshold_is_30_per_spec(session):
     )
 
 
+# --------------------------------------------------------------------------- #
+# 9-10 — STANDING legal-advice-language content guard (PERMANENT; the Scenarios
+# D-058 forecast-guard / Insurance adequacy-guard precedent). Estate is a readiness
+# register, NEVER legal advice. No directive/advice phrasing may appear in ANY served
+# estate copy — the ratified disclaimer itself must also pass. Do NOT delete or scope
+# this down: it is a standing invariant, not a one-off Phase-0 check.
+# --------------------------------------------------------------------------- #
+# The banned directive/advice phrasings, ruled verbatim (page-estate §9-10).
+_ADVICE_PHRASES = (
+    "you should", "we recommend", "draft your will", "you must",
+    "make sure you", "it is advisable",
+)
+
+
+async def _served_estate_copy(app_client) -> list[str]:
+    """Every app-AUTHORED string the estate surface serves: the ratified disclaimer, the
+    household-scoped rejection message, and each `estate_signals()` template (surfaced verbatim
+    in the Review attention feed). User data (names, notes) is NOT app copy and is excluded."""
+    copy: list[str] = []
+    rep = (await app_client.get("/api/v1/estate")).json()
+    copy.append(rep["disclaimer"])
+    copy.append((await app_client.get("/api/v1/estate", params={"entity_id": 1})).json()["detail"])
+
+    from datetime import UTC, datetime, timedelta
+
+    today = datetime.now(UTC).date()
+
+    async def _estate_review_titles() -> list[str]:
+        rev = (await app_client.get("/api/v1/portfolio/review")).json()
+        return [i["title"] for i in rev["items"] if i["area"] == "Estate"]
+
+    # State 1 — no will + overdue review + a missing document (three templates).
+    await app_client.put("/api/v1/estate/profile", json={
+        "will_status": "none", "next_review_date": (today - timedelta(days=10)).isoformat()})
+    await app_client.post("/api/v1/estate/documents", json={"title": "Property deed", "status": "missing"})
+    copy += await _estate_review_titles()
+
+    # State 2 — will needs update + a review due soon (the remaining two templates).
+    await app_client.put("/api/v1/estate/profile", json={
+        "will_status": "needs_update", "next_review_date": (today + timedelta(days=10)).isoformat()})
+    copy += await _estate_review_titles()
+    return copy
+
+
+async def test_no_advice_language_in_served_estate_copy(app_client):
+    copy = await _served_estate_copy(app_client)
+    # the ratified disclaimer is in the scanned set and must itself pass the guard
+    assert any("Not legal or estate-planning advice" in t for t in copy), "disclaimer missing from scanned copy"
+    # every estate_signals template was exercised (guard proves what it exercises)
+    joined = " || ".join(copy)
+    for template in ("No will recorded", "needing an update", "missing or outdated",
+                     "overdue", "Estate review due in"):
+        assert template in joined, f"expected the {template!r} signal in the scanned copy"
+    for text in copy:
+        low = text.lower()
+        for phrase in _ADVICE_PHRASES:
+            assert phrase not in low, f"advice phrasing {phrase!r} in served estate copy: {text!r}"
+
+

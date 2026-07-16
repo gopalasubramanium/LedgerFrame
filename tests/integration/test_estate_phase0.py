@@ -123,3 +123,33 @@ async def test_doc_attention_count_is_one_derivation(session):
     )
 
 
+# --------------------------------------------------------------------------- #
+# 9-8 (D-059) — _REVIEW_SOON_DAYS = 30 is now a named constant in PRODUCT-SPEC §5.
+# A same-batch code test pins the SERVED threshold (the page-review §13 lesson: a spec
+# edit alone leaves the code free to silently disagree), fail-first.
+# --------------------------------------------------------------------------- #
+async def test_review_soon_days_threshold_is_30_per_spec(session):
+    """The estate review-due signal fires within 30 days (inclusive) and stays silent at 31 —
+    pinning the served threshold to the D-059 spec value. RED if the constant/behaviour drifts."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.services.estate import _REVIEW_SOON_DAYS, estate_signals, get_or_create_profile
+
+    assert _REVIEW_SOON_DAYS == 30, "the constant must match the PRODUCT-SPEC §5 D-059 value"
+
+    p = await get_or_create_profile(session)
+    today = datetime.now(UTC).date()
+
+    p.next_review_date = (today + timedelta(days=_REVIEW_SOON_DAYS)).isoformat()  # exactly at the horizon
+    await session.commit()
+    assert any("Estate review due in" in s for s in await estate_signals(session)), (
+        "a review due in 30 days must surface (30 <= _REVIEW_SOON_DAYS)"
+    )
+
+    p.next_review_date = (today + timedelta(days=_REVIEW_SOON_DAYS + 1)).isoformat()  # one day past
+    await session.commit()
+    assert not any("Estate review due in" in s for s in await estate_signals(session)), (
+        "a review due in 31 days must NOT surface (31 > _REVIEW_SOON_DAYS) — pins the threshold at 30"
+    )
+
+

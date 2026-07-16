@@ -532,6 +532,24 @@ I/J/K + Notes 1/2). §3b deltas that this milestone builds (§9-4 tax-lots CSV, 
 declined-exports ledger stays **PENDING** in `CURRENT.md` until the Pack closes (Amendment I). **Phase 1
 (page assembly) is BLOCKED until the owner ratifies the Phase-0a specimen (§12).**
 
+### AMENDMENT — 9-12 map extended by the Pack milestone (owner ruling 2026-07-17, reports-pack Pack-1)
+
+*The Pack milestone's §9 (reports-pack.md) resolved **Pack-1** on 2026-07-17: the two Amendment-I
+dispositions that do **not** map to the §9-12 list — **Cash flow** and **Scenarios**, both
+household-scoped (per-entity is impossible: Scenarios rejects `entity_id` by design
+`portfolio.py:1043-1044`; Cash flow has no entity seam, D-057) — are delivered as **consolidated
+subsections**, not silently dropped. This amendment records that extension so **one** ratified map
+exists, not two conflicting ones.*
+
+**The ratified §9-12 map, as amended (2026-07-17):**
+- **Consolidated** = net-worth trend · review **· cash flow · scenarios** *(the two additions bind
+  this milestone; both are household-scoped by construction, so they can only be consolidated)*.
+- **Per-entity** = `value_portfolio` (net worth) · policy-drift · realised P/L · risk + attribution.
+
+The original 9-12 row (Consolidated = net-worth trend + review) stands as first drafted; **this dated
+amendment is authoritative** where they differ. All five Amendment-I dispositions now map to a named
+Pack section — see the reports-pack.md §0 ledger-mapping table.
+
 ---
 
 ## 11. PHASE 0 — CONTRACT-DELTA EVIDENCE (backend-first; RED→GREEN per commit)

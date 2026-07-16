@@ -1,8 +1,10 @@
 # reports-pack — Reports Pack (`/reports/pack`) MILESTONE plan
 
-**Status: PLAN DRAFTED — §10 verify-first RECORDED · §9 NEEDS DECISION OPEN (9 items, 6 ⚑).
-NOTHING RESOLVED, NO CODE.** This is a **milestone plan for a sanctioned print/export
-artifact — the Pack is NOT an IA page (D-038).** It inherits the Reports-page rulings already
+**Status: PHASE 0 BUILT — §9 RESOLVED (owner one-pass 2026-07-17, all 9 ACCEPTED as proposed) ·
+Phase 0 (print palette + GLOSSARY + the `/reports/pack` route + docs) SHIPPED · Phase 0a
+PRINT-GEOMETRY specimen PROPOSED, ⏸ AWAITING OWNER RATIFICATION.** Phase 1 (the Reports-page entry
+point + owner walk) is **BLOCKED until the owner ratifies the print geometry** (§7a). This is a
+**milestone plan for a sanctioned print/export artifact — the Pack is NOT an IA page (D-038).** It inherits the Reports-page rulings already
 in hand (page-reports §9: 9-1 / 9-2 / 9-11 / 9-12 / 9-13 + Amendment I) — those are **cited,
 not re-decided**. Every claim below carries a file:line cite (verify-first, D-019). Build does
 not start until §9 is passed.
@@ -448,12 +450,50 @@ reason, not a blank or a fabricated zero.
 
 ---
 
-## 9. NEEDS DECISION — OPEN (owner one-pass; do NOT improvise; no build until passed)
+## 9. NEEDS DECISION — RESOLVED (owner one-pass 2026-07-17)
 
-*⚑ marks the load-bearing items the task named. Each carries a proposed resolution for the owner
-to accept or amend.*
+*All **nine** items RESOLVED in a single owner pass on **2026-07-17** — **every item ACCEPTED as
+proposed**, with **recording notes on Pack-1, Pack-4, and Pack-9** (verbatim below). ⚑ marks the
+load-bearing items the task named. Each row flips **OPEN → RESOLVED** with its ruling + date; the
+"Proposed resolution" column is retained as the accepted text.*
 
-| # | Item | Why it blocks | Proposed resolution (for owner) |
+### Rulings (owner 2026-07-17)
+
+| # | Ruling | Date |
+|---|--------|------|
+| **Pack-1 ⚑** | ✅ **RESOLVED — ACCEPTED as proposed.** Extend the CONSOLIDATED section with household-scoped **Cash flow** + **Scenarios** subsections. Consolidated becomes: **net-worth trend · review · cash flow · scenarios**. **RECORDING NOTE (below):** this SUPERSEDES the ratified §9-12 map — a dated amendment is appended to page-reports §9-12 so one ratified map exists. The §0 ledger now maps all five Amendment-I dispositions to named sections. | 2026-07-17 |
+| **Pack-2 ⚑** | ✅ **RESOLVED — ACCEPTED as proposed.** Author the minimal print palette + `@media print` rules **spec-first** (DESIGN-SYSTEM amendment): light bg / dark text (light-theme donor), semantic gain/loss retained **as enhancement** (the sign carries the information — colour never alone), page-break rules, repeating artifact header. | 2026-07-17 |
+| **Pack-3 ⚑** | ✅ **RESOLVED — ACCEPTED as proposed.** Empty sections render an honest note carrying the reader's **served reason**, never a blank or a fabricated 0; the section stays present so the artifact structure is stable across entities (Guarantee 3). | 2026-07-17 |
+| **Pack-4 ⚑** | ✅ **RESOLVED — ACCEPTED as proposed.** Consolidated always renders. **RECORDING NOTE (below):** **zero** entities → consolidated + the honest omission note; **one** entity → its per-entity section **still renders** (structural stability; the partial overlap is accepted). | 2026-07-17 |
+| **Pack-5 ⚑** | ✅ **RESOLVED — ACCEPTED as proposed.** The artifact header carries the global disclaimer block (title · generated date · base currency · current-FX caveat · not-advice line); sections with a served `disclaimer` render it verbatim; the 3 disclaimer-less sections rely on the header + a "reporting only" caption. | 2026-07-17 |
+| **Pack-6 ⚑** | ✅ **RESOLVED — ACCEPTED as proposed.** Order: consolidated first (net-worth trend → review → cash flow → scenarios), then per-entity sections (entities **alphabetical**), each entity's subsections net worth → drift → realised → risk + attribution. Owner ratifies the order at the Phase-0a gate. | 2026-07-17 |
+| **Pack-7** | ✅ **RESOLVED — ACCEPTED as proposed.** Author "Consolidated" and "Per-entity" in `GLOSSARY.md` **first**, then any popover mirror, guarded by `test_glossary_parity.py`. | 2026-07-17 |
+| **Pack-8** | ✅ **RESOLVED — ACCEPTED as proposed.** Extend the export-artifacts standard: "disclaimers always" + now-snapshot **"as-of"** labelling **bind the print HTML** (content-level); the **utf-8-sig/BOM** rule is **CSV-only** and does not apply (the Pack emits no CSV). Record the scope split in DESIGN-SYSTEM. | 2026-07-17 |
+| **Pack-9** | ✅ **RESOLVED — ACCEPTED as proposed.** The artifact is **fully self-contained** (inline CSS, no app JS, no external fetch); **access follows the platform read posture — no one-route guard**. **RECORDING NOTES (below):** SECURITY-BASELINE gains the named line (the Pack route, consolidated human-readable artifact under the read posture, loopback default; revisit under read-auth); the **read-auth revisit is recorded in SECURITY-BASELINE §7 (gap #7) + R-1**, not R-30 (verify-first: R-30 is the Postgres-backend item — owner re-ruling 2026-07-17, this session). Both are Phase-0 doc commits. | 2026-07-17 |
+
+### Recording notes (owner 2026-07-17 — verbatim)
+
+- **RECORDING NOTE (Pack-1):** the consolidated extension extends to **trend · review · cash flow ·
+  scenarios**. This **SUPERSEDES the ratified §9-12 map** — a **dated amendment is appended to
+  `page-reports.md` §9-12** (owner ruling 2026-07-17, Pack-1) so **one** ratified map exists, not two
+  conflicting ones. The **§0 ledger-mapping table** now maps all five Amendment-I dispositions to
+  named sections.
+- **RECORDING NOTE (Pack-4):** **zero** entities → consolidated + the honest omission note; **one**
+  entity → its per-entity section **still renders** (structural stability; the partial overlap is
+  accepted, not collapsed).
+- **RECORDING NOTE (Pack-9):** the artifact is fully self-contained (inline CSS, no app JS, no
+  external fetch); access follows the platform read posture — **no one-route guard**.
+  **SECURITY-BASELINE gains the named line** (the Pack route: consolidated human-readable artifact
+  under the read posture, loopback default; revisit under read-auth). The **read-auth revisit note**
+  lands in **SECURITY-BASELINE §7 (gap #7 disposition) + a cross-ref to R-1 (passphrase mode)** —
+  **NOT ROADMAP R-30**: verify-first found R-30 is the **Postgres-backend option**, and there is no
+  read-auth ROADMAP item (the read-on-no-PIN posture lives in SECURITY §7 gap #7 + R-1). The owner
+  re-ruled this home on 2026-07-17 (this session) so the ROADMAP is not corrupted. Both are Phase-0
+  doc commits.
+
+### Accepted resolutions (as proposed — retained verbatim)
+
+| # | Item | Why it blocked | Accepted resolution (as proposed) |
 |---|------|---------------|----------------------------------|
 | **Pack-1 ⚑** | **Scenarios + Cash flow do not map to the ratified §9-12 section list** — both are household-scoped (Scenarios rejects `entity_id` by design `portfolio.py:1043-1044`; Cash flow has no entity seam, D-057), so per-entity composition is impossible. The §9-12 consolidated list names only *net-worth trend + review*. Amendment I commits both to Pack delivery — they cannot be silently dropped. | Closes the Amendment-I ledger. Neither maps cleanly (the task's expected ⚑). | **Extend the CONSOLIDATED section** to add two household-scoped subsections — **Scenarios** (`scenario_report`) and **Cash flow** (`obligations_report` + `goals_report` + `contributions_report`) — since both are inherently household/consolidated. Consolidated becomes: net-worth trend · review · cash flow · scenarios. This delivers all five Amendment-I dispositions against §0. *(Alternative: re-declare Scenarios/Cash-flow as not-in-Pack — but both explicitly named D-061 as their export home, so extending is the honest closure.)* |
 | **Pack-2 ⚑** | **No print palette exists** — `frontend/src/theme/tokens.css` is dark-theme + light-theme only; no `@media print` rule, no print tokens anywhere in `frontend/src`; DESIGN-SYSTEM has no print guidance (§10-3). Dark backgrounds do not print. | The artifact cannot render legibly without it. New print affordance → DESIGN-SYSTEM amendment. | **Author a minimal PRINT PALETTE + `@media print` rules spec-first** (DESIGN-SYSTEM amendment): light background / dark text (donor = light theme `tokens.css:22-64`), semantic gain/loss retained, page-break rules (`break-before: page` per top-level section, `break-inside: avoid` per card), a repeating artifact header. Inline in the artifact's self-contained CSS (no app token layer at runtime). |
@@ -467,6 +507,8 @@ to accept or amend.*
 
 ---
 
-**Sign-off to start build:** §9 has no open blocker · the §3b delta (`GET /reports/pack`) is
-approved · Pack-2's print palette is ratified · the Phase-0a print-geometry specimen is ratified by
-the owner (§7a). **Until then: PLAN ONLY.**
+**Sign-off — §9 CLOSED (owner 2026-07-17):** all **9 items RESOLVED** (ACCEPTED as proposed + the
+Pack-1/4/9 recording notes). The §3b delta (`GET /reports/pack`) is approved and **BUILT in Phase 0**
+(§11); Pack-2's print palette is authored spec-first (§11). **Phase 1 (the Reports-page entry point +
+the owner acceptance walk) remains BLOCKED until the owner ratifies the Phase-0a print-geometry
+specimen by looking (§7a).**

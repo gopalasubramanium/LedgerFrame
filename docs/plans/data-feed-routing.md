@@ -1353,3 +1353,116 @@ isolated instance.
 
 **STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b batch 3, judgment
 only).
+
+---
+
+## §20 — PHASE 3b (batch 4): §14dr-13 masters + R-42 activation (owner re-walk 2026-07-18)
+
+The owner's batch-3 re-walk filed **one regression finding** (§14dr-13) and **activated
+R-42** with a definition. Docs (this section + ROADMAP + `intraday-series.md` + CURRENT
+NEXT) commit first; the build follows verify-first with a hard stop.
+
+### §14dr-13 — REGRESSION (owner-filed 2026-07-18): master-sync affordances dropped without a recorded deferral
+
+**The finding.** v1 Settings carried **refresh / fetch-history + master-sync
+affordances** — the *"AMFI/CoinGecko/ECB/Kite opt-in cards"* (`01-FEATURE-INVENTORY.md:191`).
+v2 **dropped them WITHOUT a recorded deferral**: the Settings **Candidates Ledger**
+(`page-settings.md §0`) inventoried **keys** (the `_ALLOWED_KEYS` settings), **not
+actions** — so the sync *actions* fell through the audit net silently. That silence is
+the defect; a drop is legitimate only when it is a **recorded** deferral.
+
+**Why it surfaced now.** The dr-12 picker is honestly **class-scoped** (D-097), but the
+non-equity classes have **thin / no masters to select from** on a fresh instance — the
+crypto/mutual-fund suggestion pools come **only** from the local `coingecko_coins` /
+`amfi_schemes` caches (`services/coingecko.py:83`, `services/amfi.py`), which are **empty
+until synced**. dr-12 fixed the *message* ("No crypto instruments match — create 'XRP'");
+dr-13 restores the *means to populate the pool* so the honest empty can become an honest
+list.
+
+**Owner ruling (2026-07-18):** **masters sync RETURNS**; the **Data feeds tab is its
+canonical home** (IA P-1 — one home; the tab is already the feed/provider canonical home,
+§14st-1). The picker's honest empty gains a **never-synced** variant that points at the
+card ("No mutual-fund master synced yet — sync it in Settings → Data feeds").
+
+### R-42 — ACTIVATED (owner definition supplied 2026-07-18)
+
+**Intraday price series** — surfaced BY §14dr-7 (the disabled 1D/5D). The owner supplied
+the **definition** at this re-walk, activating it as the milestone **immediately after
+this one closes, before Help**:
+
+- **tier-aware** — the fetch respects the learned `av_tier` (alphavantage free tier keeps
+  the honest **disabled** 1D/5D; a premium tier enables intraday);
+- **USER-TRIGGERED** — an explicit fetch **per instrument / per range** (never a
+  background poll; the provider-budget discipline, `alphavantage free ≈ 25 req/day`);
+- **PERSISTED permanently once fetched** — an intraday series, once pulled, is stored and
+  reused (the `PriceHistory.interval` seam, `app/models/__init__.py:325`); no re-fetch on
+  every view.
+
+Own plan file **`docs/plans/intraday-series.md`** (stub now, the R-38 stub pattern).
+ROADMAP R-42 flipped parked → **ACTIVATED**; CURRENT NEXT re-sequenced.
+
+### Step 1 — sync-machinery verification (REPORTED before building; STOP CONDITION NOT met)
+
+Per-master, what actually exists (file:line), against the hard stop *"if any master needs
+a NEW sync engine — scheduler, job model, or >1 new table — beyond wiring existing
+fetch/parse code to a trigger — STOP"*:
+
+- **AMFI scheme list** — **full engine already live.** `fetch_nav_all()` +
+  `parse_nav_all` (`app/providers/market/amfi.py`), `refresh_schemes` upserts the
+  `amfi_schemes` master + publishes NAVs (`app/services/amfi.py:20`), migration
+  `b4e77c9a1f22_phase4_amfi_schemes`. Trigger **already an endpoint in the frozen
+  contract**: `POST /amfi/refresh` (require_auth, file-or-network, `routes/amfi.py:31`);
+  `GET /amfi/status` → `{schemes, priced, as_of}` (`amfi.py:101`, `as_of` = max NAV
+  *data* date). Picker consumes it live (`markets.py:206`).
+- **CoinGecko coins/list** — **full engine already live.** `fetch_coins_list()` /
+  `fetch_prices()` (`providers/market/coingecko.py:82,90`), `refresh_coins` upserts the
+  `coingecko_coins` master (`services/coingecko.py:24`), migration
+  `c5f88d0b3a41_phase4_coingecko_coins`; the coins table populates **on-demand** in the
+  refresh path when empty (`routes/coingecko.py:52` `if status["coins"] == 0`). Trigger
+  **already an endpoint**: `POST /coingecko/refresh` (require_auth,
+  `routes/coingecko.py:34`); `GET /coingecko/status` → `{coins, mapped}` (**no
+  timestamp**). Picker consumes it live (`markets.py:209`).
+- **Equities / ETF search** — **no master to sync; already live** via provider search
+  (`get_provider().search_instruments`, `markets.py:212`).
+
+**VERDICT: NO master needs a new sync engine.** No scheduler, no job model, no new table
+(all four master tables — `amfi_schemes`, `coingecko_coins`, `ecb_fx_rates`,
+`kite_instruments` — already migrated). The triggers already exist as contract endpoints.
+**The stop condition is NOT triggered — wiring (indeed less than wiring) suffices.** Two
+honest gaps remain, both thin: (a) the **Settings UI affordance** (the dropped cards —
+§14dr-13 proper); (b) `status()` serves **no true last-synced timestamp** — surfacing
+`synced_at = max(updated_at)` (both columns exist, upserted on refresh) is a served,
+honest touch, invisible to contract regen (untyped `dict` responses; **134 held**).
+
+**Scope of the Masters card:** the **two instrument masters the picker consumes** — AMFI
+(mutual funds) and CoinGecko (crypto). ECB is an FX reference (not an instrument master)
+and Kite is derivatives identity (the picker's `else` lane routes to the market provider,
+not Kite) — both out of scope for this picker-centric finding, their `/refresh`+`/status`
+endpoints untouched.
+
+### Step 2 — build (wiring; no new engine)
+
+- **Backend (thin honesty touch):** `amfi_svc.status` / `cg.status` add `synced_at`
+  (`max(updated_at)`, ISO or null = never synced). The existing require_auth
+  `POST /amfi/refresh` + `POST /coingecko/refresh` are the sync triggers (rate-budget
+  aware already — AMFI single-file pull, CoinGecko populate-if-empty within the ≈25/day
+  budget). Contract regen same-commit — **134 held** (dict responses, no path added).
+- **Settings → Data feeds → "Masters" card:** per master — served **last-synced**
+  (honest **"Never synced"** when `synced_at` is null / count 0), a **Sync-now** `Button`
+  on the dr-8 async-action standard (`loading` = pending/disabled + result toast). No
+  fabricated progress; served counts only.
+- **Picker never-synced empty (dr-12 follow-through):** when the class's master has never
+  been synced, the honest empty says **"No mutual-fund master synced yet — sync it in
+  Settings → Data feeds"** (crypto likewise), **journey-guarded** to the card (§14ac-2 —
+  the link must actually reach the Masters card, not a dead route).
+- **Tests:** per-master sync trigger (fail-first), picker-consumes-master per class, the
+  never-synced empty + its journey guard.
+
+### Re-run + STOP
+
+Phase 3b batch-4 re-run on a **reset demo instance** (owner instance untouched,
+`[[prepass-harness]]`): sync each master live, then add **one mutual fund** and **one
+crypto** end-to-end from the synced dropdowns; screenshots (Masters card before/after
+sync, per-class picker with real entries, the never-synced state). Suites + contract
+(**134** held) + frontend **exit code** + per-page pre-passes (Settings · Holdings
+picker). `git push`. **STOP — the owner re-walks.**

@@ -1582,21 +1582,25 @@ Frontend check: **N/A — plan-only, no code touched.** The §9 one-pass happens
 *(**Settings ✅ DONE** — six tabs; owner-accepted 2026-07-18, see "SETTINGS — DONE ✅" below. Accounts ✅,
 Reports ✅, Reports Pack ✅ also DONE. The Amendment-I declined-exports ledger — the oldest open debt in the
 rebuild — is CLOSED.)*
-1. **data-feed-routing (R-38 activation)** — `docs/plans/data-feed-routing.md`, **PLAN ONLY, verify-first**
-   (plan-only kickoff already filed at the Settings close). Provider routing matrix: per asset-class ×
-   listing-country provider mapping; editor home **Settings → Data feeds**; per-cell provenance on Pricing
-   Health. **Pulled forward as the NEXT milestone** (owner ruling 2026-07-18; the R-35-activation precedent).
-2. Then **Help** ([Help]-popover retrofit, owner-picked targets) · **Legal** · the **AI-surfaces
+1. **data-feed-routing (R-38 activation)** — `docs/plans/data-feed-routing.md`, verify-first. Provider
+   routing matrix (built + accepted through the Phase-3b walk); **currently in the Phase-3b re-walk** —
+   **batch 4** filed **§14dr-13** (masters-sync affordance regression) + **activated R-42** (§20). Batch 4
+   is FRONTEND-wiring (the sync engine already exists — Step-1 verified, no new engine); STOP after its
+   re-run for the owner re-walk.
+2. **intraday-series (R-42)** — `docs/plans/intraday-series.md` (**stub filed; PLAN ONLY**). **ACTIVATED
+   with an owner definition** (tier-aware · user-triggered · persisted; §20 / §14dr-13). Sequenced as the
+   milestone **immediately after data-feed-routing closes, BEFORE Help** (owner ruling 2026-07-18).
+3. Then **Help** ([Help]-popover retrofit, owner-picked targets) · **Legal** · the **AI-surfaces
    milestone** (D-067/D-068) · **chrome-sidebar-refresh** (R-39, the **final pre-release** milestone,
    §14st-3) · then release **Gates C→F** and tag `v2.0.0`.
-3. **Voice (R-32) is POST-RELEASE** (owner ruling 2026-07-18, RD-9 Amendment 4) — it **does NOT gate
+4. **Voice (R-32) is POST-RELEASE** (owner ruling 2026-07-18, RD-9 Amendment 4) — it **does NOT gate
    v2.0.0**; its definition is **still owed** and gates whichever release ships it.
 
 **Release posture (RD-9 Amendment 3, REFINED by Amendment 4):** the release gate is **FULL COMPLETION** of
-the enumerated v2.0.0 set — **all pages + Settings + data-feed-routing (R-38) + Help + Legal + AI-surfaces +
-chrome-sidebar-refresh (R-39) + Gates C→F**; **Voice is post-release.** Gates C–F stay dormant until the
-owner accepts the full set. **Standing, owner-only:** the **CLA counsel review** before the first external
-merge (Gate B2).
+the enumerated v2.0.0 set — **all pages + Settings + data-feed-routing (R-38) + intraday-series (R-42) +
+Help + Legal + AI-surfaces + chrome-sidebar-refresh (R-39) + Gates C→F**; **Voice is post-release.** Gates
+C–F stay dormant until the owner accepts the full set. **Standing, owner-only:** the **CLA counsel review**
+before the first external merge (Gate B2).
 
 ## Scheduled cross-page retrofits (owner-picked targets; each re-runs its own pre-pass)
 

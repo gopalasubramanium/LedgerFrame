@@ -1466,3 +1466,70 @@ crypto** end-to-end from the synced dropdowns; screenshots (Masters card before/
 sync, per-class picker with real entries, the never-synced state). Suites + contract
 (**134** held) + frontend **exit code** + per-page pre-passes (Settings · Holdings
 picker). `git push`. **STOP — the owner re-walks.**
+
+### §20 — PHASE 3b (batch 4) FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+§14dr-13 fixed verify-first, docs-first, one fix per commit. **Step-1 verification paid
+off exactly as batch-3 did: the STOP CONDITION was NOT met** — every master already had
+a full fetch/parse/store engine wired to a contract endpoint, so the batch reduced to a
+thin backend honesty touch + FRONTEND wiring + the picker follow-through. **Contract HELD
+at 134.**
+
+- **DONE — records filed first** (`94d4b1e`) — §14dr-13 finding + Step-1 report + R-42
+  activation (ROADMAP flip + `intraday-series.md` stub + CURRENT NEXT), before any fix.
+- **DONE — backend honesty touch** (`ef5149c`) — `amfi_svc.status` / `cg.status` serve
+  `synced_at = max(updated_at)` (null = never synced). Fail-first: both status tests RED
+  (KeyError `synced_at`) on the pre-edit readers, GREEN after; run on the clean `session`
+  fixture (app_client seeds demo coins/schemes). Untyped dict — contract 134 held.
+- **DONE — search master signal** (`5a4597d`) — `GET /instruments/search` adds a served
+  `master` {provider, synced} (null for classes with no dedicated master), so the picker's
+  honest empty can distinguish never-synced from no-match. Test: crypto synced (demo seeds
+  coins), mutual-fund never-synced until an AMFI refresh, equity master=None.
+- **DONE — Settings Masters card + picker never-synced** (`74c1d65`) — Data feeds gains an
+  "Instrument masters" card (per master: served last-synced / honest "Never synced" + a
+  Sync-now `Button` on the dr-8 async-action standard). The picker consumes the served
+  `master` signal: a never-synced class shows "No {class} master synced yet — sync it in
+  Settings → Data feeds", a link **journey-guarded** to the card (`#/settings?tab=data-feeds`,
+  §14ac-2). vitest 298 → 304 (+6: 3 picker + 3 masters).
+
+### Phase 3b (batch 4) re-run — RESULT (isolated demo instance; owner instance untouched)
+
+Isolated **demo-seeded** backend on spare port **8399** (own temp data dir,
+`LEDGERFRAME_DEMO_SEED`) + a throwaway **Vite dev** on **5199** proxying to it (owner's
+5173→8321→`~/.ledgerframe-data` never touched; §15c, `[[prepass-harness]]`). The `.env`
+was **snapshotted before and verified byte-IDENTICAL after** (md5 `0f421eb5…`; no
+`apply_env` this batch); the throwaway `vite.prepass.config.ts` + driver scripts + temp
+data dir removed; **working tree clean**; both isolated servers down.
+
+Every finding exercised **end-to-end via the real UI**, all **PASS**, **0 console errors**
+(Vite-dev stack — no prod-CSP theme-flash). **Live network egress worked** — the AMFI
+sync pulled the real `NAVAll.txt` (**14,224 schemes**):
+
+- **Masters card, before:** AMFI **"Never synced"**, CoinGecko "Last synced 2026-07-17 · 2
+  entries" (demo). *(01-masters-before.png)*
+- **Picker never-synced:** Adding **Mutual fund** + searching "axis" showed **"No mutual
+  fund master synced yet — sync it in Settings → Data feeds"**; the link href is
+  **`#/settings?tab=data-feeds`** (journey guard verified). *(02-picker-neversynced.png)*
+- **Live sync:** the AMFI **Sync now** button (dr-8 loading state) completed with a served
+  toast **"Sync complete — 14224 entries."**; the row then read **"Last synced 2026-07-17 ·
+  14224 entries"**. CoinGecko Sync now completed ("2 entries" — its `/refresh` fetches the
+  coins/list only when empty, so the demo seed stood; noted). *(03-masters-after.png)*
+- **Picker WITH real entries:** Adding Mutual fund + "axis" now showed **"Suggested (mutual
+  fund)"** with real AMFI schemes (128952 / 120437 / 120438 / 120439 — real codes + full
+  names); crypto showed 3 options from the synced coin master. *(04, 06)*
+- **Add end-to-end from the synced dropdowns:** a mutual fund (real AMFI code **128952**,
+  qty 10) and a crypto (BTC, qty +2) were added and appear in holdings. *(05, 07)*
+
+- **Gates:** backend **927 passed** (was 924; +3: two `synced_at`, one search-master);
+  `make api-contract-check` current, contract **134 path-keys** (HELD — no endpoints added);
+  frontend `npm run check` **exit 0** — lint + typecheck + tokens + check:copy + **vitest
+  304** + **e2e 337**.
+- **Screenshots (7):** masters before/after · picker never-synced (with the card link) ·
+  per-class pickers with real synced entries · both end-to-end adds.
+
+**Accepted-page pre-passes stated:** Settings → Data feeds (the Masters card) and the
+Holdings Add-flow picker (never-synced + synced-entry states) were driven end-to-end on the
+isolated instance.
+
+**STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b batch 4, judgment
+only; the close ritual follows only after that re-walk).

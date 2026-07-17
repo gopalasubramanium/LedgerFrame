@@ -90,6 +90,60 @@ async def test_mutual_fund_history_not_fetched_from_equity_provider(session):
     assert candles == []
 
 
+# --- §14dr-18: demo charts are visibly distinct per instrument -------------- #
+#
+# The owner observed "identical wave shapes across every chart". Verify-first
+# proved history is genuinely per-instrument (no routing/binding defect); the
+# look-alike was the shared-envelope demo generator (one fixed frequency +
+# amplitude for every symbol, only the phase seeded) surviving PriceChart's
+# min/max normalisation. These pins guard the diversified generator: two
+# served histories must not be identical, AND the normalised shapes must vary
+# across the demo universe (the shared-envelope code gave every symbol the same
+# turning-point count — spread ~1 — so this is RED on the old generator).
+
+async def test_served_histories_differ_per_instrument(session):
+    from datetime import UTC, datetime, timedelta
+
+    from app.services.market import get_history_cached
+
+    await seed_demo_data(session)
+    await session.flush()
+    end = datetime.now(UTC)
+    start = end - timedelta(days=120)
+    aapl = [c.close for c in await get_history_cached(session, "AAPL", "1d", start, end)]
+    msft = [c.close for c in await get_history_cached(session, "MSFT", "1d", start, end)]
+    assert aapl and msft
+    # Two instruments' served histories are NOT identical (the owner's named pin).
+    assert aapl != msft
+
+
+async def test_demo_series_shapes_are_diverse():
+    from datetime import UTC, datetime, timedelta
+
+    from app.providers.market.mock import MockMarketDataProvider
+
+    def _turning_points(closes: list[float]) -> int:
+        lo, hi = min(closes), max(closes)
+        rng = (hi - lo) or 1.0
+        n = [(x - lo) / rng for x in closes]  # normalise as PriceChart does
+        return sum(
+            1 for i in range(1, len(n) - 1)
+            if (n[i] - n[i - 1]) * (n[i + 1] - n[i]) < 0
+        )
+
+    provider = MockMarketDataProvider()
+    end = datetime.now(UTC)
+    start = end - timedelta(days=180)
+    universe = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "TSLA", "BTC", "ETH", "VOO"]
+    counts = []
+    for sym in universe:
+        candles = await provider.get_history(sym, "1d", start, end)
+        counts.append(_turning_points([float(c.close) for c in candles]))
+    # Shared-envelope generator → same frequency for all → spread ~1 (RED).
+    # Diversified generator → per-symbol period/amplitude → wide spread (GREEN).
+    assert max(counts) - min(counts) >= 5
+
+
 # --- §7: briefing percentage never mixes currencies ------------------------- #
 
 def test_mover_str_uses_base_percentage():

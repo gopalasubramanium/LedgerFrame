@@ -76,12 +76,29 @@ def _seed(text: str) -> int:
 
 
 def _walk(symbol: str, day: int) -> float:
-    """Deterministic multiplicative factor for a given symbol & day index."""
+    """Deterministic multiplicative factor for a given symbol & day index.
+
+    Amplitude, period AND phase of every component are derived from the
+    per-symbol seed — not just the phase — so different symbols trace visibly
+    different shapes (different number of humps, different heights), never one
+    shared envelope under many names. This keeps the demo charts distinct after
+    the PriceChart min/max normalisation, which strips the differing base level.
+    Bounded to roughly [0.80, 1.20]; fully reproducible across restarts.
+    """
     s = _seed(symbol)
-    # Two overlapping sinusoids + seeded phase → looks organic, fully reproducible.
-    drift = math.sin((day + s % 97) / 9.0) * 0.06
-    wobble = math.sin((day + s % 31) / 2.3) * 0.025
-    return 1.0 + drift + wobble
+    # Slow swing — period 7..29 days, amplitude 0.040..0.099.
+    amp1 = 0.04 + (s % 60) / 1000.0
+    per1 = 7.0 + (s // 60 % 23)
+    slow = math.sin((day + s % 97) / per1) * amp1
+    # Fast wobble — period 1.7..4.9, amplitude 0.015..0.039.
+    amp2 = 0.015 + (s // 7 % 25) / 1000.0
+    per2 = 1.7 + (s // 11 % 17) / 5.0
+    fast = math.sin((day + s % 31) / per2) * amp2
+    # Long swell — period 30..89 days, amplitude 0.020..0.059 (shape variety).
+    amp3 = 0.02 + (s // 13 % 40) / 1000.0
+    per3 = 30.0 + (s // 17 % 60)
+    swell = math.sin((day + s % 53) / per3) * amp3
+    return 1.0 + slow + fast + swell
 
 
 class MockMarketDataProvider:

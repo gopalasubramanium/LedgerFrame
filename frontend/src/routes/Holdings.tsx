@@ -514,10 +514,22 @@ export function Holdings() {
           accounts={accounts}
           baseCcy={baseCcy}
           onClose={() => setAddOpen(false)}
-          onDone={async () => {
+          onDone={async ({ recordedTransaction }) => {
             setAddOpen(false);
-            await reload();
-            toast.show({ message: "Added." });
+            if (recordedTransaction) {
+              // §14dr-21: reveal the just-recorded transaction — a back-dated buy (common
+              // for mutual funds) would otherwise sink below the most-recent-first window,
+              // reading as "no transaction was recorded" even though it was. Same reveal as
+              // a CSV import: sort by "recently added", jump to page 1.
+              setTxnSort({ key: "added", dir: "desc" });
+              setTxnOffset(0);
+              setTxnReloadTick((t) => t + 1);
+              await reloadCore();
+              toast.show({ message: "Added — showing the recorded transaction." });
+            } else {
+              await reload();
+              toast.show({ message: "Added." });
+            }
           }}
           onError={(m) => toast.show({ message: m })}
         />
@@ -756,7 +768,7 @@ function AddDialog({
   accounts: AccountRow[];
   baseCcy: string;
   onClose: () => void;
-  onDone: () => void;
+  onDone: (r: { recordedTransaction: boolean }) => void;
   onError: (msg: string) => void;
 }) {
   const [tile, setTile] = useState<AssetTile | null>(null); // D-089 entry step
@@ -887,7 +899,11 @@ function AddDialog({
       });
       if (!res.ok) return onError(`Couldn't add manual asset: ${res.error}`);
     }
-    onDone();
+    // §14dr-21: a listed add (any class — MF, crypto, equity) and a manual cash-flow
+    // txn BOTH record a transaction; a manual-holding add does not. Tell the parent so
+    // it can reveal the just-added row in the ledger (a back-dated buy would otherwise
+    // sink below the most-recent-first window — the finding-#8 reveal, applied to Adds).
+    onDone({ recordedTransaction: mode === "listed" || manualAction === "txn" });
   }
 
   return (

@@ -26,6 +26,29 @@ async def test_filter_and_total_are_server_side(app_client):
     assert r["filter"] == "ZZ"
 
 
+async def test_mutual_fund_and_crypto_adds_both_record_a_transaction(app_client):
+    # §14dr-21: verify-first found NO divergence — a listed add records a TransactionIn
+    # regardless of asset class (the owner questioned the mutual fund). Pin both. The
+    # mutual fund is BACK-DATED (realistic for funds) — its row still exists and is
+    # reachable via the full filtered ledger; it just isn't at the top of the default
+    # most-recent-first window (the reveal is a UI concern, the row is never dropped).
+    mf = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "143263", "name": "Parag Parikh Flexi Cap (DEMO)", "type": "buy",
+        "ts": "2021-06-15T00:00:00", "quantity": 10, "price": 55, "currency": "INR",
+        "asset_class": "mutual_fund",
+    })
+    assert mf.status_code == 200
+    crypto = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "SOLX", "type": "buy", "ts": "2026-07-18T00:00:00",
+        "quantity": 3, "price": 150, "currency": "USD", "asset_class": "crypto",
+    })
+    assert crypto.status_code == 200
+    mf_rows = (await app_client.get("/api/v1/portfolio/transactions?filter=143263")).json()["transactions"]
+    crypto_rows = (await app_client.get("/api/v1/portfolio/transactions?filter=SOLX")).json()["transactions"]
+    assert len(mf_rows) == 1 and mf_rows[0]["type"] == "buy"
+    assert len(crypto_rows) == 1 and crypto_rows[0]["type"] == "buy"
+
+
 async def test_ledger_serves_instrument_name_beside_symbol(app_client):
     # §14dr-19 (owner reversal of dr-16): the ledger serves the instrument NAME
     # beside the canonical symbol; null when the name equals the symbol.

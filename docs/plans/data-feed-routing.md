@@ -337,5 +337,72 @@ component needs an unresolved amendment.
 
 ---
 
-**Plan-only.** The §9 one-pass happens in chat with the owner. Nothing here commits a
-data shape or UI until the owner rules each ⚑.
+## §9 — RESOLVED (owner one-pass, 2026-07-18)
+
+*The §9 one-pass happened in chat with the owner on 2026-07-18; the owner ruled every
+item. The rulings below are binding and supersede the PROPOSED resolutions in the §9
+table above (which stands as the reasoning of record). Build proceeds from these.*
+
+- **1 — ACCEPT + AMENDMENT A (PREPEND SEMANTICS, binding).** The matrix cell is
+  consulted at step **"3.5"**, immediately before the active-provider fallback
+  (`router.py:279`), after override (step 1), manual-only (step 2), and
+  cache-publish/NAV (step 3) have returned. **On failure or degradation — rate-limit,
+  unkeyed, tier-degraded, error — resolution CONTINUES down the existing step-4 chain
+  unchanged**: a cell can never price *less* than today. `route_rule = matrix` is
+  served **only when the cell actually priced the instrument**. Items 1 and 7 are now
+  consistent by construction. Encoded fail-first in `route()`; the load-bearing test is
+  1(b) below.
+- **2 — ACCEPT.** An unmapped cell **falls through** to the current lane chain / active
+  provider (matrix as a *refinement*, not a gate). An **empty matrix = today's
+  behaviour exactly**. Explicit "unrouted" is **rejected as the default** (it would
+  repoint instruments to `None` and break the guarantee).
+- **3 — ACCEPT.** **Edit-time** honest **400** via the `validate_source_override` logic
+  (`caps.asset_classes ∋ class` or `*` **AND** `caps.regions ∋ country` or `*`).
+  **Resolve-time** re-validates the cell against live CAPABILITIES; an incapable/stale
+  cell is **ignored** → falls through. Both pinned fail-first.
+- **4 — ACCEPT (option B).** The active provider stays a **separate env-rooted terminal
+  fallback** (D-014). `/system/data-source` **and** the Settings provider control are
+  **UNCHANGED**; the matrix is **purely additive** above them. (Alternative A — active
+  provider as the `*×*` default cell — rejected: it migrates an env setting into the DB.)
+- **5 — ACCEPT.** Dimensions = **asset_class × listing_country**; country =
+  **ISO-3166 alpha-2 + `"*"` wildcard**, mirroring `CAPABILITIES.regions`. The D-083
+  six-bucket region model is **display-only** and NOT used here. Subclass granularity is
+  **out of scope**.
+- **6 — ACCEPT.** **Quotes lane ONLY.** `fx` routing (`services/fx.py`) and `news` feeds
+  (`/news/feeds`) are **explicit non-scope** — recorded, not built, untouched.
+- **7 — ACCEPT.** A **capable-but-unkeyed** cell: **accept-with-caveat** → a degraded
+  chip ("needs credentials — add them in Settings"); resolve-time `_auth_gap`
+  fall-through until the key lands. (Capability *mismatch* — item 3 — remains a hard
+  400; only the credentials case is accept-with-caveat.)
+- **8 — ACCEPT.** Tier handling **grounded strictly in `external.py:96-157`.**
+  Edit-time validates **declared** CAPABILITIES (`av_tier` is learned-not-persisted →
+  accept-with-caveat); resolve-time honours the **learned** `av_tier` via the
+  **existing** ETF-proxy fallback; Pricing Health serves the **honest string**
+  ("index via ETF proxy — key not premium"). **No new tier semantics invented.**
+- **9 — ACCEPT.** The editor **composes `DataTable` + `MasterSelect` + `StatusChip`**.
+  If the editable-cell grid doesn't compose cleanly, a **§5 DESIGN-SYSTEM amendment is
+  raised at Phase 0a** — never improvised mid-build.
+- **10 — ACCEPT.** `route()` serves `route_rule`
+  (`override` / `matrix` / `lane` / `active`) — **one derivation**; Pricing Health is
+  **read-only** (D-072 intact).
+- **11 — ACCEPT.** `GET`/`PUT` `/system/routing-matrix`,
+  `DELETE /system/routing-matrix/{class}/{country}`; `route_rule` on
+  `/portfolio/pricing-health`; `require_auth` on writes; D-105 served strings; contract
+  baseline **132 → +3 operations** (GET, PUT, DELETE); shape-discriminated removal tests.
+  *(Build note, 2026-07-18 execution: those three operations land on **two** OpenAPI
+  path-keys — GET+PUT share `/system/routing-matrix` — so the path-key count is
+  **132 → 134**; the "+3 / 135" figure in §4b/§11 counted operations, not path-keys.
+  The ruled endpoint SHAPES above are the binding artifact; the count is reported as
+  the observed 134. Owner ratifies the shapes by looking at 0a.)*
+- **R — AFFIRMED.** R-38 (a cell selects **one provider**) is a **different shape** from
+  R-13 (lane-priority reordering — **STAYS PARKED**). D-072's Pricing-Health-read-only
+  prohibition is **INTACT**. Recorded cross-file in COMMIT 2.
+- **T — ACCEPT.** **"Routing matrix"** = a GLOSSARY entry, authored **spec-first**
+  (`GLOSSARY.md` THEN `mocks/glossary.ts`, parity guard). `route_rule` values are served
+  **plain labels** (no glossary entries). "Data feeds" stays a plain tab label.
+
+---
+
+**Plan-only above §9-RESOLVED.** From §9-RESOLVED onward the owner has ruled; build
+proceeds backend-first, fail-first, one delta per commit, STOP at Phase 0a for
+ratification-by-looking.

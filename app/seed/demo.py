@@ -21,6 +21,7 @@ from app.models import (
     Holding,
     Instrument,
     InsurancePolicy,
+    RoutingMatrix,
     Transaction,
     TxnType,
     Watchlist,
@@ -313,6 +314,23 @@ async def seed_demo_data(session: AsyncSession) -> bool:
         ))
 
     await seed_estate(session)
+
+    # R-38 routing matrix (data-feed-routing §9 / Phase 3a). Two demo cells so the feature is
+    # VISIBLE end-to-end without repointing any NAV or canonical price (§9-1/§9-2):
+    #   • (etf, US → mock): capable + keyless, and mock is the demo's active provider, so the demo
+    #     VOO (and the US index ETFs) actually PRICE via the matrix — route_rule=matrix is visible
+    #     on Pricing Health with a real value, not a degraded cell. (Choosing a network provider like
+    #     yahoo here would decide "matrix" but leave the holding unpriced in the offline demo — the
+    #     honest end-to-end case needs the provider that can actually quote here, which is mock.)
+    #   • (equity, IN → eodhd): capable but needs a key, so with no credentials it is stored and
+    #     shown DEGRADED with the caveat, and routing falls through unchanged (§9-7) — the
+    #     accept-with-caveat path, live. An empty matrix would change nothing (§9-2).
+    # This is the ONE seed function both boot paths call (dev.sh migrations + reset-demo create_all),
+    # so the two cells appear identically on each (the seed-parity treatment).
+    session.add_all([
+        RoutingMatrix(asset_class="etf", listing_country="US", provider="mock"),
+        RoutingMatrix(asset_class="equity", listing_country="IN", provider="eodhd"),
+    ])
 
     session.add(Setting(key=SEED_FLAG_KEY, value="1"))
     await session.flush()

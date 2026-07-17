@@ -52,3 +52,25 @@ async def test_pricing_health_serves_provider_tier_note_key(app_client):
     body = (await app_client.get(_HEALTH)).json()
     assert "provider_tier_note" in body
     assert body["provider_tier_note"] is None   # tests run on mock, not AV
+
+
+async def test_demo_seed_ships_two_matrix_cells_and_prices_voo_via_matrix(app_client):
+    """Phase 3a seed-parity: the demo seed ships two routing-matrix cells (via the ONE seed
+    function both boot paths call), so the feature is visible end-to-end. (etf,US→yahoo) is
+    capable+keyless and actually prices the demo VOO holding via the matrix; (equity,IN→eodhd)
+    is stored DEGRADED (unkeyed) — the accept-with-caveat path, live (§9-2/§9-7)."""
+    cells = {(c["asset_class"], c["listing_country"]): c
+             for c in (await app_client.get(_MATRIX)).json()["cells"]}
+    assert cells[("etf", "US")]["provider"] == "mock"
+    assert cells[("etf", "US")]["degraded"] is False
+    assert cells[("equity", "IN")]["provider"] == "eodhd"
+    assert cells[("equity", "IN")]["degraded"] is True                 # needs a key → caveat
+    assert "credentials" in (cells[("equity", "IN")]["caveat"] or "").lower()
+
+    # The demo VOO (etf/US) holding prices via the matrix — route_rule=matrix, priced by mock
+    # (the demo's active provider; the cell selected it, so provenance is matrix, not active).
+    rows = (await app_client.get(_HEALTH)).json()["holdings"]
+    voo = next((r for r in rows if r["symbol"] == "VOO"), None)
+    assert voo is not None, "demo seed should hold VOO"
+    assert voo["route_rule"] == "matrix"
+    assert voo["route_source"] == "mock"

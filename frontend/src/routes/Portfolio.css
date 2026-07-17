@@ -164,6 +164,12 @@
   gap: var(--space-3);
   font-size: var(--font-size-14);
 }
+/* §14dr-22: shrink so the InstrumentLabel ellipsizes instead of pushing the row. */
+.pf__moversym {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
 .pf__moversym a {
   color: var(--accent);
   text-decoration: none;
@@ -172,6 +178,7 @@
   text-decoration: underline;
 }
 .pf__moverright {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: baseline;
   gap: var(--space-3);

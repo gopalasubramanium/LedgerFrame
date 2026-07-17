@@ -5,6 +5,10 @@
   line-height: 1.25;
   min-width: 0;
 }
+/* §14dr-22: truncation mode — never exceed the (shrinkable) parent; sym+name ellipsize. */
+.lf-instr--truncate {
+  max-width: 100%;
+}
 .lf-instr__sym {
   font-weight: var(--weight-semibold);
   overflow: hidden;

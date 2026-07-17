@@ -36,4 +36,18 @@ describe("InstrumentLabel", () => {
     expect(screen.getByText("Cash transfer")).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
+
+  it("§14dr-22: truncate mode adds the class and a full-identity title tooltip", () => {
+    const { container } = renderIt({ symbol: "MSFT", name: "Microsoft Corporation", truncate: true });
+    const el = container.querySelector(".lf-instr");
+    expect(el).toHaveClass("lf-instr--truncate");
+    expect(el).toHaveAttribute("title", "MSFT — Microsoft Corporation");
+  });
+
+  it("§14dr-22: no truncate → no class and no title", () => {
+    const { container } = renderIt({ symbol: "MSFT", name: "Microsoft Corporation" });
+    const el = container.querySelector(".lf-instr");
+    expect(el).not.toHaveClass("lf-instr--truncate");
+    expect(el).not.toHaveAttribute("title");
+  });
 });

@@ -234,13 +234,17 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* §14dr-22: minmax(0,1fr) — a bare 1fr column's min-width is its content, so a long
+     instrument name would push the grid wide; minmax(0,·) lets the column shrink so the
+     InstrumentLabel inside ellipsizes. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-content: stretch;
   gap: var(--space-4);
 }
 .hm3__moverlist {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
 }
 .hm3__moverrows {
@@ -274,11 +278,12 @@
 }
 .hm3__moversym {
   color: var(--text-primary);
+  /* §14dr-22: shrink so the InstrumentLabel inside ellipsizes instead of pushing the row. */
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.hm3__moverpct { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hm3__moverpct { flex: 0 0 auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .hm3__moverpct--up { color: var(--gain); }
 .hm3__moverpct--down { color: var(--loss); }
 

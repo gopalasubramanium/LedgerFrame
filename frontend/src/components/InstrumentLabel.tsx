@@ -13,16 +13,24 @@ export function InstrumentLabel({
   name,
   fallback,
   link = true,
+  truncate = false,
 }: {
   symbol?: string | null;
   name?: string | null;
   fallback?: string | null;
   link?: boolean;
+  // §14dr-22: dense consumers (Home/Portfolio movers, table cells) set truncate so the
+  // sym+name ellipsize within a bounded flex parent instead of pushing the row wide; the
+  // full identity rides a title tooltip. Requires the parent to allow shrink (min-width:0).
+  truncate?: boolean;
 }) {
   const sym = symbol || fallback || "—";
   const showName = name && name !== symbol && name !== sym;
   return (
-    <span className="lf-instr">
+    <span
+      className={`lf-instr${truncate ? " lf-instr--truncate" : ""}`}
+      title={truncate ? (showName ? `${sym} — ${name}` : sym) : undefined}
+    >
       {link && symbol ? (
         <Link className="lf-instr__sym lf-instr__link" to={`/instrument/${encodeURIComponent(symbol)}`}>
           {sym}

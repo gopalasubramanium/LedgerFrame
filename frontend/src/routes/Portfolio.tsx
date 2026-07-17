@@ -193,7 +193,7 @@ export function Portfolio() {
   }, [attribution, attrSort, attrFilter]);
 
   const attrColumns: Column<AttributionHolding>[] = [
-    { key: "label", label: "Holding", sortable: true, render: (h) => <InstrumentLabel symbol={h.symbol} name={h.name} fallback={h.label} /> },
+    { key: "label", label: "Holding", sortable: true, render: (h) => <InstrumentLabel symbol={h.symbol} name={h.name} fallback={h.label} truncate /> },
     { key: "asset_class", label: "Class", sortable: true, render: (h) => (h.asset_class ? labelFor("asset_class", h.asset_class) : "—") },
     { key: "sector", label: "Sector", sortable: true, render: (h) => h.sector ?? "—" },
     { key: "contribution_pct", label: "Contribution", align: "right", format: "signed-percent", sortable: true },
@@ -465,7 +465,7 @@ function MoverList({ title, rows, emptyReason }: { title: string; rows: MoverRow
           {rows.map((r) => (
             <li key={r.id} className="pf__moverrow">
               <span className="pf__moversym">
-                <InstrumentLabel symbol={r.symbol} name={r.name} fallback={r.label} />
+                <InstrumentLabel symbol={r.symbol} name={r.name} fallback={r.label} truncate />
               </span>
               <span className="pf__moverright">
                 {r.price != null && (

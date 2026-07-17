@@ -482,7 +482,7 @@ function MoverList({ title, rows, empty }: { title: string; rows: MoverItem[]; e
           {rows.map((r) => (
             <li className="hm3__moverrow" key={r.id}>
               <span className="hm3__moversym">
-                <InstrumentLabel symbol={r.symbol} name={r.name} fallback={r.label} />
+                <InstrumentLabel symbol={r.symbol} name={r.name} fallback={r.label} truncate />
               </span>
               <span className={`hm3__moverpct hm3__moverpct--${signOf(r.day_change_pct)}`}>
                 {formatSignedPercent(r.day_change_pct)}

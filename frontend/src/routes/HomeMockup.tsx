@@ -9,6 +9,7 @@ import {
   Sparkline,
   SummaryHead,
 } from "../components/ui";
+import { InstrumentLabel } from "../components/InstrumentLabel";
 import "./home-grid.css";
 
 // HOME MOCKUP — the ratification gate for the Home REBUILD (page-home §12ho1-4).
@@ -51,25 +52,28 @@ const ALLOCATION = [
 
 // Both movers PAIRS (D-024) — never interchanged. Contribution-weighted pair is Portfolio's;
 // the price-move pair is Markets'. N=3 per list (§9-6).
+// §14dr-22: names carried through the SAME InstrumentLabel the live Home uses, with
+// realistic LONG names — so the tile-integrity guard exercises the truncation this
+// specimen previously faked away with bare short symbols.
 const CONTRIBUTORS = [
-  { sym: "VWRA", pct: "+0.18%" },
-  { sym: "NVDA", pct: "+0.11%" },
-  { sym: "D05", pct: "+0.06%" },
+  { sym: "VWRA", name: "Vanguard FTSE All-World UCITS ETF", pct: "+0.18%" },
+  { sym: "NVDA", name: "NVIDIA Corporation", pct: "+0.11%" },
+  { sym: "D05", name: "DBS Group Holdings Ltd", pct: "+0.06%" },
 ];
 const DETRACTORS = [
-  { sym: "RELIANCE", pct: "−0.09%" },
-  { sym: "BTC", pct: "−0.05%" },
-  { sym: "AAPL", pct: "−0.02%" },
+  { sym: "RELIANCE", name: "Reliance Industries Limited", pct: "−0.09%" },
+  { sym: "BTC", name: "Bitcoin", pct: "−0.05%" },
+  { sym: "AAPL", name: "Apple Inc.", pct: "−0.02%" },
 ];
 const GAINERS = [
-  { sym: "NVDA", pct: "+2.41%" },
-  { sym: "VOO", pct: "+1.07%" },
-  { sym: "D05", pct: "+0.79%" },
+  { sym: "NVDA", name: "NVIDIA Corporation", pct: "+2.41%" },
+  { sym: "VOO", name: "Vanguard S&P 500 ETF", pct: "+1.07%" },
+  { sym: "D05", name: "DBS Group Holdings Ltd", pct: "+0.79%" },
 ];
 const LOSERS = [
-  { sym: "RELIANCE", pct: "−0.85%" },
-  { sym: "US · S&P 500", pct: "−0.23%" },
-  { sym: "HDFCNIFTY", pct: "−0.11%" },
+  { sym: "RELIANCE", name: "Reliance Industries Limited", pct: "−0.85%" },
+  { sym: "US · S&P 500", name: "S&P 500 Index", pct: "−0.23%" },
+  { sym: "HDFCNIFTY", name: "HDFC NIFTY 50 Index Fund - Direct Growth", pct: "−0.11%" },
 ];
 
 // N=3: a summary never out-details its canonical page, and the tile must not clip mid-list.
@@ -119,14 +123,17 @@ const BRIEFING =
   "Cash runway is under three months and two holdings still have no price source — both are " +
   "waiting for you in Review. Nothing else moved beyond its usual range.";
 
-function MoverList({ title, rows }: { title: string; rows: { sym: string; pct: string }[] }) {
+function MoverList({ title, rows }: { title: string; rows: { sym: string; name?: string; pct: string }[] }) {
   return (
     <div className="hm3__moverlist">
       <h3 className="hm3__moverhead">{title}</h3>
       <ul className="hm3__moverrows">
         {rows.map((r) => (
           <li className="hm3__moverrow" key={r.sym}>
-            <span className="hm3__moversym">{r.sym}</span>
+            <span className="hm3__moversym">
+              {/* §14dr-22: the SAME InstrumentLabel the live Home uses, truncating. */}
+              <InstrumentLabel symbol={r.sym} name={r.name} link={false} truncate />
+            </span>
             <span className={`hm3__moverpct hm3__moverpct--${r.pct.startsWith("+") ? "up" : "down"}`}>
               {r.pct}
             </span>

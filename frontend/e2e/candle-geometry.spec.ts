@@ -53,10 +53,12 @@ test("Advanced chart zoom: wheel narrows the window, Reset restores it, no overf
   // Reset control is absent until zoomed.
   await expect(specimen.getByRole("button", { name: "Reset zoom" })).toHaveCount(0);
 
-  // Wheel up over the plot = zoom in → fewer visible candles.
-  const box = (await specimen.locator(".lf-pricechart__plot").boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.wheel(0, -240);
+  // Wheel up over the plot = zoom in → fewer visible candles. Dispatch a real WheelEvent on the
+  // plot (deterministic delivery to the component's non-passive wheel listener).
+  await specimen.locator(".lf-pricechart__plot").evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new WheelEvent("wheel", { deltaY: -240, clientX: r.left + r.width / 2, bubbles: true, cancelable: true }));
+  });
   await expect.poll(async () => bodies.count(), { timeout: 4000 }).toBeLessThan(full);
 
   // No horizontal overflow while zoomed.

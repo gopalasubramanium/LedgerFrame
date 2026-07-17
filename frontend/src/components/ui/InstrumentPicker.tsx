@@ -22,7 +22,10 @@ export interface PickedInstrument {
 }
 export type InstrumentPick =
   | { kind: "existing"; instrument: PickedInstrument }
-  | { kind: "create"; query: string };
+  // §14dr-16 — a create from a master SUGGESTION carries the master's display name so the
+  // new instrument isn't identified by its bare code (e.g. AMFI "103504"). A plain typed
+  // create (no suggestion) has no name and stays undefined.
+  | { kind: "create"; query: string; name?: string };
 
 export interface InstrumentPickerProps {
   value?: string;
@@ -183,7 +186,9 @@ export function InstrumentPicker({
                 aria-selected={false}
                 className="lf-picker__option"
                 onMouseDown={() => {
-                  onSelect({ kind: "create", query: s.symbol });
+                  // §14dr-16 — carry the master's name so the created instrument shows it,
+                  // not just the code (the create path persists it via the txn payload).
+                  onSelect({ kind: "create", query: s.symbol, name: s.name });
                   setQuery(s.symbol);
                   setOpen(false);
                 }}

@@ -757,6 +757,9 @@ function AddDialog({
 
   // listed
   const [symbol, setSymbol] = useState("");
+  // §14dr-16 — the display name carried from the picker (master suggestion or an existing
+  // instrument), so a newly-created instrument isn't identified by its bare code.
+  const [pickedName, setPickedName] = useState("");
   const [type, setType] = useState("buy");
   const [qty, setQty] = useState("0");
   const [price, setPrice] = useState("0");
@@ -832,6 +835,9 @@ function AddDialog({
         // D-089: classify a newly-created instrument by the chosen type so it
         // routes correctly (crypto → CoinGecko, mutual_fund → AMFI).
         asset_class: tile?.assetClass ?? null,
+        // §14dr-16: persist the master's display name so a fund/coin added from its
+        // master isn't identified by the bare code. Null when nothing was carried.
+        name: pickedName.trim() || null,
         related_instrument_id: type === "merger" ? absorbedInto : null,
       });
       if (!res.ok) return onError(`Couldn't add transaction: ${res.error}`);
@@ -949,9 +955,15 @@ function AddDialog({
               <InstrumentPicker
                 allowCreate
                 assetClass={activeClass}
-                onSelect={(p) =>
-                  setSymbol(p.kind === "create" ? p.query : p.instrument.symbol)
-                }
+                onSelect={(p) => {
+                  if (p.kind === "create") {
+                    setSymbol(p.query);
+                    setPickedName(p.name ?? ""); // §14dr-16 — carry the master's name
+                  } else {
+                    setSymbol(p.instrument.symbol);
+                    setPickedName(p.instrument.name ?? "");
+                  }
+                }}
               />
             </div>
             <div className="hold__field hold__field--full">

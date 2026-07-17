@@ -42,3 +42,26 @@ test("synced master with no match → the dr-12 create empty (not the never-sync
   expect(await screen.findByText(/No crypto instruments match — create/, {}, { timeout: 2000 })).toBeTruthy();
   await waitFor(() => expect(screen.queryByText(/master synced yet/)).toBeNull());
 });
+
+test("§14dr-16 — picking a master suggestion carries the master's NAME, not just the code", async () => {
+  vi.mocked(searchInstruments).mockResolvedValue({
+    ok: true as const,
+    data: {
+      existing: [],
+      other_class: [],
+      suggestions: [{ symbol: "103504", name: "Axis Bluechip Fund - Growth" }],
+      master: { provider: "amfi", synced: true },
+    },
+  });
+  const onSelect = vi.fn();
+  render(<InstrumentPicker assetClass="mutual_fund" onSelect={onSelect} />);
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "axis" } });
+  const opt = await screen.findByText("Axis Bluechip Fund - Growth", {}, { timeout: 2000 });
+  fireEvent.mouseDown(opt);
+  // The pick MUST carry the name so the created instrument isn't identified by the bare code.
+  expect(onSelect).toHaveBeenCalledWith({
+    kind: "create",
+    query: "103504",
+    name: "Axis Bluechip Fund - Growth",
+  });
+});

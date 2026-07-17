@@ -33,6 +33,12 @@ vi.mock("../api/client", async (orig) => ({
   apiDownload: vi.fn(),
   apiGet: vi.fn(async () => ({ ok: false, error: "no refdata in test" })),
 }));
+// The InstrumentPicker's provider search — default to no backend (create-only path);
+// the §14dr-16 test overrides it with a named master suggestion.
+vi.mock("../api/instruments", () => ({
+  searchInstruments: vi.fn(async () => ({ ok: false as const, error: "no backend in test" })),
+}));
+import { searchInstruments } from "../api/instruments";
 
 import { Holdings } from "./Holdings";
 import * as api from "../api/holdings";
@@ -200,6 +206,35 @@ test("a Listed tile classifies the new instrument by type (D-089: crypto → cry
   await user.click(within(dialog).getByRole("button", { name: "Save" }));
   expect(vi.mocked(api.addTransaction)).toHaveBeenCalledWith(
     expect.objectContaining({ asset_class: "crypto", symbol: "BTC", quantity: 0.75 }),
+  );
+});
+
+test("§14dr-16 adding from a master suggestion persists the master's NAME, not just the code", async () => {
+  const user = userEvent.setup();
+  vi.mocked(searchInstruments).mockResolvedValue({
+    ok: true,
+    data: {
+      existing: [],
+      other_class: [],
+      suggestions: [{ symbol: "103504", name: "Axis Bluechip Fund - Growth" }],
+      master: { provider: "amfi", synced: true },
+    },
+  });
+  renderPage();
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  await user.click(screen.getByRole("button", { name: "Add" }));
+  const dialog = screen.getByRole("dialog");
+  await user.click(within(dialog).getByText("Mutual fund")); // D-089 listed tile → AMFI
+  await user.type(within(dialog).getByLabelText("Instrument"), "axis");
+  await user.click(await screen.findByText("Axis Bluechip Fund - Growth"));
+  const qty = within(dialog).getByLabelText("Quantity");
+  await user.clear(qty);
+  await user.type(qty, "10");
+  await user.click(within(dialog).getByRole("button", { name: "Save" }));
+  // The code is the canonical id; the master's name rides along so the instrument isn't
+  // identified by the bare "103504" in Holdings / Instrument Detail.
+  expect(vi.mocked(api.addTransaction)).toHaveBeenCalledWith(
+    expect.objectContaining({ symbol: "103504", name: "Axis Bluechip Fund - Growth" }),
   );
 });
 

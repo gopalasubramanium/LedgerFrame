@@ -74,6 +74,10 @@ export interface TransactionIn {
   currency?: string;
   note?: string | null;
   asset_class?: string | null;
+  // §14dr-16 — the master's display name for a newly-created instrument, so a fund/coin
+  // added from its master isn't identified by the bare code. Backend persists it via
+  // _ensure_instrument (never overwrites an existing real name).
+  name?: string | null;
   related_instrument_id?: number | null;
 }
 

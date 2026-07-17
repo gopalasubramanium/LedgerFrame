@@ -201,16 +201,20 @@ test("§12rp-4: all three served disclaimers render VERBATIM, each noting it tra
   expect(screen.getByText("This disclaimer travels into the export (tax-lots.csv).")).toBeTruthy();
 });
 
-test("Reports Pack entry point: a §5.4 header action links /reports/pack, opening in a new tab", async () => {
-  // reports-pack §7a Phase 1 — the Amendment-K phasing corollary ends: the Pack artifact now exists,
-  // so the Reports page (and ONLY the Reports page, D-041) gains the entry point.
+test("§14pk-1: the Reports Pack entry point is the ratified primary Button (icon + label), opening the artifact", async () => {
+  // reports-pack §7a/§14pk-1 — the Amendment-K corollary ends and the entry point uses the ratified
+  // §5.4 primary Button anatomy (icon + label), not a link-styled anchor. Reports page ONLY (D-041).
+  const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
   renderPage();
-  const link = await screen.findByRole("link", { name: /Open the Reports Pack/i });
-  // A real anchor (backend HTML route, not an SPA <Link>), opening in a new tab.
-  expect(link.getAttribute("href")).toBe("/reports/pack");
-  expect(link.getAttribute("target")).toBe("_blank");
-  expect(link.getAttribute("rel")).toContain("noopener");
-  expect(link.textContent).toContain("Reports Pack"); // the GLOSSARY term, exact spelling
+  const btn = await screen.findByRole("button", { name: /Reports Pack/i });
+  expect(btn.tagName).toBe("BUTTON");
+  expect(btn.className).toContain("lf-btn--primary"); // the ratified primary variant, not a link
+  expect(btn.querySelector("svg"), "the primary Button carries its lucide icon").toBeTruthy();
+  expect(btn.textContent).toContain("Reports Pack"); // the GLOSSARY term, exact spelling
+  // Clicking opens the backend artifact in a new tab.
+  fireEvent.click(btn);
+  expect(openSpy).toHaveBeenCalledWith("/reports/pack", "_blank", "noopener");
+  openSpy.mockRestore();
 });
 
 test("Amendment J: the long-term threshold is READ-ONLY (rendered value, no input control)", async () => {

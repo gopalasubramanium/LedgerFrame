@@ -31,7 +31,8 @@ async function gotoReports(page: Page) {
 async function openArtifactViaEntryPoint(page: Page, context: BrowserContext): Promise<Page> {
   const [artifact] = await Promise.all([
     context.waitForEvent("page"),
-    page.getByRole("link", { name: /Open the Reports Pack/i }).click(),
+    // §14pk-1: the entry point is the ratified primary Button (not a link-styled anchor).
+    page.getByRole("button", { name: /Reports Pack/i }).click(),
   ]);
   await artifact.waitForLoadState("networkidle");
   return artifact;
@@ -78,6 +79,17 @@ test.describe.serial("Reports Pack — the artifact journey (live, DEV-ONLY)", (
     expect(html, "empty-entity served reason (Pack-3)").toContain("No holdings recorded for this entity.");
 
     console.log(`artifact journey — ${served.length} entities; header + 4 consolidated + served labels + disclaimer + empty-reason all present INSIDE the artifact`);
+  });
+
+  test("§14pk-1: the entry point is the ratified primary Button with NO link underline on hover", async ({ page }) => {
+    await gotoReports(page);
+    const btn = page.getByRole("button", { name: /Reports Pack/i });
+    await expect(btn, "the entry point is a primary Button").toHaveClass(/lf-btn--primary/);
+    expect(await btn.evaluate((el) => el.tagName), "a <button>, not a link-styled anchor").toBe("BUTTON");
+    await btn.hover();
+    const deco = await btn.evaluate((el) => getComputedStyle(el).textDecorationLine);
+    expect(deco, "the primary Button has no link underline on hover (§14pk-1, Estate §14es-1 precedent)").toBe("none");
+    console.log(`§14pk-1 — entry point is a primary Button, hover text-decoration=${deco}`);
   });
 
   test("FAIL-FIRST: the journey reads the ARTIFACT bytes — a stripped /reports/pack is caught", async ({ page, context }) => {

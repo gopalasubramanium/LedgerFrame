@@ -752,3 +752,20 @@ fully honest today). A household accruing realised events across **multiple** ye
 latest here; a true multi-year all-time roll-up would sum per-year reader outputs into a figure **no
 single reader produces** (P-1 / D-031 — the Pack adds no figure its readers do not already produce), so
 it is deferred to an **owner line**, not guessed. Flagged for the owner's future call.
+
+### §14pk-1 — the Reports-page entry point broke §5.4 button anatomy → **FIXED**
+
+**Finding (owner walk).** The "Reports Pack" entry point shipped as a **link-styled anchor**
+(`<a className="lf-btn">`) — hover underline/border — instead of the ratified §5.4 **primary Button**
+(the page-estate §14es-1 button-uniformity standard).
+
+**Fix.** `<Button variant="primary" icon={Printer} onClick={() => window.open("/reports/pack",
+"_blank", "noopener")}>Reports Pack</Button>` — the ratified icon+label treatment (icon decorative,
+`aria-hidden`; the text child is the accessible name; a `<button>` takes no link underline). The
+artifact is a backend HTML route, so the Button opens it in a new tab via `window.open`.
+
+**Guards (fail-first, RED on the anchor).** `Reports.test.tsx` asserts the control is a `<button>` with
+the **`lf-btn--primary`** class, carries the lucide `<svg>`, and calls `window.open("/reports/pack",
+"_blank", "noopener")`. The journey smoke asserts LIVE that it is a primary Button with
+**`text-decoration: none` on hover** (the §14es-1 rendered-style precedent). page-reports.md §16 gains
+the addendum.

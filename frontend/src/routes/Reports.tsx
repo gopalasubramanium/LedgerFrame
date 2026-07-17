@@ -36,8 +36,9 @@ import "./Reports.css";
 // REPORTS PACK ENTRY POINT (reports-pack §7a Phase 1, 2026-07-17 — the Amendment-K phasing corollary
 // ends now that the Pack artifact exists): a §5.4 PageHeader action opens the print artifact at
 // /reports/pack in a new tab. Reachable from Reports ONLY (D-041/D-061); no sidebar entry, no other
-// inbound link. /reports/pack is a BACKEND-served HTML route (not an SPA route), so it is a real
-// anchor (full navigation, new tab), not a react-router <Link>.
+// inbound link. §14pk-1 (owner walk): it is the ratified PRIMARY Button (icon + label), not a
+// link-styled anchor; /reports/pack is a BACKEND-served HTML route (not an SPA route), so the Button
+// opens it via window.open in a new tab, rather than a react-router <Link>.
 
 function symbolCell(symbol: string, name: string) {
   return (
@@ -272,16 +273,16 @@ export function Reports() {
         title="Reports"
         subtitle="Statements, the Realised P/L report and open tax lots — for your accountant. Every export carries the same disclaimers you see here."
         actions={
-          <a
-            className="lf-btn lf-btn--icon"
-            href="/reports/pack"
-            target="_blank"
-            rel="noopener"
-            aria-label="Open the Reports Pack (opens the printable report in a new tab)"
+          // §14pk-1: the ratified §5.4 primary Button (icon + label), NOT a link-styled anchor. The
+          // artifact is a backend HTML route (not an SPA route), so the Button opens it in a new tab.
+          <Button
+            variant="primary"
+            icon={Printer}
+            onClick={() => window.open("/reports/pack", "_blank", "noopener")}
+            title="Open the printable Reports Pack in a new tab"
           >
-            <Printer aria-hidden="true" focusable="false" />
             Reports Pack
-          </a>
+          </Button>
         }
       />
 

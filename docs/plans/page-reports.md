@@ -829,7 +829,17 @@ with the Pack milestone** — this delta records its arrival on the accepted Rep
 - **Geometry:** placed in the PageHeader action slot — ratified §5.4 anatomy — so no new §12 geometry
   ruling is needed (the header-action slot is standard page anatomy; the owner ratifies its look at the
   Pack milestone's Phase-3b walk, not here).
-- **Guarded:** a render test (`Reports.test.tsx`) pins the link's `href` / `target` / `rel` / label; the
+- **Guarded:** a render test (`Reports.test.tsx`) pins the control's anatomy + the open behaviour; the
   Pack milestone's Phase-2 artifact JOURNEY guard clicks the REAL control and asserts arrival at the
   rendered artifact (reports-pack §12pk / page-accounts §14ac-2 — a cross-page affordance is guarded as a
   journey, not destination-only). Frontend `lint` / `typecheck` / `check:tokens` / Reports vitest green.
+
+**Addendum — §14pk-1 (owner PDF/live walk, 2026-07-17): the entry point became a link-styled anchor →
+the ratified primary Button.** The first cut shipped as an `<a className="lf-btn">`, which the owner
+walked and flagged: it carried **link hover styling (underline/border)**, not the ratified §5.4 primary
+Button anatomy (the page-estate §14es-1 button-uniformity standard). Fixed to
+`<Button variant="primary" icon={Printer} onClick={() => window.open("/reports/pack","_blank","noopener")}>Reports Pack</Button>`
+— the icon is decorative (`aria-hidden`), the text child is the accessible name, and a `<button>` takes
+no link underline. Guards (fail-first RED on the anchor): the render test asserts the **`lf-btn--primary`**
+class + the lucide `<svg>` + the `window.open` call; the journey smoke asserts (live) the control is a
+primary **Button** with **`text-decoration: none` on hover** (the §14es-1 rendered-style precedent).

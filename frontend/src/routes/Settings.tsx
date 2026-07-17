@@ -436,6 +436,68 @@ function TokenCard() {
 }
 
 // --------------------------------------------------------------------------- //
+// Configured-state provider table (data-feed-routing §14dr-2) — a READ-ONLY surfacing of what
+// /system/providers + /system/data-source already serve (D-105, no new field, no math): one row per
+// provider · coverage · needs key · key SET/NOT SET · the active marker · the tier note where served.
+// Never the key VALUE — write-only stands; SET/NOT SET only (the single stored key is a global fact).
+interface ProviderRow {
+  provider: string;
+  coverage: string;
+  needs_key: boolean;
+  key_state: "Not needed" | "SET" | "NOT SET";
+  active: boolean;
+  tier: string | null;
+}
+
+function ProviderTable({ ds }: { ds: DataSource }) {
+  const labelFor = useLabelFor();
+  const [providers, setProviders] = useState<ProvidersResp | null | undefined>(undefined);
+  useEffect(() => { getProviders().then(setProviders); }, []);
+
+  const rows = useMemo<ProviderRow[]>(() => {
+    if (!providers) return [];
+    return Object.entries(providers.capabilities ?? {})
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, cap]) => {
+        const classes = cap.asset_classes.map((c) => labelFor("asset_class", c)).join(", ");
+        const regions = cap.regions.map(marketLabel).join(", ");
+        const active = name === providers.active;
+        return {
+          provider: name,
+          coverage: [classes, regions].filter(Boolean).join(" · ") || "—",
+          needs_key: cap.needs_key,
+          // Single shared key slot: SET/NOT SET is the one stored-key fact (ds.has_api_key);
+          // providers that need no key show "Not needed" (honest empty state).
+          key_state: !cap.needs_key ? "Not needed" : ds.has_api_key ? "SET" : "NOT SET",
+          active,
+          // Tier is only served/meaningful for the active provider (e.g. alphavantage).
+          tier: active && ds.av_tier ? ds.av_tier : null,
+        };
+      });
+  }, [providers, ds, labelFor]);
+
+  const columns: Column<ProviderRow>[] = [
+    { key: "provider", label: "Provider" },
+    { key: "coverage", label: "Coverage", truncate: true },
+    { key: "needs_key", label: "Needs key", render: (r) => (r.needs_key ? "Yes" : "No") },
+    {
+      key: "key_state", label: "Key",
+      render: (r) => (r.key_state === "Not needed"
+        ? <span className="set__fieldhelp">Not needed</span>
+        : <StatusChip tone={r.key_state === "SET" ? "positive" : "attention"} label={r.key_state} />),
+    },
+    {
+      key: "active", label: "Active", align: "right",
+      render: (r) => (r.active ? <StatusChip tone="positive" label="Active" /> : <span aria-hidden>—</span>),
+    },
+    { key: "tier", label: "Tier", render: (r) => r.tier ?? <span aria-hidden>—</span> },
+  ];
+
+  if (providers === undefined) return <Skeleton lines={3} />;
+  if (providers === null) return null; // the provider control above already carries the served list
+  return <DataTable columns={columns} rows={rows} caption="Configured market-data providers (read-only)." />;
+}
+
 // DATA FEEDS (§14st-1) — market provider · write-only key (§12st-2) · ND-6 feeds (§12st-3)
 // --------------------------------------------------------------------------- //
 // Feed/provider config is its own nature (owner, Phase-3b walk 2026-07-18). These controls apply
@@ -477,6 +539,10 @@ function DataFeedsPanel() {
             toast.show(r.ok ? { message: "API key saved (stored, hidden)." } : { message: `Couldn't save key: ${r.error}` });
             if (r.ok) reload();
           }} />
+        </div>
+        {/* §14dr-2: the configured providers, read-only (served facts only; never the key value). */}
+        <div className="lf-card__body">
+          <ProviderTable ds={ds} />
         </div>
       </section>
 
@@ -753,6 +819,8 @@ function FeedsCard() {
     setFeeds(d ? [...d.feeds] : []);
     setResults(null);
   };
+  // §14dr-2: show the configured feeds read-only in the card on mount (the Dialog stays the editor).
+  useEffect(() => { load(); }, []);
   const openEditor = async () => { await load(); setOpen(true); };
 
   const save = async () => {
@@ -775,8 +843,18 @@ function FeedsCard() {
         <h2 className="lf-card__title">News feeds</h2>
         <Button onClick={openEditor}>Edit feeds…</Button>
       </header>
-      <div className="lf-card__body">
+      <div className="lf-card__body set__stack">
         <p className="set__fieldhelp">The RSS/Atom feeds the news briefing reads. Managed here; News stays display-only.</p>
+        {/* §14dr-2: the configured feed URLs, read-only. Empty state honest. */}
+        {feeds.filter((f) => f.trim()).length > 0 ? (
+          <DataTable
+            columns={[{ key: "url", label: "Feed URL", truncate: true }]}
+            rows={feeds.filter((f) => f.trim()).map((url) => ({ url }))}
+            caption="Configured news feeds (read-only)."
+          />
+        ) : (
+          <p className="set__fieldhelp">No feeds configured.</p>
+        )}
       </div>
 
       <Dialog

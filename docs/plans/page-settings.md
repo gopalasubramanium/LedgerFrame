@@ -996,3 +996,61 @@ captured live (§14st-2 evidence, 15:30) and visually confirmed.
   (§15c).
 
 **Settings — DONE ✅ (six tabs; owner-accepted 2026-07-18).**
+
+---
+
+## §16 — ACCEPTED-PAGE DELTAS (dated; post-acceptance changes to `/settings`)
+
+Settings is an **accepted page**; every change after §14 CLOSED carries a dated
+delta note here + a SETTINGS pre-pass re-run (§15a machinery). These landed under
+the R-38 `data-feed-routing` Phase-3b owner walk (`data-feed-routing.md §14`).
+
+### §16-1 — client-error rendering standard (2026-07-18, data-feed-routing §14dr-1)
+
+The Data feeds → Market data **Save key** control failed with a toast reading
+*"Couldn't save key: [object Object]"* (the owner's live walk). **Two-layer fix, both
+at the standard, not this one call site:**
+- **Backend (`app/api/v1/routes/system.py`):** `DataSourceIn.provider` was **required**
+  while the Save-key control posts `{api_key}` only → a **422** every time. Made
+  `provider` optional (partial-update semantics matching `api_key` /
+  `base_currency` / `stale_after_seconds`); the provider env is written only when
+  sent; unknown-provider `400` still fires when it IS sent. Contract regen same
+  commit (`provider` required→nullable; **134 path-keys held**, Flag-1).
+- **Frontend (`frontend/src/api/client.ts` — the one choke point every reader feeds
+  the toast/`role=alert` through):** `String(body.detail)` on a FastAPI 422 (an
+  **array of objects**) produced `"[object Object]"`. Replaced with `detailToText`,
+  which renders the served reason TEXT (D-105): string passthrough; validation array
+  → joined `.msg` fields; else `HTTP {status}`. It extracts **`msg` only** — the 422
+  `detail[].input` echoes the request body, so dumping the object would **leak the
+  pasted write-only key** into a toast. Fixing here repairs **every** call site's 4xx
+  surface, not just Save-key (the Estate-Edit fix-at-the-standard precedent).
+- **Tests:** backend — key-only PUT 200 + provider-unchanged + no `"None"` note;
+  client — a 422 array renders `msg`, asserts no `"[object"` and no leaked key.
+
+### §16-2 — configured-state read-only tables (2026-07-18, data-feed-routing §14dr-2, ACCEPTED)
+
+Read-only, served-strings-only surfacing of existing config on the Data feeds tab.
+Both **frontend-only** (the payloads already carry every field; both endpoints
+already load on the tab — no additive field, no backend change).
+- **Market data card → provider `DataTable`** (`ProviderTable`, from the inventory —
+  no new component): provider · coverage (`asset_classes`/`regions`) · needs key ·
+  **key SET / NOT SET / Not needed** · **active marker** chip · **tier note**
+  (`av_tier`) on the active row. Sources: `/system/providers`
+  (`active` + `capabilities`) and `/system/data-source` (`has_api_key` + `av_tier`,
+  the latter newly declared on the reader's `DataSource` type — already served).
+  **Never the key value** — SET/NOT SET only; the single shared key slot is a global
+  fact, so needs-key rows read SET/NOT SET from `has_api_key` and no-key rows read
+  "Not needed" (honest empty state).
+- **News feeds card → configured-URLs `DataTable`** (read-only; the *Edit feeds…*
+  Dialog stays the editor). `/news/feeds` already serves the list; loaded on mount.
+  Empty state honest: "No feeds configured."
+- **Test collision resolved:** the §9-7 routing-matrix test's bare
+  `findByText("Active")` became ambiguous against the new "Active" **column header** —
+  scoped to the status chip (`lf-statuschip`), intent preserved.
+
+### §16 pre-pass re-run (SETTINGS, isolated demo instance)
+
+Stated in `data-feed-routing.md §13`/the report: the key-save path exercised
+end-to-end (a keyed save SUCCEEDS + key-state SET; a rejected save shows the served
+reason verbatim), both new tables at all widths, 0 console errors, suites + contract
++ frontend exit 0.

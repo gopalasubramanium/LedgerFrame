@@ -15,6 +15,9 @@ export interface DataSource {
   base_currency: string;
   providers: string[];
   admin_available: boolean;
+  /** Learned Alpha Vantage tier where served ("premium" | "free" | "unknown"), else null
+   *  (non-AV / no key). Display-only, the served string (D-105) — data-feed-routing §14dr-2. */
+  av_tier?: string | null;
 }
 
 export async function getDataSource(): Promise<DataSource | null> {

@@ -49,6 +49,7 @@ import { listTokens } from "../api/tokens";
 import { getDataSource, getPinSet } from "../api/systemConfig";
 import { getRoutingMatrix, getProviders, putRoutingCell, deleteRoutingCell } from "../api/routing-matrix";
 import type { ProvidersResp } from "../api/routing-matrix";
+import { getFeeds } from "../api/feeds";
 
 const SETTINGS: SettingsData = {
   stored: { privacy_mode: "true" },
@@ -232,8 +233,11 @@ test("routing matrix: renders Active + degraded caveat cells from served state (
     ],
   });
   renderAt("/settings?tab=data-feeds");
-  // The healthy cell shows Active; the unkeyed cell shows the SERVED caveat (not colour alone).
-  expect(await screen.findByText("Active")).toBeTruthy();
+  // The healthy cell shows an Active status chip; the unkeyed cell shows the SERVED caveat
+  // (not colour alone). Scoped to the chip — the §14dr-2 provider table adds an "Active" column
+  // header, so a bare text match is intentionally ambiguous now.
+  const actives = await screen.findAllByText("Active");
+  expect(actives.some((el) => el.className.includes("lf-statuschip"))).toBe(true);
   expect(screen.getByText("eodhd needs credentials — add them in Settings")).toBeTruthy();
 });
 
@@ -280,4 +284,52 @@ test("routing matrix: editing a cell's provider PUTs the change (§9-11)", async
   fireEvent.change(cellSelect, { target: { value: "eodhd" } });
   await waitFor(() =>
     expect(putRoutingCell).toHaveBeenCalledWith({ asset_class: "equity", listing_country: "US", provider: "eodhd" }));
+});
+
+// --- §14dr-2: configured-state tables (read-only, served facts only) ---------
+test("provider table surfaces served facts — SET/NOT SET, Not needed, active marker, tier note", async () => {
+  vi.mocked(getDataSource).mockResolvedValue({
+    ...DATA_SOURCE, provider: "alphavantage", has_api_key: true, av_tier: "premium",
+  });
+  vi.mocked(getProviders).mockResolvedValue({
+    active: "alphavantage",
+    capabilities: {
+      alphavantage: { asset_classes: ["equity", "etf"], regions: ["US", "*"], needs_key: true },
+      yahoo: { asset_classes: ["equity"], regions: ["*"], needs_key: false },
+    },
+    default_priority: {},
+  });
+  renderAt("/settings?tab=data-feeds");
+  const table = (await screen.findByText("Configured market-data providers (read-only).")).closest("table")!;
+  // needs-key active provider with a stored key → SET; no-key provider → Not needed.
+  expect(within(table).getByText("SET")).toBeTruthy();
+  expect(within(table).getByText("Not needed")).toBeTruthy();
+  // active marker (a positive chip) + the served tier note, both on the active row.
+  expect(within(table).getAllByText("Active").some((el) => el.className.includes("lf-statuschip"))).toBe(true);
+  expect(within(table).getByText("premium")).toBeTruthy();
+});
+
+test("provider table shows NOT SET when a keyed provider has no stored key", async () => {
+  vi.mocked(getDataSource).mockResolvedValue({ ...DATA_SOURCE, provider: "eodhd", has_api_key: false });
+  vi.mocked(getProviders).mockResolvedValue({
+    active: "eodhd",
+    capabilities: { eodhd: { asset_classes: ["equity"], regions: ["US"], needs_key: true } },
+    default_priority: {},
+  });
+  renderAt("/settings?tab=data-feeds");
+  const table = (await screen.findByText("Configured market-data providers (read-only).")).closest("table")!;
+  expect(within(table).getByText("NOT SET")).toBeTruthy();
+});
+
+test("news feeds card lists the configured URLs read-only (Edit dialog stays the editor)", async () => {
+  vi.mocked(getFeeds).mockResolvedValue({ feeds: ["https://news.example/rss.xml"], defaults: [] });
+  renderAt("/settings?tab=data-feeds");
+  const table = (await screen.findByText("Configured news feeds (read-only).")).closest("table")!;
+  expect(within(table).getByText("https://news.example/rss.xml")).toBeTruthy();
+});
+
+test("news feeds card is honest when no feeds are configured", async () => {
+  vi.mocked(getFeeds).mockResolvedValue({ feeds: [], defaults: [] });
+  renderAt("/settings?tab=data-feeds");
+  expect(await screen.findByText("No feeds configured.")).toBeTruthy();
 });

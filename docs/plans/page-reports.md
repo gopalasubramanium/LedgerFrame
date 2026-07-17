@@ -3,8 +3,11 @@
 **Status: DONE ✅ — page ACCEPTED (owner walk, 2026-07-17).** §9 RESOLVED (one-pass) · §12 GEOMETRY GATE
 RATIFIED WITH CONDITIONS · Phases 0/0a/1/2/3a DONE · **§14 owner walk (batch 1, three findings)
 FIXED + ACCEPTED (contingent on the batch, 2026-07-17)** · **§15 retrospective** written; lessons
-mechanised. **Amendment-I declined-exports ledger stays PENDING** (it closes at the Pack milestone, not
-here). See §9 (rulings), §11 (Phase-0 evidence), §12 (gate ruling), §13 (build record), **§14 (walk),
+mechanised. ~~**Amendment-I declined-exports ledger stays PENDING** (it closes at the Pack milestone, not
+here).~~ **→ DELTA (2026-07-17): the Reports Pack milestone CLOSED — the Amendment-I declined-exports
+ledger FLIPPED PENDING → DELIVERED** (all five: Policy drift · Net worth trend · Review · Scenarios ·
+Cash flow; see §15 UPDATE below and `reports-pack.md` §0). See §9 (rulings), §11 (Phase-0 evidence),
+§12 (gate ruling), §13 (build record), **§14 (walk),
 §15 (retrospective)**.
 
 This plan is a *derivation from the specs*, not a fresh design. Every section cites the

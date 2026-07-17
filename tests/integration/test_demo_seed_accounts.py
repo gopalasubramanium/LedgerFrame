@@ -39,3 +39,15 @@ async def test_demo_seed_creates_entities_and_wires_accounts(app_client):
     # Meera Iyer holds no accounts → the deletable-entity demo (delete is NOT FK-blocked).
     meera_id = ents["Meera Iyer"]["id"]
     assert all(a["entity_id"] != meera_id for a in lst.values())
+
+
+async def test_dev_boot_path_yields_exactly_three_entities_no_duplicate_household(app_client):
+    """§12pk-4: the app_client fixture runs the REAL dev.sh boot path — Alembic migrations (the
+    entities migration f4a9c2b71e08 inserts a default 'Household') THEN the demo seed. Before the
+    seed fix this yielded FOUR entities (two 'Household') and the Reports Pack rendered TWO per-entity
+    'Household' sections; the create_all + seed path (reset-demo-data.sh, no migrations) yielded the
+    correct three. The seed now get-or-creates 'Household' (the institution/estate resolve-or-create
+    precedent), so BOTH boot paths yield exactly the canonical three."""
+    names = sorted(e["name"] for e in (await app_client.get("/api/v1/entities")).json()["entities"])
+    assert names == ["Household", "Meera Iyer", "Rajan Family Trust"], names
+    assert names.count("Household") == 1, "the migration-default Household must be reused, not duplicated"

@@ -127,10 +127,21 @@ async def seed_demo_data(session: AsyncSession) -> bool:
     # A near-duplicate pair ("DBS" vs "DBS Bank") seeds the user-driven merge demo (§9-2).
     from app.services.institutions import get_or_create_institution
 
-    household = Entity(name="Household", kind="self")
+    # §12pk-4: get-or-create Household. The dev.sh boot path runs the entities migration
+    # (f4a9c2b71e08), which inserts a default "Household" BEFORE this seed runs; creating another
+    # here yielded two "Household" entities on that path (the Reports Pack then rendered two per-entity
+    # Household sections), while the create_all + seed path (reset-demo-data.sh, no migrations) had
+    # none to reuse and yielded the correct three. Reusing an existing "Household" (the institution /
+    # estate resolve-or-create precedent) makes BOTH boot paths yield exactly the canonical three.
+    household = (
+        await session.execute(select(Entity).where(Entity.name == "Household"))
+    ).scalars().first()
+    if household is None:
+        household = Entity(name="Household", kind="self")
+        session.add(household)
     trust = Entity(name="Rajan Family Trust", kind="trust")
     person = Entity(name="Meera Iyer", kind="spouse")  # 0 accounts → the deletable-entity demo (§9-6)
-    session.add_all([household, trust, person])
+    session.add_all([trust, person])
     await session.flush()
 
     saxo = await get_or_create_institution(session, "Saxo Markets")

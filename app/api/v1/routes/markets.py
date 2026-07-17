@@ -214,7 +214,20 @@ async def instruments_search(
     except Exception:  # noqa: BLE001 — a provider outage must not break the picker
         suggestions = []
 
-    return {"existing": existing, "other_class": other_class, "suggestions": suggestions}
+    # §14dr-13 — the class's instrument master state, so the picker's honest empty can say
+    # WHY a class returned nothing: an empty crypto/mutual-fund master (never synced) is a
+    # different, actionable emptiness than "no match". Served fact (D-105), null for classes
+    # with no dedicated master (equity/etf → live provider search, nothing to sync).
+    master: dict | None = None
+    if asset_class == "mutual_fund":
+        from app.services import amfi as amfi_svc
+        master = {"provider": "amfi", "synced": ((await amfi_svc.status(session)).get("schemes") or 0) > 0}
+    elif asset_class == "crypto":
+        from app.services import coingecko as cg
+        master = {"provider": "coingecko", "synced": ((await cg.status(session)).get("coins") or 0) > 0}
+
+    return {"existing": existing, "other_class": other_class,
+            "suggestions": suggestions, "master": master}
 
 
 async def _asset_detail(session: AsyncSession, identifiers: list[dict]) -> dict:

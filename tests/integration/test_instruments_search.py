@@ -36,3 +36,24 @@ async def test_instruments_search_without_class_buckets_all_as_existing(app_clie
     # No class filter → everything is 'existing', nothing is cross-class.
     assert "ZSOLO" in {i["symbol"] for i in r["existing"]}
     assert r["other_class"] == []
+
+async def test_instruments_search_carries_master_state_per_class(app_client):
+    """§14dr-13 — the search response carries the class's instrument-master state so the
+    picker's honest empty can say WHY (never synced vs no match). Demo seeds CoinGecko coins
+    but no AMFI schemes → crypto master is synced, mutual-fund master is never synced until
+    a refresh; classes with no dedicated master (equity) carry master=None."""
+    from pathlib import Path
+    # Crypto: demo seeds the coin master → synced.
+    r = (await app_client.get("/api/v1/instruments/search?q=zz&asset_class=crypto")).json()
+    assert r["master"] == {"provider": "coingecko", "synced": True}
+    # Mutual fund: no AMFI schemes seeded → never synced (the actionable empty).
+    r = (await app_client.get("/api/v1/instruments/search?q=zz&asset_class=mutual_fund")).json()
+    assert r["master"] == {"provider": "amfi", "synced": False}
+    # After an AMFI refresh, the master reads synced.
+    fixture = (Path(__file__).parents[1] / "fixtures" / "amfi_navall_sample.txt").read_bytes()
+    await app_client.post("/api/v1/amfi/refresh", files={"file": ("NAVAll.txt", fixture, "text/plain")})
+    r = (await app_client.get("/api/v1/instruments/search?q=zz&asset_class=mutual_fund")).json()
+    assert r["master"]["synced"] is True
+    # No dedicated master for the equity lane (live provider search) → master is None.
+    r = (await app_client.get("/api/v1/instruments/search?q=zz&asset_class=equity")).json()
+    assert r["master"] is None

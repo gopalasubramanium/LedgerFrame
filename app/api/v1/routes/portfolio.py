@@ -584,7 +584,7 @@ async def add_transaction(payload: TransactionIn, session: AsyncSession = Depend
 async def update_transaction(
     txn_id: int, payload: TransactionIn, session: AsyncSession = Depends(get_db)
 ) -> dict:
-    from app.services.csv_import import _ensure_instrument
+    from app.services.csv_import import _ensure_account, _ensure_instrument
 
     txn = await session.get(Transaction, txn_id)
     if txn is None:
@@ -604,8 +604,14 @@ async def update_transaction(
     txn.amount = money(_txn_cash_impact(payload))
     txn.currency = payload.currency.upper()
     txn.note = payload.note
-    if payload.account_id:
-        txn.account_id = payload.account_id
+    # §14dr-11 — re-scope the transaction's account. This is a PUT (full replace), so apply
+    # account_id whenever the client SENT it (the old `if payload.account_id:` truthy guard
+    # couldn't re-scope and swallowed the field). Resolve through `_ensure_account` exactly as
+    # add does — `transactions.account_id` is NOT NULL, so a null/absent selection maps to the
+    # default account (the add-flow bucket), never a constraint violation. Omitted → unchanged.
+    if "account_id" in payload.model_fields_set:
+        account = await _ensure_account(session, payload.account_id)
+        txn.account_id = account.id
     session.add(AuditEvent(category="mutation", action="edit_transaction", detail=str(txn_id)))
     await session.flush()
     rebuilt = await rebuild_holdings_from_transactions(session)

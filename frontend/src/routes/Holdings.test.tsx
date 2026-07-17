@@ -518,6 +518,38 @@ test("row menu Edit opens the edit dialog and updates the transaction", async ()
   );
 });
 
+test("§14dr-11: the edit dialog can re-scope a transaction's Account (parity with add)", async () => {
+  // The add flow has Account; the edit flow didn't — so a transaction could never be moved
+  // between accounts from the UI even though the PUT accepts account_id. Fail-first RED:
+  // no Account field in the edit dialog, so no account_id is sent.
+  vi.mocked(api.getAccounts).mockResolvedValue({
+    ok: true,
+    data: { accounts: [{ id: 1, name: "Demo Brokerage" }, { id: 2, name: "Retirement" }] },
+  });
+  vi.mocked(api.getTransactions).mockResolvedValue({
+    ok: true,
+    data: { transactions: [{ id: 9, type: "buy", ts: "2024-05-01T00:00:00", symbol: "AAPL", quantity: 5, price: 100, currency: "USD", amount: -500, account_id: 1 }], total: 1, offset: 0, limit: 100, sort: "ts", dir: "desc", filter: "" },
+  });
+  const user = userEvent.setup();
+  renderPage();
+  await waitFor(() => expect(screen.getByText(/2024-05-01/)).toBeInTheDocument());
+  await user.click(screen.getByRole("button", { name: /Actions for buy AAPL/ }));
+  await user.click(screen.getByRole("menuitem", { name: "Edit" }));
+  const dialog = screen.getByRole("dialog");
+  // The Account select is present and prefilled to the transaction's current account.
+  const account = within(dialog).getByLabelText("Account") as HTMLSelectElement;
+  expect(account.value).toBe("1");
+  // Re-scope to the Retirement account.
+  await user.selectOptions(account, "2");
+  await user.click(within(dialog).getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(vi.mocked(api.updateTransaction)).toHaveBeenCalledWith(
+      9,
+      expect.objectContaining({ account_id: 2 }),
+    ),
+  );
+});
+
 test("Amendment G: ?account= scopes the reader + shows a clearable chip; clearing resets it", async () => {
   const user = userEvent.setup();
   vi.mocked(api.getAccounts).mockResolvedValue({

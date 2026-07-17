@@ -678,3 +678,26 @@ ratification look before Phase 1 assembly.
   bracketed dev marker ([PIN] and kin) appears in production route/component source outside
   comments — the KitchenSink playground + mockups are scoped out. Fail-first verified: RED
   with the marker present, GREEN after removal. Holdings pre-pass re-run stated in the report.
+
+## DELTA NOTE — 2026-07-18 (R-38 data-feed-routing Phase 3b re-walk batch 3, §14dr-11)
+
+- **Transaction edit can now change Account (parity with add).** **Verify-first:** the
+  add flow had an Account `Select`; the edit dialog (`TxnEditDialog`) did **not**, and
+  never sent `account_id` — so a transaction could never be re-scoped from the UI even
+  though the `PUT` schema (`TransactionIn.account_id`) already carried it. Fix:
+  - **Frontend:** `TxnEditDialog` gains the Account `Select` (served `/accounts`, prefilled
+    from the transaction's `account_id`) and sends `account_id` on save.
+  - **Backend (correctness, no contract change):** `PUT /portfolio/transactions/{id}`
+    applied `account_id` only under a truthy guard (`if payload.account_id:`) — it couldn't
+    re-scope reliably. It now applies the field whenever the client **sent** it
+    (`model_fields_set`), resolving through the same **`_ensure_account`** the add flow uses
+    (`transactions.account_id` is **NOT NULL**, so a null/absent selection maps to the
+    default account — the add-flow bucket — never a constraint violation; omitted → unchanged).
+  - **Re-scope arithmetic:** the account change flows through `rebuild_holdings_from_transactions`
+    (groups by `(account_id, instrument_id)`), so **both** accounts' derived holdings recompute
+    — the transaction leaves the source account's view and arrives in the destination's.
+  - Fail-first: a frontend test (the edit dialog carries + prefills Account and sends a changed
+    `account_id`, RED before — no field) and a backend integration test (a move A→B leaves A and
+    arrives in B; an explicit-null clear leaves B via the default account — RED before against
+    the truthy guard, which either ignored it or hit the NOT-NULL constraint). The account-scoped
+    journey guards (Holdings account chip + Accounts) re-run in the report.

@@ -57,6 +57,51 @@ async def test_transaction_crud_via_api(app_client):
     assert delete.status_code == 200
 
 
+async def test_edit_rescopes_transaction_across_accounts(app_client):
+    # §14dr-11 — re-scoping a transaction moves it between account-scoped holdings views and
+    # recomputes BOTH accounts' derived holdings. Fail-first RED against the old truthy guard
+    # only for the null-clear/edge, but the cross-account move must hold end-to-end.
+    add = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "ZQXT", "type": "buy", "ts": "2024-06-01T09:30:00",
+        "quantity": 4, "price": 400, "currency": "USD", "account_id": 1,
+    })
+    assert add.status_code == 200
+    tid = add.json()["transaction_id"]
+
+    def held(resp, account):
+        rows = resp.json()["holdings"]
+        return [h for h in rows if h.get("symbol") == "ZQXT"]
+
+    # Initially in account 1, not in account 2.
+    a1 = await app_client.get("/api/v1/portfolio/holdings?account_id=1")
+    a2 = await app_client.get("/api/v1/portfolio/holdings?account_id=2")
+    assert held(a1, 1), "ZQXT should be in account 1 before the re-scope"
+    assert not held(a2, 2), "ZQXT should NOT be in account 2 before the re-scope"
+
+    # Re-scope to account 2.
+    upd = await app_client.put(f"/api/v1/portfolio/transactions/{tid}", json={
+        "symbol": "ZQXT", "type": "buy", "ts": "2024-06-01T09:30:00",
+        "quantity": 4, "price": 400, "currency": "USD", "account_id": 2,
+    })
+    assert upd.status_code == 200
+
+    # Now in account 2, gone from account 1 — both derived views recomputed.
+    a1b = await app_client.get("/api/v1/portfolio/holdings?account_id=1")
+    a2b = await app_client.get("/api/v1/portfolio/holdings?account_id=2")
+    assert not held(a1b, 1), "ZQXT should have LEFT account 1 after the re-scope"
+    assert held(a2b, 2), "ZQXT should have ARRIVED in account 2 after the re-scope"
+
+    # Clear to NO account (account_id null). The old `if payload.account_id:` truthy guard could
+    # NOT express this (RED). With the model_fields_set fix an explicit null re-scopes to none.
+    clr = await app_client.put(f"/api/v1/portfolio/transactions/{tid}", json={
+        "symbol": "ZQXT", "type": "buy", "ts": "2024-06-01T09:30:00",
+        "quantity": 4, "price": 400, "currency": "USD", "account_id": None,
+    })
+    assert clr.status_code == 200
+    a2c = await app_client.get("/api/v1/portfolio/holdings?account_id=2")
+    assert not held(a2c, 2), "ZQXT should have LEFT account 2 after clearing its account"
+
+
 async def test_foreign_symbol_holding_uses_native_currency(app_client):
     # A .BSE stock trades in INR even though the form defaulted to USD — the
     # engine must value/report it in INR (then convert to base for totals).

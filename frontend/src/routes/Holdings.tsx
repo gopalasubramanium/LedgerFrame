@@ -559,6 +559,7 @@ export function Holdings() {
       {editTxn && (
         <TxnEditDialog
           txn={editTxn}
+          accounts={accounts}
           onClose={() => setEditTxn(null)}
           onError={(m) => toast.show({ message: m })}
           onDone={async () => {
@@ -1150,11 +1151,13 @@ function MetaFieldInput({
 // --- Edit an existing transaction (row action → PUT /transactions/{id}) --------
 function TxnEditDialog({
   txn,
+  accounts,
   onClose,
   onDone,
   onError,
 }: {
   txn: TransactionRow;
+  accounts: AccountRow[];
   onClose: () => void;
   onDone: () => void;
   onError: (msg: string) => void;
@@ -1166,6 +1169,14 @@ function TxnEditDialog({
   const [date, setDate] = useState(txn.ts.slice(0, 10));
   const [currency, setCurrency] = useState(txn.currency);
   const [note, setNote] = useState(txn.note ?? "");
+  // §14dr-11 — Account is editable in the edit flow (parity with add); re-scoping moves the
+  // transaction between account-scoped views and recomputes BOTH accounts' derived holdings
+  // (backend rebuild). Prefill from the served account_id; "" = no account (the add-flow bucket).
+  const [accountId, setAccountId] = useState(txn.account_id != null ? String(txn.account_id) : "");
+  const accountOptions = [
+    { value: "", label: "— account —" },
+    ...accounts.map((a) => ({ value: String(a.id), label: a.name })),
+  ];
 
   async function save() {
     const res = await updateTransaction(txn.id, {
@@ -1176,6 +1187,7 @@ function TxnEditDialog({
       price: Number(price),
       currency,
       note: note.trim() || null,
+      account_id: accountId ? Number(accountId) : null,
       related_instrument_id: txn.related_instrument_id ?? null,
     });
     if (!res.ok) return onError(`Couldn't update: ${res.error}`);
@@ -1195,6 +1207,10 @@ function TxnEditDialog({
       }
     >
       <div className="hold__form">
+        <div className="hold__field">
+          <span className="hold__label">Account</span>
+          <Select value={accountId} onChange={setAccountId} options={accountOptions} aria-label="Account" />
+        </div>
         <div className="hold__field">
           <span className="hold__label">Type</span>
           <MasterSelect master="txn_type" value={type} onChange={setType} />

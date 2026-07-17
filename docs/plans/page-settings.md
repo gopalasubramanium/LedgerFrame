@@ -751,5 +751,50 @@ tab, "Data feeds"**, is added. The Settings tab set becomes **five**:
   CONTROL); the **PIN step still lands on System**. `Settings.test.tsx` tab-set
   assertions updated fail-first.
 
-*(Build evidence appended below as this batch lands; the owner re-walks the
-restructured page after `git push`.)*
+### Build & Phase-3a re-run evidence (2026-07-18)
+
+- **COMMIT 1 `5feeab3`** (records) — §13/§14 above; DECISIONS D-069 dated five-tab
+  amendment; IA mirror; DESIGN-SYSTEM §5.4 PROPOSED→RATIFIED; §9-10 refinement note.
+- **COMMIT 2 `e155cc7`** (restructure) — the fifth `data-feeds` Segmented segment +
+  `DataFeedsPanel` (provider · write-only key · ND-6 feeds); System reflow
+  ("Access & auto-lock" holds auto-lock + Allow LAN); `FIRST_RUN_LINKS.prices →
+  ?tab=data-feeds`. **Fail-first:** the five-tab set / provider-journey /
+  data-feeds-control guards went **RED on the real cause** (2 test files, 5
+  assertions) before the code moved, then GREEN.
+- **No backend change this milestone** — `git diff` over `app/` for both commits
+  is **empty**. Confirmed by re-running the suite + contract-check anyway:
+  - **Backend `pytest -q` → 891 passed, 0 failed** (269s).
+  - **`make api-contract-check` → green** (API contract current; allow-list/UI
+    changes are invisible to the shape regen, as expected).
+- **Frontend `npm run check` (from `frontend/`) → exit 0** — lint · typecheck ·
+  check:tokens · **vitest** (the 5 fail-first guards GREEN) · **322 overflow/tile
+  e2e** incl. the new `settings · data-feeds` route (×5 tabs × both themes).
+- **Live settings-smoke (dev servers up; demo-seeded, PIN-free, provider `mock`,
+  `admin_available=false`) — 5/5 read-only tests passed:** containment + **0
+  console errors across FIVE tabs × both themes × 320/375/900/1366**; the five-tab
+  strip; the **Data feeds** tab (provider + write-only key + feeds dialog); General
+  `long_term_days` verbatim; Privacy derived statement + empty tokens.
+  Screenshots (14:12): `settings-{general,appearance,privacy,data-feeds,system}-{light,dark}.png`,
+  `settings-data-feeds.png`, `settings-feeds-dialog.png`, `settings-privacy-detail.png`.
+  Visually confirmed: the five-tab strip, the Data feeds tab, the reflowed System tab.
+- **Deliberately NOT run against the live instance: the PIN-mutating System test.**
+  It sets a 6-digit PIN on a no-PIN install, and there is **no API to clear a PIN**
+  — running it would leave the owner's demo instance **locked**. The reflowed System
+  tab is captured read-only instead (`settings-system-{light,dark}.png`, 14:12); the
+  enabled-Reset / fresh-PIN ConfirmDialog capture is covered by the vitest guards
+  (`Settings.test.tsx` — danger variant + D-103 no-PIN refusal). The §9-10 live
+  refinement (only Allow LAN degrades) is visible in the System screenshot.
+
+**Journey guards (live, §14ac-2):** the first-run → provider step now targets
+`?tab=data-feeds` and the guard asserts arrival at the **Market data provider**
+control (not the href); the PIN step still targets `?tab=system` at the PIN card —
+both GREEN in `AppShell.test.tsx` / `Settings.test.tsx`.
+
+### STALE-AFTER — recorded gap (not fabricated)
+
+`stale_after_seconds` is **served** (`/system/data-source` → `"900"`, confirmed on
+the live instance) but has **no rendered control**. §14st-1 fixes its canonical
+home as **Data feeds**; when a stale-after control is authored (spec-first) it
+lands there. No control was fabricated in this restructure (CLAUDE.md hard rule).
+
+*(STOP — the owner re-walks the restructured five-tab page.)*

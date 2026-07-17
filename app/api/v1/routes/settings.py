@@ -36,6 +36,12 @@ _ALLOWED_KEYS = {
     # layout — Home ships ONE layout, so a layout key would store a choice nothing can make. A
     # write-only key is the very thing D-078 forbids, so it is GONE, not left as dead surface.
     "home_quote_source",
+    # Long-term holding threshold (page-settings §9-1, Amendment A; D-077/Guarantee 4 — a
+    # NEUTRAL user-set integer, no jurisdiction presets). The stored value is resolved as the
+    # default for the realised-gains / tax-lots readers in ONE place (`tax.resolve_long_term_days`,
+    # A11 — no per-route re-reads); an explicit query param still wins (PARAM-WINS). The numeric
+    # validator below mirrors the route's `ge=0, le=3660`.
+    "long_term_days",
 }
 
 #: Home quote-card sources (D-046/D-052) — the ratified view-scope options, each with a real reader.
@@ -89,6 +95,16 @@ async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(
     # an honest 400, never silently coerced to a default.
     if "home_quote_source" in patch.values and patch.values["home_quote_source"] not in HOME_QUOTE_SOURCES:
         raise HTTPException(400, f"That is not a quote source — choose one of: {', '.join(HOME_QUOTE_SOURCES)}.")
+    # Long-term threshold (page-settings §9-1) — a whole number of days, validated to mirror the
+    # realised-gains / tax-lots route bound (`ge=0, le=3660`, `portfolio.py`). A non-numeric or
+    # out-of-range value is an honest 400, never a silently-stored bad threshold.
+    if "long_term_days" in patch.values:
+        try:
+            _ltd = int(patch.values["long_term_days"])
+        except (TypeError, ValueError):
+            raise HTTPException(400, "long_term_days must be a whole number of days between 0 and 3660.")
+        if not 0 <= _ltd <= 3660:
+            raise HTTPException(400, "long_term_days must be between 0 and 3660 days.")
     # An unknown key is REFUSED, not skipped. It used to `continue` here — which is exactly why a PUT
     # of the (then unlisted) `home_layout` looked like it worked and changed nothing (page-home Phase
     # 0). A write surface that accepts a key it does not store is lying to its caller, and it hid a

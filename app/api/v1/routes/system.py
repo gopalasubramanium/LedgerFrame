@@ -149,7 +149,10 @@ async def get_data_source() -> dict:
 
 
 class DataSourceIn(BaseModel):
-    provider: str
+    # Partial update: every field is optional; only what's sent is applied. `provider`
+    # was once required, which 422'd the Save-key control (it posts {api_key} only) —
+    # data-feed-routing §14dr-1. Omitting `provider` leaves the persisted provider as-is.
+    provider: str | None = None
     api_key: str | None = None  # write-only; never returned
     base_currency: str | None = None
     stale_after_seconds: int | None = None
@@ -159,9 +162,11 @@ class DataSourceIn(BaseModel):
 async def set_data_source(payload: DataSourceIn) -> dict:
     from app.core.envfile import apply_env
 
-    if payload.provider not in _MARKET_PROVIDERS:
-        raise HTTPException(400, f"unknown provider; choose one of {sorted(_MARKET_PROVIDERS)}")
-    updates = {"LEDGERFRAME_MARKET_PROVIDER": payload.provider}
+    updates: dict[str, str] = {}
+    if payload.provider is not None:
+        if payload.provider not in _MARKET_PROVIDERS:
+            raise HTTPException(400, f"unknown provider; choose one of {sorted(_MARKET_PROVIDERS)}")
+        updates["LEDGERFRAME_MARKET_PROVIDER"] = payload.provider
     if payload.api_key is not None:
         updates["LEDGERFRAME_MARKET_API_KEY"] = payload.api_key.strip()
     if payload.base_currency:
@@ -179,7 +184,10 @@ async def set_data_source(payload: DataSourceIn) -> dict:
     reload_settings()
     fx.clear_cache()
     await restart_worker()
-    return {"ok": True, "applied": True, "note": f"Applied — now using '{payload.provider}'."}
+    note = (
+        f"Applied — now using '{payload.provider}'." if payload.provider else "Saved."
+    )
+    return {"ok": True, "applied": True, "note": note}
 
 
 # --- R-38: provider routing matrix (data-feed-routing §9-RESOLVED) --------------

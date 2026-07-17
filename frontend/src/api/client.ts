@@ -8,6 +8,25 @@ export type Result<T> =
 
 const BASE = "/api/v1";
 
+// Render a non-2xx `detail` as the SERVED reason TEXT (D-105) — never a stringified
+// object. A FastAPI 422 `detail` is an array of {loc, msg, type, input}; the old
+// `String(detail)` produced "[object Object]" (data-feed-routing §14dr-1, systemic).
+// We extract `msg` ONLY — the 422 `input` echoes the request body (e.g. a pasted
+// write-only key), so the whole object must never be serialized into an error string.
+function detailToText(detail: unknown, status: number): string {
+  if (typeof detail === "string") return detail;
+  const msgOf = (d: unknown): string =>
+    d && typeof d === "object" && "msg" in d ? String((d as { msg: unknown }).msg) : "";
+  if (Array.isArray(detail)) {
+    const msgs = detail.map(msgOf).filter(Boolean);
+    if (msgs.length) return msgs.join("; ");
+  } else {
+    const msg = msgOf(detail);
+    if (msg) return msg;
+  }
+  return `HTTP ${status}`;
+}
+
 async function request<T>(
   path: string,
   init?: RequestInit,
@@ -18,7 +37,7 @@ async function request<T>(
       let detail = `HTTP ${res.status}`;
       try {
         const body = await res.json();
-        if (body?.detail) detail = String(body.detail);
+        if (body?.detail !== undefined) detail = detailToText(body.detail, res.status);
       } catch {
         /* non-JSON error body */
       }

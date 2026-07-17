@@ -478,8 +478,15 @@
             "title": "Base Currency"
           },
           "provider": {
-            "title": "Provider",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
           },
           "stale_after_seconds": {
             "anyOf": [
@@ -493,9 +500,6 @@
             "title": "Stale After Seconds"
           }
         },
-        "required": [
-          "provider"
-        ],
         "title": "DataSourceIn",
         "type": "object"
       },

@@ -653,3 +653,69 @@ end-to-end (a keyed save SUCCEEDS + key-state shows SET; a rejected save shows t
 served reason verbatim), both new tables at all widths, 0 console errors, suites +
 contract + frontend exit 0. Screenshots: the fixed save (success AND an honest
 rejection), both tables, the empty states. `git push`. STOP — the owner re-walks.
+
+---
+
+## §15 — PHASE 3b FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+Both findings fixed verify-first (fail-first RED on the real cause), small commits,
+docs-first.
+
+- **DONE — §14 findings filed first** (`931eb44`) — dr-1 (real cause + systemic
+  surface + the key-leak hazard) and dr-2 (verified frontend-only) recorded before
+  any fix.
+- **DONE — §14dr-1 fix** (`e1ce9f1`) — **backend** `DataSourceIn.provider` →
+  optional (partial-update; unknown-provider 400 still fires when sent; note
+  conditional); **client.ts** `detailToText` renders the served reason TEXT,
+  `msg`-only (no `[object Object]`, no leaked `input`/key). Contract regen same
+  commit (`provider` required→nullable; **134 path-keys held**). Fail-first:
+  backend key-only 200 + provider-unchanged + no `"None"` note; client 422-array →
+  `msg`, asserts no `"[object"` and no leaked key.
+- **DONE — §14dr-2 fix** (`049af20`) — provider `DataTable` (`ProviderTable`) +
+  news-feeds `DataTable`, served facts only, no new component, no backend change;
+  `av_tier` declared on the `DataSource` reader type (already served); the §9-7
+  routing test's bare `findByText("Active")` scoped to the status chip.
+  `page-settings.md §16` accepted-page delta notes (dr-1 + dr-2).
+
+### Phase 3b re-run — RESULT (isolated demo instance; owner instance untouched)
+
+Isolated **production-mode** backend on spare port **8399** (own temp data dir,
+demo-seeded) + a throwaway Vite dev on **5199** proxying to it (owner's 5173→8321 →
+`~/.ledgerframe-data` never touched; §15c). The one instance mutation that reaches
+the repo — `apply_env` writing `.env` on the key-save — was **snapshotted before and
+restored after** (verified: `.env` back to `MARKET_API_KEY=` empty); the throwaway
+Vite config and temp data dir were removed. Working tree clean.
+
+- **Key-save FIXED end-to-end:** the exact previously-broken body
+  `PUT /system/data-source {api_key}` → **200** (was 422); `has_api_key` → true; the
+  UI Save-key flow shows **"API key saved (stored, hidden)."** and the provider table
+  key state shows **SET** with the key value **never** displayed (`•••••• (set)`).
+- **Honest rejection rendered verbatim:** the kite→US add returns 400; the
+  `role="alert"` shows **"kite doesn't cover US"** (asserted exactly) — the
+  client-error standard renders the served reason, **`[object` never appears** on the
+  page.
+- **§14dr-2 tables live:** provider table (alphavantage · Active · SET · tier `free`;
+  no-key providers `Not needed`), news-feeds list (3 configured URLs read-only), and
+  the honest empty state **"No feeds configured."** after clearing.
+- **Widths + console:** Data feeds tab captured at **320/375/900/1366**; **0
+  unexpected console errors** — the single console entry is the browser logging the
+  **intentional kite→US 400** as a failed resource (the §13-documented expected
+  rejection, not a defect).
+- **Gates:** backend **922 passed** (+2 dr-1 pins); `make api-contract-check` green,
+  contract **134 path-keys** (Flag 1 held); frontend `npm run check` **exit 0**
+  (lint+typecheck+tokens+**vitest incl. dr-1 client + dr-2 table/feeds pins**+**334
+  overflow/tile e2e** incl. the taller Data feeds tab).
+- **Screenshots (10):** the fixed save success toast; the honest rejection verbatim;
+  the provider table; the news-feeds list; the empty-feeds state; the Data feeds tab
+  at all four widths.
+
+**One interpretive point for the owner re-walk (raised, not improvised):** under the
+**single shared key slot** (`LEDGERFRAME_MARKET_API_KEY` is one value, not
+per-provider), the provider table renders **SET on every needs-key row** from the one
+stored-key fact — so `eodhd`/`kite` read SET while `alphavantage` is the active,
+keyed provider. The active marker distinguishes which provider the key actually
+serves. The honest alternative (SET/NOT SET only on the active row) is a one-line
+change if the owner prefers it; recorded in `page-settings.md §16-2`.
+
+**STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b, judgment only),
+then the close ritual.

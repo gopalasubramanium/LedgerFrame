@@ -16,6 +16,7 @@ import {
 import type { Column } from "./index";
 import {
   ALLOCATION_BY_CLASS,
+  DENSE_CANDLE_SERIES,
   HOLDINGS,
   PRICE_SERIES,
   PROV_STALE,
@@ -90,6 +91,50 @@ test("PriceChart amendment: Simple default, Advanced shows candles, period fires
   expect(onPeriod).toHaveBeenCalledWith("1M");
   // Honest short-history note is shown, never hidden.
   expect(screen.getByText(/Only 4 days of history available/)).toBeInTheDocument();
+});
+
+// §14dr-4 — candlestick GEOMETRY at real daily density. The 40-point PRICE_SERIES hid the bug
+// (sparse → wide bodies); with a dense ~130-bar daily fixture the body width collapsed below the
+// wick and rendered as a cross. Assert the SVG geometry (not pixels-by-eye): readable body width,
+// no overlap, body between open/close, wick to high/low, correct up/down class.
+test("PriceChart: dense-daily candles keep readable, non-overlapping bodies between open/close (§14dr-4)", () => {
+  const { container } = render(<PriceChart series={DENSE_CANDLE_SERIES} mode="candles" interval="1D" />);
+  const groups = Array.from(container.querySelectorAll(".lf-candle--up, .lf-candle--down"));
+  expect(groups.length).toBe(DENSE_CANDLE_SERIES.length);
+
+  const X0 = 2, X1 = 98;
+  const slot = (X1 - X0) / DENSE_CANDLE_SERIES.length; // ≈ 0.738 viewBox units at 130 bars
+  const num = (el: Element | null, a: string) => parseFloat(el!.getAttribute(a) ?? "NaN");
+
+  groups.forEach((g, i) => {
+    const p = DENSE_CANDLE_SERIES[i];
+    const rect = g.querySelector("rect");
+    const line = g.querySelector("line");
+    expect(rect).not.toBeNull();
+    expect(line).not.toBeNull();
+
+    // READABLE: the body is wider than the wick (0.4) and clears the old collapsed width (~0.37 at
+    // this density) — the fix floors it to 0.6. This is the fail-first assertion: RED before the fix.
+    const bw = num(rect, "width");
+    expect(bw).toBeGreaterThanOrEqual(0.5);
+    // NO OVERLAP: the body never exceeds its per-point slot (holds at 1Y/Max density too).
+    expect(bw).toBeLessThanOrEqual(slot + 1e-6);
+
+    // WICK to high→low: y1 (high) is at/above y2 (low) — smaller y = higher price.
+    const wickTop = num(line, "y1"), wickBot = num(line, "y2");
+    expect(wickTop).toBeLessThanOrEqual(wickBot);
+
+    // BODY between open/close: its top (yAt(max(open,close))) sits WITHIN the wick's high→low span,
+    // and the body has positive height. (The bottom allows the 0.4 min-height doji floor.)
+    const bodyTop = num(rect, "y"), bodyH = num(rect, "height"), bodyBot = bodyTop + bodyH;
+    expect(bodyTop).toBeGreaterThanOrEqual(wickTop - 1e-6);
+    expect(bodyTop).toBeLessThanOrEqual(wickBot + 1e-6);
+    expect(bodyH).toBeGreaterThan(0);
+    expect(bodyBot).toBeLessThanOrEqual(wickBot + 0.4 + 1e-6);
+
+    // UP/DOWN class matches the served open/close.
+    expect(g.classList.contains(p.close >= p.open ? "lf-candle--up" : "lf-candle--down")).toBe(true);
+  });
 });
 
 test("InstrumentPicker exposes an explicit create path (no silent auto-create)", async () => {

@@ -258,3 +258,29 @@ export const PRICE_SERIES: PricePoint[] = Array.from({ length: 40 }, (_, i) => {
 export const BENCHMARK_SERIES: number[] = PRICE_SERIES.map(
   (_, i) => 118 + i * 0.5 + Math.sin(i / 5) * 4,
 );
+
+// A DENSE, real-shaped daily OHLC series (~130 bars ≈ the 6M default on Instrument Detail) — the
+// fixture for the candlestick geometry regression (§14dr-4). Deterministic (a seeded LCG) so tests
+// are stable, yet shaped like a real daily feed: day-to-day drift, mixed up/down bodies, and
+// high ≥ max(open,close) / low ≤ min(open,close) on every bar. The 40-point PRICE_SERIES hid the bug
+// (sparse → wide bodies); real daily density is where candles collapsed to crosses.
+export const DENSE_CANDLE_SERIES: PricePoint[] = (() => {
+  let seed = 0x1a2b3c;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const out: PricePoint[] = [];
+  let close = 180;
+  for (let i = 0; i < 130; i++) {
+    const open = close;
+    close = Math.max(60, open + (rnd() - 0.47) * 5);
+    const high = Math.max(open, close) + rnd() * 2.5;
+    const low = Math.min(open, close) - rnd() * 2.5;
+    const day = String((i % 28) + 1).padStart(2, "0");
+    const month = String(((i / 28) | 0) + 1).padStart(2, "0");
+    out.push({
+      t: `2026-${month}-${day}`,
+      open: +open.toFixed(2), high: +high.toFixed(2), low: +low.toFixed(2), close: +close.toFixed(2),
+      volume: Math.round(1e6 + rnd() * 4e6),
+    });
+  }
+  return out;
+})();

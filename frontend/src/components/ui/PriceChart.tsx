@@ -226,7 +226,13 @@ export function PriceChart({
             ? series.map((p, i) => {
                 const up = p.close >= p.open;
                 const x = xAt(i);
-                const bw = ((X1 - X0) / n) * 0.5;
+                // §14dr-4 — body width is BAND-based with a readable floor and a no-overlap clamp:
+                // `slot` = the per-point width. `slot*0.7` gives a normal gapped candle at sparse
+                // density; the 0.6 floor keeps the body readable at real daily density (was
+                // `slot*0.5` → ~0.39 at the 6M/~124-bar default, thinner than the wick); the outer
+                // `min(slot, …)` guarantees the body never exceeds its slot (no overlap) at 1Y/Max.
+                const slot = (X1 - X0) / n;
+                const bw = Math.min(slot, Math.max(slot * 0.7, 0.6));
                 return (
                   <g key={i} className={up ? "lf-candle--up" : "lf-candle--down"}>
                     <line x1={x} y1={yAt(p.high)} x2={x} y2={yAt(p.low)} strokeWidth="0.4" />

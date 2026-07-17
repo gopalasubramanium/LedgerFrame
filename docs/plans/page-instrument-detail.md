@@ -316,3 +316,31 @@ Both are **PROPOSED pending the owner's visual ratify** at the next look.
   inset" standard (shell owns the inset; no page-local cap/centering). **Visible change:** the page now
   renders full-width like Net worth/Portfolio (was a centred ~1120px column) — flagged for owner
   confirmation at the re-walk. Overflow suite covers `/instrument/AAPL` at all breakpoints + the 1728 inset guard; green.
+
+---
+
+## DELTA NOTE — 2026-07-18 (R-38 data-feed-routing Phase 3b re-walk, §14dr-4)
+
+- **Advanced candlestick chart: malformed candles fixed (rendered as crosses).**
+  Verify-first, the served OHLC is correct (backend `markets.py` → alphavantage
+  `get_history`; the `Candle → PricePoint` mapping is a straight passthrough) — the
+  defect is **rendering geometry** in the shared `PriceChart` component. Two
+  compounding causes at real daily density:
+  - **The body outline ballooned into a "+".** The candle body `<rect>` inherited a
+    `stroke` with **no `vector-effect: non-scaling-stroke`** (unlike every sibling
+    series), so the SVG default 1-user-unit stroke was scaled non-uniformly by the
+    plot's `preserveAspectRatio="none"` into a fat cross around a thin fill. **Fix:**
+    candle bodies render **fill-only** (`stroke: none`); the wick keeps a **crisp
+    non-scaling stroke** — parity with `__line/__axis/__overlay/__bench/__cmp`.
+  - **The body width collapsed with density.** `bw = slot*0.5` gave ~0.39 viewBox
+    units at the 6M/~124-bar default (thinner than the wick). **Fix:** band-based
+    width with a readable floor and a no-overlap clamp:
+    `min(slot, max(slot*0.7, 0.6))`.
+  - **Fix-at-standard sweep:** the fix is at the component, so **every candle
+    consumer** inherits it — Instrument Detail (Advanced) and the kitchen-sink candle
+    specimens; Portfolio / Net worth use `mode="line"` (unaffected). A **dense
+    real-shaped fixture** (`DENSE_CANDLE_SERIES`, ~130 daily bars) + kitchen-sink
+    specimen back a **fail-first unit geometry test** (RED on the collapsed width;
+    asserts body between open/close, wick to high/low, no overlap) **and an e2e
+    box-geometry test** (RED on the cross bloom — bodies must read as non-overlapping
+    rectangles). Instrument Detail pre-pass re-run stated in the report.

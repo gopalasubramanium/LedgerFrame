@@ -162,6 +162,12 @@
 .lf-pricechart__overlay { fill: none; stroke: var(--attention); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .lf-candle--up { stroke: var(--gain); fill: var(--gain); }
 .lf-candle--down { stroke: var(--loss); fill: var(--loss); }
+/* §14dr-4 — the body is a FILLED rect with NO outline: the SVG default 1-user-unit stroke, scaled
+   non-uniformly by the plot's `preserveAspectRatio="none"`, ballooned into a fat cross around a thin
+   fill at real daily density. The wick keeps a CRISP non-scaling stroke — parity with every sibling
+   series (`__line/__axis/__overlay/__bench/__cmp/__cross` all set `vector-effect`). */
+.lf-candle--up rect, .lf-candle--down rect { stroke: none; }
+.lf-candle--up line, .lf-candle--down line { vector-effect: non-scaling-stroke; }
 /* PROPOSED comparison mode (page-portfolio ND-3d/e) — a second same-unit series on the SHARED
    axis (portfolio = accent solid, benchmark = neutral dashed), with a legend swatch. */
 .lf-pricechart__cmp { fill: none; stroke: var(--text-secondary); stroke-width: 1.25; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }

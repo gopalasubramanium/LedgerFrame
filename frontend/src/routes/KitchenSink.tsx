@@ -75,6 +75,7 @@ import {
   ALLOCATION_BY_CLASS,
   ALLOCATION_BY_SECTOR,
   BENCHMARK_SERIES,
+  DENSE_CANDLE_SERIES,
   HOLDINGS,
   PRICE_SERIES,
   PROV_EOD,
@@ -637,6 +638,11 @@ export function KitchenSink() {
           </Specimen>
           <Specimen label="PriceChart · candles + MA + BB + RSI (Instrument Detail)">
             <PriceChart series={PRICE_SERIES} mode="candles" overlays={["MA", "BB", "RSI"]} interval="1M" />
+          </Specimen>
+          <Specimen label="PriceChart · candles at DENSE daily density (§14dr-4 regression — filled-rect bodies, never crosses)">
+            <div data-testid="ks-dense-candles">
+              <PriceChart series={DENSE_CANDLE_SERIES} mode="candles" interval="1D" />
+            </div>
           </Specimen>
           <Specimen label="PriceChart · AMENDMENT (PROPOSED): Simple/Advanced toggle · period selector · hover crosshair + tooltip · honest short-history">
             <PriceChart

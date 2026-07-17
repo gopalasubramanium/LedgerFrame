@@ -501,3 +501,70 @@ unblocked and proceeds from these rulings.
 **Build from here (owner-gated, this session):** Phase 1 assembly · Phase 2 tests ·
 Phase 3a scripted pre-pass → STOP. Phase 3b is the owner walk (separate session,
 no self-certification).
+
+---
+
+## §13 — PHASE 1–3a EXECUTION RECORD (2026-07-18)
+
+Built from the ratified rulings, backend-first where relevant, small commits.
+
+- **DONE — Commit 1: §12 ratification record** (`af66bd7`) — specimen ratified;
+  Flag 1 (134 path-keys) + Flag 2 (capability-not-chain gate) recorded; dated
+  strike-and-annotate corrections added in-place to §4b/§11.
+- **DONE — Phase 1 assembly** (`a597cf3`) — **Settings → Data feeds: the Routing
+  matrix card** below Market data + News feeds. Composes `DataTable` +
+  `MasterSelect` (cell) + `StatusChip` + `Button` (§9-9, no §5 amendment).
+  Add-rule flow (class + market + provider) **capability-validated by the honest
+  edit-time 400, rendered verbatim** in a `role="alert"` (§9-3); per-cell provider
+  edit + Clear (DELETE → fall-through); the degraded **caveat chip** shows the
+  served string, the Provider API key control is in the same tab above (§9-7);
+  the ratified **empty-state verbatim** (§9-2); the "Routing matrix" `[Help]`
+  popover serves the GLOSSARY entry. Market vocab = the router's ISO alpha-2
+  regions + `"*"` (§9-5), served from `/system/providers`. **Pricing Health:** the
+  read-only **`route_rule` provenance column** (override/matrix/lane/active,
+  neutral chips), the route-detail **MetaStrip** (Source · Rule · Lane · Class ·
+  Native price), and the **`av_tier_note`** honest string where served (§9-8/§9-10,
+  D-072 — no edit affordance). New reader `api/routing-matrix.ts`.
+- **DONE — Phase 2 tests** (`936a720`) — **frontend** component tests: empty-state
+  verbatim; Active + degraded caveat chips; the edit-time 400 rendered verbatim;
+  add PUT + reload; Clear DELETE; per-cell edit PUT; the provenance column (all
+  four values), the MetaStrip Rule, the tier-note. **backend** pins: the **Flag-2**
+  pin (capable+keyed OFF-chain cell prices via matrix) + its unkeyed counter-pin;
+  the matrix CRUD **require_auth** (locked → PUT/DELETE 401).
+- **DONE — Phase 3a demo-seed** (`566d7ac`) — two matrix cells seeded in
+  `seed_demo_data` (the ONE function both boot paths call — seed parity): `(etf,
+  US → mock)` so the demo VOO **prices via the matrix end-to-end**
+  (`route_rule=matrix`), and `(equity, IN → eodhd)` unkeyed → the degraded caveat
+  path. Seed-parity pin asserts both cells + VOO priced-by-matrix. *Root-cause
+  note: an earlier `(etf, US → yahoo)` seed decided `matrix` but left the US ETFs
+  unpriced in the offline demo (yahoo can't quote here) — it broke the
+  performance/markets fact tests; the honest end-to-end demo needs the provider
+  that can actually quote here, which is `mock`.*
+
+### Phase 3a scripted pre-pass — RESULT (isolated demo instance, owner instance untouched)
+
+The pre-pass ran against an **isolated dev stack** (own temp data dir, backend on
+spare port 8399, Vite dev on 5199) so the owner's live stack (5173 → 8321 →
+`~/.ledgerframe-data`) was **never touched** — the restore path is that nothing of
+the owner's was mutated (Settings §15 lesson (c)).
+
+- **Smoke sweep — 0 console errors:** Settings ×6 tabs × light/dark × 320/375/900/
+  1366 + Pricing Health at every width. (The one console entry in the whole run is
+  the **intentional** kite→US `400` triggered in the capture phase to screenshot
+  the honest reason — an expected rejection, not a defect.)
+- **Matrix-priced holding end-to-end:** demo VOO → `route_rule=matrix`,
+  `source=mock`, status Delayed, real value — visible on Pricing Health.
+- **Degraded caveat live:** `(equity, IN → eodhd)` stored + shown degraded with the
+  served caveat; routing falls through.
+- **Screenshots captured:** editor with rules; the edit-time `400` ("kite doesn't
+  cover US"); Pricing Health provenance (all four `route_rule` values incl. an
+  override set live); the route-detail MetaStrip (VOO, rule=matrix); the empty
+  state (both rules cleared → fall-through). The unkeyed **caveat chip** is in the
+  editor grid within the editor screenshot.
+
+**Gates:** backend **920 passed**; `make api-contract-check` green; contract
+**134 path-keys** (Flag 1); frontend `npm run check` **exit 0** (lint+typecheck+
+tokens+tests+overflow, 334, incl. the taller Data feeds tab).
+
+**STATUS: STOPPED after Phase 3a.** NEXT: **Phase 3b — the owner walk** (separate
+session, judgment only, no self-certification), then the close ritual.

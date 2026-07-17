@@ -482,6 +482,14 @@ token layer never loads at print time). This section is the spec that inline CSS
   currency · current-FX caveat · not-advice line — reports-pack Pack-5) is authored so it **repeats on
   each printed page** where the print context supports it (a running header), and is **always present on
   the first page**. On screen it renders once at the top.
+- **Running header is SUPPRESSED on page 1 (RATIFIED 2026-07-17, reports-pack §12pk-2).** The full
+  artifact **header block owns page 1**; the compact **running header exists for loose pages 2+** (an
+  accountant's stapled printout, where every page must name the report). Because a `position: fixed`
+  running header repeats on **every** printed page in Chromium (no pure-CSS "pages 2+" selector for a
+  fixed element), page 1's copy is **masked**: the header block is opaque and painted above the running
+  header (a higher `z-index`), and the running header is **inset to the content column** so the mask
+  covers it exactly (a full-bleed header would peek in the side margins). Pages 2+ have no header block,
+  so the running header shows.
 - **Screen vs print.** On screen the artifact is a normal scrolling light-background document; the
   `@media print` block adds the page-break geometry and the running header. Both are ratified at the
   **Phase-0a print-geometry gate** (reports-pack §7a) — the owner looks at BOTH the on-screen rendering

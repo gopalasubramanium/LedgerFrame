@@ -334,6 +334,17 @@ Chromium `page.pdf()`, which honours `@media print`). **Capture inventory** (all
 | Print — page 2 (PDF) | `pack-specimen-print-page2.png` | **Running header repeats on page 2+**; a **section break lands cleanly**; the header band is reserved (no overlap after the print-spacing fix); signed figures legible in grayscale. |
 | Print — full artifact (PDF) | `pack-specimen-print.pdf` | The whole 10-page paginated print output the owner would actually print. |
 
+**Fixed captures (2026-07-17, Phase 1 §12pk-1/2/3 — SUPERSEDING; the originals above are kept, the
+gate record cites them):** re-captured after the four ratification fixes landed, on the same reset
+3-entity seed.
+
+| Capture (fixed) | File | What it now proves |
+|-----------------|------|--------------------|
+| Print — page 1 | `pack-specimen-print-page1-fixed.png` | **§12pk-2:** page 1 shows the artifact header block ONLY — the running header is suppressed (masked by the opaque header block); no page-1 header ↔ running-header redundancy. |
+| Print — page 2 | `pack-specimen-print-page2-fixed.png` | **§12pk-2:** the running header repeats on page 2+ (inset to the content column); **§12pk-3:** "Net worth trend" prints as ONE heading (the section h2), no duplicate card h3. |
+| Print — full artifact | `pack-specimen-print-fixed.pdf` | The 10-page fixed print output. |
+| Screen — Household per-entity (1440) | `pack-specimen-per-entity-household-fixed-1440.png` | **§12pk-1:** the Attribution asset-class rows render SERVED display labels (Bond · Cash · Equity · **Fixed deposit** · Liability · Property · Retirement), never the raw reader key. |
+
 **Tile-integrity (one derivation, P-1):** every figure is a canonical-reader output — Household's net
 worth (739,108.20) is `value_portfolio(entity_id=Household).total_value`, the SAME value the Net
 worth / Holdings readers serve; the Pack formats it with the shared `format_money_display`, never a

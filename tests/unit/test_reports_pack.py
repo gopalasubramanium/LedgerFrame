@@ -68,6 +68,16 @@ async def test_attribution_rows_render_served_labels_not_reader_keys(app_client)
     assert "fixed_deposit" not in html, "the raw reader key must not render — it is not a display label"
 
 
+async def test_single_card_consolidated_sections_render_one_heading_not_h2_plus_h3(app_client):
+    """§12pk-3: a single-card consolidated subsection prints ONE heading — the section <h2> — never a
+    duplicated card <h3> of the same text (the DataTable-caption lesson). Per-entity sections keep
+    their card <h3>s (their <h2> is the entity name, so the card titles are NOT duplicates)."""
+    html = (await app_client.get("/reports/pack")).text
+    for title in ("Net worth trend", "Review", "Cash flow", "Scenarios"):
+        assert f"<h2>{title}</h2>" in html, f"the consolidated section heading for {title!r} is present"
+        assert f"<h3>{title}</h3>" not in html, f"duplicate card heading for {title!r} (§12pk-3)"
+
+
 # ------------------------------------------------------------------- Pack-3 empty / Pack-4 degenerate
 
 

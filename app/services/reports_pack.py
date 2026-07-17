@@ -111,6 +111,13 @@ def _card(title: str, inner: str) -> str:
     return f'<div class="pack-card"><h3>{_esc(title)}</h3>{inner}</div>'
 
 
+def _plain_card(inner: str) -> str:
+    """A card box with NO heading — used for a single-card consolidated subsection whose section
+    <h2> already titles it, so the artifact prints ONE heading, not a duplicated h2+h3 of the same
+    text (§12pk-3, the DataTable-caption lesson)."""
+    return f'<div class="pack-card">{inner}</div>'
+
+
 def _section(title: str, cards: str, *, kind: str = "consolidated") -> str:
     return f'<section class="pack-section pack-section--{kind}"><h2>{_esc(title)}</h2>{cards}</section>'
 
@@ -125,7 +132,7 @@ async def _consolidated_net_worth_trend(session: AsyncSession) -> str:
     if not rows:
         inner = _empty_note("No net-worth snapshots recorded yet — the trend builds as the daily "
                             "snapshot worker accrues history.")
-        return _card("Net worth trend", inner + _caption(_REPORTING_CAPTION))
+        return _plain_card(inner + _caption(_REPORTING_CAPTION))
     first, last = rows[0], rows[-1]
     body_rows = "".join(
         f"<tr><td>{_esc(r.ts.date().isoformat())}</td><td>{_money(r.net_worth)}</td>"
@@ -140,7 +147,7 @@ async def _consolidated_net_worth_trend(session: AsyncSession) -> str:
         f'<p class="pack-caption">Change over the recorded period: '
         f'<span class="{cls}">{change}</span> ({len(rows)} snapshots).</p>'
     )
-    return _card("Net worth trend", table + _caption(_REPORTING_CAPTION))
+    return _plain_card(table + _caption(_REPORTING_CAPTION))
 
 
 async def _consolidated_review(session: AsyncSession) -> str:
@@ -152,7 +159,7 @@ async def _consolidated_review(session: AsyncSession) -> str:
         for i in items
     )
     inner = f'<p class="pack-caption">As of {_esc(report.get("as_of"))}</p><ul class="pack-list">{rows}</ul>'
-    return _card("Review", inner + _disclaimer(report.get("disclaimer")))
+    return _plain_card(inner + _disclaimer(report.get("disclaimer")))
 
 
 async def _consolidated_cash_flow(session: AsyncSession) -> str:
@@ -166,7 +173,7 @@ async def _consolidated_cash_flow(session: AsyncSession) -> str:
 
     if not ob_rows and not goal_rows and not contrib_rows:
         inner = _empty_note("No obligations, goals, or contributions recorded — nothing to project.")
-        return _card("Cash flow", inner + _disclaimer(obs.get("disclaimer")))
+        return _plain_card(inner + _disclaimer(obs.get("disclaimer")))
 
     parts: list[str] = []
     parts.append(
@@ -192,7 +199,7 @@ async def _consolidated_cash_flow(session: AsyncSession) -> str:
     disclaimers = "".join(
         _disclaimer(r.get("disclaimer")) for r in (obs, goals, contrib) if r.get("disclaimer")
     )
-    return _card("Cash flow", "".join(parts) + disclaimers)
+    return _plain_card("".join(parts) + disclaimers)
 
 
 async def _consolidated_scenarios(session: AsyncSession) -> str:
@@ -219,7 +226,7 @@ async def _consolidated_scenarios(session: AsyncSession) -> str:
     if scen_rows:
         inner += ("<table><thead><tr><th>Scenario</th><th>Modelled net worth</th></tr></thead>"
                   f"<tbody>{scen_rows}</tbody></table>")
-    return _card("Scenarios", inner + _disclaimer(report.get("disclaimer")))
+    return _plain_card(inner + _disclaimer(report.get("disclaimer")))
 
 
 # ------------------------------------------------------------------------------ per-entity sections
@@ -459,14 +466,23 @@ th { color: #475569; font-weight: 600; font-size: 12px; }
 @media print {
   body { background: #ffffff; }
   .pack { max-width: none; padding: 0 12mm; }
-  .pack-running-header { display: block; position: fixed; top: 0; left: 0; right: 0;
+  /* Inset to the content column (matches .pack's 12mm side padding) so the header block's
+     page-1 mask covers it exactly — a full-bleed header would peek in the side margins. */
+  .pack-running-header { display: block; position: fixed; top: 0; left: 12mm; right: 12mm;
     height: 7mm; line-height: 7mm; font-size: 10px; color: #475569;
     border-bottom: 1px solid #cbd5e1; background: #ffffff; z-index: 10; }
   /* Every top-level section starts a fresh page (break-before). The running header is
      position:fixed at the page top, so each page reserves a top band for it (padding-top)
      — otherwise the fixed header prints ON TOP of the section heading. */
   .pack-section { break-before: page; padding-top: 10mm; }
-  .pack-header { padding-top: 10mm; break-after: avoid; }
+  /* §12pk-2: SUPPRESS the running header on page 1 — the artifact header block owns page 1; the
+     running header exists for loose pages 2+. A position:fixed element repeats on every printed
+     page (no pure-CSS "pages 2+" selector for it in Chromium), so page 1's copy is MASKED: the
+     header block is opaque white and sits above the running header (z-index 11 > 10), painting over
+     the top band it occupies on page 1. On pages 2+ the header block is absent, so the header
+     shows. */
+  .pack-header { position: relative; z-index: 11; background: #ffffff;
+    padding-top: 4mm; break-after: avoid; }
   .pack-group-label { break-before: auto; }
   .pack-section h2, .pack-card h3 { break-after: avoid; }
   .pack-card { break-inside: avoid; }

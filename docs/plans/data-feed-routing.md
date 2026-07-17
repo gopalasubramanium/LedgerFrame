@@ -959,3 +959,317 @@ temp data dir removed; **working tree clean**.
 
 **STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b, judgment only),
 then the close ritual.
+
+---
+
+## §18 — PHASE 3b RE-WALK (batch 3) — FINDINGS (2026-07-18)
+
+The owner **re-walked** the live app after the batch-2 fixes (dr-3/dr-4/dr-5 +
+key-slot **ACCEPTED**). **Seven new findings** (the `§14dr-*` series continues) **+
+three feature requests** (R-42/R-43/R-44 → `ROADMAP.md`, this same docs commit;
+**recorded, not built**). Filed here **first**, then fixed one-per-commit,
+verify-first: environment gate · fail-first RED on the **real cause** · frontend exit
+code · **no mutating smokes on the owner's live instance** (an isolated demo stack
+only, `[[prepass-harness]]`). Accepted-page touches (Instrument Detail, Pricing
+Health, Holdings, chrome ticker) each get a dated delta note + their pre-pass re-run,
+stated per page in the report.
+
+**Verify-first headline — the batch resolves to FRONTEND fixes; the contract holds at
+134.** Four of the seven findings assumed a backend gap the code does **not** have:
+the transaction `PUT` **already** accepts `account_id` (dr-11); the instrument search
+**already** filters by `asset_class` (dr-12, D-097); the ticker **already** consumes
+the served `is_stale`, not a client timestamp (dr-9); the AMFI mapping **already** has
+a canonical writer endpoint (dr-6). So **no endpoint is added** and **no contract key
+changes** — the honest fixes are at the surface that lies, not the wire.
+
+### §14dr-6 — BUG: source-override edit is a dead-end + toast stacking
+
+**Reproduce:** Instrument Detail → Edit an instrument → set **Source override** to
+`amfi_nav` on a mutual fund → Save → the backend **400s honestly** ("amfi_nav needs an
+AMFI scheme mapping on a mutual fund"), but the dialog offers **no way** to supply the
+mapping — a dead-end. Separately, retrying stacked **three identical** toasts.
+
+**Verify-first — the AMFI code is modelled, and there is a canonical writer (verified).**
+- The edit dialog (`InstrumentDetail.tsx` `EditDialog`, `:326-376`) exposes **name ·
+  asset_class · source_override** only (submit `:337-342`); **no `amfi_code` field**
+  anywhere in the frontend (grep `map-amfi`/`mapAmfi` in `frontend/` → 0 hits).
+- The 400 is honest and correct: `validate_source_override`
+  (`app/services/market.py:124-125`) requires `id_type "amfi_code"` present in
+  `instrument_identifiers` when `amfi_nav` is chosen on a `mutual_fund`; surfaced at
+  `PATCH /instruments/{symbol}` (`markets.py:296`).
+- **The AMFI code's ONE canonical home is `instrument_identifiers` (`id_type =
+  "amfi_code"`)** — `app/models/__init__.py:196-221`; **not** a column on `Instrument`
+  (`:191` has only `source_override`). Its **canonical writer already exists**: `POST
+  /instruments/{symbol}/map-amfi` (`app/api/v1/routes/amfi.py:57-70`) →
+  `set_identifier(..., "amfi_code", ..., provider="amfi_nav", is_primary=True)` ("the
+  only way NAV mapping happens — never inferred", `:60-61`). NAV pricing reads it back
+  (`services/amfi.py:54`; `market.py:538-539`). GLOSSARY / MASTER-DATA fix the
+  spellings: id_type **`amfi_code`**, source **`amfi_nav`**.
+
+**Fix level: FRONTEND (compose the canonical writer) — no new field, no contract change.**
+1. **Supply the mapping in the edit flow.** When `source_override = amfi_nav` is
+   chosen on a mutual fund and no `amfi_code` is mapped yet, the dialog reveals an
+   **AMFI scheme code** input (ratified `ui/` field). On save, if a code is entered,
+   the dialog **calls the canonical writer `POST …/map-amfi` first**, then the
+   `source_override` PATCH — so the code lands in its one home
+   (`instrument_identifiers`), never a duplicated column (IA P-1). The honest 400 copy
+   becomes reachable-then-resolvable, not a dead-end.
+2. **Toast dedupe at the standard.** `ToastProvider.show` (`ToastProvider.tsx:30-42`)
+   appends unconditionally — no comparison against visible toasts. Add a guard at the
+   top of `show`: **same `message` (+ `tone`) already visible → no new toast** (reset
+   the existing timer, return its id). DESIGN-SYSTEM §5.5 is **silent** on stacking →
+   this adds the provision (spec delta note in DESIGN-SYSTEM §5.5).
+- **Fail-first:** (a) a component test that choosing `amfi_nav` on a mutual fund
+  reveals the code field and that Save issues `map-amfi` then the PATCH (RED today — no
+  field, no call); (b) a `ToastProvider` test that three `show()` of the same message
+  yield **one** live toast (RED today — three).
+- **Accepted-page delta:** Instrument Detail → dated delta note in
+  `page-instrument-detail.md` + its pre-pass re-run. Toast dedupe → DESIGN-SYSTEM §5.5
+  delta.
+
+### §14dr-7 — SPEC-GAP: range↔granularity honesty + overlay values in the hover
+
+**Reproduce:** Instrument Detail → **1D** renders **three DAILY candles** — the range
+picker implies an intraday granularity the data model does not hold.
+
+**Verify-first — the store holds DAILY ONLY; the picker promises intraday (verified).**
+- `PriceHistory` has an `interval` column (`app/models/__init__.py:325`), but **every
+  live provider hardcodes daily** regardless of the arg — Yahoo `"interval":"1d"`
+  (`yahoo.py:209`), Alpha Vantage `"interval":"daily"` (`external.py:213`). Only the
+  **mock** would emit sub-daily. So the store holds **daily closes/OHLC only**.
+- The picker `PERIODS = ["1D","5D","1M",…]` (`InstrumentDetail.tsx:44`) maps each
+  period to a **day window** (`periodToDays`, `:45-52`) and **never passes an
+  interval** (`instruments.ts:55-57` sends `?days=` only → server default `1d`). So
+  **"1D" = `days=1` of daily bars** → 1–3 rows near a weekend. "Interval: 1d" is
+  already labelled in the legend (`PriceChart.tsx:361`), but the **range buttons**
+  1D/5D still promise intraday.
+- The hover tooltip (`PriceChart.tsx:328-348`) shows date/close (+OHLCV in Advanced)
+  but **no overlay values**; MA/BB/RSI are computed index-aligned and available at the
+  hover index (`ma` `:177`, `sd` `:178`, `rsiVals` `:216`; overlays exist in Advanced
+  only, `:108`).
+
+**Fix level: FRONTEND (honest ranges + richer hover) — no backend, intraday is R-42.**
+1. **No fabricated density.** 1D and 5D promise a granularity daily-only data cannot
+   differ on → **disable both with an honest reason** ("Intraday prices aren't
+   available — daily history only", the `coverageNote` honesty voice) rather than
+   render a 1–3-candle lie; the shortest honest range stays **1M**. Every remaining
+   range renders only the daily bars that honestly exist, already labelled "Interval:
+   1d". (Intraday itself is **R-42**, filed below — the disabled-reason points there
+   conceptually, not by internal id in user copy.)
+2. **Overlay values in hover.** The Advanced tooltip gains **MA · BB (upper/lower) ·
+   RSI at the hovered point** (`ma[i]`, `ma[i]±2·sd[i]`, `rsiVals[i]`), **null-guarded**
+   for the warm-up window (SMA-5 / RSI-14) — chart-component standard.
+- **Fail-first:** (a) a unit/e2e test that 1D & 5D render **disabled with a reason**
+  (RED today — they're active and render daily candles); (b) a `PriceChart` test that
+  the Advanced hover tooltip includes the overlay values at the hovered index, and
+  omits them during warm-up (RED today — absent).
+- **Accepted-page delta:** Instrument Detail delta note + pre-pass re-run.
+
+### §14dr-8 — BUG: async Refresh has no perceptible feedback (fix-at-standard)
+
+**Reproduce:** Pricing Health → the owner clicked **Refresh 4×** — no perceptible
+pending state, no clear completion.
+
+**Verify-first — the header button is half-compliant; the per-row actions are not
+(verified).**
+- The page-header **"Refresh all"** *already* guards: `disabled={refreshing||noEgress}`
+  + `aria-busy` + a served toast `Refreshed {n} of {m}…` (`PricingHealth.tsx:114-133,
+  228-232`). But it is a raw framed icon-button with **no spinner** — on a fast/mock
+  backend the pending flash is **imperceptible**, and the only completion signal is an
+  auto-dismissing toast → the "clicked 4×" report despite the guard.
+- The **per-holding "Refresh"** (`:135-153`) and **"Save correction"** (`:155-166`)
+  have **no pending state and no in-flight guard at all** — re-clickable mid-flight.
+- The shared **`Button`** (`Button.tsx`) has **no `loading`/pending prop** — it only
+  forwards native `disabled`. There is **no async-action section in DESIGN-SYSTEM**;
+  the standard lives scattered in page plans (`page-news.md:459-468`;
+  `page-pricing-health.md:407-409`: `aria-busy`, served-outcome toast, honest disable,
+  *never a no-op spinner*).
+- **Sweep — same defect (no in-flight guard):** Markets create/delete/add/remove
+  watchlist (`Markets.tsx` `:261-314`), Settings create-token / save-feeds / set-PIN /
+  save-key / save-days (`Settings.tsx` handlers `:347,848,708,…`).
+
+**Fix level: THE STANDARD (`Button`) + the defective call sites — no backend.**
+1. **Ratify the async-action standard in DESIGN-SYSTEM** (new §5.4 provision): a
+   `Button` **`loading` prop** → `disabled` + `aria-busy` + a **perceptible** pending
+   affordance (a small in-button spinner/label), re-click guarded; completion via the
+   served-outcome toast. `Button.tsx` gains the prop.
+2. **Apply at the defect sites:** the per-holding Refresh + Save correction on Pricing
+   Health, and the swept Markets/Settings actions, adopt `loading`/guarded state. The
+   header "Refresh all" gains the perceptible affordance too.
+- **Fail-first:** a test that a guarded async Button is **disabled + `aria-busy`
+  in-flight** and that a **completion signal is surfaced** (RED today — re-clickable,
+  no perceptible pending).
+- **Accepted-page delta:** Pricing Health delta note + pre-pass re-run;
+  DESIGN-SYSTEM §5.4 delta.
+
+### §14dr-9 — BUG (A11): ticker staleness is a divergent population, not a re-derivation
+
+**Reproduce:** the bottom chrome ticker shows stale marks on **most** instruments
+while the shared reader (banner / Pricing Health) counts **2**.
+
+**Verify-first — the ticker consumes served `is_stale`; the divergence is POPULATION
+(verified).**
+- The ticker does **not** compute staleness from a timestamp. `fetchTickerQuotes`
+  (`chrome.ts:105-145`) unions **two served populations**: portfolio holdings
+  (`/portfolio/holdings` → `stale: !!hv.is_stale`, `:120`) **and** world indices
+  (`/markets/global` → `stale: !!it.quote?.is_stale`, `:136`); rendered as a triangle
+  (`TickerStrip.tsx:50-54`).
+- The shared reader (`stale_count`, `portfolio.py:133`) is **portfolio holdings
+  ONLY** — the same `HoldingValue.is_stale` (`services/portfolio.py:303`) the ticker's
+  **holding** rows already use. So for holdings the ticker and banner **already agree**
+  (one derivation, the `renewal_reminders` precedent, `insurance.py:266`).
+- **The extra marks are the world-index rows.** Index quotes derive `is_stale` from a
+  separate path (`markets.py:150` `display_quote` → `_is_stale(received_at,
+  stale_after_seconds=900)`, `market.py:321`); indices refresh only on the worker /
+  "Refresh live data", so their cache is routinely >900s → most flag stale, while the
+  holdings `stale_count` stays 2.
+
+**Fix level: FRONTEND (one derivation, scoped population) — no backend (`is_stale`
+already served).**
+- The ticker's **pricing-health stale triangle** consumes the **shared served
+  `is_stale`** on **holding rows** and is **not** applied to **world-index rows** — the
+  freshness of a world index is a **different domain** whose canonical home is
+  **Markets** (IA P-1), not the chrome pricing-health signal, and conflating the two is
+  what over-marks. This makes the owner's pin literally true.
+- **Reconciliation pin (proven live):** the set of stale-marked **holding** ticker rows
+  **==** the shared reader's stale set (both from `HoldingValue.is_stale`); index rows
+  carry no pricing-health stale mark.
+- **Fail-first:** a `chrome`/ticker test that ticker holding-row stale marks equal the
+  shared `staleCount` set, and index rows are unmarked (RED today — indices marked,
+  ticker ≠ shared set).
+- **Chrome delta:** dated delta note in `page-chrome.md` + the chrome-ticker pre-pass
+  re-run.
+
+### §14dr-10 — BUG: stray internal copy "Purge N deleted [PIN]"
+
+**Reproduce:** the owner saw **"purged 2 deleted [PIN]"**-style copy reaching a user
+surface off Instrument Detail.
+
+**Verify-first — the string is a leftover dev annotation on Holdings (verified).**
+- Exact source: `Holdings.tsx:443` renders the button label **`Purge {deletedCount}
+  deleted [PIN]`** (Transactions section, `:441-445`) → literally "Purge 2 deleted
+  [PIN]". (Instrument Detail itself renders **no** purge control — it *links out* to
+  `/holdings`, `:247/:256`; the owner reached it via that navigation. Source lives only
+  in `Holdings.tsx`.)
+- **`[PIN]` is internal residue.** The purge is *already* PIN-gated properly via the
+  confirm dialog's `requirePin` prop (`:575`) with clean toast copy `"Purged."`
+  (`:580`). The `[PIN]` is a dev reminder that leaked into user copy; its honest home is
+  the `requirePin` affordance, not the label.
+- **Siblings (grep):** only `KitchenSink.tsx` (`:1153,:1155,:1443,:830`) carries
+  internal/annotation copy — the **dev-only** sink (confirm it isn't routed in prod). No
+  `console.*` leaks into JSX; no stray TODO/DEBUG on production surfaces. The **one true
+  production leak is `Holdings.tsx:443`**.
+
+**Fix level: FRONTEND (remove the residue) + a guard.**
+- Remove `[PIN]` from the label (the PIN gate is the `requirePin` dialog; add a lock
+  affordance only if the ratified inventory has one — no invented iconography).
+- **Guard:** a test/lint that asserts internal annotation markers (`[PIN]` and kin)
+  **never render on production user surfaces** (KitchenSink scoped out).
+- **Accepted-page delta:** Holdings → dated delta note in `page-holdings.md` + pre-pass
+  re-run.
+
+### §14dr-11 — BUG: transaction edit cannot change Account
+
+**Reproduce:** the add-transaction flow has **Account**; the edit flow does **not**.
+
+**Verify-first — the backend already supports the re-scope; the edit form omits the
+field (verified).**
+- Add has the Account `Select` (`Holdings.tsx:933-936`) and sends `account_id`
+  (`:821/:840/:857`). **`TxnEditDialog`** (`:1148-1226`) has **no** Account field and
+  its `PUT` payload (`:1168-1177`) **omits** `account_id`.
+- The backend is **ready**: `TransactionIn.account_id` exists (`portfolio.py:411`), and
+  `PUT /portfolio/transactions/{txn_id}` (`:583-612`) applies it (`:607-608`) then calls
+  `rebuild_holdings_from_transactions` (`services/portfolio.py:438`), which groups **all**
+  transactions by `(account_id, instrument_id)` and rebuilds the full holdings set — so
+  a re-scope **correctly** drops the txn from the source account's holding and adds it to
+  the destination's. Because the form never sends the field, this path never fires.
+- **Correctness nit:** `if payload.account_id:` (`:607`) is truthy-guarded — it cannot
+  express "move to no account" (`account_id = null`); the add flow *does* allow a null
+  account. In scope for the fix if the edit `Select` offers "no account".
+- **Spec posture:** `page-holdings.md:74,119,149-150,275,294,534` spec Account as a
+  first-class `ui/Select` over `/accounts` on the transaction surface, with **no**
+  edit-exception — the owner has **ruled it SHOULD be editable**. `page-accounts.md:658-663`
+  (§14ac-3): the account chip scopes both holdings and the ledger.
+
+**Fix level: FRONTEND (add the field) — backend already correct; no contract change.**
+- `TxnEditDialog` gains the Account `Select` (parity with add), sending `account_id` in
+  the `PUT`. Handle the null/clear case consistently (and, if we allow clearing, relax
+  the backend truthy guard to an explicit `is not None`, a minimal backend correctness
+  touch — not a contract change).
+- **Fail-first:** (a) a test that the edit `PUT` **carries and applies** a changed
+  `account_id` (RED today — field absent); (b) the **re-scope arithmetic** — after
+  moving a txn A→B, account A's derived holding loses it and B's gains it (both
+  correct). The **account-scoped journey guards re-run for BOTH entry points**
+  (Holdings account chip + Accounts).
+- **Accepted-page delta:** Holdings delta note + pre-pass re-run (both account-scoped
+  entry points).
+
+### §14dr-12 — BUG (P1): instrument picker's honest empty state (class scoping verified)
+
+**Reproduce:** "Adding **Crypto**" → search **XRP** → **nothing** shown, "not even an
+honest empty".
+
+**Verify-first — the picker IS class-scoped (D-097); the gap is the honest empty
+state (verified).**
+- The picker **already** passes the class (`InstrumentPicker.tsx:64`
+  `searchInstruments(q, assetClass)`; Holdings crypto flow passes `activeClass`,
+  `Holdings.tsx:947`) and the endpoint **already** filters: `GET /instruments/search`
+  `asset_class` param (`markets.py:175`), splits `existing`/`other_class` by class
+  (`:200`), routes `suggestions` by class — AMFI for `mutual_fund`, **CoinGecko for
+  `crypto`** (`:204-213`). **So "add the class filter" is NOT the fix — it exists.**
+- **The real cause of "returned nothing":** (a) crypto `suggestions` come **only** from
+  the **local `CoingeckoCoin` cache** (`services/coingecko.py:83-102`) — **empty on a
+  fresh instance** → no XRP suggestion; and the provider call is wrapped in a **bare
+  `except → []`** (`markets.py:214-215`), silently swallowing an outage. (b) With all
+  three buckets empty, the picker renders **only** a bare "＋ Create new instrument
+  'XRP'" `li` (`InstrumentPicker.tsx:198-210`) — there is **no honest empty *message***
+  ("we searched crypto and found none") — so the owner read it as "nothing". (c) The
+  `allowCreate=false` path (e.g. merger-target picker) shows an **empty menu** with no
+  text at all (`hasAny` false, `:92-93,:119`).
+
+**Fix level: FRONTEND (honest class-scoped empty state) — no backend/contract (filter
+exists).**
+- When existing/other_class/suggestions are all empty, the menu shows an **honest
+  class-scoped empty state**: **"No {class} instruments match — create '{q}'"** (the
+  owner's copy), combining the empty message with the create path; scoped by the
+  selected asset class. The `allowCreate=false` variant shows **"No {class} instruments
+  match"** (no create). Ensure the menu opens for the empty-state case.
+- (Optional honesty follow-through, minimal: surface a "couldn't reach suggestions"
+  note instead of the silent `except→[]` swallow — kept small, not the core fix.)
+- **Fail-first PER CLASS:** adding **Crypto** with a no-match query shows "No crypto
+  instruments match — create 'XRP'"; adding **Mutual fund** likewise "No mutual fund
+  instruments match — create '…'" (RED today — bare create option only, no message).
+- **Accepted-page delta:** Holdings delta note + the class-scoped picker pre-pass
+  re-run per class.
+
+### §14 R-ITEMS (owner-raised 2026-07-18) — filed to ROADMAP.md, NOT built
+
+Recorded in `ROADMAP.md` (this same docs commit), dated, plan-file-gated:
+
+- **R-42 — Intraday price series** (enables an honest 1D/5D — the disabled ranges in
+  dr-7). Owner expectation: 1-min bars for 1D (~390 pts), daily for 1M/1Y. Scope:
+  intraday storage model (the `PriceHistory.interval` seam already exists), fetch
+  cadence within provider budgets (**alphavantage free ≈ 25 req/day** — named
+  constraint), range→interval mapping, chart consumption. Plan-file gate; release-pull
+  candidate.
+- **R-43 — Historical valuation backfill** (owner priority: today's net-worth trend is
+  flat/linear). Retrospective portfolio valuation from price history + transactions +
+  per-date FX (needs **R-8 historical FX**), Decimal engine, snapshot persistence;
+  powers Net worth trend + performance. Plan-file gate; the biggest of the three;
+  release-pull candidate.
+- **R-44 — News thumbnails** (instrument / News / Home). New egress (og:image /
+  enclosure fetch) → **no-egress-mode conditional** (zero calls, Guarantee 5), caching,
+  layout. Plan-file gate.
+
+### Re-run + STOP
+
+Phase 3a re-run on a **reset demo instance** (owner instance untouched,
+`[[prepass-harness]]`): **every** finding's fix exercised — override edit completes
+with an AMFI mapping end-to-end; single toast on repeat; honest ranges (1D/5D disabled
+with reason) + overlay hover; perceptible refresh feedback + guard; ticker/reader
+reconciliation live (holdings marks == shared set, indices unmarked); no stray copy;
+transaction re-scoped across accounts with **both** views correct; class-scoped picker
+with the honest empty state **per class**. Suites + contract (**134** held) + frontend
+**exit code** + per-page pre-passes (Instrument Detail · Pricing Health · Holdings ·
+chrome ticker). **Screenshots per finding.** `git push`. **STOP — the owner
+re-walks.**

@@ -1902,3 +1902,84 @@ Home (names), and the Holdings ledger / purge flow / Add flow were driven end-to
 
 **STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b batch 6; the close ritual follows only
 from chat, NOT self-started).
+
+---
+
+## §25 — PHASE 3b RE-WALK (batch 7) — RATIFICATIONS + FINDINGS §14dr-22..24 (owner, 2026-07-18)
+
+The owner re-walked batch 6 and ruled two ratifications IN CHAT, then filed three findings. Same
+discipline: docs commit first; one fix per commit; fail-first RED on the real cause; environment gate;
+frontend exit code; isolated instance; accepted-page touches get dated delta notes + pre-pass re-runs.
+
+### Batch-6 ratifications (owner, 2026-07-18)
+
+- **§14dr-19 ticker-strip exception — CONFIRMED.** The bottom `TickerStrip` stays **symbol-only** (density;
+  conventional) — the exception proposed at the batch-6 re-run is ratified as shipped. No change.
+- **§14dr-20 purge copy — SUPERSEDED by §14dr-23 (below).** The shipped "Permanently delete N trashed…"
+  button + "Purge?" help affordance is replaced per §14dr-23. **The D-103 `verify_fresh_pin` enforcement and
+  the GLOSSARY "Purge" term STAND** — only the control's presentation changes.
+
+### §14dr-22 — BUG (dr-19 regression): instrument names overflow Home tiles
+
+**Root cause (verified).** dr-19 swapped the Home movers' plain-text symbol span for the flex-column
+`InstrumentLabel`. The container `.hm3__moversym` still carries `text-overflow: ellipsis; white-space:
+nowrap` (`home-grid.css:275`) — left over from when it held inline text — but ellipsis does **not** apply to
+a flex-column child, and nothing bounds the label's width in the `justify-content: space-between` row
+(`.hm3__moverrow`), so a long name (`.lf-instr__name`, `white-space: nowrap`) forces the column wide and
+pushes the row. `.lf-instr` has `min-width: 0` but the consumer chain doesn't propagate the shrink.
+
+**Guard gap (verified, honest).** The tile-integrity overflow suite (`e2e/tile-integrity.spec.ts`) did NOT
+catch this: its per-breakpoint check runs the **live `#/` route with no backend** (empty movers — no names)
+and its no-clip check runs the **kitchen-sink Home specimen with tidy/short demo data** (the *"dressed
+itself with a tidy demo"* trap the suite's own comment warns about). Real long names were never exercised,
+and the walk **skips content bounded by an `overflow:hidden` ancestor** — so `.hm3__moversym`'s unbounded
+growth read as "handled."
+
+**Fix (owner ruling — at the component).** `InstrumentLabel` gains a **truncation mode** (`truncate` prop →
+ellipsis on sym+name + the full `name`/`symbol` on a `title` tooltip attr) that dense consumers use; **sweep
+EVERY consumer** for containment (`min-width: 0` on the flex parent so the ellipsis engages). **Extend the
+guard** so THIS class of inline-text spill is fail-first caught (long-name specimen data at 320/375/…), then
+fix — the pin is the lesson. Home delta note + pre-pass.
+
+### §14dr-23 — OWNER AMENDMENT (supersedes the shipped dr-20 copy): purge control
+
+**Owner ruling.** REMOVE the "Purge?" text + hover tooltip entirely. **ONE danger-variant `Button`**
+(DESIGN-SYSTEM §5.4 anatomy — lucide `Trash2` icon + label). Proposed exact label (sentence-case per the
+platform convention, from the owner's intent *"PIN to permanently delete"*): **"PIN to permanently delete"**
+— the count moves into the ConfirmDialog (which already states *"all N trashed (soft-deleted) …"*), recorded
+here for **ratification at the re-walk**. The **ConfirmDialog + `verify_fresh_pin` flow is UNCHANGED** (the
+D-103 enforcement stands); the GLOSSARY **"Purge"** term stays, served via a **[Help] popover inside the
+dialog**, not a hover tooltip. Overflow re-checked on Holdings at all widths. Holdings delta note + pre-pass.
+
+### §14dr-24 — BUG: the Performance benchmark still shows the mock wave (VERIFIED: same path; frozen demo cache)
+
+**Verified — NOT a separate generator.** The Portfolio Performance benchmark line is built by
+`performance_series` from **`get_history_cached(session, "SPY", "1d", …)`** (`analytics.py:239`) — the SAME
+per-instrument served-history path instrument charts use (`market.py:352`). Post-§14dr-18 the mock `_walk`
+is per-symbol, so SPY's demo series is **already diversified** (empirically: SPY 50 turning points over 365d,
+distinct from AAPL 29 / MSFT 30 / VOO 68; SPY-normalised ≠ AAPL-normalised) and is **real on a keyed
+instance** (SPY is an alphavantage-covered ETF). The portfolio `series` is a separate reconstruction (sum of
+holdings' carried-forward histories), so benchmark ≠ portfolio by construction.
+
+**Root cause of the residual (verified).** `get_history_cached` serves cached `PriceHistory` within
+`max_age_hours` (`market.py:401`) and its upsert **only adds new timestamps, never overwrites existing ones**
+(`market.py:436-443`). So on a **persistent** instance the **pre-dr-18 demo candles are frozen** — a
+generator change never propagates to already-cached demo series. This freezes instrument charts too, but the
+owner surfaced it via the benchmark. (On a fresh instance the benchmark is diversified; the batch-6 re-run's
+"Not enough history yet" was thin fresh history, not this.)
+
+**Owner ruling (2026-07-18): fix the demo cache.** For the deterministic mock/demo provider (free +
+reproducible), `get_history_cached` **regenerates** rather than serving frozen stale candles — so dr-18's
+diversification shows for the benchmark AND instrument charts on any instance. **Real providers are
+unchanged** (their cache stays authoritative and rate-limit-protected). **Fail-first pins:** (1) the served
+benchmark series ≠ the portfolio series; (2) a demo instance with pre-existing (stale-shaped) cached SPY
+candles serves the CURRENT diversified generator's benchmark after the fix (RED before — the stale cache was
+served). Sweep the Net-worth trend for a second benchmark. Portfolio delta note + pre-pass.
+
+### Re-run + STOP — batch 7
+
+3a re-run (isolated instance, keyed where possible): Home tiles contained at **320/375/900/1366** with names
+truncating (ellipsis + title); the single danger purge Button + fresh-PIN flow end-to-end; Performance
+showing a visibly distinct benchmark vs portfolio line (demo cache regenerated). Screenshots per finding.
+Suites + contract (**134 held**) + frontend **exit code** + per-page pre-passes. `git push`. **STOP — the
+owner re-walks;** the close ritual follows only from chat.

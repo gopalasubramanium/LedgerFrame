@@ -1593,9 +1593,14 @@ rebuild — is CLOSED.)*
    collected then discarded; server authorizes on ambient session) → fix D-103 for real (fresh-PIN on
    purge + reset-data) + honest copy + GLOSSARY term · **dr-21** MF-records-no-txn VERIFIED does NOT
    reproduce in code (backdated-date pagination reveal gap) → reveal + regression pin. Prior: batch 5
-   §14dr-15/16 (§21/§22), batch 4 §14dr-13 + R-42 (§20). **Batch 6 FIXED + RE-RUN GREEN (§24, 2026-07-18)** —
-   backend 936 · vitest 310 · overflow e2e 337 · contract 134 held · isolated re-run 0 console errors,
-   screenshots per finding. **STOPPED for the owner re-walk;** the close ritual follows only from chat.
+   §14dr-15/16 (§21/§22), batch 4 §14dr-13 + R-42 (§20). Batch 6 FIXED + RE-RUN GREEN (§24). **Batch 7 (§25,
+   2026-07-18)** — batch-6 ratifications (dr-19 ticker symbol-only CONFIRMED; dr-20 copy SUPERSEDED by dr-23,
+   D-103 enforcement stands) + THREE findings: **§14dr-22** InstrumentLabel overflows Home tiles (dr-19
+   regression) → truncation mode + guard extension; **§14dr-23** purge control → one danger Button "PIN to
+   permanently delete" + [Help]-on-dialog (verify_fresh_pin unchanged); **§14dr-24** Performance benchmark
+   VERIFIED already on the served-history path (not a separate generator) — residual is frozen pre-dr-18 demo
+   cache → mock/demo `get_history_cached` regenerates (real providers unchanged). STOP after the batch-7
+   re-run for the owner re-walk; the close ritual follows only from chat.
 2. **intraday-series (R-42)** — `docs/plans/intraday-series.md` (**stub filed; PLAN ONLY**). **ACTIVATED
    with an owner definition** (tier-aware · user-triggered · persisted; §20 / §14dr-13). Sequenced as the
    milestone **immediately after data-feed-routing closes, BEFORE Help** (owner ruling 2026-07-18).

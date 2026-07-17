@@ -28,6 +28,13 @@ const ROUTES = [
   { name: "estate (worklist)", hash: "#/estate" },
   { name: "accounts (worklist)", hash: "#/accounts" },
   { name: "reports (overview)", hash: "#/reports" },
+  // Settings (config) — all four D-069 tabs, URL-addressable (Amendment C). Backend-free here, so
+  // each tab renders its honest load-error / empty states; the tab strip + cards must still fit at
+  // every breakpoint (the token table + feeds rows are the overflow-prone bits). §7 acceptance.
+  { name: "settings · general", hash: "#/settings?tab=general" },
+  { name: "settings · appearance", hash: "#/settings?tab=appearance" },
+  { name: "settings · privacy", hash: "#/settings?tab=privacy" },
+  { name: "settings · system", hash: "#/settings?tab=system" },
 ];
 const THEMES = ["light", "dark"] as const;
 

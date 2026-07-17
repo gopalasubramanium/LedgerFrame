@@ -267,6 +267,66 @@ test("/snapshot redirects to /net-worth and /planning to /cash-flow (D-042/D-022
   await waitFor(() => expect(screen.getByTestId("loc").textContent).toBe("/cash-flow"));
 });
 
+// --------------------------------------------------------------------------- //
+// Amendment C — first-run → Settings TAB journeys (page-settings §14ac-2). Each first-run step
+// deep-links to the tab holding its control; the guard asserts ARRIVAL AT THE CONTROL, not the href.
+// --------------------------------------------------------------------------- //
+function stubFirstRunSettings() {
+  const json = (obj: unknown) =>
+    new Response(JSON.stringify(obj), { status: 200, headers: { "Content-Type": "application/json" } });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/auth/state")) return json({ pin_set: false });
+      if (url.includes("/system/data-source"))
+        return json({ provider: "mock", has_api_key: false, base_currency: "SGD", providers: ["mock", "csv", "yahoo"], admin_available: true });
+      if (url.includes("/system/config")) return json({ timezone: "Asia/Singapore", autolock_minutes: "15", stale_after_seconds: "900" });
+      if (url.includes("/system/ai-config")) return json({ enabled: false, provider: "disabled", model: "", has_openai_key: false });
+      if (url.includes("/system/admin/available")) return json({ available: true });
+      if (url.includes("/system/status")) return json({ allow_lan: false });
+      if (url.includes("/tokens")) return json({ tokens: [] });
+      if (url.includes("/news/feeds")) return json({ feeds: [], defaults: [] });
+      if (url.includes("/settings"))
+        return json({
+          stored: {},
+          defaults: { base_currency: "SGD", timezone: "Asia/Singapore", market_provider: "mock", supported_currencies: ["SGD", "USD"], long_term_days: 365 },
+        });
+      if (url.includes("/portfolio/summary")) return json({ has_stale: false, stale_count: 0 });
+      return json({});
+    }),
+  );
+}
+
+test("Amendment C journey: a first-run step deep-links to the Settings tab holding its control", async () => {
+  stubFirstRunSettings();
+  const user = userEvent.setup();
+  renderRoutesAt("/");
+  // The overlay appears (first-run incomplete + no PIN → no lock gate).
+  await screen.findByRole("dialog", { name: "Set up LedgerFrame" });
+  // The Data provider step's link ("Add an API key →") deep-links to the System tab.
+  await user.click(screen.getByRole("link", { name: /Add an API key/ }));
+  // Arrival at the CONTROL, not the href: we are on /settings AND the System-tab controls are present.
+  await waitFor(() => expect(screen.getByTestId("loc").textContent).toBe("/settings"));
+  expect(await screen.findByLabelText("Market data provider")).toBeTruthy(); // §12st-2
+  expect(screen.getByRole("button", { name: /Set PIN/ })).toBeTruthy();      // §12st-1
+});
+
+test("Amendment C: every first-run step links to the correct Settings tab", async () => {
+  stubFirstRunSettings();
+  renderRoutesAt("/");
+  await screen.findByRole("dialog", { name: "Set up LedgerFrame" });
+  // Base currency + Timezone → General; PIN → System; provider → System; no-egress → Privacy.
+  const general = screen.getAllByRole("link", { name: /More options/ });
+  expect(general.every((a) => a.getAttribute("href")?.includes("tab="))).toBe(true);
+  expect(screen.getByRole("link", { name: /Add an API key/ }).getAttribute("href")).toContain("tab=system");
+  // At least one step deep-links to each of general / system / privacy.
+  const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "");
+  expect(hrefs.some((h) => h.includes("tab=general"))).toBe(true);
+  expect(hrefs.some((h) => h.includes("tab=system"))).toBe(true);
+  expect(hrefs.some((h) => h.includes("tab=privacy"))).toBe(true);
+});
+
 test("the routed page renders inside the shell with chrome around it — `/` is HOME (§12ho1-6)", async () => {
   renderRoutesAt("/");
   // Chrome present…

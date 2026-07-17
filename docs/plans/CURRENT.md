@@ -1612,6 +1612,13 @@ rebuild — is CLOSED.)*
    **§26-bis standing rule:** a real-data-render finding is NOT closeable on a mock-forced run — the re-run
    now covers BOTH postures (mock-forced + a budget-aware real-provider slice). Ratifications carried:
    dr-22 + dr-23 flow ACCEPTED; the dr-23 button label awaits the owner's explicit word.
+   **Batch 8 FIXED + RE-RUN GREEN (§28, 2026-07-18)** — four cache-layer parts shipped (date-normalised
+   key + `source` migration `a7d3f2c15e94` · real-supersedes-demo upsert precedence · idempotent served
+   purge + read-time collapse · fail-first pins). **Both postures covered:** REAL alphavantage instance
+   (isolated, owner `.env` read-only + byte-identical after) — AAPL/MSFT/SPY history 40/40 unique-ascending
+   smooth, one GENUINE live MSFT fetch (82 midnight-keyed real candles), Performance two distinct lines,
+   browser render 0 console errors; MOCK posture via the 944-green suite. backend **944** · contract 134
+   held · frontend check exit 0 (vitest + e2e 337). Screenshots per surface.
    **STOPPED for the owner re-walk;** the close ritual follows only from chat.
 2. **intraday-series (R-42)** — `docs/plans/intraday-series.md` (**stub filed; PLAN ONLY**). **ACTIVATED
    with an owner definition** (tier-aware · user-triggered · persisted; §20 / §14dr-13). Sequenced as the

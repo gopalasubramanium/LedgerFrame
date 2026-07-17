@@ -2114,3 +2114,66 @@ bench_candles]` (`analytics.py:240,278`), so duplicate-ts bench candles comb the
 - **dr-22 (truncation)** and the **dr-23 purge flow** — **ACCEPTED as shipped** (owner re-walk). The dr-23
   button label **"PIN to permanently delete"** stands as implemented **pending the owner's explicit word at
   this re-walk** — §14 is NOT closed on it without the ruling.
+
+### §28 — PHASE 3b (batch 8) FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+Docs-first, verify-first with fail-first RED, one concern per commit. **Contract 134 HELD** (this is a
+data-layer fix — no route/shape change; `make api-contract-check` current).
+
+- **DONE — records first** (`§27` commit) — the §14dr-25 finding + the verify-first dump (rows cited) +
+  the §26-bis standing re-run rule.
+- **DONE — §14dr-25 fix** (four parts, one commit):
+  - **Keying** — `_norm_hist_ts` date-normalises DAILY candle `ts` to 00:00:00 UTC (tz-safe) on write, so
+    the existing `(instrument, interval, ts)` unique index is one-row-per-trading-date for daily; intraday
+    (R-42) keeps its real per-bar ts. New `price_history.source` column (provenance). **Migration
+    `a7d3f2c15e94`** (down_revision `c1d4e7a90f38`, single head, ADR-0001 chain): adds `source` + dedups
+    existing daily rows (REAL@midnight supersedes DEMO@non-midnight) + normalises the kept ts. Idempotent.
+    Verified round-trip: **8 combed rows → 4 unique-date real rows**, second run a no-op;
+    `test_migrated_head_matches_create_all` confirms the migrated schema == create_all.
+  - **Precedence** — the real upsert keys existing rows by trading date; a REAL candle SUPERSEDES a
+    demo/mock row for that date (overwrite in place, stamps `source`); an existing REAL row is still never
+    overwritten. The upsert-never-overwrites policy annotation is amended in place (dated, original kept).
+  - **Cleanup** — `repair_history_demo_residue` (the dr-16 pattern): served, idempotent, logged, guarded by
+    a one-time `Setting` marker; purges demo residue for any (instrument, date) where a real row exists,
+    reports counts. Plus a **read-time collapse** in `_from_db` so the SERVED series is strictly
+    unique-ascending even before the purge runs — the benchmark inherits it (`performance_series` rides
+    `get_history_cached`).
+  - **Pins, fail-first** — captured RED against the unpatched code (served 8 candles / 4 dates, close
+    alternating 190/250; benchmark 8 pts / 4 dates), GREEN after: served unique-ascending dates · real
+    supersedes demo for a shared date · benchmark inherits it · upsert precedence stamps `source` · repair
+    idempotent · migration dedup round-trip. (`test_history_cache_integrity.py` +5,
+    `test_db_migrate.py::test_price_history_date_key_dedups_demo_residue`.)
+
+**Phase 3b (batch 8) re-run — RESULT (isolated instance; owner instance untouched). BOTH POSTURES.**
+The repo `.env` (owner's alphavantage key) was **read-snapshotted only, never written**, verified
+**byte-IDENTICAL** after (md5 `0f421eb5a0ef44eacad8fc94d541c60b`).
+
+- **REAL posture (alphavantage) — the path batch 7 missed (§26-bis).** Isolated instance on spare port
+  **8399**, provider forced to **alphavantage** with the owner's real key (OS-env override), demo-seeded,
+  serving prod `dist` same-origin. The owner's frozen COMB reproduced by injecting demo@14:32 + real@midnight
+  rows for **AAPL/MSFT/SPY**, then served through the FIXED code (`is_demo=False`, serve-cache):
+  - **Instrument history (live API):** AAPL/MSFT/SPY each **40 candles / 40 distinct dates, strictly
+    unique-ascending, smooth** (max day-jump ≤ 0.003; the demo teeth 250/330/620 purged live by the repair +
+    read-collapse).
+  - **A GENUINE live alphavantage fetch (budget-aware slice):** MSFT returned **82 real candles**, all
+    **midnight-keyed**, `source='alphavantage'`, unique-ascending — real data flows through the new upsert
+    clean.
+  - **Performance (live API):** benchmark **40 pts** + portfolio series **40 pts**, both unique-ascending,
+    **two distinct lines**.
+  - **RENDER (browser, 1366×900, 0 console errors filtered):** the **AAPL** and **MSFT** Price-history
+    charts draw a **single smooth continuous line** (Source badge: **alphavantage**), no sawtooth; the
+    **Portfolio → Performance** chart draws **two plausible distinct lines** — a smooth dashed S&P 500 (SPY
+    proxy) benchmark and a naturally-varying solid portfolio line — **no comb**.
+- **MOCK posture — covered by the full backend suite** (`conftest` forces `LEDGERFRAME_MARKET_PROVIDER=mock`
+  for all 944 tests), which exercises the `is_demo=True` regenerate path unchanged by this batch. Both
+  postures green — the standing §26-bis rule satisfied.
+
+- **Gates:** backend **944 passed** (was 938; +6 pins); `make api-contract-check` current, contract **134
+  path-keys** (HELD); ruff clean; frontend `npm run check` **exit 0** — lint + typecheck + tokens +
+  check:copy + **vitest** + **e2e 337**.
+- **Screenshots:** AAPL chart · MSFT chart · Portfolio/Performance (two distinct lines).
+
+Isolated server down; `dist` + throwaway driver removed; working tree clean; `.env` byte-identical.
+
+**STATUS: FIXED + RE-RUN GREEN (both postures). NEXT: the owner re-walks** (Phase 3b batch 8; the close
+ritual follows only from chat, NOT self-started).

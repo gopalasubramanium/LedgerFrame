@@ -190,6 +190,16 @@ def matrix_cell_state(
     }
 
 
+def av_tier_note(source: str | None, av_tier: str | None) -> str | None:
+    """The honest served string for an Alpha Vantage tier-degraded case (§9-8). Grounded
+    strictly in ``external.py`` — ``av_tier`` is *learned* from the key (premium prices
+    real index levels; free/unknown falls back to ETF proxies). Returns ``None`` when it
+    doesn't apply; invents NO new tier semantics — it only formats the existing signal."""
+    if source == "alphavantage" and av_tier in ("free", "unknown"):
+        return "index via ETF proxy — key not premium"
+    return None
+
+
 async def matrix_provider_for(session: AsyncSession, asset_class: str, listing_country: str | None) -> str | None:
     """The routing-matrix provider for an instrument's (class, country), or None if the
     matrix has no cell. Exact country wins over the ``"*"`` wildcard (data-feed-routing

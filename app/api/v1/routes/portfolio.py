@@ -271,12 +271,25 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
             "priority_chain": diag.priority_chain if diag else [],
             "mapping_required": diag.mapping_required if diag else False,
             "auth_required": diag.auth_required if diag else False,
+            # R-38 §9-10: which rule selected the source (override|matrix|lane|active).
+            "route_rule": diag.route_rule if diag else "lane",
             # Phase 2a: data confidence.
             **conf,
         })
     rows.sort(key=lambda r: (r["status"] != "Unavailable", r["status"] != "Estimated", r["label"]))
+    # R-38 §9-8: the honest Alpha-Vantage tier string, served (never a fabricated real-
+    # index label). Read the CACHED learned tier only — no probe, no egress from a read
+    # endpoint. None unless the active provider is a non-premium AV key (grounded in
+    # external.py). Index isn't a holdings lane, so this is the Markets-surface honesty
+    # case surfaced here as provider context.
+    from app.providers.market import get_provider
+    from app.services.market import av_tier_note
+
+    prov = get_provider()
+    provider_tier_note = av_tier_note(
+        getattr(prov, "name", None), getattr(prov, "av_tier", None))
     return {"base_currency": base, "holdings": rows, "summary": dict(counts),
-            "confidence": summarise(scored)}
+            "confidence": summarise(scored), "provider_tier_note": provider_tier_note}
 
 
 @router.post("/portfolio/pricing-health/{holding_id}/refresh", dependencies=[Depends(require_auth)])

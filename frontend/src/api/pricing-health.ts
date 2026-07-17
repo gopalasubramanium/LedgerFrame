@@ -1,4 +1,5 @@
 import { apiGet, apiSend } from "./client";
+import { refreshBriefing } from "./news";
 
 // Pricing Health (diagnostics) readers — page-pricing-health §3a. All display values are SERVED
 // (provenance/confidence/routing); the page performs no money math (P-1/D-031). Everything the
@@ -82,6 +83,52 @@ export const getIdentifierDuplicates = () => apiGet<DuplicatesResp>("/system/ide
 export const refreshHolding = (id: number) =>
   apiSend<{ ok: boolean; refreshed?: boolean; reason?: string }>(`/portfolio/pricing-health/${id}/refresh`, "POST");
 export const refreshAllData = () => apiSend<RefreshSummary>("/system/refresh-data", "POST");
+// §14dr-17: FX (ECB reference rates) — the opt-in daily feed when no file is supplied.
+export const refreshFxEcb = () => apiSend<{ currencies?: number; as_of?: string }>("/fx/ecb/refresh", "POST");
+
+// §14dr-17 — REFRESH ALL MARKET DATA. Contract-held (owner ruling): the frontend
+// orchestrates the three existing lane endpoints — quotes (world-index proxies ride
+// this lane via display-symbols), FX, and news — and reports a per-lane result
+// summary. Instrument masters are EXCLUDED by ruling (rarely change; budget) and stay
+// manual in Settings → Data feeds. Lanes run in sequence (user-triggered; the quotes
+// lane already paces itself). No new endpoint — contract 134 HELD.
+export interface LaneResult {
+  lane: string;
+  ok: boolean;
+  detail: string;
+}
+export async function refreshAllMarketData(): Promise<LaneResult[]> {
+  const lanes: LaneResult[] = [];
+
+  const q = await refreshAllData();
+  lanes.push(
+    q.ok
+      ? {
+          lane: "Quotes & indices",
+          ok: q.data.failed.length === 0,
+          detail: `Refreshed ${q.data.refreshed} of ${q.data.total}${
+            q.data.failed.length ? ` · ${q.data.failed.length} failed` : ""
+          }${q.data.skipped ? ` · ${q.data.skipped} skipped` : ""}`,
+        }
+      : { lane: "Quotes & indices", ok: false, detail: q.error },
+  );
+
+  const fxr = await refreshFxEcb();
+  lanes.push(
+    fxr.ok
+      ? { lane: "FX rates", ok: true, detail: `Updated ${fxr.data.currencies ?? 0} rates` }
+      : { lane: "FX rates", ok: false, detail: fxr.error },
+  );
+
+  const n = await refreshBriefing();
+  lanes.push(
+    n.ok
+      ? { lane: "News", ok: true, detail: "Briefing refreshed" }
+      : { lane: "News", ok: false, detail: n.error },
+  );
+
+  return lanes;
+}
 // Correct-source: a per-instrument CORRECTION (validated), never priority editing (D-072, ND-4).
 export const correctSource = (symbol: string, source_override: string) =>
   apiSend<{ ok?: boolean; source_override?: string | null }>(`/instruments/${encodeURIComponent(symbol)}`, "PATCH", { source_override });

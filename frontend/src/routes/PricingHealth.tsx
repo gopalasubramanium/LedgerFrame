@@ -28,7 +28,7 @@ import {
   getIdentifierDuplicates,
   getNoEgress,
   getPricingHealth,
-  refreshAllData,
+  refreshAllMarketData,
   refreshHolding,
 } from "../api/pricing-health";
 import type { DuplicatesResp, PricingHealthResp, PricingRow } from "../api/pricing-health";
@@ -113,28 +113,27 @@ export function PricingHealth() {
     reload();
   }, [reload]);
 
-  // Bulk "Refresh all" (ND-2/ND-3): the SAME /system/refresh-data the app already exposes. Long-
-  // running → honest in-progress state; the served updated/failed/skipped summary shown on completion.
+  // §14dr-17 — REFRESH ALL MARKET DATA (ND-2/ND-3). Contract-held: orchestrates the quotes
+  // (+world-index proxies), FX and news lanes the app already exposes, and reports a per-lane
+  // result summary. Masters are EXCLUDED by ruling (manual in Settings → Data feeds). Long-
+  // running → honest in-progress state (dr-8 standard, re-click guarded).
   const onRefreshAll = useCallback(async () => {
     if (noEgress) {
       toast.show({ message: "Refresh unavailable — no-egress is on. Stale prices stand.", tone: "warning" });
       return;
     }
+    if (refreshing) return; // re-click guard while the lanes are in flight
     setRefreshing(true);
-    const r = await refreshAllData();
+    const lanes = await refreshAllMarketData();
     setRefreshing(false);
-    if (!r.ok) {
-      toast.show({ message: `Refresh failed: ${r.error}`, tone: "warning" });
-      return;
-    }
-    const s = r.data;
+    const failed = lanes.filter((l) => !l.ok);
     toast.show({
-      message: `Refreshed ${s.refreshed} of ${s.total}${s.failed.length ? ` · ${s.failed.length} failed` : ""}${s.skipped ? ` · ${s.skipped} skipped` : ""}`,
-      tone: s.failed.length || s.skipped ? "warning" : undefined,
+      message: lanes.map((l) => `${l.lane}: ${l.detail}`).join(" · "),
+      tone: failed.length ? "warning" : undefined,
     });
     reload();
     invalidateStaleCount(); // banner + footnote move together after a refresh (§12ph1-1)
-  }, [noEgress, toast, reload]);
+  }, [noEgress, toast, reload, refreshing]);
 
   const onRefreshHolding = useCallback(
     async (row: PricingRow) => {
@@ -241,8 +240,10 @@ export function PricingHealth() {
         subtitle="Provenance, confidence & routing — the honest “why is this number what it is”"
         actions={
           <button type="button" className="lf-iconbtn lf-iconbtn--framed" onClick={onRefreshAll}
-            disabled={refreshing || noEgress} aria-busy={refreshing} aria-label="Refresh all prices"
-            title={noEgress ? "No-egress is on — refresh makes no network calls" : refreshing ? "Refreshing…" : "Refresh all prices"}>
+            disabled={refreshing || noEgress} aria-busy={refreshing} aria-label="Refresh all market data"
+            title={noEgress ? "No-egress is on — refresh makes no network calls"
+              : refreshing ? "Refreshing…"
+              : "Refresh all market data — quotes, world indices, FX and news. Instrument masters are not included."}>
             {/* §14dr-8 — perceptible pending: the icon SPINS while refreshing (the owner clicked
                 4× when the only signal was an imperceptible disabled flash). */}
             <RotateCw aria-hidden="true" className={refreshing ? "ph__spin" : undefined} />
@@ -252,6 +253,11 @@ export function PricingHealth() {
       {noEgress && (
         <p className="ph__egress" role="status">Refresh unavailable — no-egress is on; prices degrade to honest stale (Guarantee 5).</p>
       )}
+      {/* §14dr-17 — the button's scope is stated honestly so the masters exclusion is visible. */}
+      <p className="ph__refreshscope" role="note">
+        “Refresh all market data” refreshes quotes, world indices, FX and news. Instrument masters
+        (mutual funds, coins) aren’t included — <a href="#/settings?tab=data-feeds">sync them in Settings → Data feeds</a>.
+      </p>
 
       {/* R-38 §9-8: the honest Alpha-Vantage tier string, served (never a fabricated real-index label).
           Shown only when the active provider is a non-premium AV key. Index isn't a holdings lane, so

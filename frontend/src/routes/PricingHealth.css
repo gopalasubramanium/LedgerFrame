@@ -32,6 +32,15 @@
   color: var(--attention);
   font-size: var(--font-size-13);
 }
+/* §14dr-17 — honest scope caption for "Refresh all market data" (the exclusion is visible). */
+.ph__refreshscope {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+}
+.ph__refreshscope a {
+  color: var(--accent);
+}
 /* R-38 §9-8 — the honest AV tier note (just a chip on its own line). */
 .ph__tiernote {
   margin: 0;

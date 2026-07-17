@@ -42,6 +42,11 @@ vi.mock("../api/pricing-health", () => ({
   getNoEgress: vi.fn(async () => false),
   refreshHolding: vi.fn(async () => ({ ok: true, data: { ok: true, refreshed: true } })),
   refreshAllData: vi.fn(async () => ({ ok: true, data: { ok: true, refreshed: 2, total: 4, skipped: 0, succeeded: [], failed: [], errors: [] } })),
+  refreshAllMarketData: vi.fn(async () => [
+    { lane: "Quotes & indices", ok: true, detail: "Refreshed 2 of 4" },
+    { lane: "FX rates", ok: true, detail: "Updated 30 rates" },
+    { lane: "News", ok: true, detail: "Briefing refreshed" },
+  ]),
   correctSource: vi.fn(async () => ({ ok: true, data: { ok: true } })),
 }));
 
@@ -198,6 +203,21 @@ test("no-egress disables Refresh all with an honest state (ND-3)", async () => {
   const btn = await screen.findByRole("button", { name: /Refresh all/ });
   await waitFor(() => expect((btn as HTMLButtonElement).disabled).toBe(true));
   expect(await screen.findByText(/Refresh unavailable — no-egress is on/)).toBeTruthy();
+});
+
+// --- §14dr-17 — Refresh all market data (honest scope, per-lane summary) --------------------
+test("Refresh all market data reports a per-lane summary and names the excluded masters", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await screen.findByText("Per-holding diagnostics");
+  // The honest scope caption names the masters exclusion + links to the Masters card.
+  const scopeLink = await screen.findByRole("link", { name: /sync them in Settings/ });
+  expect(scopeLink.getAttribute("href")).toBe("#/settings?tab=data-feeds");
+  // Clicking refresh shows a per-lane result summary (quotes+indices · FX · news).
+  const btn = await screen.findByRole("button", { name: /Refresh all market data/ });
+  await user.click(btn);
+  const summary = await screen.findByText(/Quotes & indices:.*FX rates:.*News:/);
+  expect(summary).toBeTruthy();
 });
 
 // --- R-38 provenance (Phase 1; §9-10/§9-8) — served route_rule, read-only (D-072) -----------

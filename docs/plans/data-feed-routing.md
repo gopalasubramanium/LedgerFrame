@@ -719,3 +719,166 @@ change if the owner prefers it; recorded in `page-settings.md §16-2`.
 
 **STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b, judgment only),
 then the close ritual.
+
+---
+
+## §16 — PHASE 3b RE-WALK (batch 2) — FINDINGS (2026-07-18)
+
+The owner **re-walked** the live Data feeds tab after the batch-1 fixes (dr-1/dr-2
+**ACCEPTED** — key saves; matrix-priced AAPL live via `alphavantage`). **Three new
+findings** (the `§14dr-*` series continues) **+ one ruling** on the key-slot point
+raised in batch 1. Filed here **first** (this docs commit), then fixed verify-first:
+environment gate · fail-first RED on the **real cause** · frontend exit code · **no
+mutating smokes on the owner's live instance** (an isolated demo stack only).
+Accepted-page touches (Pricing Health, Instrument Detail, Settings) get dated delta
+notes + their pre-pass re-runs.
+
+### §14dr-3 — BUG / SPEC-GAP: stale holdings are not identifiable on Pricing Health
+
+**Reproduce:** Pricing Health. The Stale banner + the confidence card both count **2
+stale** (`"{n} of {m} prices stale"`, `PricingHealth.tsx:249-252`), but the
+per-holding diagnostics table has **no way to show WHICH two** — no stale marker, no
+as-of column, and the table is neither sorted nor filtered to surface them. *A
+destination that states a count but cannot answer "which ones" only half-answers
+(§14ac-2 — destinations that don't answer the question lie too).*
+
+**Verify-first — is staleness already served per-holding? YES (verified, not
+guessed).**
+- The per-holding payload **already carries `is_stale`** on every row
+  (`app/api/v1/routes/portfolio.py:266`, inside the `pricing_health` handler
+  `:217-292`); the frontend type **already declares it** (`PricingRow.is_stale`,
+  `frontend/src/api/pricing-health.ts:23`; `price_ts` at `:22`).
+- The banner/confidence **count** is `stale_count = sum(1 for h in val.holdings if
+  h.is_stale)` (`portfolio.py:133`, on `GET /portfolio/summary`), plumbed to the
+  chrome via `state/staleCount.ts` (the shared, invalidatable query). Both the
+  count **and** the per-row flag derive from the **same** shared reader
+  `value_portfolio(...)` — `h.is_stale = quote.is_stale`
+  (`app/services/portfolio.py:303`), `val.has_stale` (`:429`) — which the
+  pricing-health handler also calls (`portfolio.py:230`). **One derivation already;
+  the flag is on the wire per row.**
+- Frontend gap only: `PricingHealth.tsx` adds **no** stale column to `columns`
+  (`:137-181`) and wires **neither** sort nor filter to the `DataTable` (`:266`) —
+  even though the columns are flagged `sortable: true` and `DataTable` supports both
+  `sort`/`onSort` and `filter` (`DataTable.tsx:60-62`). So today the "sortable"
+  headers are **inert** (no `onSort` → clicks do nothing, `DataTable.tsx:166`).
+
+**Fix level: FRONTEND (render what's served) — smallest ratified-component answer,
+NO new component.**
+1. **Mark WHICH:** render the served `is_stale` — a **Stale** `StatusChip` in the
+   Status cell + an **As of** column (served `price_ts`, date-only). Both from the
+   ratified inventory; no backend change.
+2. **Make them FINDABLE:** **default-order stale rows to the top** on load (zero
+   interaction → identifiable at arrival) **and** wire `DataTable`'s existing
+   `sort`/`onSort` (removing the inert-sortable lie — the headers now actually sort).
+3. **One source, pinned by reconciliation:** the row markers and the banner count
+   both read `is_stale`; a **reconciliation test** asserts *banner count == marked
+   rows* — **backend:** `sum(is_stale)` in the pricing-health payload **==**
+   `stale_count` on `/portfolio/summary` for the same portfolio (both from
+   `value_portfolio`); **frontend:** the count of rendered Stale markers **==** the
+   shared `staleCount`.
+4. **Journey guard extended:** the stale-banner → Pricing Health journey now asserts
+   the stale rows are **identifiable at the destination** (marked + pinned to the
+   top), not merely that the page arrived (§14ac-2).
+- **Accepted-page delta:** Pricing Health is an accepted page → dated delta note in
+  `page-pricing-health.md` + the Pricing Health pre-pass re-run stated in the report.
+
+### §14dr-4 — BUG: the Advanced candle chart renders malformed candles
+
+**Reproduce:** Instrument Detail → **Advanced** view, real daily OHLC (e.g. AAPL via
+`alphavantage`, 6M default ≈ 124 bars). Candles render as **crosses** ("+") — the
+body reads as a fat plus around the wick, not a filled open→close rectangle.
+
+**Verify-first — the real cause is RENDERING GEOMETRY, not data (verified).**
+- **Data is correct.** The served bars are per-field distinct: backend
+  `instrument_history` (`app/api/v1/routes/markets.py:465-480`) → alphavantage
+  `get_history` (`TIME_SERIES_DAILY`, `app/providers/market/external.py:207-238`);
+  the `Candle → PricePoint` mapping is a straight passthrough with no field swap
+  (`frontend/src/routes/InstrumentDetail.tsx:102-104`). **Not a data bug.**
+- **The chart component is `PriceChart.tsx`**; candle geometry at `:225-236`. Two
+  compounding defects at real (dense) density:
+  - **(a) Body outline balloons — the dominant "+" cause.** The body `<rect>`
+    inherits `.lf-candle--up/--down` (`charts.css:163-164`), which set `stroke` +
+    `fill` but — **unlike every sibling series** (`.lf-pricechart__line/__axis/
+    __overlay/__bench/__cmp/__cross` all set it, `charts.css:159-162,167,185`) —
+    **omit `vector-effect: non-scaling-stroke`**. So the rect gets the SVG default
+    **1-user-unit** stroke, scaled **non-uniformly** by `preserveAspectRatio="none"`
+    (`PriceChart.tsx:202`) into a fat distorted outline around a thin fill → a cross.
+  - **(b) Body width collapses with point density.** `bw = ((X1-X0)/n)*0.5 = 48/n`
+    viewBox units (`PriceChart.tsx:229`): ≈1.2 at the 40-point mock (why mocks/tests
+    look fine), but ≈**0.39** at 6M daily density — thinner than the wick — so even
+    without (a) the body is a sliver.
+- **Not covered by tests.** `ui.test.tsx:75-101` only asserts candle elements
+  *exist* (count > 0), never geometry, and uses the 40-point `PRICE_SERIES` — the
+  dense-daily case is untested.
+
+**Fix level: THE CHART COMPONENT / THE STANDARD (fix-at-standard).**
+- **(a)** `.lf-candle` bodies render **fill-only** (no scaled outline); the wick
+  keeps a **crisp non-scaling stroke** — parity with every sibling series
+  (`charts.css`).
+- **(b)** Body width becomes **band-based with a readable floor and a no-overlap
+  clamp**: `slot=(X1-X0)/n; bw=min(slot, max(slot*0.7, 0.6))` — readable at 1M/6M
+  density, never wider than its slot (no overlap) at 1Y/Max.
+- **Fail-first regression with a real-shaped fixture** (a dense ~130-bar daily OHLC
+  series, body between open/close, wick to high/low): a **unit geometry test** (RED
+  on the collapsed width at 6M density; asserts body spans open→close, wick spans
+  high→low, up/down class) **+ an e2e box-geometry test** (RED on the cross:
+  measures the rendered body box vs the wick — a body must read as a rectangle, not
+  a ~square plus — *assert geometry, not pixels-by-eye*). Both green after.
+- **Fix-at-standard sweep — every consumer:** `PriceChart` candle mode is used by
+  **Instrument Detail** (the report) and the **kitchen-sink** candles specimen;
+  **Portfolio / Net worth** use it in `mode="line"` only (unaffected). The fix is at
+  the component, so all candle consumers inherit it; a **dense candle specimen** is
+  added to the kitchen sink so the e2e can measure it offline/deterministically.
+- **Accepted-page delta:** Instrument Detail → dated delta note in
+  `page-instrument-detail.md` + the Instrument Detail pre-pass re-run.
+
+### §14dr-5 — ENHANCEMENT (owner-ruled): zoom on the Advanced chart
+
+**Scope (owner ruling, minimal — nothing beyond this):** **wheel/pinch zoom + a
+reset affordance**, **Advanced view only**, **no persistence**, ratified
+components/iconography (DESIGN-SYSTEM §5.4 button anatomy for the reset control).
+
+**Fix level: `PriceChart.tsx` (Advanced mode).** A local visible-window state
+(`[start,end]` over the series); **wheel** zooms about the cursor, **pinch** (touch)
+zooms, a ratified **Button** ("Reset zoom", shown only when Advanced + zoomed)
+restores the full range. State is **local** — it resets on unmount / period change
+(no persistence, no served field, no contract change). Overflow/smoke coverage for
+the interaction (zoom changes the visible candle count; reset restores it) at all
+widths. Same Instrument Detail delta note.
+
+### §14 KEY-SLOT HONESTY — RULING (from the batch-1 raised point) + ROADMAP R-41
+
+The batch-1 re-run raised (honestly, `§15` closing note; `page-settings.md §16-2`)
+that the provider table renders **SET on every needs-key row** from the single shared
+`has_api_key` fact (`Settings.tsx:471`), so `eodhd`/`kite` read SET while
+`alphavantage` is the active, keyed provider. The owner **ruled**:
+
+1. **Honest per-row key state (this milestone, frontend).** The table shows **SET**
+   only on the row the shared slot **actually serves** — the **active keyed
+   provider** — labelled so the shared-slot fact is explicit (**"shared key slot"**);
+   **other needs-key rows show NOT SET** with honest copy (**"uses the shared slot —
+   currently serving {provider}"**). The strings compose from **served facts**
+   (`providers.active` · per-provider `needs_key` · the shared `has_api_key`, all
+   already on the tab) — the same served-facts composition the **accepted §14dr-2**
+   table uses (D-105; provider names are served vocab). **No backend change, no new
+   field** (per-provider credentials are R-41, below). `page-settings.md §16` delta
+   note; the two `ProviderTable` tests updated to the multi-needs-key case that
+   exposed the bug.
+2. **ROADMAP R-41 — per-provider credentials (filed 2026-07-18, surfaced by R-38).**
+   The routing matrix invites **multiple keyed providers concurrently**; the single
+   shared `LEDGERFRAME_MARKET_API_KEY` slot **cannot** support that. **Scope sketch:**
+   per-provider write-only key storage; the Settings key control gains a **provider
+   dimension**; the matrix caveat chip keys off **per-provider** credentials.
+   **PARKED — owner prioritises** (release-scope candidate). Cross-ref: this §16 and
+   the `ROADMAP.md` R-41 row.
+
+### Re-run + STOP
+
+Phase 3a re-run on the **reset demo instance** (owner instance untouched): stale rows
+identifiable **end-to-end** (banner → page → the two rows); the candle fixture test
+green + the chart **visually sane at 1D/1M/1Y**; zoom works at all widths; the
+key-slot display honest; **0 console errors**; suites + contract (**134** held) +
+frontend **exit code** + **both** accepted-page pre-passes (Pricing Health +
+Instrument Detail) stated. Screenshots: Pricing Health with the stale rows found; the
+repaired candles (1M); zoom in action; the key-slot table. `git push`. **STOP — the
+owner re-walks.**

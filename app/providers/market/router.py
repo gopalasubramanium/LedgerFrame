@@ -190,6 +190,7 @@ class RouteDiagnostic:
     auth_required: bool = False           # needs provider credentials
     has_manual_override: bool = False
     reason: str | None = None
+    route_rule: str = "lane"              # which rule selected the source: override|matrix|lane|active (§9-10)
 
 
 def route(
@@ -205,6 +206,7 @@ def route(
     source_override: str | None = None,
     cached_source: str | None = None,
     availability: dict[str, ProviderAvailability] | None = None,
+    matrix_provider: str | None = None,
 ) -> RouteDiagnostic:
     """Decide the authoritative price source for one instrument (pure/testable).
 
@@ -238,6 +240,7 @@ def route(
             d.source_selected = source_override
             d.valuation_method = "official_nav" if source_override == "amfi_nav" else "market_quote"
             d.reason = "source override"
+            d.route_rule = "override"
             return _finish(d)
         d.reason = f"ignored unknown source override '{source_override}'"
 
@@ -275,10 +278,39 @@ def route(
                 d.mapping_required = True  # canonical id recommended, but symbol pricing works
             break  # crypto → fall through to the active provider fallback
 
+    # Step 3.5 — the routing matrix (R-38; §9-1 AMENDMENT A, PREPEND). A user-declared
+    # cell REFINES which market provider prices this class×country. It is consulted ONLY
+    # here — after override (1), manual-only (2) and cache-publish/NAV (3) have returned —
+    # so it can NEVER overwrite a NAV or a canonical crypto price (the guarantee lives in
+    # steps 2-3 returning first). AMENDMENT A: the cell prices ONLY when its provider is
+    # live-capable for THIS instrument (resolve-time re-validation, §9-3) AND keyed (§9-7);
+    # on any incapability / degradation / unkeyed state, resolution CONTINUES down the
+    # existing step-4 chain unchanged — a cell can never price less than today. Capability,
+    # not chain-membership, is the gate (the matrix is the authority that selects the
+    # provider; the edit-time 400 already blocked incapable cells).
+    if matrix_provider and matrix_provider in CAPABILITIES:
+        mcaps = capabilities_for(matrix_provider)
+        country = (listing_country or "").upper()
+        capable = (
+            (not mcaps.asset_classes or asset_class in mcaps.asset_classes or "*" in mcaps.asset_classes)
+            and (not mcaps.regions or not country or country in mcaps.regions or "*" in mcaps.regions)
+        )
+        keyed = True
+        if mcaps.needs_key:
+            av = (availability or {}).get(matrix_provider)
+            keyed = bool(av and av.has_credentials)
+        if capable and keyed:
+            d.source_selected = matrix_provider
+            d.valuation_method = "official_nav" if matrix_provider == "amfi_nav" else "market_quote"
+            d.route_rule = "matrix"
+            return _finish(d)
+        # else: degraded / incapable / unkeyed → fall through unchanged (§9-1/§9-3/§9-7).
+
     # Otherwise: the active market provider, if it's in the chain / capable.
     if active_provider in chain or active_provider == "mock":
         d.source_selected = active_provider
         d.valuation_method = "market_quote"
+        d.route_rule = "active"
         return _finish(d)
     # Live provider not eligible for this lane → cache/manual.
     d.source_selected = "manual" if has_manual else None

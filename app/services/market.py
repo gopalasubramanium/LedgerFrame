@@ -225,14 +225,16 @@ async def route_for_instrument(session: AsyncSession, instrument):
     )).first() is not None
     cached = await session.get(QuoteRow, instrument.id)
     ac = instrument.asset_class.value if hasattr(instrument.asset_class, "value") else str(instrument.asset_class)
+    country = instrument.listing_country or instrument.country
     return route(
         instrument_id=instrument.id, symbol=instrument.symbol, asset_class=ac,
         asset_subclass=instrument.asset_subclass,
-        listing_country=instrument.listing_country or instrument.country,
+        listing_country=country,
         mappings=set(ids), active_provider=getattr(get_provider(), "name", "mock"),
         has_manual=has_manual, source_override=instrument.source_override,
         cached_source=cached.source if cached else None,
         availability=provider_availability(),
+        matrix_provider=await matrix_provider_for(session, ac, country),
     )
 
 

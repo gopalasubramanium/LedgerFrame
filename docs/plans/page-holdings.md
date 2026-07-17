@@ -663,3 +663,18 @@ ratification look before Phase 1 assembly.
 - **Re-verify:** `Holdings.test.tsx` (24) + `Accounts.test.tsx` (10) green; the journey smoke green; the
   `portfolio-smoke` (shared reader) re-run green. Served holdings/transactions shapes unchanged (a new
   optional query param only).
+
+## DELTA NOTE — 2026-07-18 (R-38 data-feed-routing Phase 3b re-walk batch 3, §14dr-10)
+
+- **Stray internal copy removed from the Transactions purge button.** The label read
+  "Purge N deleted [PIN]" — the "[PIN]" was a leftover dev annotation reminding that the
+  action is PIN-gated; it leaked into user-facing copy. **Verify-first:** the purge is
+  *already* PIN-gated by the confirm dialog's `requirePin` prop (its honest home) with a
+  clean "Purged." toast; the annotation added nothing but noise. Fix: the label is now
+  "Purge N deleted". (The string lived only in `Holdings.tsx`; Instrument Detail renders no
+  purge control — the owner reached it via the holdings navigation.)
+- **Guard (mechanical, CI):** a new `scripts/check-internal-copy.mjs` (wired into
+  `npm run check` as `check:copy`, mirroring the design-token drift check) fails if a
+  bracketed dev marker ([PIN] and kin) appears in production route/component source outside
+  comments — the KitchenSink playground + mockups are scoped out. Fail-first verified: RED
+  with the marker present, GREEN after removal. Holdings pre-pass re-run stated in the report.

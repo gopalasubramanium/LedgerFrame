@@ -440,7 +440,10 @@ export function Holdings() {
           <h2 className="hold__h2">Transactions</h2>
           {deletedCount > 0 && (
             <button type="button" className="lf-btn" onClick={() => setPurgeOpen(true)}>
-              Purge {deletedCount} deleted [PIN]
+              {/* §14dr-10 — removed the stray internal dev annotation that leaked into this
+                  label. The action is PIN-gated by the confirm dialog's requirePin prop (its
+                  honest home), not by an annotation in the button copy. */}
+              Purge {deletedCount} deleted
             </button>
           )}
         </div>

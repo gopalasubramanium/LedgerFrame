@@ -17,8 +17,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check:tokens": "node scripts/check-design-tokens.mjs",
+    "check:copy": "node scripts/check-internal-copy.mjs",
     "test:overflow": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run check:tokens && npm run test && npm run test:overflow"
+    "check": "npm run lint && npm run typecheck && npm run check:tokens && npm run check:copy && npm run test && npm run test:overflow"
   },
   "dependencies": {
     "lucide-react": "^1.24.0",

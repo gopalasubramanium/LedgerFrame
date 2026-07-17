@@ -1038,9 +1038,19 @@ already load on the tab — no additive field, no backend change).
   (`av_tier`) on the active row. Sources: `/system/providers`
   (`active` + `capabilities`) and `/system/data-source` (`has_api_key` + `av_tier`,
   the latter newly declared on the reader's `DataSource` type — already served).
-  **Never the key value** — SET/NOT SET only; the single shared key slot is a global
-  fact, so needs-key rows read SET/NOT SET from `has_api_key` and no-key rows read
-  "Not needed" (honest empty state).
+  **Never the key value** — SET/NOT SET only; no-key rows read "Not needed" (honest
+  empty state).
+  - **[REVISED 2026-07-18, data-feed-routing §16 key-slot honesty ruling.]** The single
+    shared key slot (`LEDGERFRAME_MARKET_API_KEY`) serves exactly ONE provider — the
+    **active** one. So **SET shows only on the active keyed row**, labelled **"shared
+    key slot"**; **every other needs-key row reads NOT SET** with honest copy — *"uses
+    the shared slot — currently serving {provider}"* (the active provider). This
+    supersedes the earlier "SET/NOT SET from `has_api_key` on every needs-key row"
+    (which read SET on `eodhd`/`kite` while `alphavantage` was the active keyed
+    provider — flagged honestly in §15's closing note). Composed from served facts
+    (`providers.active` · per-provider `needs_key` · the shared `has_api_key`) — the
+    same served-facts composition this table already uses; **no backend change**.
+    Per-provider credentials (a real per-provider key slot) are **ROADMAP R-41**.
 - **News feeds card → configured-URLs `DataTable`** (read-only; the *Edit feeds…*
   Dialog stays the editor). `/news/feeds` already serves the list; loaded on mount.
   Empty state honest: "No feeds configured."

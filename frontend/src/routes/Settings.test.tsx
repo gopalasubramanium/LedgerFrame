@@ -301,15 +301,16 @@ test("provider table surfaces served facts — SET/NOT SET, Not needed, active m
   });
   renderAt("/settings?tab=data-feeds");
   const table = (await screen.findByText("Configured market-data providers (read-only).")).closest("table")!;
-  // needs-key active provider with a stored key → SET; no-key provider → Not needed.
+  // needs-key active provider with a stored key → SET, labelled as the shared slot; no-key → Not needed.
   expect(within(table).getByText("SET")).toBeTruthy();
+  expect(within(table).getByText("shared key slot")).toBeTruthy();
   expect(within(table).getByText("Not needed")).toBeTruthy();
   // active marker (a positive chip) + the served tier note, both on the active row.
   expect(within(table).getAllByText("Active").some((el) => el.className.includes("lf-statuschip"))).toBe(true);
   expect(within(table).getByText("premium")).toBeTruthy();
 });
 
-test("provider table shows NOT SET when a keyed provider has no stored key", async () => {
+test("provider table shows NOT SET when the active keyed provider has no stored key", async () => {
   vi.mocked(getDataSource).mockResolvedValue({ ...DATA_SOURCE, provider: "eodhd", has_api_key: false });
   vi.mocked(getProviders).mockResolvedValue({
     active: "eodhd",
@@ -319,6 +320,36 @@ test("provider table shows NOT SET when a keyed provider has no stored key", asy
   renderAt("/settings?tab=data-feeds");
   const table = (await screen.findByText("Configured market-data providers (read-only).")).closest("table")!;
   expect(within(table).getByText("NOT SET")).toBeTruthy();
+});
+
+// §14 key-slot honesty ruling: under the SINGLE shared key slot, SET must show ONLY on the active
+// keyed provider — every other needs-key provider reads NOT SET with honest copy that the shared
+// slot currently serves the active one. (Before the fix, a stored key rendered SET on EVERY needs-key
+// row — eodhd/kite read SET while alphavantage was the active, keyed provider.)
+test("provider table: SET only on the active keyed row; other needs-key rows are honest NOT SET", async () => {
+  vi.mocked(getDataSource).mockResolvedValue({
+    ...DATA_SOURCE, provider: "alphavantage", has_api_key: true, av_tier: "free",
+  });
+  vi.mocked(getProviders).mockResolvedValue({
+    active: "alphavantage",
+    capabilities: {
+      alphavantage: { asset_classes: ["equity", "etf"], regions: ["US", "*"], needs_key: true },
+      eodhd: { asset_classes: ["equity"], regions: ["US", "SG", "IN"], needs_key: true },
+      kite: { asset_classes: ["equity"], regions: ["IN"], needs_key: true },
+      yahoo: { asset_classes: ["equity"], regions: ["*"], needs_key: false },
+    },
+    default_priority: {},
+  });
+  renderAt("/settings?tab=data-feeds");
+  const table = (await screen.findByText("Configured market-data providers (read-only).")).closest("table")!;
+  // Exactly ONE SET (the active, keyed alphavantage), labelled as the shared slot.
+  expect(within(table).getAllByText("SET").length).toBe(1);
+  expect(within(table).getByText("shared key slot")).toBeTruthy();
+  // The other two needs-key providers (eodhd, kite) read NOT SET with the honest shared-slot copy.
+  expect(within(table).getAllByText("NOT SET").length).toBe(2);
+  expect(within(table).getAllByText("uses the shared slot — currently serving alphavantage").length).toBe(2);
+  // yahoo needs no key.
+  expect(within(table).getByText("Not needed")).toBeTruthy();
 });
 
 test("news feeds card lists the configured URLs read-only (Edit dialog stays the editor)", async () => {

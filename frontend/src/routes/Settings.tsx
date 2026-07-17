@@ -445,6 +445,7 @@ interface ProviderRow {
   coverage: string;
   needs_key: boolean;
   key_state: "Not needed" | "SET" | "NOT SET";
+  key_note: string | null;
   active: boolean;
   tier: string | null;
 }
@@ -456,19 +457,35 @@ function ProviderTable({ ds }: { ds: DataSource }) {
 
   const rows = useMemo<ProviderRow[]>(() => {
     if (!providers) return [];
+    const activeName = providers.active;
     return Object.entries(providers.capabilities ?? {})
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, cap]) => {
         const classes = cap.asset_classes.map((c) => labelFor("asset_class", c)).join(", ");
         const regions = cap.regions.map(marketLabel).join(", ");
-        const active = name === providers.active;
+        const active = name === activeName;
+        // §14 key-slot honesty ruling: the single shared slot (LEDGERFRAME_MARKET_API_KEY) serves
+        // exactly ONE provider — the active one. So SET shows ONLY on the active keyed row (labelled
+        // "shared key slot"); every OTHER needs-key provider reads NOT SET with honest copy that it
+        // has no key of its own and the slot currently serves the active provider. (Per-provider
+        // credentials are ROADMAP R-41.) Composed from served facts — the accepted §14dr-2 pattern.
+        let key_state: ProviderRow["key_state"];
+        let key_note: string | null = null;
+        if (!cap.needs_key) {
+          key_state = "Not needed";
+        } else if (active) {
+          key_state = ds.has_api_key ? "SET" : "NOT SET";
+          key_note = "shared key slot";
+        } else {
+          key_state = "NOT SET";
+          key_note = `uses the shared slot — currently serving ${activeName}`;
+        }
         return {
           provider: name,
           coverage: [classes, regions].filter(Boolean).join(" · ") || "—",
           needs_key: cap.needs_key,
-          // Single shared key slot: SET/NOT SET is the one stored-key fact (ds.has_api_key);
-          // providers that need no key show "Not needed" (honest empty state).
-          key_state: !cap.needs_key ? "Not needed" : ds.has_api_key ? "SET" : "NOT SET",
+          key_state,
+          key_note,
           active,
           // Tier is only served/meaningful for the active provider (e.g. alphavantage).
           tier: active && ds.av_tier ? ds.av_tier : null,
@@ -484,7 +501,12 @@ function ProviderTable({ ds }: { ds: DataSource }) {
       key: "key_state", label: "Key",
       render: (r) => (r.key_state === "Not needed"
         ? <span className="set__fieldhelp">Not needed</span>
-        : <StatusChip tone={r.key_state === "SET" ? "positive" : "attention"} label={r.key_state} />),
+        : (
+          <span className="set__keycell">
+            <StatusChip tone={r.key_state === "SET" ? "positive" : "attention"} label={r.key_state} />
+            {r.key_note && <span className="set__fieldhelp">{r.key_note}</span>}
+          </span>
+        )),
     },
     {
       key: "active", label: "Active", align: "right",

@@ -110,6 +110,13 @@
   line-height: var(--line-13);
   color: var(--text-secondary);
 }
+/* §14 key-slot honesty — the Key cell stacks the SET/NOT SET chip over its honest shared-slot note. */
+.set__keycell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
 
 /* long_term_days / minutes / api-key: a numeric/short field + affix + a Save button. Wraps at narrow
    widths so the row never forces horizontal overflow (Phase-3a containment). */

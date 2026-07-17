@@ -458,7 +458,7 @@ marks the load-bearing owner calls named in the task. **Amendments A–D** and t
 | **9-7** | Allow-list pinning + write-only reconciliation | ✅ **ACCEPT.** **REMOVE** `refresh_interval_seconds` + `display_sleep_minutes` (**no consumer, no spec home**; re-add spec-first if a feature ever names them). |
 | **9-8** | [S]-gating + PIN vs the real session contract | ✅ **ACCEPT.** [S] mapping **as verified** (`require_session` for tokens; `require_auth` for settings/system mutations; **both open on a no-PIN local install**, the accepted gap #7). **Token revoke stays `require_session`** — the fresh-PIN extension was **DECLINED** (D-103 binds the **destructive purge only**; a revoked token is re-creatable). Record D-103's correct scope; **do not cite it for revoke**. |
 | **9-9** | No-egress toggle — one canonical home | ✅ **ACCEPT.** `privacy_mode`: **ONE row**, Settings → Privacy canonical; all writers via the **same `PUT /settings`**; the egress **state statement is derived from that row**. |
-| **9-10** | System tab without the sudo helper (D-003) | ✅ **ACCEPT.** Sudo-dependent System controls **disabled with an honest explanation** keyed off served `admin_available`; **no dead buttons, no fabricated success**; non-helper controls work regardless. |
+| **9-10** | System tab without the sudo helper (D-003) | ✅ **ACCEPT.** Sudo-dependent System controls **disabled with an honest explanation** keyed off served `admin_available`; **no dead buttons, no fabricated success**; non-helper controls work regardless. **REFINED at the Phase-3b walk (2026-07-18, §14):** the live surface degrades **only Allow LAN** (the one control that calls `POST /system/admin`); provider / auto-lock / reset / the AI line work regardless. The live behaviour **supersedes the §11 specimen's illustrative broad gating** — the "non-helper controls work regardless" clause is the shipped contract. |
 
 ### LANGUAGE — STRIKE via §-entry (owner, 2026-07-18)
 
@@ -644,3 +644,112 @@ report**. These are the specimen gaps the owner found at the walk:
 
 *(End of §12 ratification record. Phase 1 proceeds against these rulings +
 conditions; every §12st condition ships a screenshot in the phase report.)*
+
+---
+
+## 13. PHASE 1 / 2 / 3a — BUILD & PRE-PASS RECORD (four tabs; superseded in §14 by the §14st-1 restructure)
+
+*The Phase-0a specimen (`SettingsMockup.tsx`) became the **real, wired** page
+(`frontend/src/routes/Settings.tsx` + `Settings.css`). Every value shown is a
+**served** display string (D-105); the frontend computes nothing and there is **no
+money math** (P-1/D-031). Writes go through the **canonical** endpoints only —
+`/settings`, `/tokens`, `/system/*`, `/auth/*`. Commits (post-§12 ratification):*
+
+- **`794c0ee`** — DESIGN-SYSTEM §5.4 danger `ButtonVariant` amendment + slice
+  (`--loss-contrast` token; `Button.tsx` `danger→lf-btn--danger`). *(Ratified at
+  the Phase-3b walk — see §14.)*
+- **`389c05f`** — chrome: TopBar rotation toggle **hidden until R-37** (0a gate
+  ruling (d)).
+- **`8d65420`** — Phase 1 backend: served `long_term_days`; reset-data D-103 gate.
+- **`c4b8098`** — GLOSSARY §9-4 Settings terms (spec-first + `mocks/glossary.ts`
+  slice; parity green): **Density · API token · Privacy mode · Data provider ·
+  High contrast · Reduced motion** (Appearance / Rotation are plain UI labels — no
+  entries, per the §9-4 ruling).
+- **`b00cbd5`** — Phase 1: the real `/settings` page — **four URL-addressable
+  tabs** (`?tab=general|appearance|privacy|system`, Amendment C), composing
+  ratified `ui/` only; the four §12st conditions delivered (PIN card §12st-1;
+  write-only provider key §12st-2; ND-6 feeds editor §12st-3; read-only served
+  AI-config line §12st-4).
+- **`d16bf86`** / **`ad243a8`** / **`41bb442`** — Phase 2: `Settings.test.tsx`
+  render + honest-state + Amendment-C journey tests; `AppShell.test.tsx` first-run
+  → Settings-TAB journey guards (§14ac-2); `e2e/overflow.spec.ts` extended to the
+  four Settings tabs; de-flaked the served-value test.
+- **`1af3652`** — contract regen for the reset-data D-103 `require_pin` gate.
+- **`b8c31e6`** / **`b3907ea`** — Phase 3a scripted pre-pass: `settings-smoke.spec.ts`
+  (live app + real backend, four tabs × both themes × 320/375/900/1366);
+  fixed a live General 320px overflow finding; idempotent PIN-state guard.
+
+**Pre-pass posture at the end of Phase 3a:** four tabs, containment + 0 console
+errors across the matrix, the §12st screenshots captured. **This is the surface
+the owner walked at Phase 3b (§14) — where §14st-1 restructures it to five.**
+
+---
+
+## 14. PHASE 3b — OWNER ACCEPTANCE WALK, BATCH 1 (live, demo-seeded; 2026-07-18)
+
+*The owner walked the live, demo-seeded `/settings` (Phase 3b, 2026-07-18). The
+page is **IN FLIGHT** (not yet owner-accepted) — no accepted-page delta machinery
+applies to `/settings` itself. **ONE finding** (§14st-1, an IA arrangement
+owner-decision) plus **two walk ratifications**, recorded below and executed as
+COMMIT 2+.*
+
+### §14st-1 — data-feed configuration is its own nature: a FIFTH "Data feeds" tab (owner-decision, IA arrangement, 2026-07-18)
+
+**Ruling.** Data-feed configuration **does not belong under System**. A **fifth
+tab, "Data feeds"**, is added. The Settings tab set becomes **five**:
+**General · Appearance · Privacy · Data feeds · System.**
+
+- **MOVES to Data feeds:** **Market data provider**, **Provider API key**
+  (write-only, D-003), **stale-after posture**, and **News feeds** (the ND-6
+  editor, §12st-3). These are all *feed/provider configuration* — one nature.
+- **STAYS in System:** **Root helper status**, **PIN** (§12st-1), **Auto-lock**,
+  **Allow LAN**, the **AI config line** (§12st-4), **Reset data**. Rationale:
+  **auto-lock and LAN are access controls, not feeds**, and remain in System
+  **despite** having lived in the old "Prices & access" card.
+- **"Data feeds" is a plain tab label** — the §9-4 logic: **no GLOSSARY entry**
+  for the label itself; the terms *inside* it (Data provider, etc.) already carry
+  theirs.
+- **Tab state stays URL-addressable** (`?tab=data-feeds`, Amendment C); **no new
+  component** (the `Segmented` strip gains a fifth segment).
+
+> **HONESTY NOTE (verify-first, 2026-07-18).** **Stale-after posture has no
+> rendered control today** — `stale_after_seconds` is *served*
+> (`getSystemConfig`, `systemConfig.ts:37`) but Phase 1 built no stale-after
+> input (it was a §0-ledger candidate dispositioned to a tab, never assembled).
+> §14st-1 fixes its **canonical home as Data feeds** for when it lands; the
+> restructure therefore physically relocates the **three built controls**
+> (provider, write-only key, feeds editor) — no stale-after control is
+> fabricated. Recorded, not invented (CLAUDE.md hard rule).
+
+### Walk ratifications (2026-07-18)
+
+- **§5.4 danger `ButtonVariant` — RATIFIED at the walk.** The PROPOSED §5.4
+  amendment (`794c0ee`; DESIGN-SYSTEM §5.4, dated 2026-07-18) is **ratified** —
+  Reset data's `variant="danger"` treatment passed the walk in both themes. The
+  DESIGN-SYSTEM §5.4 header **PROPOSED** marker is **struck → RATIFIED** (dated),
+  not silently edited.
+- **`admin_available` gating refinement — ACCEPTED (note against §9-10).** The
+  live page degrades **only Allow LAN** without the root helper (the one control
+  that genuinely calls `POST /system/admin`); provider / auto-lock / reset / the
+  AI line all work regardless (`systemConfig.ts:1-7`). This **live behaviour
+  supersedes the specimen's illustrative broad gating** (the §11 frame 6 showed
+  the sudo-dependent *controls* disabled as a class). §9-10's ruling — *"non-helper
+  controls work regardless"* — is affirmed by the live surface; the specimen's
+  broad-gating illustration is **not** the shipped contract. Annotated against
+  §9-10 above.
+
+### COMMIT 2+ — the restructure (executed against §14st-1; fail-first where guards exist)
+
+- Add the fifth `Segmented` segment; tab state URL-addressable (`?tab=data-feeds`).
+- Move the three built items to a **`DataFeedsPanel`**; System reflows (root
+  helper, PIN, auto-lock + LAN as access controls, AI line, reset).
+- Update **every** guard that encoded four tabs or the old homes, **RED-first on
+  the real cause**: the overflow suite (**×5 tabs**), the smoke matrix (**all five
+  tabs × light/dark × four widths**), and — critically — the **D-045 first-run
+  journey guards**: the data-provider step now lands on **`?tab=data-feeds`** at
+  the **provider control** (destination-only guards lie — assert arrival at the
+  CONTROL); the **PIN step still lands on System**. `Settings.test.tsx` tab-set
+  assertions updated fail-first.
+
+*(Build evidence appended below as this batch lands; the owner re-walks the
+restructured page after `git push`.)*

@@ -81,7 +81,7 @@ and order are fixed and match §3.
 | **Estate** | `/estate` | Planning | Will/executor, contacts, document-readiness register; isolated, no FKs. |
 | **Reports** | `/reports` | Reports | Statements, Realised P/L report, tax lots; server-side exports. |
 | **Pricing Health** | `/pricing-health` | Reports | Canonical home for provenance, confidence, and routing diagnostics. |
-| **Settings** | `/settings` | System | Configuration across 4 tabs, incl. Privacy and API-token cards. |
+| **Settings** | `/settings` | System | Configuration across ~~4~~ **5** tabs *(General · Appearance · Privacy · **Data feeds** · System — D-069 amended 2026-07-18, §14st-1)*, incl. Privacy and API-token cards. |
 | **Help** | `/help` | System | Searchable knowledge base (pages + terms + guarantees). |
 | **Legal** | `/legal` | System | License, disclaimer, Product Guarantees, no-jurisdiction-tax stance. |
 
@@ -368,7 +368,14 @@ summary reuses the canonical page's reader, never a second code path.
 
 ### Settings (`/settings`) — D-069
 
-- **Owns:** configuration across **4 tabs**. Adds a **Privacy section** (no-egress
+- **Owns:** configuration across ~~**4 tabs**~~ **five tabs** — **General ·
+  Appearance · Privacy · Data feeds · System** *(D-069 amended 2026-07-18 at the
+  Settings Phase-3b walk, page-settings §14st-1)*. The **Data feeds** tab is the
+  canonical home for **feed/provider configuration** — market data provider,
+  provider API key (write-only, D-003), stale-after posture, and the **ND-6 news
+  feeds** editor — that config being its own nature. **Auto-lock and Allow LAN are
+  access controls, not feeds**, and stay on the **System** tab. Adds a **Privacy
+  section** (no-egress
   toggle; "AI never persists" statement; privacy-mode indicator; **current
   egress state shown as a plain statement** — "This device makes no network
   calls" when enabled — state shown, not merely offered) and an **API-token

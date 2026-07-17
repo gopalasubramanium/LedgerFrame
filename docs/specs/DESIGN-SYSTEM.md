@@ -866,7 +866,7 @@ governs the **base-currency SUMMARY** figure, which was otherwise bare.
   backend-first. Money **rows** that already carry per-quote codes (Markets, Heatmap, Pricing Health) are
   out of scope. Each touched accepted page carries a dated delta note + a re-run pre-pass.
 
-## §5.4 AMENDMENT — a `danger` ButtonVariant (PROPOSED 2026-07-18, page-settings Phase-0a gate ruling (b); ratify at the Settings walk)
+## §5.4 AMENDMENT — a `danger` ButtonVariant (~~PROPOSED 2026-07-18~~ **RATIFIED 2026-07-18** at the Settings Phase-3b walk, page-settings §14; raised at the Phase-0a gate ruling (b))
 
 **Raised by the owner at the Settings Phase-0a specimen gate (page-settings §12 ruling (b)).** The
 ratified `Button` inventory has **two** variants — `default | primary` (`Button.tsx:6`) — and **no

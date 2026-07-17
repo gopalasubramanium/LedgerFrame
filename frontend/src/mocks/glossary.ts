@@ -313,6 +313,14 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "A per-device display axis — stops animations and the ticker scroll. Saved on this device only, not a server setting; also honours your operating system's reduce-motion preference.",
   },
+  // data-feed-routing §9-T (ruled 2026-07-18). Authored in docs/specs/GLOSSARY.md FIRST
+  // (the two-store rule), then here — the parity guard (tests/unit/test_glossary_parity.py)
+  // enforces the identical spelling "Routing matrix".
+  "term-routing-matrix": {
+    term: "Routing matrix",
+    definition:
+      "Your table of which provider prices each kind of instrument in each market — one choice per asset-class and listing-country, edited in Settings → Data feeds. It is a preference layer, not a price: a cell only takes effect when the provider you named can actually price that instrument, and it can never fabricate, replace, or worsen a value — if the named provider can't price a holding, LedgerFrame falls back to its normal source exactly as before. Pricing Health shows the outcome read-only.",
+  },
 };
 
 export function lookupTerm(id: string): GlossaryEntry | undefined {

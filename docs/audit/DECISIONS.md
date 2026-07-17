@@ -377,6 +377,12 @@ AI-fallback signal (D-070); the normative validation contract (D-071).
   chains + per-instrument `source_override` (validated) retained. Pricing
   Health shows the chain per holding — visibility yes, editability no.
   ROADMAP: per-lane priority editing only on demonstrated need.
+  - **Annotation (2026-07-18, data-feed-routing §9-R — D-072 STANDS):** R-38's
+    **cell-selection editor** (Settings → Data feeds — a cell selects *one
+    provider per class×country*) is **outside this prohibition** by owner ruling
+    2026-07-18. It is a **different shape** from lane-priority reordering, which
+    **remains R-13, parked**. **Pricing Health remains read-only.** This
+    annotates, it does not weaken: no lane-priority editing is sanctioned.
 - **D-073 — Bond / deposit / retirement lanes: manual is the honest,
   specified v2 behaviour** (OQ 19). Per-type meta (FD rate, coupon…) kept as
   **reference fields, not calculation inputs**. `calculated_accrual` and

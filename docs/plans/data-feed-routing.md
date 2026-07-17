@@ -1615,3 +1615,69 @@ dropdown with its **NAME visible** in Holdings; the "103504" instrument shows it
 after backfill**. Screenshots: Masters card with real counts, the crypto picker finding **Ripple**,
 Holdings showing the named mutual fund. Suites + contract + frontend **exit code** + accepted-page
 pre-passes. `git push`. **STOP — the owner re-walks;** the close ritual follows only from chat.
+
+### §22 — PHASE 3b (batch 5) FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+Both findings fixed docs-first, one fix per commit, fail-first RED on the real cause. **Contract
+HELD at 134** (no new endpoints — the backfill folded into the refresh the owner already runs).
+
+- **DONE — records filed first** (`2096315`) — §14dr-15 + §14dr-16 findings + CURRENT NEXT, before
+  any fix.
+- **DONE — §14dr-15** (`88907b3`) — `POST /coingecko/refresh` (no-file branch) **always** refetches
+  `coins/list` and re-upserts the master, mirroring `amfi_refresh` (the `if coins == 0` guard is
+  gone). Fail-first: RED reproduced kept-stale-cache on the seeded instance (`assert 2 > 10000`),
+  GREEN asserts order-of-magnitude **> 10,000** and the picker resolves Ripple. ruff clean.
+- **DONE — §14dr-16 (create path)** (`26fc56c`) — the `InstrumentPick` create variant carries an
+  optional `name`; the picker passes the master's name on a suggestion pick; Holdings tracks
+  `pickedName` and sends `TransactionIn.name` (frontend type gains `name`). Backend already persists
+  it via `_ensure_instrument`. Fail-first: picker unit test RED on the dropped name; a Holdings test
+  drives Add → master suggestion → Save and asserts `addTransaction` carries `name`. vitest 304 → 306.
+- **DONE — §14dr-16 (backfill)** (`243365d`) — `_name_from_cache` gains an AMFI code-match fallback;
+  `backfill_master_names` heals name-less instruments (applying only a GENUINE name — not the code,
+  not a `(DEMO)`/`(CSV)` placeholder → idempotent), logged per repair, served as `names_backfilled`;
+  wired into `amfi_refresh` + `coingecko_refresh`. Fail-first: a seeded name-less "103504" + its AMFI
+  scheme stays name-less pre-fix; healed after a refresh; a second refresh is a no-op.
+- **DONE — pre-existing lint** (`4112e55`) — a `B904` in `settings.py` (unrelated to the findings)
+  was surfaced when the batch-5 pre-pass ran the full `ruff check .`; chained `from None`. Kept in
+  its own commit, separate from the findings. **No behaviour change.**
+
+### Phase 3b (batch 5) re-run — RESULT (isolated demo instance; owner instance untouched)
+
+Isolated **demo-seeded** backend on spare port **8399** (own temp data dir, `LEDGERFRAME_DEMO_SEED`)
++ a throwaway **Vite dev** on **5199** proxying to it (owner's 5173→8321→`~/.ledgerframe-data` never
+touched; §15c, `[[prepass-harness]]`). The `.env` was **snapshotted before and verified
+byte-IDENTICAL after** (md5 `0f421eb5…`; no `apply_env` this batch); the throwaway
+`vite.prepass.config.ts` + driver scripts + temp data dir removed; **working tree clean**; both
+isolated servers down.
+
+Every finding exercised **end-to-end via the real UI**, all **PASS**, **0 console errors**
+(Vite-dev stack). **Live network egress worked** — CoinGecko pulled the real full `coins/list`
+(**17,630** coins) and AMFI pulled the real `NAVAll.txt` (**14,224** schemes):
+
+- **§14dr-15 — CoinGecko real sync:** Masters card **before** read "Crypto (CoinGecko) · 2 entries"
+  (the stale demo seed — the owner's exact state). **Sync now** served
+  `{coins: 17630, names_backfilled: 2}`; the card then read **"Last synced … · 17630 entries"**. The
+  crypto picker for "ripple" showed a **Suggested (crypto)** group with **XRP** (+ OXRP / XRPB-SOL /
+  RLUSD) — Ripple is now findable (was unfindable at 2 coins). **XRP added end-to-end** (qty 5) from
+  the synced dropdown, appears in Holdings. *(01, 02, 03, 05, 06)*
+- **§14dr-16 — create-path name:** a **new** mutual fund added from the synced AMFI dropdown (Parag
+  Parikh) persisted its **full name** — Holdings shows code **143263** with subtext **"Parag Parikh
+  Liquid Fund- Direct Plan- Daily Reinvestment of IDCW"**; the Transactions Symbol column keeps the
+  canonical code (no invented column). *(07)*
+- **§14dr-16 — backfill:** the pre-seeded name-less **"103504"** was healed on the AMFI **Sync now**
+  (`names_backfilled: 1`, logged) — Holdings now shows **"SBI Large Cap FUND-REGULAR PLAN GROWTH"** as
+  the identity subtext; the Transactions Symbol column stays **103504**. *(04)*
+
+- **Gates:** backend **929 passed** (+2: one CoinGecko sync-now, one AMFI backfill); `make
+  api-contract-check` current, contract **134 path-keys** (HELD — no endpoints added); ruff clean;
+  frontend `npm run check` **exit 0** — lint + typecheck + tokens + check:copy + **vitest 306** (+2)
+  + **e2e 337**.
+- **Screenshots (7):** masters before / after-coingecko / after-both · Holdings 103504 named
+  (backfill) · crypto picker finding Ripple · Holdings XRP · Holdings create-path MF named.
+
+**Accepted-page pre-passes stated:** Settings → Data feeds (the Masters card sync, both masters) and
+the Holdings Add-flow picker + ledger (crypto/mutual-fund suggestions, create-path name, backfill
+render) were driven end-to-end on the isolated instance.
+
+**STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b batch 5 — the LAST batch; the
+CLOSE RITUAL follows only from chat, NOT self-started).

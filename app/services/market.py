@@ -431,6 +431,12 @@ async def get_history_cached(
         log.warning("history fetch failed for %s: %s", symbol, exc)
         return await _from_db()
 
+    if is_demo:
+        # §14dr-24: demo is deterministic + free — return the freshly generated series
+        # WITHOUT caching it. Caching would only freeze a generator change; re-upserting
+        # on every view would also risk duplicate PriceHistory rows. Return as-is.
+        return candles if candles else await _from_db()
+
     existing_ts = set(
         (
             await session.execute(

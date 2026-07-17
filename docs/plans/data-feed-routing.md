@@ -1983,3 +1983,61 @@ truncating (ellipsis + title); the single danger purge Button + fresh-PIN flow e
 showing a visibly distinct benchmark vs portfolio line (demo cache regenerated). Screenshots per finding.
 Suites + contract (**134 held**) + frontend **exit code** + per-page pre-passes. `git push`. **STOP — the
 owner re-walks;** the close ritual follows only from chat.
+
+### §26 — PHASE 3b (batch 7) FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+Three findings resolved docs-first, one fix per commit, verify-first with fail-first RED. The batch-6
+ratifications (dr-19 ticker symbol-only CONFIRMED; dr-20 SUPERSEDED by dr-23) were recorded in the §25 docs
+commit. **Contract 134 HELD** (no route/shape change this batch).
+
+- **DONE — records + ratifications first** (`16b1d0b`) — §25 findings + verification + owner rulings.
+- **DONE — §14dr-24** (`d37d6c3` + follow-up `1e35c89`) — verified the benchmark rides
+  `get_history_cached("SPY")` (same served-history path, already diversified/real; not a separate
+  generator). Per owner ruling the mock/demo provider regenerates instead of serving pre-dr-18 frozen
+  cache; a follow-up returns demo candles WITHOUT upserting (the re-upsert hit a tz-dedup UNIQUE constraint
+  — 3 suite failures — now avoided). Real providers unchanged. Pins: benchmark ≠ portfolio; stale-cached
+  demo SPY serves the current generator.
+- **DONE — §14dr-22** (`ee4cd17`) — dr-19 regression: the flex-column `InstrumentLabel` broke the movers'
+  inline-text ellipsis and nothing bounded its width. Guard gap root-caused honestly: the tile-integrity
+  suite exercised a DRIFTED `HomeMockup` specimen (bare short symbols, no `InstrumentLabel`). Fixed the
+  specimen to render the real component with long names (guard then caught the movers-cell overflow);
+  `InstrumentLabel` gains a `truncate` mode (ellipsis + title tooltip); consumers get `min-width:0`, the
+  movers grid uses `minmax(0,1fr)`. Pins: truncate class/title; the guard now runs long names at all widths.
+- **DONE — §14dr-23** (`8925e64`) — removed the "Purge?" text + tooltip; ONE danger `Button`
+  (`Trash2` + "PIN to permanently delete"). The GLOSSARY "Purge" now rides a `[Help]` popover INSIDE the
+  ConfirmDialog (new `helpTerm` prop); the `verify_fresh_pin` (D-103) flow is unchanged. Pins: ConfirmDialog
+  `helpTerm` renders/omits the [Help] affordance.
+
+**Phase 3b (batch 7) re-run — RESULT (isolated instance; owner instance untouched).** Isolated demo backend
+on spare port **8399** served **same-origin (prod `dist`)** to sidestep a `SameSite=Strict` session-cookie
+issue the Vite-proxy harness exposes when a PIN is set (a valid token was injected as a `Lax` cookie so
+readers authenticate; the LockScreen unlock + the D-103 purge PIN were driven live). The provider was forced
+to **mock** via `LEDGERFRAME_MARKET_PROVIDER=mock` (OS-env override — the repo `.env`, which carries the
+owner's alphavantage key, was NOT written and verified byte-IDENTICAL after, md5 `0f421eb5…`; this both
+exercises the dr-24 demo path and avoids spending the owner's API quota). Both isolated servers down; `dist`
++ throwaway drivers removed; working tree clean. Every finding exercised end-to-end, **0 console errors**
+(the one benign prod-CSP theme-flash filtered):
+
+- **§14dr-22:** Home tiles contained at **375 and 1366** (and 320/900) with the movers' long ETF names
+  ellipsizing ("Nasdaq 100 ET…", "Singapore ETF (…", "S&P 500 ETF (D…", "Euro Stoxx 5…"); no spill/overlap.
+  *(dr22-movers-375 / dr22-movers-1366)*
+- **§14dr-23:** the single red danger Button **"🗑 PIN to permanently delete"**; the ConfirmDialog with the
+  **[Help] popover open** on the "Purge" definition (in-dialog, not a tooltip); a **back-dated** soft-delete
+  → the fresh-PIN purge completing live ("Trash emptied — the rows are permanently deleted"). *(dr23-danger-
+  button / dr23-dialog-help / dr23-purged)*
+- **§14dr-24:** the Performance chart drawing **two visibly distinct lines** — the solid portfolio line and
+  the dashed S&P 500 (SPY proxy) benchmark, different shapes (served: series 366, benchmark 366, series ≠
+  benchmark). *(dr24-performance)*
+
+- **Gates:** backend **938 passed** (was 936; +2 net after the dr-24 fix + new pins); `make
+  api-contract-check` current, contract **134 path-keys** (HELD); ruff clean; frontend `npm run check`
+  **exit 0** — lint + typecheck + tokens + check:copy + **vitest 314** + **tile/overflow e2e 337** (incl.
+  the extended long-name guard).
+- **Screenshots:** per finding (Home movers 375/1366 truncated · danger button · dialog [Help] · purge
+  complete · Performance benchmark vs portfolio).
+
+**Accepted-page pre-passes stated:** Home (movers containment), Holdings (purge control + fresh-PIN flow),
+and Portfolio (Performance benchmark) were driven end-to-end on the isolated instance.
+
+**STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b batch 7; the close ritual follows only
+from chat, NOT self-started).

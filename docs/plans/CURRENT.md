@@ -1599,8 +1599,10 @@ rebuild — is CLOSED.)*
    regression) → truncation mode + guard extension; **§14dr-23** purge control → one danger Button "PIN to
    permanently delete" + [Help]-on-dialog (verify_fresh_pin unchanged); **§14dr-24** Performance benchmark
    VERIFIED already on the served-history path (not a separate generator) — residual is frozen pre-dr-18 demo
-   cache → mock/demo `get_history_cached` regenerates (real providers unchanged). STOP after the batch-7
-   re-run for the owner re-walk; the close ritual follows only from chat.
+   cache → mock/demo `get_history_cached` regenerates (real providers unchanged). **Batch 7 FIXED + RE-RUN
+   GREEN (§26, 2026-07-18)** — backend 938 · vitest 314 · overflow/tile e2e 337 · contract 134 held ·
+   isolated re-run (mock-forced, owner `.env` untouched) 0 console errors, screenshots per finding.
+   **STOPPED for the owner re-walk;** the close ritual follows only from chat.
 2. **intraday-series (R-42)** — `docs/plans/intraday-series.md` (**stub filed; PLAN ONLY**). **ACTIVATED
    with an owner definition** (tier-aware · user-triggered · persisted; §20 / §14dr-13). Sequenced as the
    milestone **immediately after data-feed-routing closes, BEFORE Help** (owner ruling 2026-07-18).

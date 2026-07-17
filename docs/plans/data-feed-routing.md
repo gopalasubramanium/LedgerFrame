@@ -1273,3 +1273,83 @@ with the honest empty state **per class**. Suites + contract (**134** held) + fr
 **exit code** + per-page pre-passes (Instrument Detail · Pricing Health · Holdings ·
 chrome ticker). **Screenshots per finding.** `git push`. **STOP — the owner
 re-walks.**
+
+---
+
+## §19 — PHASE 3b (batch 3) FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+All seven findings fixed verify-first (fail-first RED on the real cause), docs-first,
+one fix per commit. **Verify-first paid off: the batch is FRONTEND-resolved and the
+contract HELD at 134** — the four "backend gap" findings had no gap (the txn PUT
+already accepted `account_id`; search already filtered by `asset_class`; the ticker
+already consumed served `is_stale`; AMFI had a canonical writer).
+
+- **DONE — §18 findings filed first** (`c290dec`) — dr-6..12 + R-42/43/44, recorded
+  before any fix.
+- **DONE — §14dr-6** (`d6c980e`) — the edit dialog reveals an **AMFI scheme code** field
+  when `amfi_nav` is chosen and composes the canonical `map-amfi` writer before the
+  override PATCH (one home, IA P-1); **toast dedupe** at the `ToastProvider` standard
+  (same message+tone while visible → one). DESIGN-SYSTEM §5.5 + Instrument Detail deltas.
+- **DONE — §14dr-7** (`6dcec44`) — **1D/5D disabled-with-reason** (daily-only data; no
+  fabricated density) via a new `Segmented` disabled-option state + `PriceChart`
+  `disabledPeriods`; **MA/BB/RSI overlay values in the Advanced hover**, null-guarded.
+  Intraday is R-42. DESIGN-SYSTEM §5.2 + Instrument Detail deltas.
+- **DONE — §14dr-8** (`95b41dc`) — the async-action standard: `Button` **`loading`** prop
+  (disabled + `aria-busy` + perceptible spinner, re-click guarded); applied at the
+  Pricing Health refresh/save defects + swept the data-feeds saves. DESIGN-SYSTEM §5.4 +
+  Pricing Health deltas.
+- **DONE — §14dr-9** (`3ec8a55`) — ticker **one-derivation**: holding rows consume the
+  shared served `is_stale`; **world-index rows carry no pricing-health stale mark**
+  (their home is Markets, IA P-1). Reconciliation pin in `chrome.test.ts`. page-chrome §16.
+- **DONE — §14dr-10** (`88ecf54`) — removed the stray **`[PIN]`** dev annotation from the
+  Holdings purge label (PIN gate is the `requirePin` dialog) + a CI guard
+  (`check:copy`, the token-check precedent). page-holdings delta.
+- **DONE — §14dr-11** (`86208a8`) — transaction edit gains the **Account** field (parity
+  with add); the edit PUT applies `account_id` when sent (`model_fields_set`, resolved via
+  `_ensure_account` — NOT-NULL safe), re-scoping recomputes **both** accounts' holdings.
+  page-holdings delta.
+- **DONE — §14dr-12** (`fe28056`) — **honest class-scoped empty state** ("No {class}
+  instruments match — create '{q}'"); the picker was already class-scoped (D-097), the
+  gap was the missing message. page-holdings delta.
+
+### Phase 3b (batch 3) re-run — RESULT (isolated demo instance; owner instance untouched)
+
+Isolated **demo-seeded** backend on spare port **8399** (own temp data dir,
+`LEDGERFRAME_DEMO_SEED`, mock provider) + a throwaway **Vite dev** on **5199** proxying to
+it (owner's 5173→8321→`~/.ledgerframe-data` never touched; §15c). The `.env` was
+**snapshotted before and verified IDENTICAL after** (no `apply_env` save this batch);
+the throwaway `vite.prepass.config.ts` + temp data dir removed; **working tree clean**;
+owner's `:8321` confirmed alive and untouched.
+
+Every finding exercised **end-to-end**, all **PASS**, **0 console errors** (Vite-dev
+stack — no prod-CSP theme-flash):
+
+- **dr-6:** editing HDFCNIFTY → Source override `amfi_nav` **revealed the AMFI scheme code
+  field**; entering it + Save completed (no 400 dead-end).
+- **dr-7:** on AAPL, **1D and 5D render disabled** with the reason *"Intraday prices aren't
+  available yet — daily history only."*; the Advanced hover tooltip showed **MA 189.29 · BB
+  196.17 / 182.42 · RSI 49** at the point (null-guarded).
+- **dr-8:** "Refresh all" reported **`aria-busy` true in-flight** (perceptible spinner).
+- **dr-9:** ticker carried **no stray index stale marks** (indices unmarked; holdings ==
+  shared reader by construction).
+- **dr-10:** **no `[PIN]`** anywhere on the Holdings surface; the purge affordance rendered
+  the clean **"Purge 1 deleted"**.
+- **dr-11:** the **Edit transaction** dialog carried the **Account** field, prefilled to the
+  transaction's account (Demo Brokerage).
+- **dr-12:** Adding **Crypto** + searching **XRP** showed **"No crypto instruments match —
+  create 'XRP'"** — the owner's exact copy.
+
+- **Gates:** backend **924 passed**; `make api-contract-check` **current**, contract **134
+  path-keys** (Flag 1 held — no endpoints added); frontend `npm run check` **exit 0** —
+  lint + typecheck + tokens + **check:copy** (new) + **vitest 298** (incl. the dr-6..12
+  pins) + **e2e 337** (incl. the new `overlay-hover.spec.ts`).
+- **Screenshots (7):** the AMFI-code field; the disabled 1D/5D + overlay hover; refresh
+  in-flight; the ticker; the clean purge label; the Edit-transaction Account field; the
+  crypto honest empty state.
+
+**Accepted-page pre-passes stated:** Instrument Detail (dr-6/dr-7), Pricing Health (dr-8),
+Holdings (dr-10/dr-11/dr-12), and the chrome ticker (dr-9) were driven end-to-end on the
+isolated instance.
+
+**STATUS: FIXED + RE-RUN GREEN. NEXT: the owner re-walks** (Phase 3b batch 3, judgment
+only).

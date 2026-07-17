@@ -89,8 +89,11 @@ test.describe.serial("settings pre-pass (live)", () => {
   test("System §12st + the danger Reset control (D-103) + the §9-10 degradation", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page.emulateMedia({ colorScheme: "light" });
+    // This harness assumes a RESET (PIN-free) demo-seeded instance, like every smoke here. If a prior
+    // run left the test PIN set, clear it first (reset.py / null pin_hash) before re-running.
     await page.goto(`/#/settings?tab=system`);
     await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible({ timeout: 15_000 });
+    const pinAlreadySet = await page.getByText("PIN: set").isVisible().catch(() => false);
 
     // §12st-4 — the READ-ONLY served AI-config line.
     await expect(page.getByText(/^AI is (on|off)/)).toBeVisible();
@@ -99,12 +102,15 @@ test.describe.serial("settings pre-pass (live)", () => {
     // §9-10 — the root helper is absent on this instance → Allow LAN is disabled (not dead) with a note.
     await expect(page.getByText(/optional root helper/i)).toBeVisible();
     await expect(page.getByLabel("Allow LAN access")).toBeDisabled();
-    // §12st-1 — the PIN card, and the danger Reset DISABLED without a PIN (D-103 honest state).
-    await expect(page.getByText("PIN: not set")).toBeVisible();
+    // §12st-1 — the PIN card + the danger Reset. On a no-PIN instance it is DISABLED (the honest
+    // D-103 state: an irreversible wipe is impossible on an unprotected install).
     const reset = page.getByRole("button", { name: /Reset data/ });
     await expect(reset).toHaveClass(/lf-btn--danger/);
-    await expect(reset).toBeDisabled();
-    await page.screenshot({ path: `${OUT}/settings-system-degraded.png`, fullPage: true });
+    if (!pinAlreadySet) {
+      await expect(page.getByText("PIN: not set")).toBeVisible();
+      await expect(reset).toBeDisabled();
+      await page.screenshot({ path: `${OUT}/settings-system-degraded.png`, fullPage: true });
+    }
 
     // §12st-3 — the ND-6 feeds editor Dialog (the ratified Accounts-dialog pattern).
     await page.getByRole("button", { name: /Edit feeds/ }).click();
@@ -112,11 +118,13 @@ test.describe.serial("settings pre-pass (live)", () => {
     await page.screenshot({ path: `${OUT}/settings-feeds-dialog.png` });
     await page.getByRole("button", { name: "Cancel" }).click();
 
-    // §12st-1 — exercise the PIN set flow, then the ENABLED danger Reset + the D-103 fresh-PIN
-    // ConfirmDialog (never confirmed — demo data untouched).
-    await page.getByRole("button", { name: /Set PIN/ }).click();
-    await page.getByLabel("New PIN").fill(TEST_PIN);
-    await page.getByRole("dialog").getByRole("button", { name: /Set PIN/ }).click();
+    // §12st-1 — set a PIN if one isn't set, so the ENABLED danger Reset + the D-103 fresh-PIN
+    // ConfirmDialog can be captured (never confirmed — demo data untouched).
+    if (!pinAlreadySet) {
+      await page.getByRole("button", { name: /Set PIN/ }).click();
+      await page.getByLabel("New PIN").fill(TEST_PIN);
+      await page.getByRole("dialog").getByRole("button", { name: /Set PIN/ }).click();
+    }
     await expect(page.getByText("PIN: set")).toBeVisible({ timeout: 10_000 });
     await expect(reset).toBeEnabled();
     await page.screenshot({ path: `${OUT}/settings-system-pin-set.png`, fullPage: true });

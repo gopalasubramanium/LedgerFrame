@@ -77,9 +77,9 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 // --- tabs + URL state (Amendment C) -----------------------------------------
-test("renders the five D-069 tabs (§14st-1) and defaults to General", async () => {
+test("renders the six D-069 tabs (§14st-2) and defaults to General", async () => {
   renderAt();
-  for (const t of ["General", "Appearance", "Privacy", "Data feeds", "System"]) {
+  for (const t of ["General", "Appearance", "Privacy", "Data feeds", "AI", "System"]) {
     expect(screen.getByRole("button", { name: t })).toBeTruthy();
   }
   // General is the default control set: base currency + timezone + the long-term threshold.
@@ -109,6 +109,17 @@ test("Amendment C: ?tab=system deep-links to the PIN control (first-run PIN jour
   expect(await screen.findByRole("button", { name: /Set PIN/ })).toBeTruthy();
   // The provider control has MOVED to the Data feeds tab — it is NOT on System.
   expect(screen.queryByLabelText("Market data provider")).toBeNull();
+  // §14st-2: the AI-config line has MOVED to the AI tab — System no longer carries it.
+  expect(screen.queryByText(/^AI is (on|off)/)).toBeNull();
+});
+
+// §14st-2 — the AI-config line is its own tab (owner option B, 2026-07-18).
+test("Amendment C: ?tab=ai deep-links to the read-only served AI-config line + deferral note (§14st-2)", async () => {
+  renderAt("/settings?tab=ai");
+  // arrival at the CONTROL: the served AI-config display line (getAiConfig → enabled/hailo/llama3).
+  expect(await screen.findByText(/^AI is (on|off)/)).toBeTruthy();
+  // The static deferral note — model management stays with AI-surfaces (D-067/D-068).
+  expect(screen.getByText(/Model management lives with the AI surfaces/i)).toBeTruthy();
 });
 
 test("Amendment C: ?tab=data-feeds deep-links to the provider control (first-run provider journey target, §14st-1)", async () => {

@@ -11,16 +11,18 @@ import { test, expect } from "@playwright/test";
 // ConfirmDialog, but NEVER confirms a reset (demo data untouched). The harness driver restores the
 // instance to PIN-free afterward (reset.py mechanism).
 //
-// §14st-1 (owner, Phase-3b walk 2026-07-18): FIVE tabs — General · Appearance · Privacy · Data feeds
-// · System. Feed/provider config (market data provider, write-only API key, ND-6 feeds) lives on the
-// Data feeds tab; System keeps the access controls (root helper, PIN, auto-lock, Allow LAN, AI line,
-// Reset data).
+// §14st-1 (owner, Phase-3b walk 2026-07-18): a "Data feeds" tab — feed/provider config (market data
+// provider, write-only API key, ND-6 feeds) lives there.
+// §14st-2 (owner re-walk 2026-07-18): a SIXTH "AI" tab — the read-only served AI-config line MOVES out
+// of System to its own AI tab; System loses it. SIX tabs — General · Appearance · Privacy · Data feeds
+// · AI · System. System keeps the access/appliance controls (root helper, PIN, auto-lock, Allow LAN,
+// Reset data); the "AI never persists" statement stays in Privacy.
 
 const API = "http://127.0.0.1:8321/api/v1";
 const OUT = "e2e/smoke/artifacts";
 const WIDTHS = [320, 375, 900, 1366];
 const THEMES = ["light", "dark"] as const;
-const TABS = ["general", "appearance", "privacy", "data-feeds", "system"] as const;
+const TABS = ["general", "appearance", "privacy", "data-feeds", "ai", "system"] as const;
 const TEST_PIN = "090909";
 const consoleErrors: string[] = [];
 
@@ -29,7 +31,7 @@ test.describe.serial("settings pre-pass (live)", () => {
     consoleErrors.length = 0;
   });
 
-  test("containment + 0 console errors across five tabs × both themes × breakpoints", async ({ page }) => {
+  test("containment + 0 console errors across six tabs × both themes × breakpoints", async ({ page }) => {
     page.on("console", (m) => m.type() === "error" && consoleErrors.push(`[console] ${m.text()}`));
     page.on("pageerror", (e) => consoleErrors.push(`[pageerror] ${e.message}`));
 
@@ -60,7 +62,7 @@ test.describe.serial("settings pre-pass (live)", () => {
     expect(consoleErrors, "zero console/page errors across the settings pre-pass").toEqual([]);
   });
 
-  test("tab screenshots — each of the five tabs, both themes", async ({ page }) => {
+  test("tab screenshots — each of the six tabs, both themes", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     for (const theme of THEMES) {
       await page.emulateMedia({ colorScheme: theme });
@@ -110,6 +112,18 @@ test.describe.serial("settings pre-pass (live)", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
   });
 
+  test("AI §14st-2 — the read-only served AI-config line MOVED here + the deferral note", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto(`/#/settings?tab=ai`);
+    await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible({ timeout: 15_000 });
+    // §12st-4 / §14st-2 — the READ-ONLY served AI-config line now lives on its own AI tab.
+    await expect(page.getByText(/^AI is (on|off)/)).toBeVisible();
+    // The static deferral note — model management stays with AI-surfaces (D-067/D-068).
+    await expect(page.getByText(/Model management lives with the AI surfaces/i)).toBeVisible();
+    await page.screenshot({ path: `${OUT}/settings-ai.png`, fullPage: true });
+  });
+
   test("System §12st + the danger Reset control (D-103) + the §9-10 degradation", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page.emulateMedia({ colorScheme: "light" });
@@ -119,8 +133,8 @@ test.describe.serial("settings pre-pass (live)", () => {
     await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible({ timeout: 15_000 });
     const pinAlreadySet = await page.getByText("PIN: set").isVisible().catch(() => false);
 
-    // §12st-4 — the READ-ONLY served AI-config line (stays in System).
-    await expect(page.getByText(/^AI is (on|off)/)).toBeVisible();
+    // §14st-2 — the AI-config line MOVED to the AI tab; System no longer carries it.
+    await expect(page.getByText(/^AI is (on|off)/)).toHaveCount(0);
     // §14st-1 — provider/key MOVED to Data feeds; System no longer carries them.
     await expect(page.getByLabel("Provider API key (write-only)")).toHaveCount(0);
     // §9-10 — the root helper is absent on this instance → Allow LAN is disabled (not dead) with a note.

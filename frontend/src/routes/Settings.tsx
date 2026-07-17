@@ -52,20 +52,25 @@ import "./Settings.css";
 // `?tab=general|appearance|privacy|data-feeds|system`, so the first-run checklist links deep-link to
 // the tab that holds the control they name.
 //
-// §14st-1 (owner, Phase-3b walk 2026-07-18): FIVE tabs. A "Data feeds" tab is the canonical home for
-// feed/provider config — market data provider, write-only provider API key, stale-after posture (not
-// yet built — served only), and the ND-6 news-feeds editor. System keeps the ACCESS controls (root
-// helper status, PIN, auto-lock, Allow LAN, the AI config line, Reset data) — auto-lock and LAN are
-// access controls, not feeds.
+// §14st-1 (owner, Phase-3b walk 2026-07-18): a "Data feeds" tab is the canonical home for feed/provider
+// config — market data provider, write-only provider API key, stale-after posture (not yet built —
+// served only), and the ND-6 news-feeds editor.
+// §14st-2 (owner re-walk 2026-07-18, option B): a SIXTH "AI" tab. The read-only served AI-config line
+// MOVES out of System to its own AI tab (System loses it); the "AI never persists" statement stays in
+// Privacy (its D-069 home). Named "AI", NOT "AI & Voice" — R-32 (Voice) is undefined and naming an
+// undefined surface would invent behaviour; it gains "& Voice" only after the owner's R-32 definition.
+// System keeps the ACCESS controls (root helper status, PIN, auto-lock, Allow LAN, Reset data) — auto-
+// lock and LAN are access controls, not feeds.
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
-type TabId = "general" | "appearance" | "privacy" | "data-feeds" | "system";
-const TAB_IDS: TabId[] = ["general", "appearance", "privacy", "data-feeds", "system"];
+type TabId = "general" | "appearance" | "privacy" | "data-feeds" | "ai" | "system";
+const TAB_IDS: TabId[] = ["general", "appearance", "privacy", "data-feeds", "ai", "system"];
 const TABS = [
   { value: "general", label: "General" },
   { value: "appearance", label: "Appearance" },
   { value: "privacy", label: "Privacy" },
   { value: "data-feeds", label: "Data feeds" },
+  { value: "ai", label: "AI" },
   { value: "system", label: "System" },
 ];
 
@@ -102,6 +107,7 @@ export function Settings() {
         {tab === "appearance" && <AppearancePanel />}
         {tab === "privacy" && <PrivacyPanel />}
         {tab === "data-feeds" && <DataFeedsPanel />}
+        {tab === "ai" && <AiPanel />}
         {tab === "system" && <SystemPanel />}
       </div>
     </div>
@@ -469,16 +475,48 @@ function DataFeedsPanel() {
 }
 
 // --------------------------------------------------------------------------- //
-// SYSTEM (§9-10 + §12st) — root helper · PIN · auto-lock · LAN · AI line · reset
+// AI (§14st-2 / §12st-4) — a READ-ONLY served line; model management is deferred (AI-surfaces)
+// --------------------------------------------------------------------------- //
+// AI is its own nature (owner re-walk 2026-07-18, option B): "AI is what the machine does with the
+// data." This tab surfaces ONLY the served AI-config line (D-105 — the frontend computes nothing) plus
+// a static deferral note. Model MANAGEMENT stays deferred to the AI-surfaces milestone (D-067/D-068);
+// nothing is invented beyond the moved line + the note. The "AI never persists" statement stays in
+// Privacy (its D-069 home — no move, no duplicate). Named "AI", NOT "AI & Voice" (R-32 undefined).
+function AiPanel() {
+  const [ai, setAi] = useState<AiConfig | null | undefined>(undefined);
+  useEffect(() => {
+    getAiConfig().then((a) => setAi(a));
+  }, []);
+
+  return (
+    <section className="lf-card set__section">
+      <header className="set__cardhead"><h2 className="lf-card__title">AI configuration</h2></header>
+      <div className="lf-card__body">
+        <p className="set__aiconfig">
+          {ai === undefined
+            ? "Loading…"
+            : ai
+              ? ai.enabled
+                ? `AI is on — provider ${ai.provider}, model ${ai.model || "(default)"}${ai.has_openai_key ? ", API key set" : ""}.`
+                : "AI is off."
+              : "AI configuration unavailable."}
+        </p>
+        <p className="set__fieldhelp">Model management lives with the AI surfaces — this line reflects the served configuration only.</p>
+      </div>
+    </section>
+  );
+}
+
+// --------------------------------------------------------------------------- //
+// SYSTEM (§9-10 + §12st) — root helper · PIN · auto-lock · LAN · reset
 // --------------------------------------------------------------------------- //
 // §14st-1: the ACCESS controls stay here (auto-lock and LAN are access controls, not feeds); the
-// feed/provider config moved to Data feeds. `ds` is still read for the D-003 `admin_available` signal
-// that gates the ONE sudo-dependent control — Allow LAN.
+// feed/provider config moved to Data feeds; §14st-2: the AI line moved to the AI tab. `ds` is still
+// read for the D-003 `admin_available` signal that gates the ONE sudo-dependent control — Allow LAN.
 function SystemPanel() {
   const toast = useToast();
   const [ds, setDs] = useState<DataSource | null | undefined>(undefined);
   const [cfg, setCfg] = useState<SystemConfig | null>(null);
-  const [ai, setAi] = useState<AiConfig | null>(null);
   const [pinSet, setPinSet] = useState(false);
   const [lan, setLan] = useState(false);
 
@@ -486,7 +524,6 @@ function SystemPanel() {
     setDs(undefined);
     getDataSource().then(setDs);
     getSystemConfig().then(setCfg);
-    getAiConfig().then(setAi);
     getPinSet().then(setPinSet);
     getLanEnabled().then(setLan);
   }, []);
@@ -544,21 +581,6 @@ function SystemPanel() {
               aria-label="Allow LAN access"
             />
           </Field>
-        </div>
-      </section>
-
-      {/* AI config (§12st-4) — a READ-ONLY served line; model management is deferred (AI-surfaces). */}
-      <section className="lf-card set__section">
-        <header className="set__cardhead"><h2 className="lf-card__title">AI</h2></header>
-        <div className="lf-card__body">
-          <p className="set__aiconfig">
-            {ai
-              ? ai.enabled
-                ? `AI is on — provider ${ai.provider}, model ${ai.model || "(default)"}${ai.has_openai_key ? ", API key set" : ""}.`
-                : "AI is off."
-              : "AI configuration unavailable."}
-          </p>
-          <p className="set__fieldhelp">Model management lives with the AI surfaces — this line reflects the served configuration only.</p>
         </div>
       </section>
 

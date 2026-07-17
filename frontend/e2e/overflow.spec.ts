@@ -35,6 +35,7 @@ const ROUTES = [
   { name: "settings · appearance", hash: "#/settings?tab=appearance" },
   { name: "settings · privacy", hash: "#/settings?tab=privacy" },
   { name: "settings · data-feeds", hash: "#/settings?tab=data-feeds" },
+  { name: "settings · ai", hash: "#/settings?tab=ai" },
   { name: "settings · system", hash: "#/settings?tab=system" },
 ];
 const THEMES = ["light", "dark"] as const;

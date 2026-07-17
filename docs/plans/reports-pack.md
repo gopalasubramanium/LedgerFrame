@@ -769,3 +769,21 @@ the **`lf-btn--primary`** class, carries the lucide `<svg>`, and calls `window.o
 "_blank", "noopener")`. The journey smoke asserts LIVE that it is a primary Button with
 **`text-decoration: none` on hover** (the §14es-1 rendered-style precedent). page-reports.md §16 gains
 the addendum.
+
+### §14 — batch evidence (re-captured on the reset 3-entity seed, superseding; originals kept)
+
+The three fixes re-captured after landing, on a fresh 3-entity instance (Household · Rajan Family
+Trust · Meera Iyer):
+
+| Evidence | File | Proves |
+|----------|------|--------|
+| Print — full artifact | `docs/plans/assets/pack-specimen-print-batch1.pdf` | The 10-page fixed print output. |
+| Review section (print) | `docs/plans/assets/pack-specimen-review-items-batch1.png` | **§14pk-2:** every Review row carries its served item text (e.g. *"Insurance 'Critical Illness' renewal is overdue"*, *"2 key documents marked missing or outdated"*), not just area/severity tags. |
+| Realised section — Rajan (print) | `docs/plans/assets/pack-specimen-realised-period-batch1.png` | **§14pk-3:** heading **"Realised P/L — 2024"** states the period; empty entities cite the SAME 2024. |
+| Entry point (Reports header) | `docs/plans/assets/pack-specimen-entrypoint-button-batch1.png` | **§14pk-1:** the ratified filled **primary Button** (printer icon + "Reports Pack"), not a link-styled anchor. |
+
+**Re-run GREEN:** the artifact JOURNEY guards + the §14pk-1 hover assertion + the print-emulation pins
+(`reports-pack-journey-smoke` — page 1 = 0 dark px, page 2 = 465) · the Reports page pre-pass
+(`reports-smoke` — 0 console errors, light+dark × 4 widths) · `reports-artifact-smoke` — **18/18**.
+Backend **`pytest -q` 861 passed** · `make api-contract-check` **GREEN** · frontend
+**`npm run check` from `frontend/` EXIT 0** (262 Playwright).

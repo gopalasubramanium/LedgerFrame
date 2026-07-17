@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   AllocationDonut,
@@ -135,6 +135,40 @@ test("PriceChart: dense-daily candles keep readable, non-overlapping bodies betw
     // UP/DOWN class matches the served open/close.
     expect(g.classList.contains(p.close >= p.open ? "lf-candle--up" : "lf-candle--down")).toBe(true);
   });
+});
+
+// §14dr-5 — zoom on the Advanced chart: wheel narrows the visible window (fewer candles) and a
+// ratified Reset control appears; Reset restores the full range. Advanced-only, non-persistent.
+test("PriceChart: Advanced candles zoom on wheel + Reset restores the full range (§14dr-5)", async () => {
+  const { container } = render(<PriceChart series={DENSE_CANDLE_SERIES} mode="candles" interval="1D" />);
+  const plot = container.querySelector(".lf-pricechart__plot") as HTMLElement;
+  const count = () => container.querySelectorAll(".lf-candle--up, .lf-candle--down").length;
+  expect(count()).toBe(DENSE_CANDLE_SERIES.length);
+  // No Reset control until zoomed.
+  expect(screen.queryByRole("button", { name: "Reset zoom" })).toBeNull();
+
+  // Wheel up = zoom in → fewer visible candles + a Reset control.
+  fireEvent.wheel(plot, { deltaY: -120, clientX: 100 });
+  await waitFor(() => expect(count()).toBeLessThan(DENSE_CANDLE_SERIES.length));
+  const reset = screen.getByRole("button", { name: "Reset zoom" });
+
+  // Reset restores the full range and hides the control (non-persistent).
+  await userEvent.click(reset);
+  await waitFor(() => expect(count()).toBe(DENSE_CANDLE_SERIES.length));
+  expect(screen.queryByRole("button", { name: "Reset zoom" })).toBeNull();
+});
+
+test("PriceChart: NO zoom in Simple view (Advanced only, §14dr-5)", () => {
+  const { container } = render(
+    <PriceChart series={DENSE_CANDLE_SERIES} interval="1D" controls defaultView="simple" />,
+  );
+  const plot = container.querySelector(".lf-pricechart__plot") as HTMLElement;
+  const linePts = () => (container.querySelector(".lf-pricechart__line") as SVGPathElement).getAttribute("d")!.length;
+  const before = linePts();
+  fireEvent.wheel(plot, { deltaY: -120, clientX: 100 });
+  // Simple view ignores the wheel — the line path is unchanged and no Reset control appears.
+  expect(linePts()).toBe(before);
+  expect(screen.queryByRole("button", { name: "Reset zoom" })).toBeNull();
 });
 
 test("InstrumentPicker exposes an explicit create path (no silent auto-create)", async () => {

@@ -186,7 +186,9 @@
 }
 /* Chart controls (view toggle + period) use the shared `Segmented` primitive (segmented.css) —
    page-news §13a. `.lf-pricechart__controls` stays as their flex-row container. */
-.lf-pricechart__plot { position: relative; }
+.lf-pricechart__plot { position: relative; touch-action: pan-y; }
+/* §14dr-5 — zoom reset overlay: a ratified Button pinned top-right of the plot, only while zoomed. */
+.lf-pricechart__zoom { position: absolute; top: var(--space-2); right: var(--space-2); z-index: 1; }
 .lf-pricechart__vol { fill: var(--text-tertiary); opacity: 0.4; }
 .lf-pricechart__cross { stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .lf-pricechart__dot { fill: var(--accent); }

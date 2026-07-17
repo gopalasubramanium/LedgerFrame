@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./charts.css";
+import { Button } from "./Button";
 import { Segmented } from "./Segmented";
 import type { PricePoint } from "../../mocks/types";
 
@@ -105,15 +106,78 @@ export function PriceChart({
   const advanced = controls ? view === "advanced" : mode === "candles";
   const effMode: "candles" | "line" = advanced ? "candles" : "line";
   const effOverlays: Overlay[] = controls ? (advanced ? ["MA", "BB", "RSI"] : []) : overlays;
-  const showVolume = advanced && series.some((p) => p.volume != null);
 
-  const closes = series.map((p) => p.close);
-  const lows = series.map((p) => p.low);
-  const highs = series.map((p) => p.high);
+  // §14dr-5 — zoom is ADVANCED-only and NON-persistent: a window [lo,hi] over the full series in
+  // index space; wheel/pinch narrow or widen it (see the effect below), the Reset control clears it.
+  // A new `series` (a period change, or unmount) resets the window — no persistence, no served field.
+  const [zoom, setZoom] = useState<{ lo: number; hi: number } | null>(null);
+  useEffect(() => setZoom(null), [series]);
+  const zoomed = advanced && zoom != null;
+  const zSeries = zoomed ? series.slice(zoom!.lo, zoom!.hi + 1) : series;
+
+  // Wheel + pinch zoom about the cursor (Advanced only). Native non-passive listeners so
+  // preventDefault stops the page from scrolling while zooming. Recomputes the [lo,hi] window in
+  // FULL-series index space; a full zoom-out clears the window (→ Reset state).
+  useEffect(() => {
+    const el = wrapRef.current;
+    const n0 = series.length;
+    if (!el || !advanced || n0 < 4) return;
+    const MINW = 3; // never zoom below a few candles
+    const applyZoom = (factor: number, frac: number) => {
+      setZoom((z) => {
+        const lo = z?.lo ?? 0;
+        const hi = z?.hi ?? n0 - 1;
+        const idx = lo + frac * (hi - lo);
+        const w = Math.max((hi - lo) * factor, MINW);
+        if (w >= n0 - 1) return null; // fully zoomed out
+        let nlo = Math.round(idx - frac * w);
+        let nhi = Math.round(nlo + w);
+        if (nlo < 0) { nlo = 0; nhi = Math.round(w); }
+        if (nhi > n0 - 1) { nhi = n0 - 1; nlo = Math.round(nhi - w); }
+        nlo = Math.max(nlo, 0);
+        return nhi - nlo < MINW ? z : { lo: nlo, hi: nhi };
+      });
+    };
+    const fracAt = (clientX: number) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width) return 0.5; // no layout (e.g. jsdom) → zoom about the centre
+      return Math.min(Math.max((clientX - r.left) / r.width, 0), 1);
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      applyZoom(e.deltaY < 0 ? 0.8 : 1.25, fracAt(e.clientX));
+    };
+    const gap = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    let pinch = 0;
+    const onTouchStart = (e: TouchEvent) => { if (e.touches.length === 2) pinch = gap(e.touches); };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return;
+      e.preventDefault();
+      const d = gap(e.touches);
+      if (pinch && Math.abs(1 - pinch / d) >= 0.05) {
+        applyZoom(pinch / d, fracAt((e.touches[0].clientX + e.touches[1].clientX) / 2));
+      }
+      pinch = d;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [advanced, series]);
+
+  const showVolume = advanced && zSeries.some((p) => p.volume != null);
+
+  const closes = zSeries.map((p) => p.close);
+  const lows = zSeries.map((p) => p.low);
+  const highs = zSeries.map((p) => p.high);
   const ma = useMemo(() => sma(closes, 5), [closes]);
   const sd = useMemo(() => stddev(closes, 5), [closes]);
 
-  const n = series.length;
+  const n = zSeries.length;
   // Comparison mode shares the value axis: fold the second series into the min/max so both fit.
   const cmpVals = comparison?.values ?? [];
   const useCmp = comparison != null && cmpVals.length === n;
@@ -159,7 +223,7 @@ export function PriceChart({
         .trim()
     : "";
 
-  const volMax = showVolume ? Math.max(...series.map((p) => p.volume ?? 0), 1) : 1;
+  const volMax = showVolume ? Math.max(...zSeries.map((p) => p.volume ?? 0), 1) : 1;
 
   function onMove(e: React.MouseEvent) {
     const el = wrapRef.current;
@@ -169,7 +233,7 @@ export function PriceChart({
     setHover({ i: Math.round(frac * (n - 1)), x: e.clientX - r.left });
   }
 
-  const hp = hover ? series[hover.i] : null;
+  const hp = hover ? zSeries[hover.i] : null;
 
   return (
     <div className="lf-pricechart">
@@ -217,13 +281,13 @@ export function PriceChart({
           {effOverlays.includes("MA") && <path className="lf-pricechart__overlay" d={linePath(ma)} />}
 
           {showVolume &&
-            series.map((p, i) => {
+            zSeries.map((p, i) => {
               const vh = ((p.volume ?? 0) / volMax) * (46 - plotBot);
               return <rect key={`v${i}`} className="lf-pricechart__vol" x={xAt(i) - 0.3} y={46 - vh} width={0.6} height={Math.max(vh, 0.1)} />;
             })}
 
           {effMode === "candles"
-            ? series.map((p, i) => {
+            ? zSeries.map((p, i) => {
                 const up = p.close >= p.open;
                 const x = xAt(i);
                 // §14dr-4 — body width is BAND-based with a readable floor and a no-overlap clamp:
@@ -282,6 +346,14 @@ export function PriceChart({
             )}
           </div>
         )}
+
+        {/* §14dr-5 — zoom reset. Ratified Button (§5.4), shown only while zoomed (Advanced only);
+            clears the non-persistent window back to the full range. */}
+        {zoomed && (
+          <div className="lf-pricechart__zoom">
+            <Button className="lf-pricechart__zoomreset" onClick={() => setZoom(null)}>Reset zoom</Button>
+          </div>
+        )}
       </div>
       )}
 
@@ -291,6 +363,8 @@ export function PriceChart({
             EXISTS on the page. The Simple/Advanced view line shows only when its toggle is present
             (`controls`) — never on a page (e.g. Net worth) that has no view toggle. */}
         {controls && <span>View: {advanced ? "Advanced" : "Simple"}</span>}
+        {/* Honest metadata: the zoom control only exists in Advanced, so the hint shows only there. */}
+        {advanced && <span>Scroll or pinch to zoom{zoomed ? ` · showing ${n} of ${series.length}` : ""}</span>}
         {effOverlays.length > 0 && <span>Overlays: {effOverlays.join(" · ")}</span>}
         {benchmark && <span>Benchmark overlaid (indexed)</span>}
         {comparison && (

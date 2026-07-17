@@ -344,3 +344,17 @@ Both are **PROPOSED pending the owner's visual ratify** at the next look.
     asserts body between open/close, wick to high/low, no overlap) **and an e2e
     box-geometry test** (RED on the cross bloom — bodies must read as non-overlapping
     rectangles). Instrument Detail pre-pass re-run stated in the report.
+
+## DELTA NOTE — 2026-07-18 (R-38 data-feed-routing Phase 3b re-walk, §14dr-5)
+
+- **Zoom on the Advanced chart (owner-ruled enhancement, minimal).** The shared
+  `PriceChart` gains **wheel + pinch zoom about the cursor**, **Advanced view only**,
+  with a **ratified `Button` ("Reset zoom", §5.4)** shown only while zoomed. The zoom
+  is a `[lo,hi]` window over the series in index space (native non-passive
+  listeners → `preventDefault` stops page-scroll while zooming; the y-scale + overlays
+  recompute to the visible data). **Non-persistent** — a new `series` (period change /
+  unmount) clears it; **no served field, no contract change**. A legend hint ("Scroll
+  or pinch to zoom · showing N of M") appears only in Advanced (honest metadata — the
+  control exists there). Coverage: a unit test (wheel narrows the window, Reset
+  restores; Simple view ignores the wheel) + an e2e interaction test (zoom + Reset +
+  no horizontal overflow). Nothing beyond this scope.

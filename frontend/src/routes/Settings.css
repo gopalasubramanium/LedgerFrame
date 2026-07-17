@@ -54,6 +54,7 @@
   flex-direction: column;
   gap: var(--space-2);
   max-width: 34rem;
+  min-width: 0; /* let the field shrink below its content at narrow widths (no horizontal overflow) */
 }
 .set__fieldlabel {
   font-size: var(--font-size-14);
@@ -64,7 +65,21 @@
 .set__fieldcontrol {
   display: flex;
   align-items: center;
+  flex-wrap: wrap; /* a control cluster (input + affix + Save) wraps rather than overflows at 320px */
   gap: var(--space-2);
+  min-width: 0;
+}
+/* A single full-width control (MasterSelect / Combobox / Select) fills the field and can shrink.
+   Combobox root is `.lf-combo`; MasterSelect/Select are `.lf-field` (block/select). */
+.set__fieldcontrol > .lf-field,
+.set__fieldcontrol > .lf-combo {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.set__fieldcontrol > .lf-combo .lf-field {
+  width: 100%;
+  min-width: 0;
 }
 .set__fieldhelp {
   margin: 0;
@@ -73,11 +88,21 @@
   color: var(--text-secondary);
 }
 
-/* long_term_days / minutes: a numeric field with a trailing unit affix. */
+/* long_term_days / minutes / api-key: a numeric/short field + affix + a Save button. Wraps at narrow
+   widths so the row never forces horizontal overflow (Phase-3a containment). */
 .set__daysfield {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
+  max-width: 100%;
+  min-width: 0;
+}
+/* The input grows to fill the row but shrinks to a small basis so input + affix + Save fit (or wrap)
+   at 320px — its block width (100%) no longer forces overflow. */
+.set__daysfield > .lf-field {
+  flex: 1 1 8rem;
+  min-width: 5rem;
 }
 .set__affix {
   font-size: var(--font-size-13);

@@ -9,6 +9,10 @@ import "./segmented.css";
 export interface SegmentedOption {
   value: string;
   label: ReactNode;
+  /** Disable this option (honest dead-affordance: shown, unclickable). */
+  disabled?: boolean;
+  /** When disabled, an honest reason surfaced as the button's title/accessible description. */
+  reason?: string;
 }
 export interface SegmentedProps {
   options: SegmentedOption[];
@@ -26,7 +30,9 @@ export function Segmented({ options, value, onChange, "aria-label": ariaLabel }:
           type="button"
           className={`lf-segbtn${o.value === value ? " lf-segbtn--on" : ""}`}
           aria-pressed={o.value === value}
-          onClick={() => onChange(o.value)}
+          disabled={o.disabled}
+          title={o.disabled ? o.reason : undefined}
+          onClick={() => { if (!o.disabled) onChange(o.value); }}
         >
           {o.label}
         </button>

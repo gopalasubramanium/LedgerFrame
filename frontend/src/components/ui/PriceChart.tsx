@@ -32,6 +32,10 @@ export interface PriceChartProps {
   periods?: string[];
   activePeriod?: string;
   onPeriodChange?: (p: string) => void;
+  /** §14dr-7 — ranges that cannot be shown honestly at the data's granularity (value →
+   *  reason). Rendered disabled-with-reason rather than fabricating density (e.g. 1D/5D
+   *  over daily-only data). */
+  disabledPeriods?: Record<string, string>;
   /** Honest label when the fetched history covers less than the requested period. */
   coverageNote?: string;
 }
@@ -96,6 +100,7 @@ export function PriceChart({
   periods,
   activePeriod,
   onPeriodChange,
+  disabledPeriods,
   coverageNote,
 }: PriceChartProps) {
   const [view, setView] = useState<"simple" | "advanced">(defaultView);
@@ -235,6 +240,22 @@ export function PriceChart({
 
   const hp = hover ? zSeries[hover.i] : null;
 
+  // §14dr-7 — overlay values (MA · BB · RSI) at the hovered point. Index-aligned to the
+  // visible series, so `ma[i]`/`sd[i]`/`rsiVals[i]` are exactly the plotted values. Each is
+  // null-guarded for the indicator warm-up (SMA-5 / RSI-14 return null early) → no line then.
+  const overlayParts: string[] = [];
+  if (hp && hover) {
+    const i = hover.i;
+    const fmt = (v: number) => v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (effOverlays.includes("MA") && ma[i] != null) overlayParts.push(`MA ${fmt(ma[i] as number)}`);
+    if (effOverlays.includes("BB") && ma[i] != null && sd[i] != null) {
+      const m = ma[i] as number;
+      const s = sd[i] as number;
+      overlayParts.push(`BB ${fmt(m + 2 * s)} / ${fmt(m - 2 * s)}`);
+    }
+    if (effOverlays.includes("RSI") && rsiVals[i] != null) overlayParts.push(`RSI ${(rsiVals[i] as number).toFixed(0)}`);
+  }
+
   return (
     <div className="lf-pricechart">
       {controls && (
@@ -250,7 +271,12 @@ export function PriceChart({
               aria-label="Period"
               value={activePeriod ?? ""}
               onChange={onPeriodChange}
-              options={periods.map((p) => ({ value: p, label: p }))}
+              options={periods.map((p) => ({
+                value: p,
+                label: p,
+                disabled: disabledPeriods?.[p] != null,
+                reason: disabledPeriods?.[p],
+              }))}
             />
           )}
         </div>
@@ -343,6 +369,9 @@ export function PriceChart({
                 O {hp.open.toLocaleString()} · H {hp.high.toLocaleString()} · L {hp.low.toLocaleString()}
                 {hp.volume != null ? ` · V ${hp.volume.toLocaleString()}` : ""}
               </span>
+            )}
+            {overlayParts.length > 0 && (
+              <span className="lf-pricechart__tipoverlay">{overlayParts.join(" · ")}</span>
             )}
           </div>
         )}

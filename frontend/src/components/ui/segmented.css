@@ -35,6 +35,15 @@
   outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
+/* Disabled-with-reason (§14dr-7): shown but unclickable — honest, not hidden. */
+.lf-segbtn:disabled {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lf-segbtn:disabled:hover {
+  color: var(--text-tertiary);
+}
 /* Optional count badge inside a segment label (e.g. News bucket item counts). */
 .lf-segbtn__count {
   font-size: var(--font-size-12);

@@ -123,6 +123,24 @@ test("§14dr-6: choosing amfi_nav reveals the AMFI code field and Save maps it b
   );
 });
 
+test("§14dr-7: 1D/5D ranges are disabled with a reason (daily-only data, no fabricated intraday)", async () => {
+  // The store holds daily closes only (every live provider fetches daily), so 1D/5D
+  // promised an intraday granularity the data can't differ on — "1D" rendered a couple
+  // of daily candles. Honest fix: those ranges are disabled-with-reason until intraday
+  // (R-42) lands. Fail-first RED: today they're active buttons.
+  const user = userEvent.setup();
+  renderAt();
+  await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL", level: 1 })).toBeInTheDocument());
+  const oneD = screen.getByRole("button", { name: "1D" });
+  const fiveD = screen.getByRole("button", { name: "5D" });
+  expect(oneD).toBeDisabled();
+  expect(fiveD).toBeDisabled();
+  expect(oneD).toHaveAccessibleDescription(/daily/i);
+  // A clickable range still works and is not disabled.
+  expect(screen.getByRole("button", { name: "1M" })).toBeEnabled();
+  await user.click(oneD); // no-op while disabled — no throw, no period change
+});
+
 test("Ongoing cost submits the entered bps (fund-wrapped only, D-099)", async () => {
   // D-099: the expense-ratio action exists only for fund-wrapped classes.
   vi.mocked(api.getInstrument).mockResolvedValue({

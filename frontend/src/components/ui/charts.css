@@ -212,6 +212,7 @@
 .lf-pricechart__tipdate { color: var(--text-secondary); }
 .lf-pricechart__tipohlc { color: var(--text-secondary); }
 .lf-pricechart__tipcmp { color: var(--text-secondary); }
+.lf-pricechart__tipoverlay { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .lf-pricechart__note { color: var(--attention); }
 .lf-pricechart__empty { color: var(--text-secondary); font-size: var(--font-size-13); padding: var(--space-5) 0; }
 .lf-pricechart__legend {

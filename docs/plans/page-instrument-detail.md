@@ -377,3 +377,22 @@ Both are **PROPOSED pending the owner's visual ratify** at the next look.
   stacks identical toasts — same message + tone while visible collapses to one. Fixed at
   the `ToastProvider`, so every page inherits it. Instrument Detail pre-pass re-run
   stated in the report.
+
+## DELTA NOTE — 2026-07-18 (R-38 data-feed-routing Phase 3b re-walk batch 3, §14dr-7)
+
+- **Range↔granularity honesty.** The price store holds **daily closes only** (every live
+  provider fetches daily — Yahoo `1d`, Alpha Vantage `daily`), so "1D" rendered a couple
+  of daily candles — the range picker promised an intraday granularity the data never
+  held. **Fix:** **1D and 5D are disabled-with-reason** (*"Intraday prices aren't available
+  yet — daily history only."*) via the `PriceChart` `disabledPeriods` prop + a new
+  disabled-option state on the shared `Segmented` (DESIGN-SYSTEM §5.2). No fabricated
+  density, no interpolation; the shortest honest range is **1M**; every rendered range shows
+  only the daily bars that exist, already labelled "Interval: 1d". **Intraday is R-42** —
+  it re-enables these ranges. Fail-first unit test: 1D/5D disabled with a daily reason,
+  1M enabled (RED before — active buttons).
+- **Overlay values in the Advanced hover.** The tooltip now carries **MA · BB (upper/lower)
+  · RSI** at the hovered point — index-aligned to the plotted series, **null-guarded** for
+  the SMA-5 / RSI-14 warm-up (no line during warm-up, never a fabricated 0). Fail-first e2e
+  (`overlay-hover.spec.ts`): the overlay line appears past warm-up and is absent at the
+  warm-up edge (jsdom has no layout, so hover-index math is browser-only). Instrument Detail
+  pre-pass re-run stated in the report.

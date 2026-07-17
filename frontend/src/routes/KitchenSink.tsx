@@ -637,7 +637,9 @@ export function KitchenSink() {
             />
           </Specimen>
           <Specimen label="PriceChart · candles + MA + BB + RSI (Instrument Detail)">
-            <PriceChart series={PRICE_SERIES} mode="candles" overlays={["MA", "BB", "RSI"]} interval="1M" />
+            <div data-testid="ks-overlay-candles">
+              <PriceChart series={PRICE_SERIES} mode="candles" overlays={["MA", "BB", "RSI"]} interval="1M" />
+            </div>
           </Specimen>
           <Specimen label="PriceChart · candles at DENSE daily density (§14dr-4 regression — filled-rect bodies, never crosses)">
             <div data-testid="ks-dense-candles">

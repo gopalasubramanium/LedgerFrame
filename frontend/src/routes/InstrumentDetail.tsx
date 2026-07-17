@@ -43,6 +43,12 @@ function chipVal(v: string | null | undefined | false) {
   return v ? <span className="lf-chip">{v}</span> : "—";
 }
 const PERIODS = ["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "5Y", "Max"];
+// §14dr-7 — the price store holds daily closes only (every live provider fetches daily),
+// so 1D/5D can't differ from a daily view — they promised intraday density the data never
+// held. Disable them with an honest reason rather than fabricate a 1–3-candle "1D".
+// Intraday (R-42) re-enables these ranges.
+const INTRADAY_REASON = "Intraday prices aren't available yet — daily history only.";
+const DISABLED_PERIODS: Record<string, string> = { "1D": INTRADAY_REASON, "5D": INTRADAY_REASON };
 function periodToDays(p: string): number {
   if (p === "YTD") {
     const now = new Date();
@@ -237,6 +243,7 @@ export function InstrumentDetail() {
                 periods={PERIODS}
                 activePeriod={period}
                 onPeriodChange={setPeriod}
+                disabledPeriods={DISABLED_PERIODS}
                 coverageNote={series.length < 2 ? historyReason : coverageNote}
               />
             </div>

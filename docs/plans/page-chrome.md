@@ -593,3 +593,27 @@ inert.
   + `onToggleRotation?`), the axes description, and the **↻/⊘ glyph row** (`Rotation | on RotateCw · off
   Ban`); and the page-chrome D-044/D-066/component-table rotation-toggle lines below.
 - **CHROME pre-pass re-run:** stated in the COMMIT 3 report (frontend `npm run check` exit code).
+
+## §16 — ticker staleness one-derivation (R-38 data-feed-routing Phase 3b re-walk batch 3, §14dr-9, 2026-07-18)
+
+**The shell is CLOSED/signed-off; dated delta note on the accepted surface, recorded — not a
+silent edit — per the accepted-page-touch discipline.**
+
+- **The defect (A11):** the bottom ticker showed stale marks on **most** instruments while the
+  shared reader (StaleBanner / Pricing Health `stale_count`) counted a few. **Verify-first:** the
+  ticker does **not** re-derive staleness from a timestamp — it already consumes the served
+  `is_stale`. But `fetchTickerQuotes` (`chrome.ts`) unions **two populations**: portfolio holdings
+  (`/portfolio/holdings`) **and** world indices (`/markets/global`). The shared reader counts
+  **holdings only** (`portfolio.py:133`, the same `HoldingValue.is_stale`); world-index quotes go
+  stale on their own cadence (`_is_stale`, `stale_after_seconds` 900s) and are routinely stale, so
+  they over-marked the ticker — a second signal masquerading as pricing health.
+- **Fix (frontend, no backend — `is_stale` already served):** the ticker's pricing-health stale
+  triangle consumes the shared served `is_stale` on **holding rows** and is **not** applied to
+  **world-index rows**. A world index's freshness is a different domain whose canonical home is
+  **Markets** (IA P-1), not the chrome pricing-health signal.
+- **Reconciliation pin (proven live):** the set of stale-marked **holding** ticker rows **==** the
+  shared reader's stale set (both from `HoldingValue.is_stale`); index rows carry no mark. Fail-first
+  `chrome.test.ts`: holdings marked iff served stale, indices never marked even when served stale
+  (RED before — index rows carried `stale: true`).
+- **CHROME pre-pass re-run:** the ticker/reader reconciliation was driven live on the isolated
+  instance (stated in the report).

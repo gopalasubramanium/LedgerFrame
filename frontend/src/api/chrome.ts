@@ -133,7 +133,13 @@ export async function fetchTickerQuotes(): Promise<TickerQuote[]> {
           price: numToStr(it.quote?.price),
           priceDisplay: it.quote?.price_display ?? null, // D-105 served display string
           changePct: numToStr(it.quote?.change_pct),
-          stale: !!it.quote?.is_stale,
+          // §14dr-9 — world-index rows carry NO pricing-health stale mark. Staleness in the ticker
+          // means "your prices are stale" — the SAME served is_stale the StaleBanner / Pricing Health
+          // count over PORTFOLIO HOLDINGS only. Indices refresh on their own cadence and are routinely
+          // stale; marking them here made "most instruments" look stale while the shared reader showed
+          // a few (a second derivation). Index freshness's canonical home is Markets (IA P-1), not the
+          // chrome pricing-health signal — so the ticker's stale set == the shared reader's set.
+          stale: false,
           // R-17 (page-markets ND-5): world indices link to /markets, which owns them. The Global
           // tab lives on the page (no deep-link anchor). Holdings still → InstrumentDetail (above).
           href: "/markets",

@@ -1,10 +1,13 @@
 # page-settings — Settings (`/settings`) build plan
 
-> **STATUS: PLAN ONLY — complete through §9, STOP.** No code, no migrations, no
-> contract changes, no new allow-list keys, no specimen, no Phase 0. The §9
-> one-pass happens in chat with the owner; the items below carry **PROPOSED**
-> resolutions and **⚑** genuine owner calls — they are not resolved here.
-> Frontend check: **N/A — plan-only, no code touched.**
+> **STATUS: §9 RESOLVED (owner one-pass, 2026-07-18) · Phase 0 (backend deltas)
+> + Phase 0a specimen — STOP for owner ratification.** The §9 rulings are
+> recorded verbatim in **"§9 — RESOLVED"** below (Amendments A–D bind). Phase 0
+> executes the approved allow-list surgery (add `long_term_days`; remove the
+> seven write-only keys) backend-first, one delta per commit. Phase 1 (page
+> assembly) is **BLOCKED** until the owner ratifies the Phase-0a specimen.
+> The original **PROPOSED** table (§9) is retained below the RESOLVED section
+> as the accepted-text-of-record.
 >
 > Derived from the specs per `TEMPLATE-page-build.md`. Every claim cites its
 > spec `file:line` or the repo `file:line` it was **verified against** (grep, not
@@ -395,4 +398,91 @@ New ideas surfaced during build → ROADMAP with rationale, never silent scope.
 **Sign-off to start build:** §9 has no open blocker · §3b deltas (if any survive
 §9) approved · no §4 component needs an unresolved amendment (§9-5).
 
-*(End of plan — STOP at §9. The §9 one-pass happens in chat with the owner.)*
+---
+
+## §9 — RESOLVED (owner one-pass, 2026-07-18)
+
+*All ten items RESOLVED in a single owner pass on **2026-07-18**. The rulings are
+recorded **verbatim** below (substance preserved, not paraphrased away). **⚑**
+marks the load-bearing owner calls named in the task. **Amendments A–D** and the
+**LANGUAGE strike** + **recorded exemption** are recorded below the table and
+**bind**. The PROPOSED table above is retained as the accepted-text-of-record.*
+
+### Amendments (owner, 2026-07-18 — verbatim, binding)
+
+- **AMENDMENT A (binds 9-1):** (i) **ONE default-resolution helper** — the stored
+  `long_term_days` value is resolved in **exactly one place** and shared by the
+  `tax.py` readers and every `long_term_days`-taking endpoint (A11; **no per-route
+  re-reads**); (ii) **PARAM-WINS** — an explicit query param overrides the stored
+  default; **existing export behaviour must not silently change**; (iii) the
+  Reports read-only line becomes a **LINK** to the Settings control — an
+  accepted-page touch: dated delta note in `page-reports.md` + the Reports
+  pre-pass re-run (**Phase 1/3a, not now**); (iv) that link is guarded as a
+  **JOURNEY** (arrival at the control, not the href — §14ac-2).
+- **AMENDMENT B (binds 9-2):** the TopBar rotation toggle's disposition is part of
+  THIS ruling — **no orphaned control**. Verify FIRST whether the toggle (or
+  anything in `frontend/src/**`) **WRITES** any of the three keys; sequence the
+  frontend toggle removal so the trunk **NEVER carries a chrome control that
+  400s**. *(If a writer exists, the toggle removal ships in the same batch window,
+  with a dated delta note in `page-chrome.md` + the chrome pre-pass re-run, and
+  dated strike-annotations on the D-044/D-066 "toggle stays" lines and the
+  DESIGN-SYSTEM §5.5 ↻/⊘ glyph row — never silent edits.)*
+  **VERIFICATION FINDING (2026-07-18):** **NO writer exists.** The only keys that
+  reach `PUT /settings` from the frontend are `first_run_complete`,
+  `base_currency`, `timezone`, `privacy_mode` (`updateSetting()` callers,
+  `AppShell.tsx:136,180,184,195` via `chrome.ts:61`). The TopBar rotation toggle
+  is **local `useState` only** — `AppShell.tsx:50` (`useState(false)`) and
+  `AppShell.tsx:151` (`onToggleRotation={() => setRotationOn((v) => !v)}`); it
+  makes **zero backend calls** (`TopBar.tsx:72-81` renders the icon toggle with no
+  fetch). Therefore removing the three rotation keys **cannot orphan a 400-ing
+  control** → the toggle-removal batch is **NOT triggered** this milestone. The
+  toggle **stays** as the D-044 chrome control the parked **Rotation engine
+  (R-37)** will wire; the D-044/D-066 "toggle stays" lines and the DESIGN-SYSTEM
+  §5.5 glyph row are **NOT struck**; no chrome pre-pass re-run this milestone.
+- **AMENDMENT C (binds 9-5):** tab state is **URL-addressable**; the first-run
+  →Settings-tab links (D-045) are guarded as **JOURNEYS**; a `Tabs` §5 amendment
+  is raised **only if the owner calls for it at the 0a specimen**.
+- **AMENDMENT D (binds ALL key removals this milestone):** each removed key gets
+  an **API-CONTRACT.md retired row** (the `home_layout` pattern — allow-list
+  changes are **invisible to contract regen**) **+ an unknown-key-400 test**; each
+  surviving key gets a **served-value test**.
+
+| # | Item | Ruling (owner 2026-07-18) |
+|---|------|---------------------------|
+| **9-1 ⚑** | The `long_term_days` seam (Amendment J) | ✅ **ACCEPT + AMENDMENT A.** `long_term_days` **ships with Settings** — allow-list key + numeric validator mirroring `ge=0, le=3660`. Neutral integer, **no jurisdiction presets** (D-077/Guarantee 4). Amendment A binds (one helper · PARAM-WINS · Reports line → link · link guarded as a journey). |
+| **9-2 (b) ⚑** | Rotation-keys: wire or remove | ✅ **PARK + AMENDMENT B.** **REMOVE** `rotation_seconds`, `rotation_pages`, `focus_page` from `_ALLOWED_KEYS` (D-078). Rotation is **parked to a new ROADMAP item** (R-37). Amendment B binds the TopBar toggle disposition — verify the writer first; no orphaned control. *(Writer verification: none — see Amendment B finding; toggle stays.)* |
+| **9-3** | ND-6 feeds management placement | ✅ **ACCEPT.** Feeds management (ND-6) lives in **Settings**; News stays **display-only**. *(Build work is Phase 1; record only.)* |
+| **9-4** | Terminology gaps (GLOSSARY parity) | ✅ **ACCEPT.** Glossary entries, ruled list: **Density, API token, Privacy mode, Data provider, High contrast, Reduced motion.** **Appearance** and **Rotation** are plain UI labels — **no entries**. Spec-first order enforced: `docs/specs/GLOSSARY.md` **THEN** `mocks/glossary.ts` (parity guard). |
+| **9-5 ⚑** | Four tabs vs ratified components | ✅ **ACCEPT + AMENDMENT C.** **`Segmented` is the tab strip** (no new component). Amendment C binds (URL-addressable tab state · first-run→tab links guarded as journeys · a `Tabs` §5 amendment raised only if the owner calls for it at the 0a specimen). |
+| **9-6 ⚑** | D-078 persistence split — which keys removed | ✅ **ACCEPT + AMENDMENT D.** **REMOVE** `reduced_motion` + `high_contrast` rows (**per-device is their only home**, D-078). Amendment D binds all key removals this milestone (retired row + unknown-key-400 test per removal; served-value test per surviving key). |
+| **9-7** | Allow-list pinning + write-only reconciliation | ✅ **ACCEPT.** **REMOVE** `refresh_interval_seconds` + `display_sleep_minutes` (**no consumer, no spec home**; re-add spec-first if a feature ever names them). |
+| **9-8** | [S]-gating + PIN vs the real session contract | ✅ **ACCEPT.** [S] mapping **as verified** (`require_session` for tokens; `require_auth` for settings/system mutations; **both open on a no-PIN local install**, the accepted gap #7). **Token revoke stays `require_session`** — the fresh-PIN extension was **DECLINED** (D-103 binds the **destructive purge only**; a revoked token is re-creatable). Record D-103's correct scope; **do not cite it for revoke**. |
+| **9-9** | No-egress toggle — one canonical home | ✅ **ACCEPT.** `privacy_mode`: **ONE row**, Settings → Privacy canonical; all writers via the **same `PUT /settings`**; the egress **state statement is derived from that row**. |
+| **9-10** | System tab without the sudo helper (D-003) | ✅ **ACCEPT.** Sudo-dependent System controls **disabled with an honest explanation** keyed off served `admin_available`; **no dead buttons, no fabricated success**; non-helper controls work regardless. |
+
+### LANGUAGE — STRIKE via §-entry (owner, 2026-07-18)
+
+`language` is **STRUCK** from D-078's server-persisted list — named but never
+built (no key, no consumer, no i18n anywhere; re-add spec-first if i18n ever
+lands). Recorded as a dated strike-annotation in `DECISIONS.md` (COMMIT 3), not a
+silent edit. The residual **"Home layout"** mention in the same list is also
+struck (already retired by the D-046 AMENDMENT, page-home §12ho1-6).
+
+### Recorded exemption (so the strike-check doesn't trip later)
+
+`voice_enabled` and `ai_model` rows **remain write-only BY RECORDED DEFERRAL** —
+reconciled at the **Voice** (R-32, definition still owed) and **AI-surfaces**
+(D-067/D-068) milestones respectively; **exempt from this milestone's D-078 sweep
+by this ruling**. (They are therefore **not** removed in Phase 0 delta 3.)
+
+---
+
+**Sign-off — §9 CLOSED (owner 2026-07-18):** all **10 items RESOLVED** (ACCEPT/PARK
+as recorded + Amendments A–D + the LANGUAGE strike + the voice/ai exemption).
+Phase 0 executes the approved allow-list surgery backend-first (add
+`long_term_days`; remove the seven write-only keys — the three rotation keys +
+`reduced_motion` + `high_contrast` + `refresh_interval_seconds` +
+`display_sleep_minutes`). **Phase 1 (page assembly) is BLOCKED until the owner
+ratifies the Phase-0a specimen (§8).**
+
+*(End of §9 record. Phase 0 evidence is appended as §10 after the deltas land.)*

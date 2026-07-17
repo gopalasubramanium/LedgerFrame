@@ -24,6 +24,7 @@ import {
   ReportsNoOpenLotsSpecimen,
 } from "./ReportsMockup";
 import { SettingsMockup } from "./SettingsMockup";
+import { RoutingMatrixMockup } from "./RoutingMatrixMockup";
 import {
   AllocationDonut,
   BrandLockup,
@@ -919,6 +920,18 @@ export function KitchenSink() {
                 <SettingsMockup initialTab="system" adminAvailable />
               </div>
             </div>
+          </Specimen>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        title="Routing matrix — SPECIMEN (data-feed-routing Phase 0a) — PROPOSED, AWAITING RATIFICATION"
+        note="THE COMPONENT / HONESTY GATE. Static, unwired — ratified BY LOOKING before assembly (Phase 1 is BLOCKED until then). It stages what Phase 0 BUILT (the routing_matrix table + CRUD + the route() slot 3.5 + route_rule), in SERVED strings only. §9-9 FINDING: the editable-cell grid COMPOSES CLEANLY from ratified components — a DataTable whose provider column hosts a MasterSelect via Column.render, a StatusChip for the honest cell state, a Button to clear — so NO §5 amendment is raised (had it not composed, both options' pixels would be here instead). NO money math (this surface has none); every provider/class/country/state is a served display string (D-005) and no routing decision is computed in the frontend (D-105). Honesty staged: (1) a mapped HEALTHY cell (Active, §9-1); (2) an unkeyed DEGRADED cell — the caveat chip + Settings pointer, accept-with-caveat, never a dead cell (§9-7); (3) a CAPABILITY MISMATCH rendered as the honest edit-time 400 reason (§9-3, 'kite doesn't cover US'); (4) the TIER-DEGRADED served string 'index via ETF proxy — key not premium' (§9-8 — index is NOT a holdings lane, so this is the Markets-surface case, shown for completeness, grounded in external.py, never a fabricated real-index label); (5) the EMPTY matrix = today, nothing implied (§9-2). Plus the Pricing Health PROVENANCE column with all four route_rule values (override · matrix · lane · active — §9-10), read-only (D-072), and a MetaStrip route-detail. FLAGGED for the owner: (a) the resolve-time matrix gate is CAPABILITY, not chain-membership (the cell is the authority; the edit-time 400 already blocks incapable cells) — ratify the reading; (b) the contract went 132→134 PATH-KEYS (+3 operations across 2 keys); the plan's '+3/135' counted operations."
+      >
+        <div className="ks__stack">
+          <Specimen label="Routing matrix editor (Settings → Data feeds) — DataTable + MasterSelect (cell renderer) + StatusChip. Healthy cell · unkeyed degraded cell (caveat + Settings) · clear action. Then: the §9-3 capability-mismatch 400, the §9-8 tier-degraded string, the §9-2 empty matrix, and the §9-10 Pricing Health provenance column (four route_rule values) + route-detail MetaStrip.">
+            <RoutingMatrixMockup />
           </Specimen>
         </div>
       </Section>

@@ -29,6 +29,9 @@ export interface PricingRow {
   priority_chain: string[];
   mapping_required: boolean;
   auth_required: boolean;
+  // R-38 §9-10: which rule selected the source (override | matrix | lane | active) — ONE derivation
+  // from route(), served read-only. The frontend never recomputes it (D-105/D-072).
+  route_rule: string;
   // confidence
   confidence: number;
   confidence_band: string; // high | medium | low (high≥80 / med≥50 / low<50)
@@ -44,6 +47,10 @@ export interface PricingHealthResp {
   holdings: PricingRow[];
   summary: Record<string, number>; // status → count
   confidence: { overall: number; overall_band: string; by_band: Record<string, BandBreakdown> };
+  // R-38 §9-8: the honest Alpha-Vantage tier string when the active provider is a non-premium AV key
+  // ("index via ETF proxy — key not premium"); null otherwise. Served, never a fabricated real-index
+  // label — index isn't a holdings lane, so this is surfaced as provider context (D-105).
+  provider_tier_note?: string | null;
 }
 
 export interface DuplicateGroup {

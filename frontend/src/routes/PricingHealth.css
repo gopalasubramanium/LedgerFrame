@@ -32,6 +32,10 @@
   color: var(--attention);
   font-size: var(--font-size-13);
 }
+/* R-38 §9-8 — the honest AV tier note (just a chip on its own line). */
+.ph__tiernote {
+  margin: 0;
+}
 .ph__dupbanner {
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--border-strong);

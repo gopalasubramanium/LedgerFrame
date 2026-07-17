@@ -161,6 +161,9 @@ export function PricingHealth() {
       ),
     },
     { key: "source", label: "Source", sortable: true, render: (r) => r.source_override ? `${r.source} (corrected)` : r.source },
+    // R-38 §9-10: the served route_rule provenance chip (override | matrix | lane | active), read-only
+    // (D-072). Plain served label, neutral tone — provenance is factual, never alarmist. Never recomputed.
+    { key: "route_rule", label: "Rule", sortable: true, render: (r) => <StatusChip label={r.route_rule} tone="neutral" /> },
     {
       key: "id",
       label: "",
@@ -192,6 +195,15 @@ export function PricingHealth() {
       />
       {noEgress && (
         <p className="ph__egress" role="status">Refresh unavailable — no-egress is on; prices degrade to honest stale (Guarantee 5).</p>
+      )}
+
+      {/* R-38 §9-8: the honest Alpha-Vantage tier string, served (never a fabricated real-index label).
+          Shown only when the active provider is a non-premium AV key. Index isn't a holdings lane, so
+          this is surfaced as read-only provider context. */}
+      {data?.provider_tier_note && (
+        <p className="ph__tiernote" role="status">
+          <StatusChip tone="attention" label={data.provider_tier_note} />
+        </p>
       )}
 
       {/* Identifier-duplicate banner — we never guess which is correct (shown only when count > 0). */}
@@ -274,10 +286,12 @@ export function PricingHealth() {
             />
             {detail.failure_reason && <p className="ph__note">{detail.failure_reason}</p>}
             <h3 className="ph__h3">Routing</h3>
+            {/* Route detail (source · rule · lane · chain) — the read-only provenance MetaStrip (§9-10). */}
             <MetaStrip
               items={[
+                { label: "Source", value: detail.route_source },
+                { label: "Rule", value: detail.route_rule },
                 { label: "Lane", value: detail.route_lane },
-                { label: "Selected source", value: detail.route_source },
                 { label: "Class", value: detail.asset_class ? labelFor("asset_class", detail.asset_class) : "—" },
                 { label: "Native price", value: detail.native_price != null ? `${detail.currency ?? ""} ${formatPrice(detail.native_price)}` : "—" },
               ]}

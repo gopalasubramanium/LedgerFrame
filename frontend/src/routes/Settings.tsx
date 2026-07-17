@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -42,8 +42,20 @@ import {
 import type { DataSource, SystemConfig, AiConfig } from "../api/systemConfig";
 import { getFeeds, putFeeds, testFeeds } from "../api/feeds";
 import type { FeedTestResult } from "../api/feeds";
+import {
+  getRoutingMatrix,
+  putRoutingCell,
+  deleteRoutingCell,
+  getProviders,
+} from "../api/routing-matrix";
+import type { RoutingCell, ProvidersResp } from "../api/routing-matrix";
+import { useLabelFor } from "../refdata/refdata-context";
 import { setPin } from "../api/system";
 import "./Settings.css";
+
+// R-38 §9-5: the matrix market vocab is the router's own ISO-3166 alpha-2 region set + the "*"
+// wildcard (NOT the D-083 six-bucket display model). "*" is shown as "All markets".
+const marketLabel = (code: string) => (code === "*" ? "All markets" : code);
 
 // Settings (/settings) — page-settings Phase 1 (the specimen at §11 turned into a REAL, wired page).
 // Every value shown is a SERVED display string (D-105): the frontend computes nothing, and there is
@@ -470,6 +482,11 @@ function DataFeedsPanel() {
 
       {/* News feeds editor (§12st-3 / ND-6) — Dialog + multi-URL + Test, [S]-gated. */}
       <FeedsCard />
+
+      {/* Routing matrix editor (R-38 §14st-1) — the canonical home for the class×market→provider
+          matrix, below Market data + News feeds. Composes DataTable + MasterSelect + StatusChip
+          (§9-9, no amendment). The unkeyed caveat points at the Provider API key control above. */}
+      <RoutingMatrixCard />
     </div>
   );
 }
@@ -800,6 +817,155 @@ function FeedsCard() {
           <Button icon={Plus} onClick={() => setFeeds((f) => [...f, ""])}>Add feed</Button>
         </div>
       </Dialog>
+    </section>
+  );
+}
+
+// --- Routing matrix editor (R-38 §14st-1 / data-feed-routing §9) ------------
+// The canonical home for the provider routing matrix: one provider per asset-class × market,
+// validated against real capability. Every option is SERVED (D-005) and the frontend computes NO
+// routing decision (D-105) — capability is validated by the edit-time 400 (§9-3), rendered
+// verbatim; a capable-but-unkeyed cell is accepted with a degraded caveat (§9-7); an empty matrix
+// changes nothing (§9-2). Composes DataTable + MasterSelect + StatusChip + Button (§9-9 — ratified,
+// NO §5 amendment). Read-only provenance of the outcome lives on Pricing Health (D-072).
+function RoutingMatrixCard() {
+  const toast = useToast();
+  const labelFor = useLabelFor();
+  const [cells, setCells] = useState<RoutingCell[] | null | undefined>(undefined);
+  const [providers, setProviders] = useState<ProvidersResp | null | undefined>(undefined);
+  // Add-rule draft (class + market + provider) + the honest edit-time reason the PUT returns.
+  const [draftClass, setDraftClass] = useState("");
+  const [draftMarket, setDraftMarket] = useState("*");
+  const [draftProvider, setDraftProvider] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const reload = useCallback(() => {
+    setCells(undefined);
+    getRoutingMatrix().then((d) => setCells(d ? d.cells : null));
+  }, []);
+  useEffect(() => {
+    reload();
+    getProviders().then((p) => setProviders(p ?? null));
+  }, [reload]);
+
+  // SERVED option lists (D-005). Providers = the CAPABILITIES names; markets = the union of provider
+  // regions + "*" (§9-5, the router's own vocab). Neither pre-decides validity — the authority is the
+  // edit-time 400 (§9-3), so an impossible class×market→provider is taught, never silently hidden.
+  const providerOptions = useMemo(
+    () => Object.keys(providers?.capabilities ?? {}).sort().map((p) => ({ value: p, label: p })),
+    [providers],
+  );
+  const marketOptions = useMemo(() => {
+    const codes = new Set<string>();
+    for (const cap of Object.values(providers?.capabilities ?? {})) for (const r of cap.regions) codes.add(r);
+    codes.delete("*");
+    return [{ value: "*", label: "All markets" }, ...[...codes].sort().map((c) => ({ value: c, label: c }))];
+  }, [providers]);
+
+  const onAdd = useCallback(async () => {
+    setAddError(null);
+    const r = await putRoutingCell({ asset_class: draftClass, listing_country: draftMarket, provider: draftProvider });
+    if (!r.ok) { setAddError(r.error); return; } // honest edit-time 400, rendered verbatim (§9-3)
+    toast.show({
+      message: r.cell.degraded && r.cell.caveat
+        ? `Rule added — ${r.cell.caveat}.` // accept-with-caveat (§9-7): stored, shown degraded
+        : `Rule added — ${labelFor("asset_class", r.cell.asset_class)} · ${marketLabel(r.cell.listing_country)} → ${r.cell.provider}.`,
+    });
+    setDraftClass(""); setDraftProvider(""); setDraftMarket("*");
+    reload();
+  }, [draftClass, draftMarket, draftProvider, toast, labelFor, reload]);
+
+  const onChangeProvider = useCallback(async (cell: RoutingCell, provider: string) => {
+    const r = await putRoutingCell({ asset_class: cell.asset_class, listing_country: cell.listing_country, provider });
+    toast.show(r.ok ? { message: `Provider set to ${provider}.` } : { message: `Couldn't set provider: ${r.error}` });
+    if (r.ok) reload();
+  }, [toast, reload]);
+
+  const onClear = useCallback(async (cell: RoutingCell) => {
+    const r = await deleteRoutingCell(cell.asset_class, cell.listing_country);
+    toast.show(r.ok ? { message: "Rule cleared — routing falls back to the default lane." } : { message: `Couldn't clear: ${r.error}` });
+    if (r.ok) reload();
+  }, [toast, reload]);
+
+  const columns: Column<RoutingCell>[] = [
+    { key: "asset_class", label: "Asset class", render: (c) => labelFor("asset_class", c.asset_class) },
+    { key: "listing_country", label: "Market", render: (c) => marketLabel(c.listing_country) },
+    {
+      key: "provider", label: "Provider",
+      render: (c) => (
+        <MasterSelect
+          master="source_override"
+          options={providerOptions}
+          value={c.provider}
+          onChange={(v) => onChangeProvider(c, v)}
+          aria-label={`Provider for ${labelFor("asset_class", c.asset_class)} · ${marketLabel(c.listing_country)}`}
+        />
+      ),
+    },
+    {
+      key: "degraded", label: "State",
+      // §9-7: a degraded cell shows the SERVED caveat as its label ("needs credentials — add them in
+      // Settings"); the Provider API key control is in THIS same tab, above (Market data card).
+      render: (c) => (c.degraded
+        ? <StatusChip tone="attention" label={c.caveat ?? "Degraded"} />
+        : <StatusChip tone="positive" label="Active" />),
+    },
+    {
+      key: "updated_at", label: "", align: "right",
+      render: (c) => (
+        <Button
+          icon={Trash2}
+          onClick={() => onClear(c)}
+          aria-label={`Clear rule for ${labelFor("asset_class", c.asset_class)} · ${marketLabel(c.listing_country)}`}
+        >
+          Clear
+        </Button>
+      ),
+    },
+  ];
+
+  const canAdd = !!draftClass && !!draftMarket && !!draftProvider;
+
+  return (
+    <section className="lf-card set__section">
+      <header className="set__cardhead">
+        <h2 className="lf-card__title"><GlossaryTerm term="term-routing-matrix">Routing matrix</GlossaryTerm></h2>
+      </header>
+      <div className="lf-card__body set__stack">
+        <p className="set__fieldhelp">
+          One provider per asset-class × market. A rule only takes effect when its provider can actually
+          price the instrument; otherwise routing falls through to the default lane, exactly as today.
+        </p>
+
+        {/* Add-rule flow: class + market + provider, capability-validated by the edit-time 400 (§9-3). */}
+        <div className="set__matrixadd">
+          <Field label="Asset class">
+            <MasterSelect master="asset_class" value={draftClass} onChange={setDraftClass} aria-label="New rule — asset class" />
+          </Field>
+          <Field label="Market">
+            <Select options={marketOptions} value={draftMarket} onChange={setDraftMarket} aria-label="New rule — market" />
+          </Field>
+          <Field label="Provider">
+            <MasterSelect master="source_override" options={providerOptions} value={draftProvider} onChange={setDraftProvider} aria-label="New rule — provider" />
+          </Field>
+          <Button icon={Plus} variant="primary" onClick={onAdd} disabled={!canAdd}>Add rule</Button>
+        </div>
+        {addError && <p className="set__matrixerror" role="alert">{addError}</p>}
+
+        {/* The matrix grid, or the honest empty state (§9-2 — an empty matrix changes nothing). */}
+        {cells === undefined ? (
+          <Skeleton lines={3} />
+        ) : cells === null ? (
+          <EmptyState message="Couldn't load the routing matrix" reason="It didn't load. Try again." action={<Button onClick={reload}>Retry</Button>} />
+        ) : cells.length > 0 ? (
+          <DataTable columns={columns} rows={cells} caption="Routing matrix — one provider per asset-class × market." />
+        ) : (
+          <EmptyState
+            message="No routing rules yet"
+            reason="An empty matrix changes nothing — every holding routes by its default lane and your active provider, exactly as today. Add a rule to prefer a specific provider for an asset-class in a market."
+          />
+        )}
+      </div>
     </section>
   );
 }

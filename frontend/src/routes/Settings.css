@@ -48,6 +48,29 @@
   gap: var(--space-5);
 }
 
+/* R-38 routing matrix — add-rule row (class · market · provider · Add). Wraps at narrow widths
+   so the taller Data feeds tab never overflows horizontally (§14ac / overflow suite). */
+.set__matrixadd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.set__matrixadd .set__field {
+  flex: 1 1 9rem;
+  max-width: 14rem;
+}
+.set__matrixadd > .lf-btn {
+  flex: 0 0 auto;
+}
+/* The honest edit-time 400 reason (§9-3), rendered verbatim (mirrors .acct__formerror). */
+.set__matrixerror {
+  margin: 0;
+  color: var(--loss);
+  font-size: var(--font-size-13);
+  line-height: var(--line-16);
+}
+
 /* One labelled field: label · control · help. */
 .set__field {
   display: flex;

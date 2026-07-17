@@ -486,3 +486,102 @@ Phase 0 executes the approved allow-list surgery backend-first (add
 ratifies the Phase-0a specimen (§8).**
 
 *(End of §9 record. Phase 0 evidence is appended as §10 after the deltas land.)*
+
+---
+
+## 10. PHASE 0 — CONTRACT/ALLOW-LIST DELTA EVIDENCE (backend-first; RED→GREEN per commit)
+
+*One delta per commit, in the task's order. Each was proven **fail-first RED on the real cause**,
+then GREEN with its pin. Allow-list keys are **invisible to contract regen** (`/settings` serves a
+free dict, `API-CONTRACT.md:91`), so adds/removals are pinned by **served-value / unknown-key-400
+tests**, not the schema. Environment gate: `pytest` collected cleanly (861 baseline) — the
+ModuleNotFoundError-no-`app` shell did **not** apply, so the backend deltas were verifiable.*
+
+| # | Delta [§9] | Fail-first RED (real cause) | GREEN (pin) | Commit |
+|---|-----------|-----------------------------|-------------|--------|
+| 1 | **`long_term_days` ADDED** to `_ALLOWED_KEYS` + numeric validator (`ge=0, le=3660` mirrored) [9-1/Amdt A] | `test_long_term_days_is_settable_and_reads_back` RED — `Unknown setting: long_term_days.` (unlisted key → 400) | Key added + validator; served-value round-trip + validator (`abc/-1/3661`→400, `0/3660`→200) GREEN. Suite **861→863** | `6cfb064` |
+| 2 | **ONE resolution helper** `tax.resolve_long_term_days` (Amdt A / A11); routes pass the param as **None-when-absent**; PARAM-WINS | `test_stored_threshold_is_the_default_when_param_absent` RED for BOTH endpoints — `assert 365 == 1` (routes hard-defaulted 365; the stored row was never read) | Helper resolves stored-or-365 in one place, shared by both readers + the composed statements/pack callers; PARAM-WINS + absent→365 guardrails GREEN. **Param default 365→None flipped the four query params to `anyOf:[integer,null]` — a visible schema change regenerated same-commit** (no path diff). Suite **863→869** | `17db4f1` |
+| 3 | **Seven write-only keys REMOVED** (`rotation_seconds/rotation_pages/focus_page` §9-2(b); `reduced_motion/high_contrast` §9-6; `refresh_interval_seconds/display_sleep_minutes` §9-7) [Amdt D] | `test_removed_key_is_unknown_400[*]` RED ×7 — each key was still accepted (200) | Keys delisted; unknown-key-400 per key + surviving-key round-trips (incl. the `voice_enabled`/`ai_model` deferral-exempt pair) GREEN. Allow-list removal **invisible to regen** → `make api-contract-check` green, no regen. Suite **869→880** | `552345e` |
+| 4 | **API-CONTRACT.md rows** — 1 allow-list-add + 7 retired (the `home_layout` pattern) [Amdt D] | — (docs ledger) | Contract regen produced **NO diff** to `API-CONTRACT.json`/`openapi.json`; `make api-contract-check` **green** — the assertion that the surgery is invisible to the shape check | `344e38a` |
+
+**Backend suite:** **880 passed** (861 baseline + 19 new: 2 delta-1 + 6 delta-2 + 11 delta-3).
+**Contract-check:** green throughout; the only JSON delta was the delta-2 param-nullability, regenerated
+in `17db4f1`. **Frontend `npm run check` (from `frontend/`):** **exit 0** (lint · typecheck ·
+check:tokens · **252 vitest** · **262 overflow/tile e2e**).
+
+**Amendment-B writer-verification finding (verify-first, done BEFORE delta 3):** **NO frontend writer
+exists** for any of the seven removed keys. The only keys that reach `PUT /settings` from the frontend
+are `first_run_complete`, `base_currency`, `timezone`, `privacy_mode` (`updateSetting()` callers —
+`AppShell.tsx:136,180,184,195` via `chrome.ts:61`). The **TopBar rotation toggle is local `useState`
+only** — `AppShell.tsx:50` (`useState(false)`), `AppShell.tsx:151`
+(`onToggleRotation={() => setRotationOn((v) => !v)}`); it makes **zero backend calls**
+(`TopBar.tsx:72-81`). Therefore removing the three rotation keys **cannot orphan a 400-ing control** →
+the Amendment-B toggle-removal batch was **NOT triggered**; the toggle **stays** as the D-044 chrome
+control the parked **Rotation engine (R-37)** will wire. The D-044/D-066 "toggle stays" lines and the
+DESIGN-SYSTEM §5.5 ↻/⊘ glyph row were **NOT struck**; no chrome pre-pass re-run this milestone.
+
+**Flagged (not edited — task-directed):** `DECISIONS.md` D-078's own text is reconciled (COMMIT 3),
+but the **IA drift remains** — `INFORMATION-ARCHITECTURE.md:165` ("Simple layout") and `:411`
+("Simple/Full layouts") still reference the retired two-layout Home (collapsed to ONE layout by
+§12ho1-6). These are page-home's territory; recorded here, not touched.
+
+**Related observation (not swept):** `GET /settings.defaults` still serves `rotation_seconds`
+(`settings.py:69`, env-derived `rotation_default_seconds`) — a **served read-only default**, not an
+allow-list write key, and unread by the frontend. It belongs to the parked rotation surface (R-37);
+removing it now (without the engine) would repeat the §9-2 scope-creep concern, so it is left in place
+and recorded for R-37.
+
+---
+
+## 11. PHASE 0a — THE GEOMETRY GATE SPECIMEN (static, unwired; ratify BY LOOKING)
+
+*Static `/kitchen-sink` Settings specimen (`SettingsMockup.tsx` + `Settings.css`), composed from
+ratified `ui/` only — the SETTINGS template (`DESIGN-SYSTEM.md:230`). Seven frames staged; nothing
+wired (D-105 — the frontend computes nothing). **STOP after 0a — the owner ratifies by looking.**
+Phase 1 is BLOCKED until then.*
+
+**What is staged (seven frames):**
+1. **General** — base currency (`MasterSelect`, SGD, + the restart notice) · timezone (`Combobox`,
+   Asia/Singapore) · the **`long_term_days` control** (`TextInput` "365" + a "days" affix; help copy
+   states *neutral organisation split, not tax advice, no jurisdiction presets* — D-077/Guarantee 4).
+2. **Appearance** — theme/density (`Select`) · high-contrast/reduced-motion (`Switch`), with the
+   **per-device** note (D-078; the server rows for contrast/motion were removed in Phase 0).
+3. **Privacy** — ONE no-egress `Switch` → the **derived egress state statement** (`StatusChip`
+   "No-egress: On" + *"This device makes no network calls."* — the D-069 wording **verbatim**; a plain
+   statement, never a metric, P-1/D-031) · the *"AI never persists"* statement · the **API-token card**
+   (`DataTable`, bounded D-094; a never-used token shows a **bare em dash** last-used) + the note that
+   **revoke needs the session, not a fresh PIN** (§9-8; D-103 is the destructive-purge scope only).
+4. **Privacy · token SHOWN-ONCE** — the reveal staged as a **static dialog-body frame** (the Accounts
+   merge-dialog precedent — a live `Dialog` portals a full-screen modal that would block the gallery).
+5. **Privacy · EMPTY tokens** — `EmptyState` with a reason + Create CTA (usable from zero).
+6. **System · `admin_available=false`** — the sudo-helper controls **disabled + an honest
+   explanation**; read-only status (`StatusChip` "Root helper: not installed", attention) stays; no
+   dead buttons, no fabricated success (D-003/§9-10).
+7. **System · `admin_available=true`** — the same controls **enabled** (the non-degraded contrast).
+
+**Pixel walk (geometry + honesty):**
+- **Arithmetic:** the only rendered numbers are literals — `365` (days), `15` (auto-lock min), token
+  dates. **NONE is computed** (no sums, no percentages) — Settings has no money math (P-1/D-031). The
+  honest **tile-integrity finding is the ABSENCE of arithmetic**, so nothing is staged as a computed
+  tile.
+- **Protected copy verbatim:** *"This device makes no network calls."* matches `PRODUCT-SPEC.md:219` /
+  D-069 exactly. The *"AI never persists"* statement is present (final wording is an owner-walk call).
+- **Derived-not-duplicated:** the egress `StatusChip` label and the statement both read from the one
+  `noEgress` state — they cannot disagree (§9-9).
+- **Empty/disabled states:** token EmptyState (reason + CTA); System controls disabled with the
+  keyed-off explanation; the never-used token's bare em dash (absent is real, not "never" fabricated).
+
+**Flagged for the owner at the gate (ratification questions, not invented):**
+- **(a) the `long_term_days` control** is a `TextInput` + affix — a dedicated **integer/stepper input**
+  is not in the ratified inventory; a `NumberInput` would be a §5 amendment. Owner's call.
+- **(b) "Reset data" (destructive)** — the inventory has **no danger `ButtonVariant`**; the specimen
+  uses a restrained CSS tint on the ratified `Button`. A proper danger variant is a §5 question.
+- **(c) Tab affordance** — `Segmented` is the strip per §9-5/Amendment C; if the owner wants full WCAG
+  `tablist`/`tabpanel` semantics + deep-linkable `#privacy`, that is the `Tabs` §5 amendment (raise at
+  this gate per Amendment C).
+
+**Frontend `npm run check`: exit 0.** (A first run surfaced 8 first-run-overlay e2e failures — a live
+`<Dialog open>` in the gallery portalled a modal backdrop that blocked the page; refactored to the
+static dialog-body frame, re-verified green.)
+
+*(STOP. Owner ratifies the specimen by looking. Phase 1 is BLOCKED until then.)*

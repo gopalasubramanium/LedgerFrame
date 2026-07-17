@@ -23,6 +23,7 @@ import {
   ReportsEmptyYearSpecimen,
   ReportsNoOpenLotsSpecimen,
 } from "./ReportsMockup";
+import { SettingsMockup } from "./SettingsMockup";
 import {
   AllocationDonut,
   BrandLockup,
@@ -857,6 +858,65 @@ export function KitchenSink() {
             <div className="ks__viewportscroll">
               <div className="ks__viewport ks__viewport--scroll">
                 <CashFlowMockup />
+              </div>
+            </div>
+          </Specimen>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        bleed
+        title="Settings — LAYOUT SPECIMEN (page-settings §9 / Phase 0a) — PROPOSED, AWAITING RATIFICATION"
+        note="THE GEOMETRY GATE. Static, unwired — ratified BY LOOKING before assembly (Phase 1 is BLOCKED until then). The proposed geometry (SETTINGS template, DESIGN-SYSTEM.md:230 — sectioned/tabbed configuration): a `Segmented` tab strip (§9-5 Amendment C — NO new component; tab state is URL-addressable at assembly, here local useState so the strip is clickable) over the four D-069 tabs — General · Appearance · Privacy · System — each panel a stack of D-100 layered cards. Real content region (1440×724 = viewport − chrome − shell padding), real-shaped data; every value is a STATIC display string (D-105 — the frontend computes nothing). NO MONEY MATH on this page (P-1/D-031): no sums, no percentages — the honest tile-integrity finding is the ABSENCE of arithmetic, so nothing is staged as a computed tile. GENERAL: base currency (MasterSelect + the restart notice) · timezone (Combobox) · the §9-1 long_term_days control — a NEUTRAL integer with a 'days' affix, NO jurisdiction presets (D-077/Guarantee 4). APPEARANCE: theme/density/high-contrast/reduced-motion, with the note that they are PER-DEVICE (D-078) — the server rows for contrast/motion were removed in Phase 0. PRIVACY (§9-9): ONE no-egress Switch → the egress STATE STATEMENT derived from it ('This device makes no network calls' when on — a plain statement, never a metric); the 'AI never persists' statement; the API-token card (bounded table, D-094) with the note that revoke needs the SESSION, not a fresh PIN (§9-8; D-103 is the destructive-purge scope only). SYSTEM (§9-10): the sudo-helper-dependent controls DISABLED with an honest explanation keyed off `admin_available` — no dead buttons, no fabricated success. Honesty frames staged: the token-shown-once reveal Dialog; the EMPTY token register; and the System tab with admin_available=false (degraded) AND =true (enabled). FLAGGED for the owner: (a) the long_term_days control is a TextInput + affix — a dedicated integer input would be a §5 amendment; (b) the destructive 'Reset data' button has no danger ButtonVariant in the inventory (a restrained CSS tint here) — also a §5 question."
+      >
+        <div className="ks__stack">
+          <Specimen label="Settings · GENERAL tab — base currency (restart notice) · timezone · long_term_days (neutral integer + 'days' affix, no jurisdiction presets). Click the tab strip to walk all four tabs.">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="general" />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Settings · APPEARANCE tab — theme · density · high contrast · reduced motion, all PER-DEVICE (D-078), with the sync-caveat note.">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="appearance" />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Settings · PRIVACY tab — ONE no-egress Switch → the DERIVED egress state statement · 'AI never persists' · the API-token card (revoke = session, not a fresh PIN).">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="privacy" />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Settings · PRIVACY honesty — token SHOWN ONCE reveal Dialog (the raw token appears exactly once; a re-open never re-reveals it).">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="privacy" tokenReveal />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Settings · PRIVACY honesty — EMPTY token register (EmptyState with a reason + Create CTA; usable from zero).">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="privacy" tokensEmpty />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Settings · SYSTEM honesty — admin_available=FALSE (sudo-helper controls DISABLED + honest explanation; read-only status stays; no dead buttons, D-003).">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="system" adminAvailable={false} />
+              </div>
+            </div>
+          </Specimen>
+          <Specimen label="Settings · SYSTEM — admin_available=TRUE (the same controls enabled; the non-degraded case for contrast).">
+            <div className="ks__viewportscroll">
+              <div className="ks__viewport ks__viewport--scroll">
+                <SettingsMockup initialTab="system" adminAvailable />
               </div>
             </div>
           </Specimen>

@@ -1,0 +1,186 @@
+/* Settings — GEOMETRY (page-settings §9 / Phase 0a, PROPOSED; ratify at the gate). SETTINGS template
+   (DESIGN-SYSTEM.md:230 — sectioned/tabbed configuration): a `Segmented` tab strip (§9-5 Amendment C,
+   no new component) over four D-069 tabs — General · Appearance · Privacy · System — each panel a
+   stack of D-100 layered cards. Tokens only; composed ratified ui/. NO money math on this page
+   (P-1/D-031) — the egress statement is DERIVED from the toggle, never a metric. Values are static
+   display strings (D-105). NOTE (TEMPLATE §7 media-query exception): responsive reflow is a §13 live
+   pre-pass check at REAL viewports, NOT a static-specimen claim — nothing is guarded here. */
+
+.set__tabs {
+  margin-bottom: var(--space-4);
+}
+
+.set__panel {
+  min-width: 0;
+}
+
+.set__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.set__section {
+  min-width: 0;
+}
+
+/* Card header: title left, an action (Create token) right, one row. */
+.set__cardhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.set__cardhead .lf-card__title {
+  margin: 0;
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+}
+.set__cardhead > .lf-btn {
+  margin-left: auto;
+}
+
+/* A tab panel's fields, stacked with generous gutters (a config surface breathes). */
+.set__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* One labelled field: label · control · help. */
+.set__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 34rem;
+}
+.set__fieldlabel {
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.set__fieldcontrol {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.set__fieldhelp {
+  margin: 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+
+/* long_term_days / minutes: a numeric field with a trailing unit affix. */
+.set__daysfield {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.set__affix {
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+
+/* Per-device banner (Appearance) — a plain note, not an alert. */
+.set__perdevice,
+.set__aicopy {
+  margin: 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+
+/* The egress STATE STATEMENT — derived from the one toggle (§9-9). A calm statement, not a metric. */
+.set__statement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  max-width: 34rem;
+}
+.set__statementtext {
+  margin: 0;
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  color: var(--text-primary);
+}
+
+/* API-token note + name cell. */
+.set__tokennote {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.set__tokname {
+  font-weight: var(--weight-medium);
+}
+
+/* Token "shown once" reveal — staged as a STATIC dialog-body frame (a real Dialog portals a
+   full-screen modal, which would block the gallery; the Accounts merge-dialog precedent). */
+.set__dialogframe {
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  max-width: 34rem;
+}
+.set__dialogtitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-16);
+  line-height: var(--line-16);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.set__dialogfoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* Token "shown once" reveal. */
+.set__oncewarn {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-14);
+  line-height: var(--line-14);
+  color: var(--text-primary);
+}
+.set__tokenreveal {
+  display: block;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-family: monospace;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  word-break: break-all;
+}
+
+/* D-003 degradation — an honest explanation, attention-toned but not alarmist. */
+.set__degraded {
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+  max-width: 44rem;
+}
+
+/* Destructive action — the inventory has no danger variant; a restrained tint on the ratified Button.
+   FLAGGED at the gate: a proper danger ButtonVariant is a §5 amendment question, not invented here. */
+.set__dangerbtn {
+  border-color: var(--loss, var(--border-strong));
+  color: var(--loss, var(--text-primary));
+}

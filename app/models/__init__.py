@@ -421,6 +421,14 @@ class NetWorthSnapshot(Base):
     assets: Mapped[Decimal] = mapped_column(DecimalText)
     liabilities: Mapped[Decimal] = mapped_column(DecimalText)
     net_worth: Mapped[Decimal] = mapped_column(DecimalText)
+    # R-43 §9-1 provenance. Distinguishes a retrospectively reconstructed row from a
+    # forward-accumulated worker row and an owner-pressed one, so a re-backfill is
+    # idempotent (a real/live row always supersedes a backfilled one, never the reverse)
+    # and the trend can mark each point honestly (D-105). Legacy forward rows are 'live'.
+    #   backfilled — reconstructed from price history + ledger + per-date FX (this milestone)
+    #   live       — written forward by the 6-hour worker (the pre-R-43 behaviour)
+    #   manual     — written by the owner's snapshot-now trigger
+    source: Mapped[str] = mapped_column(String(20), default="live", server_default="live")
 
 
 # --------------------------------------------------------------------------- #

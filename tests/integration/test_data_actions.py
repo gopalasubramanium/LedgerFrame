@@ -77,6 +77,64 @@ async def test_source_override_validation(app_client):
     assert amfi.status_code == 400
 
 
+async def _add_listed_crypto(app_client, symbol: str):
+    # Mirror the D-089 Add flow: one POST /portfolio/transactions with the symbol only —
+    # no coingecko mapping is attached (that is the §14dr-27 root the correction path fixes).
+    return await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": symbol, "type": "buy", "ts": "2025-01-01T00:00:00",
+        "quantity": 1, "price": 10, "currency": "USD", "asset_class": "crypto"})
+
+
+async def test_source_override_coingecko_autolinks_unambiguous_symbol(app_client):
+    # §14dr-27(a): the Add flow drops the CoinGecko canonical id (it is sent as the bare
+    # symbol), so an unmapped crypto reaches the correction with no coingecko_id. Correcting
+    # the source to coingecko now auto-matches the symbol against the synced coin master: an
+    # UNAMBIGUOUS hit links the id and the override proceeds (RED before: hard rejection).
+    from app.db.base import get_sessionmaker
+    from app.models import CoingeckoCoin
+
+    async with get_sessionmaker()() as s:
+        s.add(CoingeckoCoin(id="solana-x-dr27", symbol="solx", name="Solana X"))
+        await s.commit()
+    assert (await _add_listed_crypto(app_client, "SOLX")).status_code == 200
+
+    r = await app_client.patch("/api/v1/instruments/SOLX", json={"source_override": "coingecko"})
+    assert r.status_code == 200, r.text
+    assert r.json()["source_override"] == "coingecko"
+    # The canonical id is now persisted (so prices/history arrive and future edits pre-fill).
+    m = (await app_client.get("/api/v1/instruments/SOLX")).json()["instrument"]
+    assert any(i["id_type"] == "coingecko_id" and i["value"] == "solana-x-dr27" for i in m["identifiers"])
+
+
+async def test_source_override_coingecko_ambiguous_symbol_served_error(app_client):
+    # §14dr-27(a): ambiguous symbol → served candidate string (D-105), no silent guess.
+    from app.db.base import get_sessionmaker
+    from app.models import CoingeckoCoin
+
+    async with get_sessionmaker()() as s:
+        s.add_all([CoingeckoCoin(id="dupcoin-a", symbol="dup", name="Dup A"),
+                   CoingeckoCoin(id="dupcoin-b", symbol="dup", name="Dup B")])
+        await s.commit()
+    assert (await _add_listed_crypto(app_client, "DUP")).status_code == 200
+
+    r = await app_client.patch("/api/v1/instruments/DUP", json={"source_override": "coingecko"})
+    assert r.status_code == 400
+    detail = r.json()["detail"].lower()
+    assert "multiple" in detail and "dupcoin-a" in detail and "dupcoin-b" in detail
+    # Nothing was linked (the rejection rolled back cleanly).
+    m = (await app_client.get("/api/v1/instruments/DUP")).json()["instrument"]
+    assert not any(i["id_type"] == "coingecko_id" for i in m["identifiers"])
+
+
+async def test_source_override_coingecko_no_match_served_error(app_client):
+    # §14dr-27(a): no coin matches → served string directing to the picker; capability
+    # rejection for genuinely uncoverable cases (a non-crypto) is unchanged (test above).
+    assert (await _add_listed_crypto(app_client, "NOSUCHDR27")).status_code == 200
+    r = await app_client.patch("/api/v1/instruments/NOSUCHDR27", json={"source_override": "coingecko"})
+    assert r.status_code == 400
+    assert "no coingecko coin" in r.json()["detail"].lower()
+
+
 async def test_refresh_holding_action(app_client):
     holdings = (await app_client.get("/api/v1/portfolio/holdings")).json()["holdings"]
     market = next(h for h in holdings if h["symbol"] == "AAPL")

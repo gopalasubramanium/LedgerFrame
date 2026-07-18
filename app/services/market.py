@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -87,11 +87,44 @@ def provider_availability() -> dict:
     return av
 
 
+async def _link_coingecko_by_symbol(session: AsyncSession, instrument) -> str | None:
+    """§14dr-27(a): resolve an unmapped crypto's CoinGecko canonical id by an exact symbol
+    match against the synced coin master and attach it (``coingecko_id`` identifier).
+
+    Returns ``None`` on success (id linked), or a served error string (D-105, rendered
+    verbatim) for the ambiguous / no-match cases — never a silent guess. The Flag-2
+    capability validation is unchanged; this only recovers the mapping the Add flow dropped.
+    """
+    from app.models import CoingeckoCoin
+    from app.services.identity import DuplicateIdentifierError, set_identifier
+
+    sym = (instrument.symbol or "").strip().lower()
+    coins = (await session.execute(
+        select(CoingeckoCoin).where(func.lower(CoingeckoCoin.symbol) == sym)
+    )).scalars().all()
+    if not coins:
+        return (f"no CoinGecko coin matches the symbol '{instrument.symbol}' — pick the exact "
+                "coin from the instrument picker (or sync the CoinGecko master in Settings first)")
+    if len(coins) > 1:
+        cands = ", ".join(sorted(c.id for c in coins)[:8])
+        return (f"'{instrument.symbol}' matches multiple CoinGecko coins ({cands}) — pick the "
+                "exact one from the instrument picker")
+    try:
+        await set_identifier(session, instrument.id, "coingecko_id", coins[0].id,
+                             provider="coingecko", is_primary=True)
+    except DuplicateIdentifierError as exc:
+        return str(exc)
+    return None
+
+
 async def validate_source_override(session: AsyncSession, instrument, value: str | None) -> tuple[str | None, str | None]:
     """Validate a per-instrument source override (§5). Returns ``(normalized, error)``:
     ``normalized=None, error=None`` clears it; a non-None error means reject and keep the
     current override. Rejects unknown sources, unsuitable asset-class/region, missing
-    identifier mappings, and sources whose credentials are absent."""
+    identifier mappings, and sources whose credentials are absent. §14dr-27(a): correcting
+    an unmapped crypto to coingecko attaches the canonical id by an unambiguous symbol match
+    (a mutation on the passed session, persisted by the caller's commit) rather than dead-
+    ending — see :func:`_link_coingecko_by_symbol`."""
     from app.models import InstrumentIdentifier
     from app.providers.market.router import (
         _MANUAL_LANES,
@@ -123,8 +156,15 @@ async def validate_source_override(session: AsyncSession, instrument, value: str
     )).scalars().all())
     if v == "amfi_nav" and (ac != "mutual_fund" or "amfi_code" not in ids):
         return None, "amfi_nav needs an AMFI scheme mapping on a mutual fund"
-    if v == "coingecko" and (ac != "crypto" or "coingecko_id" not in ids):
-        return None, "coingecko needs a canonical id mapping on a crypto"
+    if v == "coingecko" and ac == "crypto" and "coingecko_id" not in ids:
+        # §14dr-27(a): attach-at-correction. The Add flow drops the picker's canonical id
+        # (it is sent as the bare symbol), so an unmapped crypto reaches here. Auto-match the
+        # symbol against the synced CoinGecko master: an unambiguous hit links the id and the
+        # override proceeds; ambiguous / no match returns a served string (D-105) pointing to
+        # the picker. Capability rejection for a non-crypto is already handled above.
+        err = await _link_coingecko_by_symbol(session, instrument)
+        if err:
+            return None, err
 
     if caps.needs_key:
         av = provider_availability().get(v)

@@ -616,25 +616,37 @@ Verified empirically on the demo book: `price_history` has **0 rows** and `ecb_f
   approximate, D05 (SGD) unchanged. Full suite 1159, 0 regressions. — commit `47065d7`.
   **§9-4 is now COMPLETE (a, b, c).**
 
-**CORRECTNESS CLUSTER DONE.** Steps 1–5 + 9 are landed, tested, green — the full engine +
-per-date FX + demo data + analytics consolidation + all §9-4 reader fixes. What remains is the
-**acquisition → orchestrator → served-trend → frontend** cluster that reaches the 0a pixel walk.
+- **Step 7 (§9-1/§9-2/§9-6) — backfill orchestrator** — `app/services/backfill.py`: `run_backfill`
+  reconstructs a DAILY net-worth series through the date-aware engine (market at per-date price+FX;
+  manual carried flat), `source='backfilled'`, idempotent + real-supersedes, no-egress-safe, served
+  file-poll progress. `snapshot_now` writes `source='manual'`; 409-refused mid-backfill (§9-6).
+  Endpoints POST `/net-worth/backfill`, GET `/net-worth/backfill-status`, POST `/net-worth/snapshot`;
+  contract 134 → 137. USER-TRIGGERED (not in the demo seed — keeps the suite fast). Suite 1163,
+  0 regressions. — commit `7774819`.
+- **Step 8 (§9-5) — served trend** — `/net-worth/history` serves per-point `source` +
+  `carried_forward` + served reason; new nullable `net_worth_snapshots.flags` (migration
+  `c2e5a8b41f30`); the backfill flags a genuine per-date FX gap (W-1b), tightened so a single
+  always-estimated holding does not flag the whole line. Contract regenerated. Suite 1165, 0
+  regressions. — commits `7f47811`, `e16cbc9`.
 
-### NEXT — the rendering cluster (reaches 0a)
+**BACKEND TREND CHAIN COMPLETE + API-LEVEL SPECIMEN GREEN (2026-07-18).** On an isolated demo
+instance, driving the whole flow through the API/services:
+- (a) backfill = **1258 daily points 2023-01-12 → 2026-07-18 in 13.5s** (§9-1 measured; DAILY
+  ruling holds); served trend = 1258 backfilled + 26 live points; **the line runs 742,489 →
+  793,108 SGD** — a real multi-year trend, no longer flat.
+- (c) carried-forward flag verified on a genuine FX gap (step-8 pin); demo trend clean (0 gaps).
+- (d) snapshot-now writes a manual point; (f) 409-refused + served "Building history…" while a
+  backfill is in flight.
+- (e) TODAY's net worth = **797,193.17 SGD, unchanged** on the live path (byte-identical engine).
+- (f-perf) ▲-B before/after stated at step 4.
 
-- **Step 6 — history acquisition.** AMFI authorized confirming call → chunked archive fetcher;
-  crypto CoinGecko `market-chart/range` adapter (capability flag per free-tier limits); AV
-  `outputsize=full` premium. Budget-aware, user-triggered. *Network-dependent — validate on the
-  owner's stack.*
-- **Step 7 — backfill orchestrator.** Daily snapshots from the earliest txn; `provenance=
-  backfilled`; idempotent + resumable; served file-poll progress (the self-update precedent);
-  **measure + report full-demo-book runtime (§9-1 condition)**; snapshot-now endpoint
-  (`manual`; 409-served refusal while a backfill is in flight, §9-6).
-- **Step 8 — served trend.** `/net-worth/history` serves the unified series (backfilled + live +
-  manual) with per-point gap / carried-forward flags (§9-5); typed `response_model` fields.
-- **Step 9 — demo backfill generation** (§9-8) so the trend renders a real line in demo/pre-pass.
-- **Step 10 — GLOSSARY (§9-T spec-first) + gates + the 0a specimen** (the rendered pixel walk).
+### NEXT — reaches the 0a PIXEL specimen
 
-**0a is NOT yet reachable** — it is a rendered-trend walk, which needs steps 7–9 + the frontend.
-This session delivered the verified backend spine the rest builds on; there is no pixel specimen
-to ratify yet. The next session continues from this log (files, not memory).
+- **Step 6 — history acquisition** (network; owner validates on-stack). AMFI confirming call →
+  chunked archive fetcher; CoinGecko `market-chart/range`; AV `outputsize=full`. Build vs fixtures.
+- **Frontend (Phase-1-into-0a)** — the "Build history" trigger + served progress; provenance/gap
+  rendering; the snapshot-now icon `Button` + disabled-with-reason; empty/no-egress states.
+- **Step 10 — GLOSSARY (§9-T spec-first "Snapshot"/"Backfill") + gates + the rendered pixel walk.**
+
+The **backend of the 0a specimen is proven at the API level** (above). The remaining rendered
+pixel walk needs the frontend wiring + GLOSSARY. The next session continues from this log.

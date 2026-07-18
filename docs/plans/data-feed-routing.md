@@ -2177,3 +2177,213 @@ Isolated server down; `dist` + throwaway driver removed; working tree clean; `.e
 
 **STATUS: FIXED + RE-RUN GREEN (both postures). NEXT: the owner re-walks** (Phase 3b batch 8; the close
 ritual follows only from chat, NOT self-started).
+
+---
+
+## §29 — PHASE 3b RE-WALK (batch 9) — FINDINGS §14dr-26..29 (owner, 2026-07-18)
+
+The owner re-walked batch 8 on the **REAL premium-keyed (alphavantage) instance**. **Four findings
+filed** (§14dr-26..29); all resolved or verified not-a-bug this batch. **Batch 9 is the LAST batch** —
+the milestone closes after it (owner ruling: the batch-9 re-walk is deferred THIS BATCH ONLY, see the
+§14 ruling 1c below). Same discipline throughout: docs commit first; one logical delta per commit;
+fail-first RED on the real cause; isolated demo/real stacks only — the owner's live instance never
+mutated.
+
+### §14dr-26 — BUG (P1): "Erase all data" left protection/estate/planning rows
+
+Verified cause: `reset_data` (`system.py:432-436`, pre-fix) deleted a **hardcoded 12-table list**
+predating the insurance/estate/planning milestones; **13 user-data tables survived** the erase
+(`entities`, `institutions`, `investment_policy`, `policy_targets`, `goals`, `obligations`,
+`review_log`, `insurance_policy`, `estate_profile`, `estate_contact`, `estate_document`, `holding_tag`,
+`contribution`).
+
+**Fix:** the deletion set is now **derived from `Base.metadata.sorted_tables`** (FK-safe, reversed to
+delete children first) **minus a spec-grounded `RESET_KEEP_TABLES` allow-list**
+(`system.py:413` frozenset; loop `system.py:445-446`) — future tables are **purged by default**; a
+guard test breaks the build on any KEEP-set drift from live metadata. Pins RED→GREEN: seed every
+user-data table → reset with a fresh PIN → **zero rows** iterating metadata; the KEEP set is
+preserved; the **D-103 fresh-PIN** enforcement is unchanged. Commits **54072e0** (fix) + **0844d43**
+(contract regen — `reset-data` description only, **134 path-keys held**). **RESOLVED.**
+
+### §14dr-27 — BUG (P1): source correction & matrix routing for crypto / mutual funds
+
+Unified root (verified via the frontend map + reproduction): the **D-089 Add flow** sent the
+picker-resolved AMFI code / CoinGecko id as the transaction **`symbol`** and never mapped it
+(`Holdings.tsx:849-864`); `_ensure_instrument` (`csv_import.py:461,469`) **defaulted a bare MF
+symbol's country to "US"** and never set `listing_country`. Sub-fixes:
+
+- **(a) 8067626** — `_link_coingecko_by_symbol` (`market.py:90`) auto-matches on
+  override→coingecko for unmapped crypto: unambiguous → **link + proceed**; ambiguous/none → the
+  **served candidate string** (D-105); non-crypto capability rejection unchanged.
+- **(b) da93668** — creation defaulting fixed: `country_for_symbol` gains a `bare_ticker_default`
+  parameter (kept `"US"` for equity/etf; `csv_import.py:468` vs the non-equity call at `:470` with
+  `bare_ticker_default=None`); non-equity classes derive country from **real signals only**; the
+  region rejection **names the field** ("amfi_nav doesn't cover the listing country US (it covers IN)").
+- **(c) ef16415** — verified **NOT a class-key mismatch** (both sides normalise to `"mutual_fund"`,
+  `market.py:209/238`); the cell failed because the MF **wasn't recognised as India**.
+  `_link_amfi_by_symbol` (`market.py:120`) links a fund whose symbol is an **exact synced scheme
+  code** (stamps IN + INR), wired at create and at correction; a recognised India MF is **owned by
+  amfi_nav** (cache-publish — the NAV is never matrix-overwritten).
+- **(d) a306621** — the scheme code **persists**; the pre-populate wire already existed
+  (`InstrumentDetail.tsx:340`) and was blank only because the code was never persisted. A mapped MF
+  opens **pre-filled**; an unchanged Save does **not** re-map.
+
+**Regression net f5e9652:** 146 parametrised cases (every class × provider) — capability accept/reject
++ `route()` rule with/without a cell, locking precedence (override > manual-only > cache-publish >
+matrix > active) and AMENDMENT-A.
+
+**Real-posture closing evidence (§26-bis) — 62034a7:** an isolated **real-keyed** run, temp data,
+`.env` read-only + **verified unchanged**, ports 8399/5199 removed; live masters **17,632 CoinGecko
+coins / 14,227 AMFI schemes**; ~5 bulk live calls; **0 console errors**; screenshots
+`docs/plans/assets/dr27-*`. AAVE free-form → correction linked `coingecko_id=aave`, USD 88.65, Source
+CoinGecko (real); BTC → served candidate error, honest active fallback; India MF **143269** →
+`listing_country=IN` + `amfi_code` at create, the `(mutual_fund, IN, amfi_nav)` matrix cell **not
+degraded**, INR 1,555.89, Source **amfi_nav** (real live NAV); price/NAV history honest "not available
+yet" (a single published point — correct). **RESOLVED.**
+
+### §14dr-28 — SPEC/UX (owner-observed): Reports empty until 3–4 refreshes — NO Reports code defect
+
+Verified: **no Reports code defect.** The load path is idempotent (loaders `useCallback([])`, one mount
+effect — `Reports.tsx:220/232/244/250`); the services compute fresh from the ledger with **no
+cache-skip guard** (`tax.py:308/399`, `statements.py:46`); the sole live-fetch path is skipped for
+rate-limited real providers (`fetch_on_demand=False`, `external.py:88`). Empirically **3/3 cold loads**
+render a populated tax-lots row on **first paint**, **0 console errors**. The symptom is most
+consistent with an **app-wide backend boot-readiness race**; the honest per-card **error+Retry** state
+(`Reports.tsx:94/298/372/419`) renders during boot — **never a silent blank**.
+
+Commit **a9aab40**: a **first-paint pin** (§14ac-2 destination-control lineage) asserting a concrete
+tax-lots row across 3 cold loads; the smoke harness made isolated-safe (`SMOKE_API`/`SMOKE_BASE`, never
+touches the owner's 8321). **RESOLVED — no code defect; owner-eyes verification carried to the
+pre-release walk** (Step 3 / `pre-release-walk.md` item 4).
+
+### §14dr-29 — NOT-A-BUG (no code change): Home shows no headlines
+
+Verified: **3 `DEFAULT_FEEDS`** are configured (`feeds.py:37-41`; `get_feed_urls` returns them when
+unset, `feeds.py:63-66`; reset keeps settings). Home's **"Top headlines"** is **holdings-scoped**
+(`Home.tsx:67` `HOLDINGS_GROUP`; consumed `Home.tsx:189-190`) — an **erased instance legitimately has
+none** and renders the honest **served EmptyState** (`Home.tsx:419-427`: headlines are *retrieved*,
+never invented); the News page likewise; **no D-105 gap**. Default-feed / per-ticker news work is
+**R-45** (out of scope here). **NOT-A-BUG.**
+
+---
+
+## §30 — PHASE 3b (batch 9) FIX + RE-RUN EXECUTION RECORD (2026-07-18)
+
+Docs-first, verify-first with fail-first RED, one concern per commit. Batch 9 is **done and pushed**.
+
+- **DONE — §14dr-26** (`54072e0` + `0844d43`) — metadata-derived reset scope + `RESET_KEEP_TABLES`
+  allow-list + KEEP-drift guard; contract regen (description only, **134 path-keys held**).
+- **DONE — §14dr-27** (`8067626` a · `da93668` b · `ef16415` c · `a306621` d · `f5e9652`
+  regression net) — CoinGecko/AMFI auto-link at create + correction; non-equity no longer fabricates a
+  US listing; India MFs recognised so the matrix prices them; scheme code persists + pre-fills.
+- **DONE — §14dr-28** (`a9aab40`) — first-paint guard; verified no cache-skip defect.
+- **§14dr-29** — NOT-A-BUG, **no code change**.
+- **DONE — real-posture closing evidence** (`62034a7`) — the §26-bis isolated real-keyed run
+  (masters 17,632 CoinGecko / 14,227 AMFI; `.env` read-only + verified unchanged; screenshots
+  `docs/plans/assets/dr27-*`).
+
+**Gates at batch-9 close:** backend suite green; `make api-contract-check` current, contract **134
+path-keys** (Flag 1 held); ruff clean; frontend `npm run check` **exit 0**. Both postures satisfied
+per §26-bis (mock via the full backend suite; real via 62034a7).
+
+---
+
+## §14 — LEDGER STATUS + CLOSE (2026-07-18)
+
+**§14 header → CLOSED: 29 findings (§14dr-1..dr-29), 9 batches. Opened 2026-07-18 → closed
+2026-07-18** (the entire Phase 3b re-walk ran on 2026-07-18). All findings RESOLVED or verified
+NOT-A-BUG; no open blocker remains.
+
+**Ledger status lines (dated 2026-07-18):**
+- **dr-22** — instrument-name overflow on Home tiles: flow **ACCEPTED** (carried, batch 8). **CLOSED.**
+- **dr-23** — the purge button label: **RATIFIED "Confirmed" — owner, 2026-07-18, in chat.** (The
+  shipped "🗑 PIN to permanently delete" danger Button + ConfirmDialog fresh-PIN gesture stands; the
+  D-103 `verify_fresh_pin` enforcement is unchanged.) **CLOSED.**
+- **dr-25** — history-cache integrity (interleaved demo+real duplicate-date candles):
+  **RESOLVED-WITH-CARRYOVER.** Owner acceptance 2026-07-18 **PARTIAL** ("waiting until intraday data
+  comes in"). Scope **resolved** (daily-series duplicates; batch-8 evidence + the owner's
+  fresh-instance confirmation "charts corrected"). **Carryover:** the final chart sign-off rides the
+  **R-42 intraday-series** owner walk **AND** the pre-release walk. Rationale recorded: the 1D/5D
+  greyed state is the **dr-7 honest-disable**, remedied by R-42 (the next milestone).
+
+### §14 ruling 1c — DEFERRED-WALK §-ENTRY (owner ruling, 2026-07-18)
+
+*Owner ruling (scope delegated to the architect, recorded): the batch-9 owner re-walk is deferred —
+**THIS BATCH ONLY**. Acceptance basis for batch 9 and this milestone close: the batch-9 report reviewed
+in chat + the §26-bis real-posture closing evidence (`62034a7`). Per-milestone owner walks **RESUME
+from intraday-series (R-42) onward** (short, scripted, after the 3a pre-pass — the standard loop). The
+thorough pre-release walk (`docs/plans/pre-release-walk.md`) is the **ADDITIVE capstone** before the
+v2.0.0 tag, **not a substitute** for milestone walks. Batch-9 deferred verifications (dr-28 owner-eyes;
+dr-25 final chart sign-off) are carried in that checklist.*
+
+---
+
+## §15 — MILESTONE STRIKE-CHECK RETROSPECTIVE (2026-07-18)
+
+Every lesson cites the MECHANISM that enforces it (a test, guard, or recorded rule) — a lesson without
+a mechanism is a wish. Each is strike-checked against the repo.
+
+1. **Both-postures verification.** A real-data-render finding is **not closable on a mock-forced run**.
+   *Mechanism:* the **§26-bis standing rule** (in-file above) — the isolated re-run covers mock (free,
+   the demo path) AND a budget-aware real slice; batch-7's mock-only green (the counter-example) missed
+   the comb that batch-8/dr-25 caught. Backend `conftest` forces mock for the whole suite; the real
+   posture is the 62034a7 / batch-8 evidence runs.
+2. **Demo data ≠ real data.** End-to-end with the **live provider** is part of every walk (the
+   dr-4/18/25 lineage — each looked green on demo and failed on the owner's real instance). *Mechanism:*
+   the §26-bis budget-aware real slice + the dr-27 real-posture evidence (`62034a7`).
+3. **Cached-refresh endpoints lie.** Refresh paths that **skip on cache state** are latent findings
+   (dr-15: CoinGecko Sync-now kept the stale cache). *Mechanism:* dr-15's always-refetch fix
+   (`POST /coingecko/refresh` no-file branch) + **dr-28's explicit no-cache-skip verification**
+   (`tax.py`/`statements.py` compute fresh; `external.py:88` is the only skip, and it's the honest
+   rate-limit guard).
+4. **Actions are inventory too.** Destinations/controls **assert the answer**, not just presence.
+   *Mechanism:* the §14ac-2 destination-control lineage + **dr-28's first-paint pin** (a concrete
+   tax-lots row across 3 cold loads).
+5. **Error surfaces render served reason text.** *Mechanism:* **D-105** + `client.ts` `detailToText`
+   (dr-1) — a 422 array joins `.msg`, never `[object Object]`, never the leaked key input; dr-27's
+   served **candidate strings** + the **named-field region rejection** ("…doesn't cover the listing
+   country US (it covers IN)").
+6. **Hardcoded table lists drift.** Deletion/enumeration sets must **derive from metadata** or carry a
+   metadata-diff guard. *Mechanism:* **dr-26** — `reset_data` iterates `Base.metadata.sorted_tables`
+   minus `RESET_KEEP_TABLES` (`system.py:413,445-446`); the KEEP-drift guard test breaks the build if
+   the allow-list diverges from live metadata. **NEW.**
+7. **Creation defaults are routing inputs.** A wrong default at create (country → US) surfaces **later**
+   as a routing/capability failure far from its cause. *Mechanism:* **dr-27(b)** — `country_for_symbol`
+   `bare_ticker_default` (kept `"US"` only for equity/etf; non-equity derives from real signals),
+   `csv_import.py:468/470`; pinned by the f5e9652 capability×route matrix. **NEW.**
+8. **Env-forcing overrides masquerade as regressions.** Check `LEDGERFRAME_MARKET_PROVIDER` on the
+   owner's instance **before** treating a routing report as a defect. *Mechanism:* this close's **GATE 0
+   precondition** (the "MF still routes to mock" observation = an OS-env `=mock` override, not a code
+   defect) — recorded as the standing pre-triage step for any routing report. **NEW.**
+
+### Changed-file table (from the ACTUAL diff)
+
+`git diff --stat <milestone-base>..HEAD`. **Base used: `f4321d0`** — the plan's Phase-0 execution
+record (§ "PHASE 0 + 0a") lists `a3aa541` (§9-RESOLVED) as its first commit; `a3aa541`'s parent is
+`f4321d0` (the plan-authoring commit), so the diff `f4321d0..HEAD` captures Phase 0 onward — the whole
+build. (Recovered via `git log --oneline --reverse -- docs/plans/data-feed-routing.md`.)
+
+| Area | Files changed | Notes |
+|------|:-------------:|-------|
+| `frontend/` | 54 | Settings Data-feeds editor · Pricing Health provenance · Holdings/InstrumentDetail source-correction + prefill · Home/Reports pins · chart fixes |
+| `tests/` | 19 | routing-matrix (route/CRUD/provenance) · dr27 capability×route matrix · history-cache integrity · reset-scope guard · first-paint pin |
+| `docs/` | 18 | this plan file · API-CONTRACT (json+md, 132→134) · openapi.json · ROADMAP · GLOSSARY · page-settings/page-pricing-health delta notes · dr27 assets |
+| `app/` | 17 | `router.py` slot-3.5 + `route_rule` · `services/market.py` link helpers · `system.py` reset scope + `DataSourceIn` · `csv_import.py` country defaults · migrations · `client`-side reason text |
+| root / misc | 5 | `ROADMAP.md` + config/misc |
+| **Total** | **113 files** | **+7985 / −290** |
+
+### §15 addendum — CURRENT.md close-ritual forensic (Step 7)
+
+`git log --oneline -- docs/plans/CURRENT.md` confirms **prior close rituals DID perform their claimed
+CURRENT.md updates** — every recent milestone close touched CURRENT.md: `c27ab04` (page-settings),
+`c64ee79` (reports-pack), `3623367` (reports), `8a2f1fe` (accounts), `b098964` (estate), `4d43a5d`
+(insurance), `c0e9fb1` (scenarios), `cf31fac` (cash-flow), `ba3de78` (policy), and further back
+(markets/news/review/heatmap/home/net-worth/portfolio/pricing-health/chrome/first-run). No missed-close
+gap was found. **MECHANISED going forward** (see the close checklist / TEMPLATE amendment): *the close
+report must show CURRENT.md inside the close commit's diff; a claimed CURRENT.md update without the file
+in the diff fails the close.*
+
+---
+
+**MILESTONE CLOSED — data-feed-routing (R-38): §14 29 findings / 9 batches, §15 recorded, RATIFICATION
+§6 row appended (2026-07-18). See CURRENT.md for the active pointer (NEXT = intraday-series / R-42).**

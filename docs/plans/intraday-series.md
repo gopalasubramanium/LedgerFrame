@@ -448,3 +448,57 @@ summarised. Build proceeds backend-first (Phase 0), STOPPING at the 0a specimen.
 **STOP AT 0a.** §9 is RULED and recorded. Build proceeds backend-first (Phase 0, §11);
 the session STOPS at the **Phase 0a specimen** for owner ratification in chat. Phase 1
 (assembly) is a separate instruction and does not begin here.
+
+---
+
+## PHASE 0a — RATIFICATION + GATE RULINGS (owner 2026-07-18, in chat)
+
+**0a specimen RATIFIED — owner, 2026-07-18, in chat.** The `/kitchen-sink` intraday
+specimen (Phase 0.7) — the intraday chart + the range control across every served state
+(premium-enabled, free/unknown tier-disabled, MF class-disabled, provider-incapable-
+disabled, no-egress-disabled) — was walked with the owner and accepted. Phase 1 (assembly)
+now proceeds.
+
+**Three 0a-gate rulings (owner 2026-07-18, per architect recommendation under standing
+delegation):**
+
+- **(e) benchmark-hidden — N/A ACCEPTED.** Instrument Detail has **no benchmark overlay**
+  to hide (it is Portfolio → Performance that carries the benchmark, §2.7), so no benchmark
+  control is invented on this page. The served `benchmark_reason` string
+  (`"Benchmark comparison is daily-range only."`) is **retained in the availability payload**
+  (`market.py:368,447`) for **R-48** (benchmark-on-intraday), a forward hook, not a dead
+  field. No control, no dead affordance — the honest posture is that the field is present in
+  the contract and simply not consumed by a benchmark control that doesn't exist here.
+- **Period-carryover fallback → PHASE 1** (this session). A verified 0a behaviour:
+  navigating from an intraday range on one instrument to an instrument where that range is
+  disabled kept the disabled range **active with an honest empty**. The fix (fall back to the
+  instrument's default daily range on load when the current range is served-disabled) is a
+  Phase-1 assembly item.
+- **dr-8 loading skeleton → PHASE 1** (this session). During the intraday fetch the bare
+  "Fetching…" note is replaced by the **ratified dr-8 loading treatment** (skeleton +
+  `aria-busy`); a Phase-1 assembly item.
+
+**Owner addition (2026-07-18): chart pan-when-zoomed** — the owner observed the chart zooms
+(§14dr-5) but does not horizontal-pan/scroll once zoomed. Added as **Phase 1 item 3**
+(verify-first: cite the existing zoom; add horizontal pan while zoomed; a reset affordance
+already exists — `PriceChart.tsx:381-385`).
+
+**Verify-and-repair — ROADMAP R-47/48/49:** checked the repo `ROADMAP.md`. The three rows
+filed by `b5efcb3` (§9-1/§9-5/§9-6) are **PRESENT** — `ROADMAP.md:59` (R-47 intraday
+compaction/downsampling), `:60` (R-48 benchmark on intraday ranges), `:61` (R-49
+history/intraday routing lane), each in house style with §9 rationale + cross-refs. **No
+duplicate rows written.** (The knowledge-base copy that showed them missing was stale; the
+repo is authoritative and correct.)
+
+---
+
+## PHASE 1 — ASSEMBLY (in progress this session; one delta per commit)
+
+Owner-ruled scope (session instruction 2026-07-18): (1) period-carryover fallback,
+(2) dr-8 loading state, (3) chart pan-when-zoomed, (4) any remaining plan Phase-1 items.
+The specimen frontend (Phase 0.7, `328f9d7`) already landed the range→interval mapping (the
+page sends a RANGE), the range-button fetch trigger, intraday ts rendering (`fmtTick`
+replaces the `slice(0,10)` truncation, `InstrumentDetail.tsx:52-56`), and the served
+`disabledPeriods` (the hardcoded `INTRADAY_REASON`/`DISABLED_PERIODS` constants are gone).
+Phase 1 completes the loading/empty treatment + the pan interaction. Per-item status is
+tracked in the commit train; the pre-pass section below records the walk.

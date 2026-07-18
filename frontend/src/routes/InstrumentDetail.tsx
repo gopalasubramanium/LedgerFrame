@@ -25,7 +25,7 @@ import {
   setOngoingCost,
   mapAmfi,
 } from "../api/instruments";
-import type { Candle, InstrumentDetail as Detail, NewsItem } from "../api/instruments";
+import type { Candle, InstrumentDetail as Detail, IntradayAvailability, NewsItem } from "../api/instruments";
 import type { HoldingRow } from "../api/holdings";
 import { useLabelFor } from "../refdata/refdata-context";
 import { Pencil } from "../icons";
@@ -43,12 +43,20 @@ function chipVal(v: string | null | undefined | false) {
   return v ? <span className="lf-chip">{v}</span> : "—";
 }
 const PERIODS = ["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "5Y", "Max"];
-// §14dr-7 — the price store holds daily closes only (every live provider fetches daily),
-// so 1D/5D can't differ from a daily view — they promised intraday density the data never
-// held. Disable them with an honest reason rather than fabricate a 1–3-candle "1D".
-// Intraday (R-42) re-enables these ranges.
-const INTRADAY_REASON = "Intraday prices aren't available yet — daily history only.";
-const DISABLED_PERIODS: Record<string, string> = { "1D": INTRADAY_REASON, "5D": INTRADAY_REASON };
+// R-42 §9-9 — the 1D/5D disable decision (dr-7) is now SERVED: the range control renders the
+// enabled/disabled + reason from the history reader's `intraday` availability map (D-105),
+// never a frontend constant. The range→interval mapping is server-side too — the page sends a
+// RANGE, never an interval.
+// Tick label by served interval: intraday shows time-of-day (§2.1 — never midnight-normalised),
+// daily shows the date. The interval literal (1min/5min) is NEVER shown in copy (§8).
+function fmtTick(iso: string, interval: string): string {
+  if (interval === "1min") return iso.slice(11, 16);                          // HH:MM (one day)
+  if (interval === "5min") return `${iso.slice(5, 10)} ${iso.slice(11, 16)}`; // MM-DD HH:MM (5 days)
+  return iso.slice(0, 10);                                                    // YYYY-MM-DD (daily)
+}
+function intervalLabel(interval: string): string {
+  return interval === "1min" ? "1-minute" : interval === "5min" ? "5-minute" : interval;
+}
 function periodToDays(p: string): number {
   if (p === "YTD") {
     const now = new Date();
@@ -66,6 +74,9 @@ export function InstrumentDetail() {
 
   const [detail, setDetail] = useState<Detail | null>(null);
   const [candles, setCandles] = useState<Candle[]>([]);
+  const [histInterval, setHistInterval] = useState("1d");
+  const [intraday, setIntraday] = useState<IntradayAvailability | null>(null);
+  const [fetching, setFetching] = useState(false);
   const [period, setPeriod] = useState("6M");
   const [news, setNews] = useState<NewsItem[]>([]);
   const [position, setPosition] = useState<HoldingRow | null>(null);
@@ -97,28 +108,53 @@ export function InstrumentDetail() {
     reload();
   }, [reload]);
 
-  // Price history refetches when the period changes (server slices the range).
+  // Price history refetches when the period changes. The page sends the RANGE (never an
+  // interval): the server maps range→interval, applies the server-side gate, and — for an
+  // intraday range — fetches it (user-triggered). Daily ranges use the days window.
   useEffect(() => {
     let live = true;
-    getInstrumentHistory(sym, periodToDays(period)).then((h) => {
-      if (live) setCandles(h.ok ? h.data.candles : []);
+    setFetching(true);
+    getInstrumentHistory(sym, periodToDays(period), period).then((h) => {
+      if (!live) return;
+      if (h.ok) {
+        setCandles(h.data.candles);
+        setHistInterval(h.data.interval);
+        setIntraday(h.data.intraday ?? null);
+      } else {
+        setCandles([]);
+      }
+      setFetching(false);
     });
     return () => { live = false; };
   }, [sym, period]);
 
+  const isIntradayView = histInterval === "1min" || histInterval === "5min";
+  // Which range labels the server treats as intraday (server-derived — never hardcoded here).
+  const periodIsIntraday = !!intraday && period in intraday.ranges;
+
   const series = useMemo<PricePoint[]>(
-    () => candles.map((c) => ({ t: c.ts.slice(0, 10), open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume })),
-    [candles],
+    () => candles.map((c) => ({ t: fmtTick(c.ts, histInterval), open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume })),
+    [candles, histInterval],
   );
-  // Honest short-history: label when the data covers less than the requested period.
+  // Honest short-history: label when the DAILY data covers less than the requested period.
+  // Intraday ranges are fixed windows (1D/5D), so the day-based coverage note doesn't apply.
   const coverageNote = useMemo(() => {
-    if (series.length < 2) return undefined;
+    if (isIntradayView || series.length < 2) return undefined;
     const wanted = periodToDays(period);
     const first = new Date(series[0].t).getTime();
     const last = new Date(series[series.length - 1].t).getTime();
     const haveDays = Math.round((last - first) / 86400000);
     return haveDays < wanted * 0.9 ? `Only ${haveDays} day${haveDays === 1 ? "" : "s"} of history available` : undefined;
-  }, [series, period]);
+  }, [series, period, isIntradayView]);
+
+  // §9-9 — the disabled ranges + reasons come from the SERVED availability map (not a constant).
+  const disabledPeriods = useMemo<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    for (const [r, s] of Object.entries(intraday?.ranges ?? {})) {
+      if (!s.enabled && s.reason) out[r] = s.reason;
+    }
+    return out;
+  }, [intraday]);
 
   const meta = detail?.instrument;
   const quote = detail?.quote;
@@ -237,14 +273,26 @@ export function InstrumentDetail() {
             <div className="lf-card__body">
               <PriceChart
                 series={series}
-                interval="1d"
+                interval={intervalLabel(histInterval)}
                 controls
                 defaultView="simple"
                 periods={PERIODS}
                 activePeriod={period}
                 onPeriodChange={setPeriod}
-                disabledPeriods={DISABLED_PERIODS}
-                coverageNote={series.length < 2 ? historyReason : coverageNote}
+                disabledPeriods={disabledPeriods}
+                coverageNote={
+                  periodIsIntraday
+                    ? fetching
+                      ? "Fetching intraday prices…"
+                      : intraday?.fetch_state === "pending"
+                        ? "Intraday prices were requested — not available yet. Try again shortly."
+                        : series.length < 2
+                          ? "No intraday prices for this range."
+                          : coverageNote
+                    : series.length < 2
+                      ? historyReason
+                      : coverageNote
+                }
               />
             </div>
           </section>

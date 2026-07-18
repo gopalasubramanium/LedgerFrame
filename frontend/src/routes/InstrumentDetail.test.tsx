@@ -9,7 +9,22 @@ import { RefdataProvider } from "../refdata/RefdataProvider";
 
 vi.mock("../api/instruments", () => ({
   getInstrument: vi.fn(),
-  getInstrumentHistory: vi.fn(async () => ({ ok: true, data: { symbol: "AAPL", interval: "1d", candles: [] } })),
+  getInstrumentHistory: vi.fn(async () => ({
+    ok: true,
+    data: {
+      symbol: "AAPL", interval: "1d", candles: [],
+      // R-42 §9-9 — served availability: the demo (mock) provider is intraday-capable, so
+      // 1D/5D are enabled by default; a disabled case is served explicitly (see the pin below).
+      intraday: {
+        ranges: {
+          "1D": { interval: "1min", enabled: true, state: "available", reason: null },
+          "5D": { interval: "5min", enabled: true, state: "available", reason: null },
+        },
+        benchmark_reason: "Benchmark comparison is daily-range only.",
+        requested_range: null, fetch_state: null,
+      },
+    },
+  })),
   getInstrumentNews: vi.fn(async () => ({ ok: true, data: { symbol: "AAPL", items: [] } })),
   getInstrumentPosition: vi.fn(async () => ({ ok: true, data: { base_currency: "SGD", holdings: [] } })),
   patchInstrument: vi.fn(async () => ({ ok: true, data: {} })),
@@ -149,11 +164,26 @@ test("§14dr-27(d): the AMFI code pre-fills on edit from the persisted mapping (
     "PPFAS", expect.objectContaining({ source_override: "amfi_nav" }));
 });
 
-test("§14dr-7: 1D/5D ranges are disabled with a reason (daily-only data, no fabricated intraday)", async () => {
-  // The store holds daily closes only (every live provider fetches daily), so 1D/5D
-  // promised an intraday granularity the data can't differ on — "1D" rendered a couple
-  // of daily candles. Honest fix: those ranges are disabled-with-reason until intraday
-  // (R-42) lands. Fail-first RED: today they're active buttons.
+test("R-42/§9-9: 1D/5D render the SERVED disabled state + reason (no frontend constant)", async () => {
+  // R-42 moves the dr-7 disable decision from a frontend constant to a SERVED availability
+  // map (D-105): the range control renders whatever the backend serves. Here the server
+  // reports 1D/5D disabled (a free-tier key) with a served, tier-keyed reason — the UI must
+  // show exactly that, and must NOT hardcode the string. Fail-first RED before §9-9.
+  const REASON = "Intraday needs an Alpha Vantage premium key — this key is on the free tier.";
+  vi.mocked(api.getInstrumentHistory).mockResolvedValue({
+    ok: true,
+    data: {
+      symbol: "AAPL", interval: "1d", candles: [],
+      intraday: {
+        ranges: {
+          "1D": { interval: "1min", enabled: false, state: "tier_disabled", reason: REASON },
+          "5D": { interval: "5min", enabled: false, state: "tier_disabled", reason: REASON },
+        },
+        benchmark_reason: "Benchmark comparison is daily-range only.",
+        requested_range: null, fetch_state: null,
+      },
+    },
+  });
   const user = userEvent.setup();
   renderAt();
   await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL", level: 1 })).toBeInTheDocument());
@@ -161,7 +191,7 @@ test("§14dr-7: 1D/5D ranges are disabled with a reason (daily-only data, no fab
   const fiveD = screen.getByRole("button", { name: "5D" });
   expect(oneD).toBeDisabled();
   expect(fiveD).toBeDisabled();
-  expect(oneD).toHaveAccessibleDescription(/daily/i);
+  expect(oneD).toHaveAccessibleDescription(/premium/i);   // the SERVED reason, verbatim
   // A clickable range still works and is not disabled.
   expect(screen.getByRole("button", { name: "1M" })).toBeEnabled();
   await user.click(oneD); // no-op while disabled — no throw, no period change

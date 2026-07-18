@@ -679,3 +679,106 @@ Screenshots captured; the owner walk ratifies (never this CLI):
 - **Perf follow-up** (finding 1): batched as-of preload for the analytics + backfill hot paths.
 - **Phase 1 polish / Phase 3a pre-pass** (both themes/breakpoints, no-egress state) → the owner
   0a ratification, then Phase 1 assembly proper.
+
+---
+
+## 11. WALK-FINDINGS LEDGER (real-instance, owner drive 2026-07-18 ~23:40)
+
+The owner ran **"Build history"** on his **LIVE** instance and reviewed screenshots in chat.
+**Step 6 (real history acquisition) is NOT built**, so the step-7 orchestrator reconstructed a
+2019→2026 daily series against a price/FX cache that barely exists. Causes verified read-only
+against a **copy** of the live DB (`.env` sha256 unchanged, live DB never written — mtime
+`2026-07-18 23:38`). Reproduced through the real engine (`value_portfolio`, `key_stats`,
+`performance_series`, `time_weighted_return`) on the copy. **F-1/F-2/F-3 = INVESTIGATED, causes
+verified, NO fixes — fix sequencing decided in chat and likely couples to step 6 (coverage).**
+
+**Shared root cause (all three):** the live acquisition stores were never populated on-stack —
+`ecb_fx_history` has **0 rows** and `price_history` for the held book is ~1yr for 3 of 6 holdings,
+**0 for both funds**, and **wrong-instrument garbage for the two crypto tickers** (AV
+`TIME_SERIES_DAILY` is an equity endpoint — ⚠-C): live BTC quote **64,024.63 USD** vs AV daily
+"BTC" close **28.38**; live XRP **1.0868 USD** vs AV daily "XRP" close **12.20**. Held-book
+`price_history` (1d) earliest→latest: TSLA/SBICARD **2025-07-21**→2026-07-17, XRP **2025-11-20**,
+BTC **2026-01-20**, funds 102000/145834 **none**. `ecb_fx_rates` (live/current) has 30 rows @
+2026-07-17 (so the **live headline prices fine**); `ecb_fx_history` (backfill FX) is **empty** (so
+every cross-currency holding zeroes in the as-of path). The backfill/analytics read
+`ecb_fx_history`; the headline reads `ecb_fx_rates` — hence they disagree.
+
+### F-1 — Max trend is a square pulse that ends low (data-honesty, P1) — CAUSE VERIFIED
+- **Dump (copy):** `net_worth_snapshots` = **2739 rows, all `source='backfilled'`, all flagged
+  `carried_forward`**, 2019-01-18→2026-07-18. Shape: **0.00** for 2019-01→2024-07-17 → **flat
+  200,000.00** 2024-07-18→2026-01-19 → collapse **198.10** (2026-01-20) → **141.90** (last,
+  2026-07-18). Only two step edges (`0→200000` at the BTC buy, `200000→198.10` at 2026-01-20).
+- **Engine repro (copy):** the plateau = **BTC's recorded cost (5×40,000 SGD = 200,000)** carried
+  as value (`_value_one_holding` cost fallback, `portfolio.py:503-506`, `estimated_value`). BTC is
+  the **only** contributor on every date because its currency resolves to **SGD = base** (null
+  `pricing_currency`, no symbol inference, txn recorded SGD → `_asof_holdings` `portfolio.py:358`),
+  so `_hist_convert_checked` same-currency short-circuit (`portfolio.py:317`) spares it. Every
+  other holding (TSLA/SBICARD/XRP/funds, USD/INR) hits `hist_fx.rate(…→SGD)=None` (empty
+  `ecb_fx_history`) → `fx_ok=False` → **mv_base=ZERO** (`portfolio.py:537-548`, W-1b). At
+  2026-01-20 BTC's garbage AV history begins (39.62), repricing 200,000→198.10; the tail 141.90 =
+  5×28.38 (garbage). **Last point 141.90 ≠ headline 473,006.67** because headline uses live
+  `quotes` + current `ecb_fx_rates` (all six priced), the backfill uses `price_history` +
+  `ecb_fx_history` (empty).
+- **Preflight gap (F-1 #4):** `run_backfill` (`backfill.py:94-177`) builds `days` = earliest-txn→
+  today (`:106-117`) and values every day with **no coverage preflight** — no price/FX coverage
+  check, no served coverage report, no warning; the only early-out is "no transactions" (`:113`).
+  A preflight belongs at `backfill.py:106-118` and/or the §9-2 trigger endpoint
+  (`POST /net-worth/backfill`). Note `gap = any(h.fx_unavailable …)` (`:156`) flags **every** point
+  `carried_forward` — the whole-trend flag fires on 100% of rows, which is itself the coverage tell.
+
+### F-2 — TWR/1Y −99.93%, drawdown −99.94% beside Total return +131.13% (correctness, P1) — CAUSE VERIFIED
+- **Repro (copy, `key_stats`):** Total value 473,012.89, Total return **+131.13%**, TWR **−99.93%**,
+  1Y **−99.93%**, Max drawdown **−99.94%**, 1Y vol 105.73% — all reproduced on the same card.
+- **`performance_series` stats:** `start_value=200000.0`, `end_value=141.9`, `worst_day_pct=-99.9`,
+  the **cliff at 2026-01-20** (200,000→198.10). The series is **BTC-only** — every other holding is
+  FX-zeroed exactly as in F-1 — so it traces BTC's cost-plateau→garbage-price trajectory.
+- **How zero-coverage enters (cite):** `performance_series` values each axis date through the
+  consolidated date-aware engine — `value_portfolio(as_of=…, hist_fx=…)` at `analytics.py:250-251`;
+  `time_weighted_return` likewise at `analytics.py:368-369` (+ cashflow rates via the same empty
+  `hist_fx`, `:348`). With `ecb_fx_history` empty they inherit F-1's zeroing.
+- **The honesty conflict (cite):** ONE card mixes two valuation bases — "Total return"
+  (`analytics.py:180`) = `val.total_return_pct` from the **live** `value_portfolio` (`:50`, current
+  quotes + `ecb_fx_rates`) → +131.13%; "1Y/TWR/Max drawdown" (`:183-188`) from the **date-aware
+  backfill series** (empty `ecb_fx_history`) → −99.9x%. (Total return is itself distorted by F-3:
+  its denominator `cost_basis` excludes the two zeroed costs.)
+- **§9-5 honesty question (report only — no implement):** what should the perf series do on
+  no/partial-coverage dates? (a) **exclude** the date (gap in the line) — honest but discontinuous;
+  (b) **flag + carry** per §9-5 — readable, honesty visible, but a synthetic-looking flat run;
+  (c) **refuse with served reason until coverage exists** (a coverage-gated card) — most honest for
+  a card whose every number is coverage-dependent, but hides the card until step 6 runs;
+  (d) exclude a holding from the series only on its uncovered dates (partial-portfolio series) —
+  most faithful but needs per-holding coverage accounting. Trade-offs surfaced; owner rules.
+
+### F-3 — TSLA & SBICARD cost basis silently ZERO (correctness, P1) — CAUSE VERIFIED
+- **Txn dump (copy):** SBICARD buy 2019-01-18 `currency=INR fx_to_base=NULL` (1000×500=500,000 INR);
+  TSLA buy 2022-07-18 `currency=USD fx_to_base=NULL` (100×400=40,000 USD); BTC/XRP/102000/145834 all
+  `currency=SGD fx_to_base=1`.
+- **Engine repro (copy, live path):** TSLA `cost_base=0.00 upl=49,176.80 cost_fx_unavailable=True`;
+  SBICARD `cost_base=0.00 upl=8,785.22 cost_fx_unavailable=True` (upl == market value exactly).
+  BTC 200,000 / XRP 50 / 102000 4,000 / 145834 600 all reconcile at face. **Portfolio
+  `cost_basis=204,650.00 = 200,000+4,000+600+50`** — the two foreign costs excluded.
+- **Cause (cite):** `_trade_date_cost_map` (`portfolio.py:376-435`). A foreign lot (`lccy != base`,
+  `:414`) needs a trade-date rate: `acq_fx`=NULL (`:418-419`) → ≤7-day fallback
+  `hist_fx.rate_near(lccy, base, acquired_ts, 7)` (`:423`) against the **empty `ecb_fx_history`** →
+  None → `missing=True`, lot **excluded** (`:427-429`), holding flagged `"unavailable"` (`:433`) →
+  `cost_override=(0.00,"unavailable")` applied at `portfolio.py:529-532` → `cost_base=0`.
+- **Why the other four differ (F-3 #3 — the inconsistency IS the finding):** they were **recorded
+  in SGD = base**, so `lccy==base` → domestic lot, cost taken at face rate 1 (`:414-416`),
+  `has_foreign=False` → left on the unchanged path (`:431-432`). **One book, three cost behaviours**
+  driven by the *recorded* currency: foreign-recorded (TSLA/SBICARD) → cost zeroed; SGD-recorded →
+  cost at face; and separately, the *value* side of every non-SGD holding is zeroed in the backfill.
+- **Silent? (F-3 #4 — YES, silent = W-1-class defect):** `cost_fx_unavailable`/`cost_fx_approximate`
+  are computed in the engine (`portfolio.py`, `tax.py`) but **serialized nowhere** — absent from all
+  API routes and the frontend (grep: 0 hits in `app/api/`, `frontend/src/`). The Holdings endpoint
+  serves `cost_basis`/`unrealised_pl` per holding (`portfolio.py:81-82`) with **no flag**, so the
+  0-cost and the value-equals-P/L are shown as fact. The value-side W-1b reason exists
+  (`portfolio.py:247-250`) but does not fire here (the live value converts fine). **Silent exclusion
+  from a headline P/L.** Recorded numbers are never rewritten (correct); the defect is the *unflagged
+  omission*, not a rewrite.
+
+**Fix sequencing (NOT decided here):** all three trace to absent coverage (`ecb_fx_history` empty +
+sparse/garbage `price_history`) — so the fixes **likely couple to step 6** (real acquisition:
+ECB `eurofxref-hist` ingest, AV `outputsize=full`, crypto history via CoinGecko not AV, AMFI
+archive). Independent of step 6: the **backfill coverage preflight** (F-1 #4), the **perf-card
+coverage/honesty policy** (F-2 §9-5), and **surfacing `cost_fx_unavailable`** (F-3 #4) are
+render/served-string honesty gaps. Sequencing ruled in chat.

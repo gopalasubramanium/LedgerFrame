@@ -14,7 +14,7 @@ function row(over: Partial<Record<string, unknown>>) {
     valuation_label: "Market quote", status: "Fresh", source: "market", entitlement: "delayed",
     price_ts: "2026-07-11T00:00:00Z", is_stale: false, failure_reason: null, source_override: null,
     route_lane: "equity", route_source: "market", priority_chain: ["market", "manual"],
-    mapping_required: false, auth_required: false, route_rule: "lane",
+    mapping_required: false, auth_required: false, route_rule: "lane", route_reason: null,
     confidence: 92, confidence_band: "high", confidence_factors: ["Live market quote"],
     ...over,
   };
@@ -234,7 +234,7 @@ test("provenance column: the served route_rule chip renders all four values (§9
   });
 });
 
-test("route detail MetaStrip shows Source · Rule · Lane (read-only, §9-10)", async () => {
+test("route detail MetaStrip shows Route · Rule · Lane, distinct from the ProvenanceBadge Source (D1-c/D-028)", async () => {
   const user = userEvent.setup();
   renderPage();
   await screen.findByText("Per-holding diagnostics");
@@ -242,10 +242,44 @@ test("route detail MetaStrip shows Source · Rule · Lane (read-only, §9-10)", 
   await user.click(menus[0]);
   await user.click(await screen.findByText("Details"));
   const dialog = await screen.findByRole("dialog");
+  // D1-c: the routing block uses routing vocabulary — "Route" (the route decision), NOT a second
+  // "Source" label. The ProvenanceBadge above keeps "Source" (the value-supplier). Two distinct
+  // labels for two distinct concepts (D-028), instead of two fields both labeled "Source".
+  expect(within(dialog).getByText("Route")).toBeTruthy();
+  expect(within(dialog).getByText("Source")).toBeTruthy();
   // The route-detail strip carries the served Rule (AAPL priced via matrix, source yahoo).
   expect(within(dialog).getByText("Rule")).toBeTruthy();
   expect(within(dialog).getByText("matrix")).toBeTruthy();
   expect(within(dialog).getByText("yahoo")).toBeTruthy();
+});
+
+test("route detail surfaces the router's OWN served reason in the Routing block (D1-c)", async () => {
+  const user = userEvent.setup();
+  // An awaiting-NAV mutual fund: the router serves "awaiting NAV (refresh AMFI)" as route_reason.
+  vi.mocked(getPricingHealth).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      base_currency: "SGD",
+      holdings: [row({
+        id: 1, symbol: "145834", label: "Franklin India Fund", status: "Unavailable",
+        valuation_method: "unavailable", route_rule: "lane", route_lane: "in_mutual_fund",
+        route_source: "amfi_nav", route_reason: "awaiting NAV (refresh AMFI)",
+        failure_reason: "No value available from any configured source.",
+      })],
+      summary: { Unavailable: 1 },
+      confidence: { overall: 30, overall_band: "low", by_band: { high: { count: 0, value_pct: 0 }, medium: { count: 0, value_pct: 0 }, low: { count: 1, value_pct: 100 } } },
+      provider_tier_note: null,
+    },
+  });
+  renderPage();
+  await screen.findByText("Per-holding diagnostics");
+  const menus = await screen.findAllByRole("button", { name: /Actions for Franklin India Fund/ });
+  await user.click(menus[0]);
+  await user.click(await screen.findByText("Details"));
+  const dialog = await screen.findByRole("dialog");
+  // The served router reason is asserted at its destination control (the Routing block) — never
+  // frontend-invented (D-105).
+  expect(within(dialog).getByText("awaiting NAV (refresh AMFI)")).toBeTruthy();
 });
 
 test("tier note: the served av_tier honest string renders only when present (§9-8)", async () => {

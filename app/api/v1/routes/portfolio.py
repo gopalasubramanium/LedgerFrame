@@ -273,6 +273,10 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
             "auth_required": diag.auth_required if diag else False,
             # R-38 §9-10: which rule selected the source (override|matrix|lane|active).
             "route_rule": diag.route_rule if diag else "lane",
+            # D1-c: the router's OWN reason (e.g. "awaiting NAV (refresh AMFI)"), served
+            # distinct from failure_reason (which the generic UNAVAILABLE string masks) so
+            # the diagnostics modal can surface it in the Routing block (D-105).
+            "route_reason": diag.reason if diag else None,
             # Phase 2a: data confidence.
             **conf,
         })

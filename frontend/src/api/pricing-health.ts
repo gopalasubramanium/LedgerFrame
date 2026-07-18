@@ -33,6 +33,9 @@ export interface PricingRow {
   // R-38 §9-10: which rule selected the source (override | matrix | lane | active) — ONE derivation
   // from route(), served read-only. The frontend never recomputes it (D-105/D-072).
   route_rule: string;
+  // D1-c: the router's OWN served reason (e.g. "awaiting NAV (refresh AMFI)"), surfaced in the
+  // routing diagnostics block. Never frontend-invented (D-105).
+  route_reason: string | null;
   // confidence
   confidence: number;
   confidence_band: string; // high | medium | low (high≥80 / med≥50 / low<50)

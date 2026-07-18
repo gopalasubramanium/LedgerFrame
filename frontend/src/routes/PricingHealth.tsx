@@ -355,16 +355,21 @@ export function PricingHealth() {
             />
             {detail.failure_reason && <p className="ph__note">{detail.failure_reason}</p>}
             <h3 className="ph__h3">Routing</h3>
-            {/* Route detail (source · rule · lane · chain) — the read-only provenance MetaStrip (§9-10). */}
+            {/* Route detail (route · rule · lane · chain) — the read-only provenance MetaStrip (§9-10).
+                D1-c: the routing block uses routing vocabulary per D-028 — "Route" here (the route
+                decision), distinct from the ProvenanceBadge "Source" above (the value-supplier). */}
             <MetaStrip
               items={[
-                { label: "Source", value: detail.route_source },
+                { label: "Route", value: detail.route_source },
                 { label: "Rule", value: detail.route_rule },
                 { label: "Lane", value: detail.route_lane },
                 { label: "Class", value: detail.asset_class ? labelFor("asset_class", detail.asset_class) : "—" },
                 { label: "Native price", value: detail.native_price != null ? `${detail.currency ?? ""} ${formatPrice(detail.native_price)}` : "—" },
               ]}
             />
+            {/* D1-c: the router's OWN served reason (e.g. "awaiting NAV (refresh AMFI)"), surfaced
+                here in the Routing block — otherwise masked by the generic failure_reason (D-105). */}
+            {detail.route_reason && <p className="ph__note">{detail.route_reason}</p>}
             <div className="ph__chain">
               <span className="ph__chainlabel">Priority chain (read-only):</span>
               {detail.priority_chain.length > 0

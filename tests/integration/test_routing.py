@@ -33,3 +33,14 @@ async def test_pricing_health_exposes_routing(app_client):
     ph = (await app_client.get("/api/v1/portfolio/pricing-health")).json()
     rows = ph["holdings"]
     assert rows and all("route_source" in r and "route_lane" in r for r in rows)
+
+
+async def test_pricing_health_serves_router_reason(app_client):
+    # D1-c: the router's OWN reason (e.g. "awaiting NAV (refresh AMFI)") is served as a
+    # distinct field so the diagnostics modal can surface it — it is otherwise masked by
+    # the generic UNAVAILABLE failure_reason. RED before: no route_reason field.
+    await _add(app_client, "HDFCMF", asset_class="mutual_fund")
+    await app_client.post("/api/v1/instruments/HDFCMF/map-amfi", json={"code": "119551"})
+    ph = (await app_client.get("/api/v1/portfolio/pricing-health")).json()
+    row = next(r for r in ph["holdings"] if r["symbol"] == "HDFCMF")
+    assert row["route_reason"] == "awaiting NAV (refresh AMFI)"

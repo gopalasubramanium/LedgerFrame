@@ -1198,6 +1198,45 @@ milestone's intake. R-43 records the finding and stops.
 - **R3 (F-7a #4, applied).** A cached quote whose `source` differs from the routed source is
   **route-mismatched** and is refetched from the new route regardless of freshness.
 
+### 18-P — F-7 FIX-BATCH PROGRESS LOG (2026-07-19)
+
+#### DONE — committed, tested, gates green
+
+- **§18 investigation + rulings** — F-7a/b/c causes verified read-only against a scratch
+  copy of the owner's DB (live stack + `.env` untouched); the F-7b "phantom provider"
+  premise **falsified** and its repair ruling recorded VOID. — commit `66b75ce` (docs-only).
+- **§18-R3 (F-7a)** — `_refetch_route_mismatched`: a cached quote whose `source` differs
+  from the routed source is refetched from the new route regardless of freshness. Fires
+  only on a genuine mismatch (an on-route quote keeps the cache-publish cadence, so the
+  CoinGecko rate budget is not burned per refresh), honours no-egress, degrades to the
+  cache on any failure. — commit `07ee502`.
+- **§18-R2 (F-7b)** — `refresh_quote_detailed` returns `QuoteRefresh(quote, outcome,
+  reason)`; `refresh_data` counts real fetches only, every un-refreshed symbol carries its
+  true reason, and the response adds `still_stale[]` which the Pricing Health lane
+  surfaces ("N not refreshed · N still stale", not ok while either is non-empty). — commit
+  `5f90b0d`.
+- **§18-F7d** — the contention-fragile AI test filed with its controlled comparison and
+  folded into AI-surfaces (D-067/D-068) per the owner ruling. — commit `7e11bbc`.
+
+#### GATES (all from a SOLO run — see the §18-F7d lesson)
+
+Backend full suite **1205 passed, 0 failed** (+4 over the §17 baseline of 1201, from the
+two F-7 test files); `ruff` **All checks passed**; contract **current at 138** path-keys
+(no API-shape change — `/system/refresh-data` returns an untyped dict); frontend
+`npm run check` **exit 0 from `frontend/`** (337).
+
+**Harness lesson mechanised:** a full-suite gate verdict only counts from an
+**uncontended solo run**. Two earlier verdicts in this batch were void because competing
+pytest processes overlapped them, and one was reported as clean before that was noticed.
+
+#### STOP — OWNER ON-STACK RE-RUN
+
+Both F-7 fixes are pinned in tests, but the **live** CoinGecko refetch runs against the
+owner's egress and budget. Confirmed on his stack, not in this CLI. Findings return via
+chat. **Open for a chat ruling:** (a) the served priority chain does not distinguish
+"configured here" from "supported but unkeyed" — the presentational gap that made
+`eodhd`/`kite` read as phantom; (b) §17-R4, the un-migrated AV override on BTC/XRP.
+
 ---
 
 ## 19. LESSONS (recorded)

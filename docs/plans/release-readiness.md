@@ -1,8 +1,33 @@
 # release-readiness.md — defining the finish line
 
 **Status: ⏸ GATES C–F STANDING/DORMANT. GATE A CLOSED (+ A9–A11 addendum) · GATE B CLOSED
-(owner-ratified). RELEASE REQUIRES FULL COMPLETION (RD-9 Amendment 3, as REFINED by Amendment 4,
-owner 2026-07-18 — Voice is POST-RELEASE; the v2.0.0 set is enumerated below).**
+(owner-ratified). RELEASE REQUIRES FULL COMPLETION (RD-9 Amendment 3, as REFINED by Amendment 4 and
+EXTENDED by Amendment 5, owner 2026-07-18 — Voice is POST-RELEASE; the v2.0.0 set is enumerated below,
+now incl. R-45 + R-46; the R-41/R-43/R-44 release-scope ruling remains PENDING with the owner).**
+
+> ## ⚠ RD-9 SCOPE AMENDMENT 5 (owner, 2026-07-18) — **v2.0.0 scope += R-45, R-46.**
+>
+> **EXTENDS Amendment 4 (below, preserved): the v2.0.0 set gains two owner-raised items.** Recorded at
+> the **data-feed-routing (R-38) close**. Owner ruling, in chat: *"All of these need to align (to be
+> done) before release."*
+>
+> - **R-45 — Per-instrument + default news coverage.** Owner-raised 2026-07-18 (R-38 Phase 3b re-walk).
+>   Per-instrument news source + default-coverage expansion; egress ruling required (P-8 symmetry,
+>   no-egress conditional). See the ROADMAP R-45 row.
+> - **R-46 — Home summary cards (post-close pages).** Owner-raised 2026-07-18. Cash-flow runway ·
+>   liquidity what-ifs · upcoming insurance renewals · goal progress. Summarise-with-reader only (IA
+>   ownership tables). See the ROADMAP R-46 row.
+>
+> **The v2.0.0 set is now:** all pages DONE + Settings + data-feed-routing (R-38) + Help + Legal +
+> AI-surfaces (D-067/D-068) + **R-45** + **R-46** + chrome-sidebar-refresh (R-39, FINAL) + Gates C→F
+> clear.
+>
+> ### ⚠ STILL PENDING with the owner (do NOT resolve): the **R-41 / R-43 / R-44** release-scope ruling.
+>
+> R-41 (per-provider credentials), R-43 (historical valuation backfill), and R-44 (news thumbnails) are
+> **release-scope CANDIDATES** raised by R-38; the owner has **not yet ruled** whether they gate v2.0.0.
+> Recorded as **PENDING**, verbatim — unresolved until the owner rules. (R-45/R-46 above ARE ruled in;
+> R-41/R-43/R-44 are NOT.)
 
 > ## ⚠ RD-9 SCOPE AMENDMENT 4 (owner, 2026-07-18) — **the v2.0.0 set is ENUMERATED; Voice (R-32) is POST-RELEASE.**
 >

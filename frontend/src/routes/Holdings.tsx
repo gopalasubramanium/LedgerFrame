@@ -76,6 +76,23 @@ function provenanceCell(h: HoldingRow) {
   );
 }
 
+// §12-R2 (F-3): the Unrealised P/L cell + a loud honesty marker when the cost basis behind it is
+// incomplete (`cost_fx_unavailable`) or approximate (`cost_fx_approximate`). The served reason
+// string (`cost_fx_note`, D-105) is rendered verbatim as the marker's title — the frontend decides
+// nothing, only whether to show the glyph.
+function plCell(h: HoldingRow) {
+  const value = formatSignedMoney(h.unrealised_pl ?? null);
+  if (!h.cost_fx_note) return <>{value}</>;
+  return (
+    <span className="hold__plflag">
+      {value}
+      <span className="hold__costfx" role="note" title={h.cost_fx_note} aria-label={h.cost_fx_note}>
+        !
+      </span>
+    </span>
+  );
+}
+
 export function Holdings() {
   const toast = useToast();
   const [holdings, setHoldings] = useState<HoldingRow[]>([]);
@@ -306,7 +323,11 @@ export function Holdings() {
       // every manual holding, and Value is the decision figure. Price lives in the
       // row's Details (instrument page).
       { key: "market_value", label: `Value (${baseCcy})`, format: "money", sortable: true },
-      { key: "unrealised_pl", label: "Unrealised P/L", format: "signed-money", sortable: true },
+      // §12-R2 (F-3 EXCLUSIONS ARE LOUD): a row whose base cost basis is incomplete/approximate for
+      // want of a trade-date rate carries a visible honesty marker with the SERVED reason (D-105) —
+      // so a value==P/L row (excluded cost) is never shown as fact. `cost_fx_note` is rendered
+      // verbatim in the title; the "!" glyph is the always-visible, colour-independent signal.
+      { key: "unrealised_pl", label: "Unrealised P/L", format: "signed-money", sortable: true, render: plCell },
       { key: "day_change", label: "Today's change", format: "signed-money" },
       // Provenance collapsed to the StalenessChip + tooltip pattern (compact).
       { key: "valuation_label", label: "Source", render: provenanceCell },

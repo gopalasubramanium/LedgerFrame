@@ -232,6 +232,10 @@ export function Portfolio() {
               <Link to="/net-worth">Net worth ↗</Link>
               {s.has_stale ? <> · <StalenessChip isStale asOf="" /> {s.stale_count} stale</> : null}
             </p>
+            {/* §12-R2 (F-3 EXCLUSIONS ARE LOUD): the cost basis carries a SERVED annotation (D-105,
+                rendered verbatim) when lots are excluded for want of a trade-date rate — so an
+                incomplete basis (and the total-return denominator it feeds) is never shown as fact. */}
+            {s.cost_basis_note && <p className="pf__note pf__note--warn">{s.cost_basis_note}</p>}
           </>
         )}
       </CardBody>

@@ -139,6 +139,12 @@
   color: var(--text-tertiary);
 }
 
+/* §12-R2 (F-3): the cost-basis exclusion annotation is an honesty line, not a footnote —
+   carry the established attention colour so an incomplete basis reads as loud, never quiet. */
+.pf__note--warn {
+  color: var(--attention);
+}
+
 .pf__donuts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));

@@ -76,6 +76,7 @@ vi.mock("../api/client", async (orig) => ({
 }));
 
 import { Portfolio, NOT_A_SHARPE } from "./Portfolio";
+import { getPortfolioSummary } from "../api/portfolio";
 
 function renderPage() {
   return render(
@@ -191,4 +192,29 @@ test("Costs card shows two separate blocks, never a blended total (D-048)", asyn
   // Cross-link to the Reports page — now the ONE linked-summary affordance: the corner ↗, whose
   // accessible name is its destination (page-home §12ho1-2). The text-link variant is retired.
   expect(within(document.body).getAllByLabelText(/Reports/).length).toBeGreaterThan(0);
+});
+
+test("§12-R2 (F-3): a served cost-basis exclusion note renders verbatim on the Portfolio card", async () => {
+  // Override the summary for this render only: the backend serves the annotation (D-105) when
+  // lots are excluded for want of a trade-date rate. The frontend renders the string verbatim.
+  vi.mocked(getPortfolioSummary).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      base_currency: "SGD", total_value: 819848.4, gross_assets: 1239848.4, liabilities: -420000, cash_and_deposits: 25000,
+      cost_basis: 204650, cost_fx_excluded_lots: 2, cost_basis_note: "Excludes 2 lots — trade-date FX unavailable",
+      unrealised_pl: 108109.45, day_change: 296.84, total_return_pct: 15.19,
+      has_stale: false, stale_count: 0,
+      allocation_by_class: { equity: 45699.11 }, allocation_by_currency: { SGD: 738768 },
+      allocation_by_sector: { Technology: 33171 }, top_gainers: [], top_losers: [],
+    },
+  } as Awaited<ReturnType<typeof getPortfolioSummary>>);
+  renderPage();
+  expect(await screen.findByText("Excludes 2 lots — trade-date FX unavailable")).toBeTruthy();
+});
+
+test("§12-R2 zero-regression: a fully-covered book (no served note) renders NO cost-basis annotation", async () => {
+  // The default mock summary carries no cost_basis_note → the loud-exclusion line stays silent.
+  renderPage();
+  await screen.findByText("Cost basis");
+  expect(screen.queryByText(/trade-date FX unavailable/)).toBeNull();
 });

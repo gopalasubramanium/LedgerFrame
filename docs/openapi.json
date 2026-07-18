@@ -752,6 +752,32 @@
             ],
             "title": "Cost Basis"
           },
+          "cost_fx_approximate": {
+            "default": false,
+            "title": "Cost Fx Approximate",
+            "type": "boolean"
+          },
+          "cost_fx_excluded_lots": {
+            "default": 0,
+            "title": "Cost Fx Excluded Lots",
+            "type": "integer"
+          },
+          "cost_fx_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Fx Note"
+          },
+          "cost_fx_unavailable": {
+            "default": false,
+            "title": "Cost Fx Unavailable",
+            "type": "boolean"
+          },
           "country": {
             "anyOf": [
               {

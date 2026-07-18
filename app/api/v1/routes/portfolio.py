@@ -23,7 +23,7 @@ from app.core.money import (
     money,
     to_display,
 )
-from app.core.provenance import valuation_label
+from app.core.provenance import cost_fx_basis_note, cost_fx_holding_note, valuation_label
 from app.core.regions import region_of
 from app.models import (
     Account,
@@ -88,6 +88,18 @@ def _hv(h) -> dict:
         "market_value_display": format_money_display(h.market_value_base),
         "day_change_pct_display": format_signed_pct_display(h.day_change_pct),
         "is_stale": h.is_stale, "is_priced": h.is_priced,
+        # §12-R2 (F-3 EXCLUSIONS ARE LOUD): the cost-basis FX honesty flags + excluded-lot count +
+        # a SERVED reason string (D-105). Previously computed in the engine but serialized nowhere —
+        # a 0-cost / value==P/L row read as fact. Recorded numbers are never rewritten; this only
+        # names the honest omission. Null note on a fully-covered row (nothing rendered).
+        "cost_fx_unavailable": getattr(h, "cost_fx_unavailable", False),
+        "cost_fx_approximate": getattr(h, "cost_fx_approximate", False),
+        "cost_fx_excluded_lots": getattr(h, "cost_fx_excluded_lots", 0),
+        "cost_fx_note": cost_fx_holding_note(
+            unavailable=getattr(h, "cost_fx_unavailable", False),
+            approximate=getattr(h, "cost_fx_approximate", False),
+            excluded_lots=getattr(h, "cost_fx_excluded_lots", 0),
+        ),
         # Provenance: HOW this value was derived + a concise, honest label + the
         # real as-of timestamp (null when unpriced — never fabricated).
         "valuation_method": method,
@@ -126,6 +138,14 @@ async def portfolio_summary(entity_id: int | None = Query(default=None),
         "liabilities": to_display(liabilities),
         "cash_and_deposits": to_display(cash_and_deposits),
         "cost_basis": to_display(val.cost_basis),
+        # §12-R2 (F-3): annotate the cost basis with the excluded-lot count so an incomplete basis
+        # (which also distorts total_return's denominator) is never shown as complete. Served string
+        # (D-105); null note + zero count on a fully-covered book.
+        "cost_fx_excluded_lots": sum(getattr(h, "cost_fx_excluded_lots", 0) for h in val.holdings),
+        "cost_basis_note": cost_fx_basis_note(
+            excluded_lots=sum(getattr(h, "cost_fx_excluded_lots", 0) for h in val.holdings),
+            approximate_holdings=sum(1 for h in val.holdings if getattr(h, "cost_fx_approximate", False)),
+        ),
         "unrealised_pl": to_display(val.unrealised_pl),
         "day_change": to_display(val.day_change),
         "total_return_pct": to_display(val.total_return_pct),
@@ -161,6 +181,11 @@ class HoldingView(BaseModel):
     day_change_pct_display: str | None = None  # §12hm1-1 served signed-percent display string
     is_stale: bool
     is_priced: bool
+    # §12-R2 (F-3): cost-basis FX honesty — the flags + excluded-lot count + served reason string.
+    cost_fx_unavailable: bool = False
+    cost_fx_approximate: bool = False
+    cost_fx_excluded_lots: int = 0
+    cost_fx_note: str | None = None  # D-105 served reason (null when the basis is honestly complete)
     valuation_method: str | None = None
     valuation_label: str | None = None
     price_ts: str | None = None  # as-of ISO timestamp (null when unpriced)

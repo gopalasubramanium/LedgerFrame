@@ -20,6 +20,12 @@ export interface HoldingRow {
   market_value_display?: string | null;
   cost_basis?: number | null;
   unrealised_pl?: number | null;
+  // §12-R2 (F-3 EXCLUSIONS ARE LOUD): cost-basis FX honesty. `cost_fx_note` is a SERVED reason
+  // string (D-105) — rendered verbatim, non-null only when the basis is incomplete/approximate.
+  cost_fx_unavailable?: boolean;
+  cost_fx_approximate?: boolean;
+  cost_fx_excluded_lots?: number;
+  cost_fx_note?: string | null;
   day_change?: number | null;
   day_change_pct?: number | null;
   day_change_pct_display?: string | null;
@@ -40,6 +46,9 @@ export interface SummaryResponse {
   base_currency: string;
   total_value?: number | null;
   cost_basis?: number | null;
+  // §12-R2 (F-3): served annotation naming the excluded-lot count when the cost basis is incomplete.
+  cost_fx_excluded_lots?: number;
+  cost_basis_note?: string | null;
   unrealised_pl?: number | null;
   day_change?: number | null;
   total_return_pct?: number | null;

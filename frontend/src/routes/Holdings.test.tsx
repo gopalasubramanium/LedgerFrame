@@ -90,6 +90,29 @@ test("renders holdings + the linked summary header from the API", async () => {
   expect(screen.getByText("+400.00")).toBeInTheDocument();
 });
 
+test("§12-R2 (F-3): a row with an incomplete cost basis renders a served honesty marker", async () => {
+  const note = "Cost basis excludes 1 lot — no trade-date exchange rate available";
+  vi.mocked(api.getHoldings).mockResolvedValue({
+    ok: true,
+    data: { base_currency: "SGD", holdings: [row({
+      symbol: "TSLA", cost_basis: 0, unrealised_pl: 49176.8,
+      cost_fx_unavailable: true, cost_fx_excluded_lots: 1, cost_fx_note: note,
+    })] },
+  });
+  renderPage();
+  await waitFor(() => expect(screen.getByText("TSLA")).toBeInTheDocument());
+  // The served reason is the marker's accessible name — rendered verbatim (D-105), never client-built.
+  const marker = screen.getByRole("note", { name: note });
+  expect(marker).toBeInTheDocument();
+  expect(marker.textContent).toBe("!");
+});
+
+test("§12-R2 zero-regression: a fully-covered row shows NO honesty marker", async () => {
+  renderPage(); // default row() carries no cost_fx_note
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  expect(screen.queryByRole("note")).toBeNull();
+});
+
 test("shows an honest empty state with a reason and an Add action", async () => {
   vi.mocked(api.getHoldings).mockResolvedValue({
     ok: true, data: { base_currency: "SGD", holdings: [] },

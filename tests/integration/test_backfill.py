@@ -145,7 +145,7 @@ async def _seed_tsla_book(session):
     price history, a live quote, and per-date ECB FX. Returns (account, instrument)."""
     from datetime import UTC, datetime
 
-    from app.models import Account, AssetClass, Holding, Instrument, PriceHistory, TxnType
+    from app.models import Account, Instrument, PriceHistory, TxnType
     from app.models import Quote as QuoteRow
     from app.models import Transaction as Txn
     from app.services import fx_history
@@ -242,11 +242,11 @@ async def test_fund_recorded_in_sgd_infers_inr_cost_currency(session):
     but whose buy was RECORDED in SGD must rebuild with holding.currency = INR — the fund's own
     currency — not the SGD transaction default. The recorded transaction numbers are untouched;
     only the derived cost currency is inferred correctly (resolves pre-release-walk item 10c)."""
-    from app.models import Account, AssetClass, Instrument, TxnType
+    from sqlalchemy import select as _select
+
+    from app.models import Account, AssetClass, Holding, Instrument, TxnType
     from app.models import Transaction as Txn
     from app.services.portfolio import rebuild_holdings_from_transactions
-    from sqlalchemy import select as _select
-    from app.models import Holding
 
     acc = Account(name="A", currency="SGD")
     session.add(acc)
@@ -310,6 +310,7 @@ async def test_demo_seeds_price_and_fx_history_so_as_of_prices_the_book(app_clie
     from datetime import UTC, datetime, timedelta
 
     from sqlalchemy import func, select
+
     from app.db.base import get_sessionmaker
     from app.models import EcbFxHistory, PriceHistory
     from app.services.portfolio import value_portfolio
@@ -368,7 +369,7 @@ async def _seed_constant_price_moving_fx(session):
     """A single USD holding on an SGD base, bought before the window, with a CONSTANT USD price
     across the window and per-date FX that MOVES — so the only possible source of series movement
     is the FX. Plus a benchmark (SPY) series for the axis. Returns the window (start, end)."""
-    from datetime import UTC, date, datetime, timedelta
+    from datetime import UTC, datetime, timedelta
 
     from app.models import Account, AssetClass, EcbFxHistory, Instrument, PriceHistory, TxnType
     from app.models import Transaction as Txn
@@ -424,7 +425,7 @@ async def test_performance_series_must_track_per_date_fx_not_todays(session, mon
     genuinely moves (the date-aware engine proves it) — but the current performance_series values
     every historical point at TODAY's FX, so its line is FLAT. It must track per-date FX. FAILS
     RED against the drifted analytics; PASSES once it consumes the date-aware engine."""
-    from datetime import UTC, datetime, timedelta
+    from datetime import timedelta
 
     import app.services.market as market
     from app.services.analytics import performance_series
@@ -512,6 +513,92 @@ async def test_cost_basis_null_fx_is_honestly_flagged_not_todays_rate(session):
     val = await value_portfolio(session, "SGD")
     foo_hv = [h for h in val.holdings if h.symbol == "FOO"][0]
     assert foo_hv.cost_fx_unavailable is True  # flagged, not fabricated at today's rate
+
+
+async def _seed_null_fx_foreign_book(session):
+    """One foreign (USD) lot with NO stored trade-date FX and no ECB history → the engine flags
+    the holding cost_fx_unavailable and excludes the lot from the base cost basis (F-3)."""
+    from datetime import UTC, datetime
+
+    from app.models import Account, AssetClass, Instrument, TxnType
+    from app.models import Quote as QuoteRow
+    from app.models import Transaction as Txn
+    from app.services.portfolio import rebuild_holdings_from_transactions
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    foo = Instrument(symbol="FOO", currency="USD", pricing_currency="USD", asset_class=AssetClass.EQUITY)
+    session.add(foo)
+    await session.flush()
+    session.add(QuoteRow(instrument_id=foo.id, price=Decimal("10"), previous_close=Decimal("10"),
+                         currency="USD", source="mock", entitlement="delayed"))
+    session.add(Txn(account_id=acc.id, instrument_id=foo.id, type=TxnType.BUY,
+                    ts=datetime(2019, 1, 2, tzinfo=UTC), quantity=Decimal("100"), price=Decimal("10"),
+                    currency="USD", fx_to_base=None, fx_base=None))
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+
+
+async def test_holdings_row_surfaces_cost_fx_unavailable_flag_and_served_note(session):
+    """§12-R2 (F-3 EXCLUSIONS ARE LOUD): the Holdings serialization surfaces the excluded-cost
+    flag + a served reason string. RED before step 1: `_hv` drops cost_fx_unavailable entirely, so
+    the 0-cost / value==P/L row is shown as fact with no flag (the W-1-class silent omission)."""
+    from app.api.v1.routes.portfolio import portfolio_holdings
+
+    await _seed_null_fx_foreign_book(session)
+    resp = await portfolio_holdings(session=session)
+    foo = [h for h in resp["holdings"] if h["symbol"] == "FOO"][0]
+    assert foo["cost_fx_unavailable"] is True            # the flag is serialized, not dropped
+    assert foo["cost_fx_excluded_lots"] == 1             # honest excluded-lot count (D-076)
+    assert foo["cost_fx_note"]                            # a served reason string (D-105), non-empty
+    assert "excludes" in foo["cost_fx_note"].lower()
+
+
+async def test_portfolio_card_annotates_cost_basis_with_excluded_lots(session):
+    """§12-R2: the Portfolio card's cost basis carries a served annotation naming the excluded-lot
+    count. RED before step 1: portfolio_summary serves a bare cost_basis with no exclusion note, so
+    the incomplete basis (and the distorted total_return denominator) reads as complete."""
+    from app.api.v1.routes.portfolio import portfolio_summary
+
+    await _seed_null_fx_foreign_book(session)
+    summary = await portfolio_summary(entity_id=None, session=session)
+    assert summary["cost_fx_excluded_lots"] == 1
+    assert summary["cost_basis_note"]                    # served annotation, non-empty
+    assert "1 lot" in summary["cost_basis_note"]
+
+
+async def test_fully_covered_book_carries_no_cost_fx_flags(session):
+    """Zero-regression pin: a domestic (all-SGD, rate-1) book surfaces NO cost-fx flags or notes —
+    the loud-exclusion surfacing must stay silent when every lot's cost basis is honestly complete."""
+    from datetime import UTC, datetime
+
+    from app.api.v1.routes.portfolio import portfolio_holdings, portfolio_summary
+    from app.models import Account, AssetClass, Instrument, TxnType
+    from app.models import Quote as QuoteRow
+    from app.models import Transaction as Txn
+    from app.services.portfolio import rebuild_holdings_from_transactions
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    bar = Instrument(symbol="BAR", currency="SGD", pricing_currency="SGD", asset_class=AssetClass.EQUITY)
+    session.add(bar)
+    await session.flush()
+    session.add(QuoteRow(instrument_id=bar.id, price=Decimal("10"), previous_close=Decimal("10"),
+                         currency="SGD", source="mock", entitlement="delayed"))
+    session.add(Txn(account_id=acc.id, instrument_id=bar.id, type=TxnType.BUY,
+                    ts=datetime(2020, 1, 2, tzinfo=UTC), quantity=Decimal("100"), price=Decimal("5"),
+                    currency="SGD", fx_to_base=Decimal("1"), fx_base="SGD"))
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+
+    holdings = await portfolio_holdings(session=session)
+    row = [h for h in holdings["holdings"] if h["symbol"] == "BAR"][0]
+    assert row["cost_fx_unavailable"] is False and row["cost_fx_approximate"] is False
+    assert row["cost_fx_excluded_lots"] == 0 and row["cost_fx_note"] is None
+    summary = await portfolio_summary(entity_id=None, session=session)
+    assert summary["cost_fx_excluded_lots"] == 0 and summary["cost_basis_note"] is None
 
 
 # --------------------------------------------------------------------------- #
@@ -622,7 +709,7 @@ async def test_backfill_and_snapshot_endpoints_served(app_client):
     r = await app_client.post("/api/v1/net-worth/backfill")
     assert r.status_code == 200 and "message" in r.json()
     st = (await app_client.get("/api/v1/net-worth/backfill-status")).json()
-    assert set(("running", "done", "total", "ok", "failed")) <= set(st)
+    assert {"running", "done", "total", "ok", "failed"} <= set(st)
     snap = await app_client.post("/api/v1/net-worth/snapshot")
     assert snap.status_code in (200, 409)  # 409 only if a backfill is mid-flight
 

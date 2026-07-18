@@ -162,6 +162,7 @@ class HoldingValue:
     # base cost is incomplete and P/L must be read as flagged (never silently at today's rate).
     cost_fx_approximate: bool = False
     cost_fx_unavailable: bool = False
+    cost_fx_excluded_lots: int = 0  # §12-R2: how many lots were excluded for want of a trade-date rate
     # Pricing-health provenance (populated from the quote where one was used).
     exchange: str | None = None
     source: str | None = None
@@ -375,7 +376,7 @@ async def _asof_holdings(
 
 async def _trade_date_cost_map(
     session: AsyncSession, base_currency: str, entity_id: int | None
-) -> dict[tuple[int, int], tuple[Decimal, str | None]]:
+) -> dict[tuple[int, int], tuple[Decimal, str | None, int]]:
     """§9-4(a): per-holding base cost basis converted at each open lot's TRADE-DATE FX, not today's
     rate. Keyed ``(account_id, instrument_id) -> (base_cost, flag)`` where flag ∈ {None,
     'approximate', 'unavailable'}. Reader-only (no migration): replays the ledger via ``fifo_report``
@@ -403,10 +404,11 @@ async def _trade_date_cost_map(
             by_key[(t.account_id, t.instrument_id)].append(t)
 
     hist_fx = None
-    out: dict[tuple[int, int], tuple[Decimal, str | None]] = {}
+    out: dict[tuple[int, int], tuple[Decimal, str | None, int]] = {}
     for key, group in by_key.items():
         _events, lots = fifo_report(group, base_currency)
         total = ZERO
+        excluded = 0
         approx = missing = has_foreign = False
         for lot in lots:
             native_cost = D(lot.quantity) * D(lot.unit_cost)
@@ -426,18 +428,20 @@ async def _trade_date_cost_map(
                     approx = True
             if rate is None:
                 missing = True  # honest-missing: this lot's base cost cannot be stated
+                excluded += 1   # §12-R2: count the excluded lots so the omission is loud (D-076)
                 continue
             total += native_cost * D(rate)
         if not has_foreign:
             continue  # domestic holding — leave the unchanged today's-rate path (identical)
         flag = "unavailable" if missing else ("approximate" if approx else None)
-        out[key] = (money(total), flag)
+        out[key] = (money(total), flag, excluded)
     return out
 
 
 async def _value_one_holding(
     session: AsyncSession, h, base_currency: str, warm: bool,
-    *, as_of: date | None = None, hist_fx=None, cost_override: tuple[Decimal, str | None] | None = None,
+    *, as_of: date | None = None, hist_fx=None,
+    cost_override: tuple[Decimal, str | None, int] | None = None,
 ) -> HoldingValue:
     """Value a single holding at its latest cached quote, converted to base
     currency. May raise on edge data — value_portfolio catches it and degrades
@@ -520,6 +524,7 @@ async def _value_one_holding(
     # basis rides the holding's currency (native_ccy). Each is converted to base independently.
     cost_fx_approximate = False
     cost_fx_unavailable = False
+    cost_fx_excluded_lots = 0
     if as_of is None:
         mv_base, fx_ok = await fx.convert_checked(mv_native, price_ccy, base_currency)
         cost_base = await fx.convert(cost_native, native_ccy, base_currency)
@@ -527,7 +532,7 @@ async def _value_one_holding(
         # §9-4(a): when a trade-date cost override exists (cross-currency lots), it supersedes the
         # today's-rate conversion above — cost basis rides each lot's stored trade-date FX.
         if cost_override is not None and h.manual_value is None:
-            cost_base, ov_flag = cost_override
+            cost_base, ov_flag, cost_fx_excluded_lots = cost_override
             cost_fx_approximate = ov_flag == "approximate"
             cost_fx_unavailable = ov_flag == "unavailable"
     else:
@@ -579,6 +584,7 @@ async def _value_one_holding(
         fx_unavailable=fx_unavailable,
         cost_fx_approximate=cost_fx_approximate,
         cost_fx_unavailable=cost_fx_unavailable,
+        cost_fx_excluded_lots=cost_fx_excluded_lots,
         exchange=instrument.exchange if instrument else None,
         source=quote.source if quote else None,
         entitlement=quote.entitlement.value if quote else None,
@@ -636,7 +642,7 @@ async def value_portfolio(
     the historical-FX resolver once and passes it in as ``hist_fx`` (avoids a reload per date).
     """
     val = PortfolioValuation(base_currency=base_currency)
-    cost_map: dict[tuple[int, int], tuple[Decimal, str | None]] = {}
+    cost_map: dict[tuple[int, int], tuple[Decimal, str | None, int]] = {}
     if as_of is None:
         # §3.5 R1 (chokepoint): soft-deleted holdings contribute nothing to net worth or any
         # valuation. This one filter covers the ~25 callers that value through value_portfolio.

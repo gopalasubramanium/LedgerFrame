@@ -22,6 +22,9 @@ export interface PortfolioSummary {
   liabilities: number;
   cash_and_deposits: number;
   cost_basis: number;
+  // §12-R2 (F-3): served cost-basis exclusion annotation (D-105) — the excluded-lot count + note.
+  cost_fx_excluded_lots?: number;
+  cost_basis_note?: string | null;
   unrealised_pl: number;
   day_change: number;
   total_return_pct: number;

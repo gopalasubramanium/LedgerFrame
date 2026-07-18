@@ -47,6 +47,35 @@ def valuation_label(
     return _METHOD_LABELS.get(method, _METHOD_LABELS[ValuationMethod.MARKET_QUOTE])
 
 
+def cost_fx_holding_note(
+    *, unavailable: bool, approximate: bool, excluded_lots: int
+) -> str | None:
+    """§12-R2 (F-3 EXCLUSIONS ARE LOUD): the served reason a holding's cost basis is incomplete or
+    approximate — the value that was silent (W-1-class) until R-43. `None` when the cost basis is
+    honestly complete (the fully-covered row shows nothing). Recorded numbers are never rewritten;
+    this only names the honest gap (D-105 served string, D-076 excluded-count)."""
+    if unavailable:
+        n = max(excluded_lots, 1)
+        return (f"Cost basis excludes {n} lot{'s' if n != 1 else ''} — "
+                "no trade-date exchange rate available")
+    if approximate:
+        return ("Cost basis uses an approximate trade-date exchange rate "
+                "(nearest published within 7 days)")
+    return None
+
+
+def cost_fx_basis_note(*, excluded_lots: int, approximate_holdings: int) -> str | None:
+    """§12-R2: the Portfolio card's cost-basis annotation. Excluded lots take precedence (the
+    incomplete-basis honesty line, which also distorts the total-return denominator); an
+    all-approximate book gets the softer note. `None` when every lot's basis is complete & exact."""
+    if excluded_lots > 0:
+        return (f"Excludes {excluded_lots} lot{'s' if excluded_lots != 1 else ''} — "
+                "trade-date FX unavailable")
+    if approximate_holdings > 0:
+        return "Cost basis uses approximate trade-date exchange rates for some holdings"
+    return None
+
+
 def method_for_quote(entitlement: EntitlementStatus, price_available: bool) -> ValuationMethod:
     """Default valuation method for a provider quote (market data). Unavailable when
     there's no price; otherwise a market quote — the common case."""

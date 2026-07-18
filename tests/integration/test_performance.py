@@ -84,8 +84,8 @@ async def test_key_stats_term_id_is_purely_additive(app_client):
     # before/after capture of the full /stats payload.)
     d = (await app_client.get("/api/v1/portfolio/stats")).json()
 
-    # term_id is the ONLY field that may be present beyond the original metric schema.
-    allowed = {"label", "value", "kind", "signed", "note", "term_id"}
+    # term_id + basis (§12-R1 F-2 valuation-basis label) are additive fields beyond the original schema.
+    allowed = {"label", "value", "kind", "signed", "note", "term_id", "basis"}
     for m in d["metrics"]:
         extra = set(m) - allowed
         assert not extra, f"{m['label']} has unexpected keys {extra}"

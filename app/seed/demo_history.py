@@ -26,7 +26,7 @@ from sqlalchemy import func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.money import D
-from app.models import AssetClass, EcbFxHistory, Instrument, PriceHistory
+from app.models import EcbFxHistory, Instrument, PriceHistory
 from app.models import Transaction as Txn
 from app.providers.market.mock import _CATALOG
 
@@ -97,11 +97,14 @@ async def seed_demo_history(session: AsyncSession) -> dict:
         instr = await session.get(Instrument, iid)
         if instr is None:
             continue
-        # A mutual fund's history is official NAV (AMFI — step 6), not a market series; a manual-
-        # priced instrument has no market feed. Neither gets a fabricated equity-style walk — they
-        # stay honestly history-less in the demo (the trend renders them as a §9-5 carried-forward
-        # gap), and the routing guarantee (a fund is never fetched from an equity provider) holds.
-        if instr.asset_class == AssetClass.MUTUAL_FUND or instr.is_manual_price:
+        # A manual-priced instrument has no market feed — it is carried at its manual valuation, so
+        # it never gets a fabricated series. A mutual fund's real history is official NAV (AMFI —
+        # step 6); the offline demo can't fetch it, so it generates a deterministic daily NAV series
+        # (source='mock') so the demo is FULLY COVERED and the §12-R1 date-aware metrics compute
+        # normally in demo (the F-2 refuse-until-coverage gate would otherwise refuse the whole
+        # perf card on a demo fund with no history). The routing guarantee still holds on a REAL
+        # instance (a fund is never fetched from an equity provider — the mock source is demo-only).
+        if instr.is_manual_price:
             continue
         cat = _CATALOG.get(instr.symbol)
         base = float(cat["base"]) if cat else float(D(instr.market_cap or 0) or 100)

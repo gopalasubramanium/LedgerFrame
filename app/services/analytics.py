@@ -102,17 +102,29 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
     largest = priced[0] if priced else None
     top5 = sum((h.market_value_base for h in priced[:5]), ZERO)
 
+    # §12-R1 (F-2 REFUSE-UNTIL-COVERAGE): the date-aware risk metrics (TWR / 1Y return / volatility
+    # / drawdown) are computed from the per-date price+FX series. If the on-stack history doesn't
+    # cover the window, that series is dominated by carried-from-nothing values and yields the
+    # F-2 −99.93% garbage — so we REFUSE with a served state instead, never a fabricated number.
+    from app.services.coverage import date_aware_computable
+
+    cov = await date_aware_computable(session, base_currency)
+    da_computable = cov["computable"]
+    da_note = cov["reason"]  # the served refusal string when not computable (else None)
+
     # 1Y risk/return metrics from the invested performance series (best-effort —
-    # never block the panel if the provider is slow/rate-limited).
+    # never block the panel if the provider is slow/rate-limited). Skipped entirely when the
+    # window isn't covered (no wasted per-date valuation, and no garbage to show).
     import asyncio
 
     ps: dict = {}
-    try:
-        perf = await asyncio.wait_for(
-            performance_series(session, base_currency, 365, benchmark, entity_id=entity_id), timeout=14)
-        ps = perf.get("stats") or {}
-    except (TimeoutError, Exception):  # noqa: BLE001
-        ps = {}
+    if da_computable:
+        try:
+            perf = await asyncio.wait_for(
+                performance_series(session, base_currency, 365, benchmark, entity_id=entity_id), timeout=14)
+            ps = perf.get("stats") or {}
+        except (TimeoutError, Exception):  # noqa: BLE001
+            ps = {}
     vol = ps.get("volatility_pct") or 0.0
     ret = ps.get("return_pct") or 0.0
     ret_vol = round(ret / vol, 2) if vol else None
@@ -158,10 +170,12 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
     # Time-weighted return (best-effort; None when history is too thin to be honest).
     import asyncio as _asyncio
 
-    try:
-        twr_pct = await _asyncio.wait_for(time_weighted_return(session, base_currency), timeout=12)
-    except (TimeoutError, Exception):  # noqa: BLE001
-        twr_pct = None
+    twr_pct = None
+    if da_computable:
+        try:
+            twr_pct = await _asyncio.wait_for(time_weighted_return(session, base_currency), timeout=12)
+        except (TimeoutError, Exception):  # noqa: BLE001
+            twr_pct = None
 
     return {
         "base_currency": base_currency,
@@ -177,15 +191,25 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
             {"label": "Realised P/L", "value": to_display(money(realised)), "kind": "money", "signed": True, "term_id": "term-realised-gains"},
             {"label": "Income (div/int)", "value": to_display(money(income)), "kind": "money", "signed": True, "term_id": "term-income"},
             {"label": "Income yield", "value": round(income_yield, 2), "kind": "pct", "term_id": "term-income-yield"},
-            {"label": "Total return", "value": to_display(val.total_return_pct), "kind": "pct", "signed": True, "term_id": "term-total-return"},
+            # Total return rides the LIVE valuation (current quotes + current FX) — basis stated so it
+            # never reads as the same basis as the date-aware metrics below (F-2's silent mixed basis).
+            {"label": "Total return", "value": to_display(val.total_return_pct), "kind": "pct", "signed": True,
+             "basis": "live", "term_id": "term-total-return"},
             {"label": "Money-weighted return (XIRR)", "value": xirr_pct, "kind": "pct", "signed": True,
              "note": "invested; annualised" if xirr_pct is not None else "not applicable", "term_id": "term-xirr-twr"},
-            {"label": "Time-weighted return (TWR)", "value": twr_pct, "kind": "pct", "signed": True,
-             "note": "invested; cumulative" if twr_pct is not None else "not applicable", "term_id": "term-xirr-twr"},
-            {"label": "1Y return", "value": ret, "kind": "pct", "signed": True, "term_id": "term-period-return"},
-            {"label": "1Y volatility", "value": vol, "kind": "pct", "term_id": "term-volatility"},
-            {"label": "Return / volatility", "value": ret_vol, "kind": "ratio", "term_id": "term-return-volatility"},
-            {"label": "Max drawdown (1Y)", "value": ps.get("max_drawdown_pct", 0.0), "kind": "pct", "signed": True, "term_id": "term-max-drawdown"},
+            # §12-R1: the date-aware metrics. When the window isn't covered they REFUSE with a served
+            # state (value null + the served reason) — never the −99.93% garbage — and each carries
+            # its basis label so the card never mixes a live and a date-aware basis silently.
+            {"label": "Time-weighted return (TWR)", "value": twr_pct if da_computable else None, "kind": "pct", "signed": True,
+             "basis": "date-aware", "note": da_note or ("invested; cumulative" if twr_pct is not None else "not applicable"), "term_id": "term-xirr-twr"},
+            {"label": "1Y return", "value": ret if da_computable else None, "kind": "pct", "signed": True,
+             "basis": "date-aware", "note": da_note, "term_id": "term-period-return"},
+            {"label": "1Y volatility", "value": vol if da_computable else None, "kind": "pct",
+             "basis": "date-aware", "note": da_note, "term_id": "term-volatility"},
+            {"label": "Return / volatility", "value": ret_vol if da_computable else None, "kind": "ratio",
+             "basis": "date-aware", "note": da_note, "term_id": "term-return-volatility"},
+            {"label": "Max drawdown (1Y)", "value": (ps.get("max_drawdown_pct", 0.0) if da_computable else None), "kind": "pct", "signed": True,
+             "basis": "date-aware", "note": da_note, "term_id": "term-max-drawdown"},
             {"label": "Cash & deposits", "value": round(cash_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},
             {"label": "Equities & ETFs", "value": round(equity_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},
             {"label": "Crypto", "value": round(crypto_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},

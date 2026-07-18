@@ -76,7 +76,7 @@ vi.mock("../api/client", async (orig) => ({
 }));
 
 import { Portfolio, NOT_A_SHARPE } from "./Portfolio";
-import { getPortfolioSummary } from "../api/portfolio";
+import { getPortfolioSummary, getPortfolioStats } from "../api/portfolio";
 
 function renderPage() {
   return render(
@@ -217,4 +217,27 @@ test("§12-R2 zero-regression: a fully-covered book (no served note) renders NO 
   renderPage();
   await screen.findByText("Cost basis");
   expect(screen.queryByText(/trade-date FX unavailable/)).toBeNull();
+});
+
+test("§12-R1 (F-2): date-aware metrics with no coverage render the served refusal, never −99.93%", async () => {
+  vi.mocked(getPortfolioStats).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      base_currency: "SGD",
+      metrics: [
+        { label: "Total return", value: 131.13, kind: "pct", term_id: "term-total-return", signed: true, basis: "live" },
+        { label: "Time-weighted return (TWR)", value: null, kind: "pct", term_id: "term-xirr-twr", signed: true, basis: "date-aware", note: "Insufficient price & FX history for this window — build history" },
+        { label: "1Y return", value: null, kind: "pct", term_id: "term-period-return", signed: true, basis: "date-aware", note: "Insufficient price & FX history for this window — build history" },
+        { label: "1Y volatility", value: null, kind: "pct", term_id: "term-volatility", basis: "date-aware", note: "Insufficient price & FX history for this window — build history" },
+        { label: "Return / volatility", value: null, kind: "ratio", term_id: "term-return-volatility", basis: "date-aware", note: "Insufficient price & FX history for this window — build history" },
+        { label: "Max drawdown (1Y)", value: null, kind: "pct", term_id: "term-max-drawdown", signed: true, basis: "date-aware", note: "Insufficient price & FX history for this window — build history" },
+      ],
+    },
+  } as Awaited<ReturnType<typeof getPortfolioStats>>);
+  const { container } = renderPage();
+  // The served refusal is shown verbatim on the Risk & return card…
+  expect(await screen.findByTestId("da-refusal")).toBeTruthy();
+  expect(screen.getByText("Insufficient price & FX history for this window — build history")).toBeTruthy();
+  // …and the −99.93% garbage never appears anywhere.
+  expect(container.textContent).not.toMatch(/-99\.9/);
 });

@@ -336,6 +336,10 @@ export function Portfolio() {
               const vol1y = metric(st, "1Y volatility");
               const retVol = metric(st, "Return / volatility");
               const maxDd = metric(st, "Max drawdown (1Y)");
+              // §12-R1 (F-2 REFUSE-UNTIL-COVERAGE): these are date-aware (reconstructed-history)
+              // metrics. When the window isn't covered the backend serves value=null + a served
+              // refusal note — render it verbatim (never a fabricated −99.93%), never the number.
+              const daRefusal = ret1y && ret1y.value == null ? ret1y.note : null;
               return (
               <>
                 <div className="pf__rail pf__rail--tight">
@@ -344,6 +348,9 @@ export function Portfolio() {
                   <TrendStat label="Return / volatility" value={metricDisplay(retVol)} tone={metricTone(retVol)} />
                   <TrendStat label="Max drawdown (1Y)" value={metricDisplay(maxDd)} tone={metricTone(maxDd)} />
                 </div>
+                {daRefusal
+                  ? <p className="pf__note pf__note--warn" data-testid="da-refusal">{daRefusal}</p>
+                  : <p className="pf__note">Basis: date-aware (per-date reconstructed history).</p>}
                 <p className="pf__note">{NOT_A_SHARPE}</p>
               </>
               );

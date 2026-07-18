@@ -44,6 +44,9 @@ export interface StatMetric {
   term_id: string | null;
   signed?: boolean;
   note?: string | null;
+  // §12-R1 (F-2): valuation basis of this metric — "live" (current quotes + FX) vs "date-aware"
+  // (per-date reconstructed history). Served so the card never mixes the two silently.
+  basis?: string | null;
 }
 export interface PortfolioStats {
   base_currency: string;

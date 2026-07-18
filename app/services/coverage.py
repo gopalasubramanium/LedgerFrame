@@ -54,6 +54,18 @@ async def coverage_summary(session: AsyncSession, base_currency: str | None = No
     covered_count = 0
     for instr in instruments:
         ac = instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class or "")
+        # A manual-priced instrument is carried at its manual valuation — it needs no market history
+        # to be part of the date-aware series (it is carried flat), so it is covered by nature.
+        if instr.is_manual_price:
+            covered_count += 1
+            out.append({
+                "instrument_id": instr.id, "symbol": instr.symbol,
+                "name": instr.name or instr.symbol, "asset_class": ac,
+                "price_earliest": None, "price_latest": None, "price_days": 0,
+                "needs_fx": False, "fx_currency": None, "fx_earliest": None, "fx_latest": None,
+                "covered": True, "summary": "Manual valuation — no market history needed",
+            })
+            continue
         prow = (await session.execute(
             select(func.min(PriceHistory.ts), func.max(PriceHistory.ts), func.count())
             .where(PriceHistory.instrument_id == instr.id, PriceHistory.interval == "1d")
@@ -106,3 +118,24 @@ async def coverage_summary(session: AsyncSession, base_currency: str | None = No
         "total": total, "covered_count": covered_count, "all_covered": all_covered,
         "coverage_label": coverage_label,
     }
+
+
+# The served refusal a date-aware metric shows until the window has real coverage (§12-R1, D-105).
+INSUFFICIENT_COVERAGE = "Insufficient price & FX history for this window — build history"
+
+
+async def date_aware_computable(session: AsyncSession, base_currency: str | None = None) -> dict:
+    """§12-R1 (F-2 REFUSE-UNTIL-COVERAGE): whether the date-aware series (TWR / period return /
+    volatility / drawdown) is honestly computable. The threshold: every then-held holding has a
+    real price within the §9-5 carry window AND per-date FX exists for its price currency → base.
+    A headline risk metric is never computed from a series dominated by carried-from-nothing
+    values (F-2's −99.93%). Returns ``{computable, reason, covered_count, total}`` — ``reason`` is
+    the served refusal string when not computable, else None."""
+    summ = await coverage_summary(session, base_currency)
+    if summ["total"] == 0:
+        return {"computable": False, "reason": INSUFFICIENT_COVERAGE,
+                "covered_count": 0, "total": 0}
+    computable = summ["all_covered"]
+    return {"computable": computable,
+            "reason": None if computable else INSUFFICIENT_COVERAGE,
+            "covered_count": summ["covered_count"], "total": summ["total"]}

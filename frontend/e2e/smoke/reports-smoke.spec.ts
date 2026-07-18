@@ -7,7 +7,9 @@ import { test, expect } from "@playwright/test";
 // Instrument Detail. NEVER wired into npm run check.
 //   npx playwright test --config e2e/smoke/playwright.smoke.config.ts reports-smoke
 
-const API = "http://127.0.0.1:8321/api/v1";
+// Isolated-instance override (§14dr-28 / rule #6): point the harness at a spare-port
+// isolated demo backend via SMOKE_API — never mutate the owner's live 8321 instance.
+const API = (process.env.SMOKE_API ?? "http://127.0.0.1:8321") + "/api/v1";
 const WIDTHS = [320, 375, 900, 1366];
 const THEMES = ["light", "dark"] as const;
 
@@ -67,6 +69,31 @@ test.describe.serial("reports pre-pass (live)", () => {
     await yearSel.selectOption(popYear);
     await expect(card.locator("table tbody tr").first()).toBeVisible({ timeout: 10_000 });
     console.log(`year round-trip — populated=${popYear} empty=${emptyYear} (EmptyState + export + disclaimer alive)`);
+  });
+
+  test("§14dr-28: FIRST paint renders a populated report row (no reload) — 3 cold loads", async ({ browser }) => {
+    // The owner's finding: Reports rendered empty until 3–4 hard refreshes. Verified: the load
+    // path is idempotent (loaders useCallback([], one mount effect, services compute fresh, no
+    // cache-skip; the sole warm-fetch is skipped for rate-limited providers). This guard fails
+    // if a regression ever makes the report fill only after a refresh: it does a COLD load
+    // (fresh context, no reload) three times and asserts a concrete destination CONTROL — a real
+    // row in the always-populated open-tax-lots table (§14ac-2) — on the FIRST paint each time.
+    for (let i = 0; i < 3; i++) {
+      const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+      const page = await ctx.newPage();
+      const errors: string[] = [];
+      page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+      page.on("pageerror", (e) => errors.push(String(e)));
+      await page.request.put(`${API}/settings`, { data: { values: { first_run_complete: "1" } } });
+      await page.goto("/#/reports");   // single COLD navigation — NO page.reload()
+      // Destination control: a concrete rendered row, not merely "0 skeletons" (which passes on
+      // an EmptyState too). The demo always has open tax lots.
+      await expect(page.locator('[data-card="taxlots"] table tbody tr').first())
+        .toBeVisible({ timeout: 20_000 });
+      expect(errors, `console errors on cold load ${i + 1}: ${errors.join(" | ")}`).toEqual([]);
+      await ctx.close();
+    }
+    console.log("first-paint — 3/3 cold loads rendered a populated tax-lots row without a refresh");
   });
 
   test("a symbol in a report row LINKS to Instrument Detail (D-098)", async ({ page }) => {

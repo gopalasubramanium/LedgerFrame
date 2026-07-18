@@ -9,6 +9,7 @@ export default defineConfig({
   testDir: ".",
   reporter: [["list"]],
   workers: 1,
-  use: { baseURL: "http://127.0.0.1:5173" },
+  // SMOKE_BASE lets an isolated pre-pass point at a spare-port frontend (§14dr-28 / rule #6).
+  use: { baseURL: process.env.SMOKE_BASE ?? "http://127.0.0.1:5173" },
   // No webServer — the dev servers must already be running (dev tool).
 });

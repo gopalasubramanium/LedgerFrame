@@ -295,6 +295,7 @@ export function InstrumentDetail() {
                 activePeriod={period}
                 onPeriodChange={setPeriod}
                 disabledPeriods={disabledPeriods}
+                loading={fetching && periodIsIntraday}
                 coverageNote={
                   periodIsIntraday
                     ? fetching

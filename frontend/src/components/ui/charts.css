@@ -215,6 +215,8 @@
 .lf-pricechart__tipoverlay { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .lf-pricechart__note { color: var(--attention); }
 .lf-pricechart__empty { color: var(--text-secondary); font-size: var(--font-size-13); padding: var(--space-5) 0; }
+/* §14dr-8 / §12-8 — in-flight loading treatment: the skeleton block sits in the plot area. */
+.lf-pricechart__loading { padding: var(--space-3) 0; }
 .lf-pricechart__legend {
   display: flex;
   gap: var(--space-4);

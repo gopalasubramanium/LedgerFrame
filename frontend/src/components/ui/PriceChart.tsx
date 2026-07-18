@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./charts.css";
 import { Button } from "./Button";
 import { Segmented } from "./Segmented";
+import { Skeleton } from "./Skeleton";
 import type { PricePoint } from "../../mocks/types";
 
 // House-SVG price/performance chart (DESIGN-SYSTEM §5.2, D-035). No ECharts. All
@@ -38,6 +39,11 @@ export interface PriceChartProps {
   disabledPeriods?: Record<string, string>;
   /** Honest label when the fetched history covers less than the requested period. */
   coverageNote?: string;
+  /** §14dr-8 / §12-8 — an in-flight fetch (e.g. the user-triggered intraday fetch). Shows the
+   *  ratified loading treatment (a Skeleton block with aria-busy) in place of the plot, so no
+   *  stale series is flashed and the pending state is perceptible. The `coverageNote` (e.g.
+   *  "Fetching intraday prices…") persists beneath as the legend note per the dr-8 idiom. */
+  loading?: boolean;
 }
 
 const VW = 100;
@@ -102,6 +108,7 @@ export function PriceChart({
   onPeriodChange,
   disabledPeriods,
   coverageNote,
+  loading = false,
 }: PriceChartProps) {
   const [view, setView] = useState<"simple" | "advanced">(defaultView);
   const [hover, setHover] = useState<{ i: number; x: number } | null>(null);
@@ -282,7 +289,13 @@ export function PriceChart({
         </div>
       )}
 
-      {n < 2 ? (
+      {loading ? (
+        // §14dr-8 / §12-8 — the ratified in-flight treatment: a skeleton block (aria-busy),
+        // not a bare note and not a stale plot. The pending line persists in the legend below.
+        <div className="lf-pricechart__loading">
+          <Skeleton block aria-label={coverageNote ?? "Loading price history…"} />
+        </div>
+      ) : n < 2 ? (
         <p className="lf-pricechart__empty">{coverageNote ?? "No price history for the selected period."}</p>
       ) : (
       <div className="lf-pricechart__plot" ref={wrapRef} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>

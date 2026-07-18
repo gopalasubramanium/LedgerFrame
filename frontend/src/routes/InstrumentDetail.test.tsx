@@ -270,6 +270,51 @@ test("R-42 Phase 1: an intraday range carried over to an instrument where it's s
   expect(screen.getByText(/Interval: 1d/)).toBeInTheDocument();
 });
 
+test("R-42 Phase 1: clicking an intraday range shows the dr-8 loading skeleton while the fetch is in flight (§14dr-8)", async () => {
+  // The user-triggered intraday fetch may hit the network. While it is in flight the chart
+  // shows the ratified dr-8 loading treatment (a skeleton, aria-busy) — not a bare note and
+  // not a stale daily plot. Deferred-promise harness so the in-flight state is observable.
+  const enabledRanges = {
+    "1D": { interval: "1min", enabled: true, state: "available", reason: null },
+    "5D": { interval: "5min", enabled: true, state: "available", reason: null },
+  };
+  const BENCH = "Benchmark comparison is daily-range only.";
+  const dailyCandles = [
+    { ts: "2026-07-01T00:00:00", open: 1, high: 2, low: 1, close: 1.5 },
+    { ts: "2026-07-02T00:00:00", open: 1.5, high: 2, low: 1, close: 1.7 },
+  ];
+  let resolve1D: (v: unknown) => void = () => {};
+  const pending = new Promise((r) => { resolve1D = r; });
+  vi.mocked(api.getInstrumentHistory).mockImplementation(async (_sym?: string, _days?: number, range?: string) => {
+    if (range === "1D") return pending as never; // stays in flight until we resolve it
+    return { ok: true, data: {
+      symbol: "AAPL", interval: "1d", candles: dailyCandles,
+      intraday: { ranges: enabledRanges, benchmark_reason: BENCH, requested_range: null, fetch_state: null },
+    } } as never;
+  });
+
+  const user = userEvent.setup();
+  renderAt();
+  await waitFor(() => expect(screen.getByRole("heading", { name: "AAPL", level: 1 })).toBeInTheDocument());
+
+  // Click 1D → the fetch is in flight → the dr-8 skeleton (aria-busy) is shown.
+  await user.click(screen.getByRole("button", { name: "1D" }));
+  const status = await screen.findByRole("status", { name: /Fetching intraday prices/ });
+  expect(status).toHaveAttribute("aria-busy", "true");
+
+  // Resolve the fetch → the skeleton clears and the intraday chart renders.
+  resolve1D({ ok: true, data: {
+    symbol: "AAPL", interval: "1min",
+    candles: [
+      { ts: "2026-07-10T14:30:00", open: 1, high: 2, low: 1, close: 1.5 },
+      { ts: "2026-07-10T14:31:00", open: 1.5, high: 2, low: 1, close: 1.7 },
+    ],
+    intraday: { ranges: enabledRanges, benchmark_reason: BENCH, requested_range: "1D", fetch_state: "fetched" },
+  } });
+  await waitFor(() => expect(screen.queryByRole("status", { name: /Fetching intraday prices/ })).toBeNull());
+  expect(screen.getByText(/Interval: 1-minute/)).toBeInTheDocument();
+});
+
 test("Ongoing cost submits the entered bps (fund-wrapped only, D-099)", async () => {
   // D-099: the expense-ratio action exists only for fund-wrapped classes.
   vi.mocked(api.getInstrument).mockResolvedValue({

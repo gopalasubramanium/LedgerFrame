@@ -172,6 +172,28 @@ test("PriceChart: NO zoom in Simple view (Advanced only, §14dr-5)", () => {
   expect(screen.queryByRole("button", { name: "Reset zoom" })).toBeNull();
 });
 
+// §14dr-8 / §12-8 — the intraday fetch (user-triggered, may hit the network) shows the RATIFIED
+// loading treatment: a Skeleton block with aria-busy, NOT a bare text note and NOT a stale plot.
+// The pending line persists beneath (the legend note), per the dr-8 idiom. Fail-first RED before
+// the `loading` prop existed.
+test("PriceChart: loading renders the dr-8 skeleton (aria-busy), not the plot (§14dr-8/§12-8)", () => {
+  const { container } = render(
+    <PriceChart series={DENSE_CANDLE_SERIES} interval="1-minute" controls loading
+      coverageNote="Fetching intraday prices…" />,
+  );
+  // The ratified skeleton: role=status + aria-busy, not a bare <p> note.
+  const status = screen.getByRole("status", { name: /Fetching intraday prices/ });
+  expect(status).toHaveAttribute("aria-busy", "true");
+  expect(container.querySelector(".lf-skeleton")).not.toBeNull();
+  // The plot (and any stale series) is NOT rendered while loading — no stale candles flashed.
+  expect(container.querySelector(".lf-pricechart__svg")).toBeNull();
+  expect(container.querySelectorAll(".lf-candle--up, .lf-candle--down").length).toBe(0);
+  // The pending line persists beneath (dr-8 idiom) — shown in the legend note.
+  expect(container.querySelector(".lf-pricechart__note")?.textContent).toMatch(/Fetching intraday prices/);
+  // The range control stays mounted so the user can still switch away.
+  expect(screen.getByRole("group", { name: "Chart view" })).toBeInTheDocument();
+});
+
 test("InstrumentPicker exposes an explicit create path (no silent auto-create)", async () => {
   const onSelect = vi.fn();
   render(<InstrumentPicker onSelect={onSelect} allowCreate />);

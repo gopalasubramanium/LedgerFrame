@@ -146,3 +146,28 @@ async def test_crypto_with_av_override_still_acquires_coingecko_history(session,
         select(PriceHistory).where(PriceHistory.instrument_id == btc.id))).scalars().all()
     assert rows and all(r.source == "coingecko" for r in rows)
     assert await _has_id(session, btc.id) == "bitcoin"  # the id was auto-linked at acquisition
+
+
+async def test_coverage_names_the_blocker_for_unmapped_crypto(session):
+    """§17-R3 (F-6): an uncovered crypto with no CoinGecko mapping is served the BLOCKER
+    ('No CoinGecko mapping for BTC …'), never the 'run Build history' CTA the owner just ran."""
+    from app.models import Account, TxnType
+    from app.models import Transaction as Txn
+    from app.services.coverage import coverage_summary
+    from app.services.portfolio import rebuild_holdings_from_transactions
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    btc = await _crypto(session, "BTC", override="alphavantage")
+    session.add(Txn(account_id=acc.id, instrument_id=btc.id, type=TxnType.BUY,
+                    ts=datetime.now(UTC) - timedelta(days=200), quantity=Decimal("1"),
+                    price=Decimal("10"), currency="USD"))
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+
+    summ = await coverage_summary(session, "SGD")
+    row = next(r for r in summ["instruments"] if r["symbol"] == "BTC")
+    assert not row["covered"]
+    assert "coingecko mapping" in row["summary"].lower() and "BTC" in row["summary"]
+    assert "run build history" not in row["summary"].lower()

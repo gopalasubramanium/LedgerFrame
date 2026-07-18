@@ -30,6 +30,35 @@ def _iso_date(ts) -> str | None:
     return ts.date().isoformat() if hasattr(ts, "date") else str(ts)[:10]
 
 
+async def _identifier(session: AsyncSession, instrument_id: int, id_type: str) -> str | None:
+    from app.models import InstrumentIdentifier
+
+    return (await session.execute(
+        select(InstrumentIdentifier.value)
+        .where(InstrumentIdentifier.instrument_id == instrument_id,
+               InstrumentIdentifier.id_type == id_type)
+    )).scalars().first()
+
+
+async def _no_price_blocker(session: AsyncSession, instr, ac: str) -> str:
+    """§17-R3 (F-6): the served reason WHY an instrument has no price history — it names the
+    BLOCKER, never the 'run Build history' CTA the user just performed. The crypto case is F-6's
+    exact defect: BTC/XRP were blocked on a missing CoinGecko mapping, yet served the build CTA."""
+    from app.providers.market.router import CAPABILITIES, can_fetch_history, capabilities_for
+
+    if ac == "crypto" and not await _identifier(session, instr.id, "coingecko_id"):
+        return (f"No CoinGecko mapping for {instr.symbol} — pick the coin in the instrument picker, "
+                "then Build history (it auto-resolves the canonical id when one clearly matches)")
+    if ac == "mutual_fund" and not (
+            await _identifier(session, instr.id, "amfi_code")
+            or (instr.symbol or "").isdigit()):
+        return (f"No AMFI scheme mapped for {instr.symbol} — map it to a scheme, then Build history")
+    if not any(can_fetch_history(capabilities_for(name), ac) for name in CAPABILITIES):
+        return f"No price provider supplies {ac or 'this asset'} history"
+    # Mappable + a provider can serve the class — genuinely not-yet-acquired: the honest CTA.
+    return "No price history yet — run Build history to acquire it"
+
+
 async def _fx_span(session: AsyncSession, currency: str) -> tuple[str | None, str | None]:
     """Earliest/latest ecb_fx_history as_of for a currency (as ISO strings), or (None, None)."""
     row = (await session.execute(
@@ -88,7 +117,7 @@ async def coverage_summary(session: AsyncSession, base_currency: str | None = No
 
         # Served human summary (D-105) — the frontend renders it verbatim.
         if not has_price:
-            summary = "No price history yet — run Build history to acquire it"
+            summary = await _no_price_blocker(session, instr, ac)  # §17-R3: name the blocker
         elif needs_fx and not has_fx:
             summary = f"Prices {p_earliest}→{p_latest}, but no {pricing_ccy}→{base} FX history yet"
         elif needs_fx:

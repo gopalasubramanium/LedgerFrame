@@ -135,6 +135,52 @@ async def test_source_override_coingecko_no_match_served_error(app_client):
     assert "no coingecko coin" in r.json()["detail"].lower()
 
 
+async def test_new_mutual_fund_is_not_defaulted_to_us(app_client):
+    # §14dr-27(b): a free-form MF created via the Add flow must NOT be fabricated a US listing
+    # (the bare-ticker->US / USD-default heuristic is an EQUITY heuristic). Its country stays
+    # unknown until an AMFI mapping supplies IN — so amfi_nav no longer wrongly "doesn't cover US".
+    r = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "DR27MF", "type": "buy", "ts": "2025-01-01T00:00:00",
+        "quantity": 10, "price": 50, "currency": "INR", "asset_class": "mutual_fund"})
+    assert r.status_code == 200, r.text
+    m = (await app_client.get("/api/v1/instruments/DR27MF")).json()["instrument"]
+    assert m["country"] != "US" and m["listing_country"] != "US"
+    # Correcting to amfi_nav now fails with the HONEST mapping error, not "doesn't cover US".
+    ov = await app_client.patch("/api/v1/instruments/DR27MF", json={"source_override": "amfi_nav"})
+    assert ov.status_code == 400
+    detail = ov.json()["detail"].lower()
+    assert "amfi scheme mapping" in detail and "doesn't cover" not in detail
+
+
+async def test_new_crypto_is_not_defaulted_to_us(app_client):
+    # §14dr-27(b): crypto is global — a bare crypto symbol must not be labelled a US listing.
+    r = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "DR27CRYP", "type": "buy", "ts": "2025-01-01T00:00:00",
+        "quantity": 1, "price": 1, "currency": "USD", "asset_class": "crypto"})
+    assert r.status_code == 200, r.text
+    m = (await app_client.get("/api/v1/instruments/DR27CRYP")).json()["instrument"]
+    assert m["country"] != "US"
+
+
+async def test_new_equity_still_classifies_us(app_client):
+    # The equity heuristic is PRESERVED: a bare US ticker still classifies as a US listing.
+    r = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "DR27EQ", "type": "buy", "ts": "2025-01-01T00:00:00",
+        "quantity": 1, "price": 100, "currency": "USD", "asset_class": "equity"})
+    assert r.status_code == 200
+    m = (await app_client.get("/api/v1/instruments/DR27EQ")).json()["instrument"]
+    assert m["country"] == "US"
+
+
+async def test_region_capability_error_names_the_field(app_client):
+    # §14dr-27(b): a genuine region mismatch names the FIELD it evaluated (the listing
+    # country), so the rejection is self-diagnosing (D-105). AAPL is a US listing; kite is IN-only.
+    r = await app_client.patch("/api/v1/instruments/AAPL", json={"source_override": "kite"})
+    assert r.status_code == 400
+    detail = r.json()["detail"].lower()
+    assert "listing country" in detail and "us" in detail
+
+
 async def test_refresh_holding_action(app_client):
     holdings = (await app_client.get("/api/v1/portfolio/holdings")).json()["holdings"]
     market = next(h for h in holdings if h["symbol"] == "AAPL")

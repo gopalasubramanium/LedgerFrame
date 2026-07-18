@@ -457,8 +457,17 @@ async def _ensure_instrument(
     ac = asset_class if isinstance(asset_class, AssetClass) else (
         AssetClass(asset_class) if asset_class else AssetClass.EQUITY
     )
-    ccy = currency_for_symbol(symbol, exchange) or "USD"
-    ctry = country or country_for_symbol(symbol, exchange, ccy)
+    raw_ccy = currency_for_symbol(symbol, exchange)   # a real suffix/exchange signal, or None
+    ccy = raw_ccy or "USD"
+    # §14dr-27(b): the bare-ticker->US / USD-default heuristic is an exchange-listed-equity
+    # rule; applying it to a mutual fund or crypto fabricated a US listing that made amfi_nav
+    # "doesn't cover US" and stopped the (mutual_fund, IN) matrix cell matching. For those
+    # classes, derive the country ONLY from a real signal (suffix / exchange / explicit) and
+    # leave it unknown otherwise — an India MF becomes IN via its AMFI mapping (§14dr-27c).
+    if ac in (AssetClass.EQUITY, AssetClass.ETF):
+        ctry = country or country_for_symbol(symbol, exchange, ccy)
+    else:
+        ctry = country or country_for_symbol(symbol, exchange, raw_ccy, bare_ticker_default=None)
 
     instr = (
         await session.execute(select(Instrument).where(Instrument.symbol == symbol))

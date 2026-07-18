@@ -16,7 +16,10 @@ async def test_added_crypto_is_classified_and_in_allocation(app_client):
 
     meta = (await app_client.get("/api/v1/instruments/XRP")).json()["instrument"]
     assert meta["asset_class"] == "crypto"          # not "equity"
-    assert meta["country"] == "US"                  # bare ticker → US listing
+    # §14dr-27(b): crypto is global — a bare crypto symbol is NOT fabricated a US listing
+    # (the bare-ticker->US default is an exchange-listed-equity heuristic). Country stays
+    # unknown; it still lands in crypto allocation below (the real regression this guards).
+    assert meta["country"] != "US"
 
     summary = (await app_client.get("/api/v1/portfolio/summary")).json()
     assert summary["allocation_by_class"].get("crypto", 0) > 0

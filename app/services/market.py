@@ -149,7 +149,11 @@ async def validate_source_override(session: AsyncSession, instrument, value: str
     if caps.asset_classes and ac not in caps.asset_classes and "*" not in caps.asset_classes:
         return None, f"{v} can't price a {ac}"
     if caps.regions and country and country not in caps.regions and "*" not in caps.regions:
-        return None, f"{v} doesn't cover {country}"
+        # §14dr-27(b): name the field evaluated (the instrument's listing country) so the
+        # rejection is self-diagnosing — a US-listed instrument vs an India-only source reads
+        # as a market mismatch, not an opaque failure (D-105).
+        covers = ", ".join(sorted(r for r in caps.regions if r != "*")) or "no market"
+        return None, f"{v} doesn't cover the listing country {country} (it covers {covers})"
 
     ids = set((await session.execute(
         select(InstrumentIdentifier.id_type).where(InstrumentIdentifier.instrument_id == instrument.id)

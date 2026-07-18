@@ -69,10 +69,18 @@ _CCY_COUNTRY: dict[str, str] = {
 
 
 def country_for_symbol(
-    symbol: str | None, exchange: str | None = None, currency: str | None = None
+    symbol: str | None, exchange: str | None = None, currency: str | None = None,
+    *, bare_ticker_default: str | None = "US",
 ) -> str | None:
     """Best-effort listing country for a ticker (suffix → exchange → currency →
-    bare-ticker=US). Returns None when nothing matches."""
+    bare-ticker=US). Returns None when nothing matches.
+
+    ``bare_ticker_default`` is the fallback for a plain, suffix-less symbol. It defaults to
+    "US" (a bare ticker is almost always a US listing) — but §14dr-27(b): that assumption is
+    an EXCHANGE-LISTED-EQUITY heuristic. A mutual fund or crypto has no exchange listing, so
+    callers pass ``None`` to derive a country only from a REAL signal (suffix / exchange) and
+    leave it unknown otherwise, rather than fabricating a US listing that breaks AMFI
+    capability and the (mutual_fund, IN) routing-matrix cell."""
     if symbol:
         sym = symbol.strip().upper()
         if "." in sym:
@@ -84,7 +92,7 @@ def country_for_symbol(
     if currency and currency.upper() in _CCY_COUNTRY:
         return _CCY_COUNTRY[currency.upper()]
     if symbol and "." not in symbol.strip():
-        return "US"  # bare ticker → US listing
+        return bare_ticker_default  # bare ticker → US listing (equities only; see docstring)
     return None
 
 

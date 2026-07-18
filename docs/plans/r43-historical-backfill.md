@@ -1160,6 +1160,34 @@ unresolvable `coingecko_id`; no dated transaction (`:144-148`). Coverage counts 
 (`coverage.py:98-116`). **Awaiting the owner's re-run outcome to close F-7c** — if it is still 4/6,
 the ECB-early-return path (`acquire.py:82-93`) is the first thing to read, not the routing.
 
+### 18-F7d — CONTENTION-FRAGILE AI TEST (2026-07-19) — FILED, NOT FIXED HERE
+
+`tests/integration/test_ai_facts_routing.py::test_performance_question_pulls_risk_metrics`
+streams `/ai/chat` and asserts the risk facts (return + volatility/drawdown) arrive. It
+**fails only when the full suite shares the machine with other pytest processes**, and
+passes solo.
+
+Controlled comparison (2026-07-19), each full suite, same interpreter:
+
+| Code | Location | Contention | Result for this test |
+|---|---|---|---|
+| `66b75ce` (pre-F-7) | worktree | solo | **passed** |
+| `5f90b0d` (HEAD, both fixes) | worktree | solo | **passed** |
+| `5f90b0d` | main dir | heavy (3 pytest procs) | **FAILED** (`PendingRollbackError`) |
+| targeted subset | main dir | heavy | **FAILED** |
+| targeted subset | main dir | solo | **passed** |
+
+Holding code constant and varying only contention reproduces it; holding contention
+constant and varying the code does not. **F-7's fixes are not the cause.** Alternatives
+checked and eliminated: shared test state (`conftest.py:13` `_TMP` is a per-run
+`mkdtemp`, so concurrent runs cannot clobber one another) and real-`.env` leakage
+(`conftest.py:21-22` force `mock` and pop the API key; the worktrees carry no `.env`).
+
+**Owner ruling (2026-07-19, architect under standing delegation): NOT fixed in this
+batch.** The robustness fix is **folded into the AI-surfaces milestone (D-067/D-068)**,
+the natural owner of the streaming surface — cross-referenced in `CURRENT.md` under that
+milestone's intake. R-43 records the finding and stops.
+
 ### 18-R — RULINGS APPLIED
 
 - **R1 (F-7b, voided).** Unknown-provider repair NOT performed: no unknown providers exist. Recorded

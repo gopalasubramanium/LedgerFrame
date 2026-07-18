@@ -54,7 +54,12 @@ The remaining v2.0.0 set, in sequence (R-43 is the active NEXT above):
 
 1. **Help** — `[Help]` retrofit, owner-picked targets (RD-9 Amendment 4).
 2. **Legal.**
-3. **AI-surfaces** — D-067 / D-068.
+3. **AI-surfaces** — D-067 / D-068. **Intake (added 2026-07-19, R-43 §18-F7d):**
+   `test_performance_question_pulls_risk_metrics` streams `/ai/chat` and asserts the risk
+   facts arrive; it is **contention-fragile** — it fails only when the suite shares the
+   machine with other pytest processes, and passes solo (controlled comparison in
+   `r43-historical-backfill.md` §18-F7d). The robustness fix belongs to this milestone as
+   the natural owner of the AI streaming surface, NOT to R-43.
 4. **R-45** — per-instrument + default news coverage (pulled into v2.0.0, RD-9
    Amendment 5; egress ruling required, take together with R-44). **Verification item
    (observed 2026-07-18):** the **Home holdings-scoped headlines vs per-ticker feed

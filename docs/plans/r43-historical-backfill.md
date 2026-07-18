@@ -854,3 +854,60 @@ params) for one of their schemes; (b) one CoinGecko daily-range call for BTC; (c
 served coverage preflight, runs **Build history**, reviews the trend + Portfolio card. Findings
 return via chat. **No close ritual in this CLI** — 0a/3b ratification + F-ledger closure happen in
 chat after the owner's re-run.
+
+---
+
+## 13. FIX-BATCH PROGRESS LOG (2026-07-19 session — the F-1/F-2/F-3 fixes + step-6 acquisition)
+
+One delta per commit, fail-first RED on the real cause, gates green at each commit. **All nine
+build-order deltas are DONE**; the batch STOPS at the owner's on-stack validation window (§12-STOP).
+
+### DONE — committed, tested, gates green
+
+- **§12-R rulings** — F-2 refuse-until-coverage, F-3 exclusions-loud, class-aware capability
+  recorded (reasoning of record before the code). — commit `c1b8ff0` (docs-only).
+- **Step 1 (F-3 surfacing / §12-R2)** — `cost_fx_unavailable`/`cost_fx_approximate` + an
+  excluded-lot count (D-076) now SERIALIZED (`_hv`, `HoldingView`) with served reason strings
+  (`provenance.cost_fx_*_note`, D-105); Holdings P/L cell shows a loud `!` marker; Portfolio card
+  annotates cost basis ("excludes N lots — FX unavailable"). Recorded numbers never rewritten.
+  Contract path-keys unchanged (137, additive fields).
+- **Step 2 (ECB ingest wired)** — `app/services/acquire.py::acquire_history` fetches
+  `eurofxref-hist` (one keyless fetch) + ingests idempotently BEFORE valuing; `run_backfill_background`
+  acquires-then-values; **no-egress → served refusal, no series written** (Guarantee 5); offline
+  demo (mock) skips the real fetch (seed-generated FX).
+- **Step 3 (class-aware capability + purge / §12-R3)** — `ProviderCapabilities.history_asset_classes`
+  / `intraday_asset_classes`; AV set to equity/etf only; `can_fetch_history/intraday`;
+  `_history_source` refuses a class the source can't serve AT THE CAPABILITY LAYER;
+  `repair_wrong_class_candles` (dr-25/W-3) purges wrong-instrument candles (AV crypto), interval-precise,
+  guarded one-time + run in the acquisition preflight. Purge second run = 0.
+- **Step 4 (CoinGecko history)** — `parse_market_chart_range` (daily, midnight-UTC keyed, no fabricated
+  OHLC/zero) + `fetch_market_chart_range`; `services/coingecko.ingest_history` (source=coingecko,
+  idempotent); coingecko capability `history=True, {crypto}`. Free-tier depth documented honestly.
+- **Step 5 (AMFI archive)** — `parse_nav_history` (column-mapping by HEADER — robust to ▲-D order
+  variance; N.A. → None), `chunk_date_ranges` (contiguous ≤90-day), `fetch_nav_history`
+  (params TO-CONFIRM ▲-D); `services/amfi.ingest_nav_history` (scheme-filtered, source=amfi_nav).
+- **Step 6 (AV full depth + acquisition orchestration)** — `acquire.acquire_prices` routes each held
+  instrument to its class's provider (equity → AV `outputsize=full`, 1 call/instrument, 12h marker;
+  crypto → CoinGecko; fund → AMFI chunks); unmapped instruments skipped honestly; wired into
+  `acquire_history`. Runs only for real (non-demo, egress-allowed) instances.
+- **Step 7 (coverage preflight / F-1)** — `services/coverage.coverage_summary` (per-instrument
+  earliest/latest real candle + FX coverage + served summary; numbers match the store);
+  `GET /net-worth/coverage` (**contract 137 → 138**); NetWorth trend card renders the served
+  preflight (uncovered holdings) before/while a build runs.
+- **Step 8 (F-2 refuse-until-coverage / §12-R1)** — `coverage.date_aware_computable` gate;
+  `analytics.key_stats` serves TWR/1Y/vol/drawdown as null + the served refusal (never −99.93%),
+  skips the per-date valuation when uncovered, and tags each metric's `basis` (live vs date-aware);
+  Portfolio Risk-&-return card renders the served refusal. `demo_history` now generates a fund NAV
+  series so the demo is fully covered and computes normally (no demo regression).
+- **Step 9 (demo + gates)** — full backend suite **1189 passed** (0 regressions); `ruff` green;
+  contract current at **138** path-keys; frontend `npm run check` **exit 0 from `frontend/`** (337
+  e2e+unit). Demo lane consistent (coverage all-covered; date-aware metrics compute).
+
+### STOP — OWNER ON-STACK VALIDATION WINDOW (the ruled §12-STOP)
+
+The batch stops here. The owner runs the three confirming calls on THEIR stack (their premium key,
+their egress), pastes the raw responses back, and any param delta becomes a fail-first pin update.
+Then the owner restarts, opens Net worth, reviews the served coverage preflight, runs **Build
+history**, and reviews the trend + Portfolio card. Findings return via chat. **No close ritual /
+ratification in this CLI** — the 0a/3b ratification + F-1/F-2/F-3 ledger closure happen in chat
+after the owner's re-run.

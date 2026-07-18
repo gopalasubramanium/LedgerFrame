@@ -394,6 +394,30 @@ async def set_ai_config(payload: AIConfigIn) -> dict:
     return {"ok": True, "available": health.available, "detail": health.detail}
 
 
+# §14dr-26 — tables "Erase all data" PRESERVES. Everything else in Base.metadata is
+# user data and is purged; a NEW table is purged by default (the safe direction — the
+# owner's erase-and-rebuild walk found insurance/estate rows surviving because the old
+# hardcoded delete list predated those milestones). Each exclusion is spec-grounded:
+#   settings/PIN/access — D-103 docstring "Keeps your settings, PIN"; users holds the
+#     PIN hash; api_token/revoked_token are the access-credential + session-revocation
+#     bookkeeping (SECURITY-BASELINE §1.7/§2.4), not portfolio data.
+#   security/backup bookkeeping — audit_events is the tamper-evident hash-chained log
+#     (the erase itself is a recorded action; wiping it would destroy that record);
+#     backup_records is backup metadata.
+#   provider reference caches — amfi_schemes/coingecko_coins/ecb_fx_rates/kite_instruments
+#     are opt-in, re-syncable public master/reference data (their model docstrings), not
+#     the user's holdings; routing_matrix is the user's provider-routing preference,
+#     which D-103 preserves as "provider config".
+# (alembic_version is preserved automatically — it is not a mapped model, so it never
+# appears in the Base.metadata purge walk.)
+RESET_KEEP_TABLES: frozenset[str] = frozenset({
+    "settings", "users", "api_token", "revoked_token",
+    "audit_events", "backup_records",
+    "amfi_schemes", "coingecko_coins", "ecb_fx_rates", "kite_instruments",
+    "routing_matrix",
+})
+
+
 @router.post("/system/reset-data", dependencies=[Depends(require_pin)])
 async def reset_data(body: PinConfirm, session: AsyncSession = Depends(get_db)) -> dict:
     """Delete all demo/portfolio/market data so you can start fresh with live data.
@@ -404,37 +428,24 @@ async def reset_data(body: PinConfirm, session: AsyncSession = Depends(get_db)) 
     re-entry, not ambient authority (SECURITY-BASELINE §3). The Settings control pairs it
     with the danger Button variant + a ConfirmDialog fresh-PIN gesture.
 
-    Removes transactions, holdings, instruments, quotes, price history, watchlists,
-    snapshots and news. Keeps your settings, PIN, and provider config. Sets a
-    flag so demo data is NOT re-seeded afterwards.
+    Removes EVERY user-data table — portfolio (holdings/transactions/instruments/quotes/
+    history/snapshots), planning (goals/obligations/contributions/investment policy),
+    protection (insurance), estate, tags, watchlists, entities, news — deriving the set
+    from live metadata minus :data:`RESET_KEEP_TABLES` (§14dr-26) so a table added by a
+    future milestone can never silently survive an erase. Keeps your settings, PIN, and
+    provider config. Sets a flag so demo data is NOT re-seeded afterwards.
     """
     await verify_fresh_pin(session, body.pin)
-    from sqlalchemy import delete
-
-    from app.models import (
-        Account,
-        Holding,
-        Instrument,
-        InstrumentIdentifier,
-        MarketNews,
-        NetWorthSnapshot,
-        PortfolioSnapshot,
-        PriceHistory,
-        Quote,
-        Setting,
-        Transaction,
-        Watchlist,
-        WatchlistItem,
-    )
+    from app.db.base import Base
+    from app.models import Setting
     from app.seed.demo import SEED_FLAG_KEY
 
-    # Delete children before parents to satisfy FK constraints.
-    for model in (
-        WatchlistItem, Watchlist, PriceHistory,
-        Quote, Transaction, Holding, PortfolioSnapshot, NetWorthSnapshot, MarketNews,
-        InstrumentIdentifier, Instrument, Account,
-    ):
-        await session.execute(delete(model))
+    # sorted_tables is FK-dependency order (parents before children); reverse it to delete
+    # children first and satisfy every foreign key without a hand-maintained order.
+    for table in reversed(Base.metadata.sorted_tables):
+        if table.name in RESET_KEEP_TABLES:
+            continue
+        await session.execute(table.delete())
     # Prevent demo re-seeding on the next boot.
     flag = (await session.execute(select(Setting).where(Setting.key == SEED_FLAG_KEY))).scalars().first()
     if flag:

@@ -49,6 +49,141 @@ async def test_reset_demands_a_fresh_pin_not_the_ambient_session(app_client):
     assert ok.status_code == 200
 
 
+# --------------------------------------------------------------------------- #
+# §14dr-26 — "Erase all data" must purge EVERY user-data table.
+# The owner's erase-and-rebuild walk found Insurance and Estate rows surviving a
+# reset. Root cause: reset_data deleted a hardcoded 12-table list that predated the
+# insurance/estate/planning milestones. These pins seed EVERY user-data table and
+# assert zero rows after reset, iterating live metadata so a future table can't
+# silently survive a purge.
+# --------------------------------------------------------------------------- #
+
+# Tables reset-data deliberately PRESERVES (D-103 docstring: "Keeps your settings,
+# PIN, and provider config"). Everything else in Base.metadata is user data and MUST
+# be purged. Kept: settings/PIN/access bookkeeping + security log + re-syncable
+# provider reference caches + the provider routing preference (provider config).
+# (alembic_version is preserved automatically — it is alembic-managed, not a mapped
+# model, so it never appears in the Base.metadata iteration the purge walks.)
+_RESET_KEEP_EXPECTED = {
+    "settings", "users", "api_token", "revoked_token",   # settings / PIN / access
+    "audit_events", "backup_records",                     # security + backup bookkeeping
+    "amfi_schemes", "coingecko_coins", "ecb_fx_rates",    # provider reference caches
+    "kite_instruments", "routing_matrix",                 # (re-syncable) + provider config
+}
+
+
+async def _seed_every_user_table(session):
+    """Add at least one row to every user-data table the demo seed does not already
+    cover (goals/obligations/contributions/investment policy/review log), so the
+    after-reset assertion is meaningful for all of them."""
+    from app.models import (
+        Contribution,
+        Goal,
+        InvestmentPolicy,
+        Obligation,
+        PolicyTarget,
+        ReviewLog,
+    )
+
+    ips = InvestmentPolicy(name="IPS")
+    session.add(ips)
+    await session.flush()
+    session.add_all([
+        Goal(name="Retire", target_amount=1000),
+        Obligation(name="Tax", amount=100, due_date="2027-01-01"),
+        Contribution(name="Monthly SIP", amount=50),
+        PolicyTarget(policy_id=ips.id, dimension="asset_class", bucket="equity", target_pct=60),
+        ReviewLog(net_worth=1000, base_currency="SGD"),
+    ])
+    await session.commit()
+
+
+async def _table_counts(user_only: bool = False):
+    from sqlalchemy import func
+    from sqlalchemy import select as sa_select
+
+    from app.db.base import Base, get_sessionmaker
+
+    counts: dict[str, int] = {}
+    async with get_sessionmaker()() as s:
+        for name, tbl in Base.metadata.tables.items():
+            if user_only and name in _RESET_KEEP_EXPECTED:
+                continue
+            counts[name] = (await s.execute(sa_select(func.count()).select_from(tbl))).scalar() or 0
+    return counts
+
+
+async def test_reset_purges_every_user_data_table(app_client):
+    # §14dr-26 RED-before / GREEN-after: the demo seed populates accounts, insurance,
+    # estate, holdings, tags, entities, snapshots…; we add the remaining planning tables.
+    from app.db.base import get_sessionmaker
+
+    async with get_sessionmaker()() as s:
+        await _seed_every_user_table(s)
+
+    before = await _table_counts(user_only=True)
+    # Sanity: the seed actually populated the tables the owner saw survive, so the
+    # after-assertion is not vacuously green.
+    for name in ("accounts", "insurance_policy", "estate_profile", "estate_contact",
+                 "estate_document", "goals", "obligations", "contribution",
+                 "investment_policy", "policy_targets", "review_log", "holding_tag",
+                 "entities", "holdings", "transactions"):
+        assert before.get(name, 0) > 0, f"seed did not populate {name}; pin is vacuous"
+
+    # D-103: set a PIN, then reset with the FRESH PIN.
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "013579"})).status_code == 200
+    r = await app_client.post("/api/v1/system/reset-data", json={"pin": "013579"})
+    assert r.status_code == 200, r.text
+
+    after = await _table_counts(user_only=True)
+    survivors = {name: n for name, n in after.items() if n > 0}
+    assert survivors == {}, f"user-data rows survived the erase: {survivors}"
+
+
+async def test_reset_keeps_settings_pin_and_provider_reference(app_client):
+    # The KEEP set is preserved: the PIN still authenticates, the seed flag is set (no
+    # re-seed), and provider reference caches are not wiped. Seed a coingecko coin +
+    # routing cell to prove they survive.
+    from app.db.base import get_sessionmaker
+    from app.models import CoingeckoCoin, RoutingMatrix
+
+    async with get_sessionmaker()() as s:
+        # Distinct keys so we never collide with demo-seeded coins / routing cells.
+        s.add(CoingeckoCoin(id="dr26-probe-coin", symbol="zzz", name="Probe"))
+        s.add(RoutingMatrix(asset_class="commodity", listing_country="ZZ", provider="mock"))
+        await s.commit()
+
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "246800"})).status_code == 200
+    assert (await app_client.post("/api/v1/system/reset-data", json={"pin": "246800"})).status_code == 200
+
+    kept = await _table_counts()
+    assert kept["coingecko_coins"] >= 1, "provider reference cache was wiped"
+    assert kept["routing_matrix"] >= 1, "provider routing config was wiped"
+    # Seed flag persists so demo is not re-seeded (settings table kept).
+    from sqlalchemy import select as sa_select
+
+    from app.models import Setting
+    from app.seed.demo import SEED_FLAG_KEY
+    async with get_sessionmaker()() as s:
+        flag = (await s.execute(sa_select(Setting).where(Setting.key == SEED_FLAG_KEY))).scalars().first()
+        assert flag is not None and flag.value == "1"
+
+
+async def test_reset_keep_list_matches_metadata_guard(app_client):
+    # Guard: the app's KEEP allow-list must reference only real tables, and every
+    # metadata table must be classified (KEEP or purged). A new table is purged by
+    # default (safe direction); a new table that should be KEPT must be added to the
+    # app constant AND here — otherwise this guard breaks the build (§14dr-26).
+    from app.api.v1.routes.system import RESET_KEEP_TABLES
+    from app.db.base import Base
+
+    # No stale names in the app KEEP set — every kept name is a real mapped table.
+    assert set(Base.metadata.tables) >= RESET_KEEP_TABLES, \
+        RESET_KEEP_TABLES - set(Base.metadata.tables)
+    # App and test agree on exactly what is preserved.
+    assert RESET_KEEP_TABLES == _RESET_KEEP_EXPECTED, (RESET_KEEP_TABLES, _RESET_KEEP_EXPECTED)
+
+
 async def test_seed_runs_once(session):
     from app.seed.demo import seed_demo_data
 

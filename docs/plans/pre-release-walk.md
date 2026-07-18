@@ -15,13 +15,17 @@
 
 ## Carryover items from data-feed-routing (R-38)
 
-1. **dr-25 — chart integrity on the REAL-keyed instance.** Instrument + benchmark
-   charts render **smooth** (no sawtooth "comb") on the real-keyed instance, including
-   **1D/5D once intraday-series (R-42) is live**. *Verified:* a single continuous line
-   per instrument chart; the Performance chart draws two distinct plausible lines
-   (portfolio + benchmark); no duplicate-date candles; Source badge names the real
-   provider. (Owner acceptance was PARTIAL at the R-38 close — "waiting until intraday
-   data comes in"; this is the final sign-off home.)
+1. **dr-25 — chart integrity on the REAL-keyed instance. → RESOLVED at the R-42 close
+   (owner-eyes, 2026-07-18).** The carryover final chart sign-off was taken on the R-42
+   3b re-walk: clean TSLA 1D/5D on the real-keyed instance, extended-hours spikes
+   root-caused (W-3) and purged. **Replaced by a standing regression item:** instrument
+   **and** benchmark charts render **smooth** (no sawtooth "comb") on the real instance
+   **across daily AND intraday ranges**; the benchmark overlay is **correctly absent on
+   Instrument Detail** (§9-5 — the *"Benchmark comparison is daily-range only"* served
+   reason ships with **R-48** if that milestone is pulled). *Verified:* a single
+   continuous line per instrument chart at 1D/5D/daily; the Performance chart draws two
+   distinct plausible lines (portfolio + benchmark); no duplicate-date candles; Source
+   badge names the real provider.
 
 2. **dr-26 — erase-all-data leaves nothing behind.** On a **disposable** instance,
    "Erase all data" leaves **zero rows in every user-data table**, including
@@ -71,11 +75,31 @@
    News/quotes surfaces (stale-flagged, never fabricated — Guarantee 5). *Verified:* a
    network trace shows zero egress; News/quotes degrade to honest stale/empty.
 
-10. **Placeholder — milestones still to ship append their own walk items here at close:**
-    intraday-series (R-42) · Help · Legal · AI-surfaces (D-067/D-068) · R-45
-    (per-instrument + default news) · R-46 (Home summary cards) · chrome-sidebar-refresh
-    (R-39). Each milestone's close ritual **adds its walk rows to this file** so the
-    pre-release capstone stays complete.
+10. **Milestones append their own walk items here at close.** Still to ship: Help · Legal ·
+    AI-surfaces (D-067/D-068) · R-45 (per-instrument + default news) · R-46 (Home summary
+    cards) · chrome-sidebar-refresh (R-39). Each milestone's close ritual **adds its walk
+    rows to this file** so the pre-release capstone stays complete.
+
+    **✅ intraday-series (R-42) — CONSUMED at close (2026-07-18).** Its walk rows are folded
+    into item 1 (the dr-25 regression) plus the three checks below:
+
+    10a. **Mixed-currency book spot-check.** With **one USD, one INR, and one SGD-native**
+    holding present: each holding's **value**, **day change**, and the **Net worth** total
+    are all honestly converted to the base currency (the value-currency derives from the
+    **quote**, not the drifted holding currency — W-1). A **deliberately rate-less
+    currency** shows the flagged **fx-unavailable** state (served reason + confidence
+    penalty, zero contribution) — **never a fabricated 1.0** (W-1b). *Verified:* the INR
+    fund reads ~S$20 magnitude (not raw INR labelled SGD); TSLA/USD unchanged; a rate-less
+    holding is flagged, not silently valued.
+
+    10b. **Intraday series contain regular-session candles only.** Spot-check a **fresh**
+    intraday fetch (1D 1-min / 5D 5-min): **no extended-hours rows** (US regular session
+    09:30–16:00 ET only — W-3); no session-boundary spikes on the 5D chart.
+
+    10c. **Fund P/L cost-currency distortion is a KNOWN state until R-43.** India funds
+    recorded cost in SGD while NAV is INR, distorting unrealised P/L — a data-entry
+    currency question folded into R-43 (trade-date cost-basis FX, with R-8 historical FX).
+    *Verified in the R-43 walk*, not this one: confirm it is resolved when R-43 ships.
 
 ---
 

@@ -469,6 +469,67 @@ must rule.*
 
 ---
 
-**STOP AT §9.** §9 is listed with PROPOSED resolutions and ⚑ marks. The §9 one-pass is walked
-with the owner in chat; do **not** begin Phase 0. No code, no migrations this session — this is
-a **docs-only** commit.
+## 9-bis. §9 RESOLUTIONS (the one-pass — walked with the owner in chat, 2026-07-18)
+
+*The §9 one-pass happened in chat on 2026-07-18. The owner's standing delegation to the
+architect governs (recorded as such; each ruling reversible by a dated entry). The PROPOSED
+resolutions in §9 stand as the reasoning of record; these RULINGS supersede them where they
+differ. Recorded as dated lettered entries per the R-38/R-42 precedent.*
+
+- **§9-1 — 2026-07-18 — RULED: DAILY granularity throughout** (architect under owner
+  delegation). Overrides the monthly-back/daily-recent proposal: ~2,550 rows for the owner's
+  book is SQLite-trivial and uniform fidelity beats a granularity seam. **CONDITION:** Phase 0
+  MEASURES the full-daily backfill runtime on the demo book and states it in the report; if a
+  typical book exceeds ~3 minutes, the hybrid returns as a dated amendment.
+  `net_worth_snapshots` gains a provenance column (migration): `backfilled | live | manual`.
+  Scale valve → ROADMAP note (granularity/archival for very large books), filed not built.
+- **§9-2 — 2026-07-18 — RULED: backfill trigger on the Net-worth trend card** (architect under
+  owner delegation). The empty state's CTA becomes the trigger ("Build history" — exact copy
+  proposed in the plan, served strings); served progress state; idempotent + resumable; re-run
+  (after new instruments) via the same card's action. Snapshot-now icon `Button` is the ongoing
+  affordance once history exists. Net worth is an ACCEPTED page: dated delta note + Phase-3a
+  pre-pass re-run on touch; the control's exact form is ratified at the 0a specimen.
+- **§9-3 — 2026-07-18 — RULED: ECB non-publication days carry forward the last published rate,
+  unflagged** (architect under owner delegation). The standard daily-close convention; document
+  it in the plan + GLOSSARY note. A genuinely missing stretch in the series → W-1b
+  honest-missing, flagged, zero-contribution.
+- **§9-4 — 2026-07-18 — RULED (reframed per ⚠-A: reader fixes, no migration)** (architect under
+  owner delegation): (a) cost basis uses the STORED trade-time `fx_base` — `portfolio.py:334`
+  stops converting at today's rate; (b) the India-fund SGD-vs-INR currency inference defect
+  (`portfolio.py:497`) is fixed at cause; (c) edit-path FX consistency (edits preserve/recompute
+  stored trade-time FX coherently). Historical-trade NULL-FX fallback: nearest published rate
+  within ≤7 days, flagged approximate (served); beyond → honest-missing (cost stays
+  native-labelled, P/L flagged). Recorded transaction numbers are NEVER rewritten (the R-42
+  batch-1 refusal stands).
+- **§9-5 — 2026-07-18 — RULED: honest gaps render as carry-forward with visible distinction**
+  (architect under owner delegation). The trend line continues across price/FX gaps but the
+  gapped span uses the ratified reduced-emphasis chart treatment and a served "carried forward
+  from <date>" reason in the tooltip. No unmarked smooth line; no broken line.
+- **§9-6 — 2026-07-18 — RULED: snapshot-now DISABLED with served reason during an in-flight
+  backfill** (architect under owner delegation). "Backfill in progress" — the dr-7 honest-disable
+  pattern.
+- **§9-7 — 2026-07-18 — RULED: trend-only consumption now** + ROADMAP row "performance/TWR on
+  backfilled history" (architect under owner delegation). **AND the ⚠-B consolidation is IN-SCOPE
+  AS A CORRECTNESS FIX:** `analytics.performance_series` and `time_weighted_return`
+  (`analytics.py:262,399`) are consolidated onto the one date-aware engine THIS milestone — they
+  carry the W-1 currency bug; fail-first RED must prove that drift before the consolidation
+  lands. Expect performance/TWR outputs to CHANGE when the bug dies; the report states
+  representative before/after figures for the owner walk.
+- **§9-8 — 2026-07-18 — RULED: demo generates a consistent backfilled trend** (architect under
+  owner delegation; option-1 precedent; no dead chart in demo/pre-pass). Real posture = §26-bis
+  budget-aware slice at 3a — backfill ONE real held instrument end-to-end on the premium key.
+  Honest-empty for real-only surfaces where demo can't be consistent.
+- **§9-T — 2026-07-18 — RULED: "Snapshot" + "Backfill" spec-first** (architect under owner
+  delegation): GLOSSARY.md THEN mocks/glossary.ts, parity guard; reconciled with the retired
+  alias (GLOSSARY `:317`); internal enums (`source`, `backfilled`) never in user copy.
+- **AMFI archive test call — 2026-07-18 — AUTHORIZED** (architect under owner delegation): ONE
+  read-only confirming call to `DownloadNAVHistoryReport_Po.aspx` in Phase 0 to pin the exact
+  params (keyless, budget-free) BEFORE building the chunked fetcher.
+
+---
+
+**PHASE 0 GO — STOP AT 0a.** §9 is resolved (9-bis). Phase 0 is backend-first, one delta per
+commit, fail-first RED on the real cause, contract regen same-commit with path-key count stated
+(baseline 134), Decimal-only money math, served strings for every rendered state, mutating work
+on demo/isolated instances only. **STOP at the 0a specimen** — the owner ratifies it in chat;
+ratifications never in this CLI. Phase 1 arrives as a separate instruction.

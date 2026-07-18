@@ -135,3 +135,100 @@ async def test_needed_currencies_derives_from_held_pricing_currencies(session):
     await session.flush()
     got = await fx_history.needed_currencies(session, "SGD")
     assert got == {"SGD", "USD", "INR"}
+
+
+# --------------------------------------------------------------------------- #
+# Step 3 (§2.2 verdict) — the date-aware valuation engine
+# --------------------------------------------------------------------------- #
+async def _seed_tsla_book(session):
+    """A one-instrument USD book on an SGD base: 10 TSLA bought 2024-01-01 @ 100, a daily
+    price history, a live quote, and per-date ECB FX. Returns (account, instrument)."""
+    from datetime import UTC, datetime
+
+    from app.models import Account, AssetClass, Holding, Instrument, PriceHistory, TxnType
+    from app.models import Quote as QuoteRow
+    from app.models import Transaction as Txn
+    from app.services import fx_history
+    from app.services.portfolio import rebuild_holdings_from_transactions
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    instr = Instrument(symbol="TSLA", currency="USD", pricing_currency="USD", sector="Consumer Discretionary")
+    session.add(instr)
+    await session.flush()
+    session.add(Txn(account_id=acc.id, instrument_id=instr.id, type=TxnType.BUY,
+                    ts=datetime(2024, 1, 1, tzinfo=UTC), quantity=Decimal("10"),
+                    price=Decimal("100"), currency="USD"))
+    # Daily price history (midnight-UTC daily rows, the §14dr-25 convention).
+    for d, close in [(datetime(2024, 6, 1, tzinfo=UTC), "200"),
+                     (datetime(2025, 1, 1, tzinfo=UTC), "300")]:
+        session.add(PriceHistory(instrument_id=instr.id, interval="1d", ts=d,
+                                 open=Decimal(close), high=Decimal(close), low=Decimal(close),
+                                 close=Decimal(close), source="alphavantage"))
+    # Live quote (the as_of=None path).
+    session.add(QuoteRow(instrument_id=instr.id, price=Decimal("400"), previous_close=Decimal("390"),
+                         currency="USD", source="alphavantage", entitlement="delayed"))
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+    await fx_history.ingest_hist(session, _HIST_CSV)
+    # A per-date USD/SGD anchor for 2024-06-01 (EUR→USD=1.10, EUR→SGD=1.45 → USD→SGD=1.45/1.10).
+    from app.models import EcbFxHistory
+    session.add_all([
+        EcbFxHistory(currency="USD", as_of="2024-06-01", rate=Decimal("1.10")),
+        EcbFxHistory(currency="SGD", as_of="2024-06-01", rate=Decimal("1.45")),
+    ])
+    await session.flush()
+    return acc, instr
+
+
+async def test_value_portfolio_accepts_as_of_and_is_byte_identical_when_none(session):
+    """The load-bearing pin: value_portfolio(as_of=None) reproduces today's valuation output
+    EXACTLY — same totals and same per-holding figures — so the date-aware generalisation is
+    provably a no-op on the live path (RED before value_portfolio accepts as_of at all)."""
+    from app.services.portfolio import value_portfolio
+
+    await _seed_tsla_book(session)
+    default = await value_portfolio(session, "SGD")
+    as_of_none = await value_portfolio(session, "SGD", as_of=None)
+
+    assert as_of_none.total_value == default.total_value
+    assert as_of_none.cost_basis == default.cost_basis
+    assert as_of_none.unrealised_pl == default.unrealised_pl
+    assert len(as_of_none.holdings) == len(default.holdings)
+    for a, b in zip(sorted(as_of_none.holdings, key=lambda h: h.holding_id),
+                    sorted(default.holdings, key=lambda h: h.holding_id), strict=True):
+        assert a.market_value_base == b.market_value_base
+        assert a.cost_basis_base == b.cost_basis_base
+        assert a.native_currency == b.native_currency
+
+
+async def test_value_portfolio_as_of_uses_past_price_and_past_fx(session):
+    """as_of=<past date> values from the PriceHistory close on/before the date and the per-date
+    ECB FX — NOT today's quote or today's rate. 10 TSLA × 200 USD × (1.45/1.10) USD→SGD."""
+    from datetime import date
+
+    from app.services.portfolio import value_portfolio
+
+    await _seed_tsla_book(session)
+    val = await value_portfolio(session, "SGD", as_of=date(2024, 6, 1))
+    tsla = [h for h in val.holdings if h.symbol == "TSLA"]
+    assert tsla, "TSLA position should exist as-of 2024-06-01"
+    expected = Decimal("10") * Decimal("200") * (Decimal("1.45") / Decimal("1.10"))
+    # money() rounds to 2dp; compare the rounded headline.
+    from app.core.money import money
+    assert tsla[0].market_value_base == money(expected)
+    assert val.total_value == money(expected)
+
+
+async def test_value_portfolio_as_of_before_purchase_is_empty(session):
+    """A date before the first buy has no position — the ledger-reconstructed portfolio is empty
+    (no fabricated pre-existence)."""
+    from datetime import date
+
+    from app.services.portfolio import value_portfolio
+
+    await _seed_tsla_book(session)
+    val = await value_portfolio(session, "SGD", as_of=date(2023, 1, 1))
+    assert [h for h in val.holdings if h.symbol == "TSLA"] == []
+    assert val.total_value == Decimal("0.00")

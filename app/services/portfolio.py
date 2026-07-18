@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.money import ZERO, D, money, pct_change
 from app.core.regions import region_of
 from app.core.symbols import currency_for_symbol
-from app.models import Account, AssetClass, Holding, Instrument, TxnType
+from app.models import Account, AssetClass, Holding, Instrument, PriceHistory, TxnType
 from app.models import Transaction as Txn
 from app.providers.market import get_provider
 from app.schemas.common import ValuationMethod
@@ -267,10 +267,116 @@ def entity_account_filter(model, entity_id: int | None):
     return model.account_id.in_(select(Account.id).where(Account.entity_id == entity_id))
 
 
-async def _value_one_holding(session: AsyncSession, h, base_currency: str, warm: bool) -> HoldingValue:
+# --------------------------------------------------------------------------- #
+# R-43 §2.2 — the three date-aware resolvers behind ONE valuation derivation.
+# When as_of is None every resolver defers to today's live path, so the output is
+# byte-for-byte identical (pinned). When as_of is a date, position comes from the
+# ledger, price from PriceHistory, and FX from the R-8 per-date store.
+# --------------------------------------------------------------------------- #
+@dataclass
+class _AsOfHolding:
+    """A position reconstructed from the ledger as-of a past date — quacks like a ``Holding``
+    for the fields ``_value_one_holding`` reads. Never persisted; a valuation-time value object."""
+
+    id: int
+    account_id: int
+    instrument_id: int | None
+    label: str | None
+    asset_class: object
+    quantity: Decimal
+    avg_cost: Decimal
+    manual_value: Decimal | None
+    currency: str
+
+
+async def _price_close_asof(session: AsyncSession, instrument_id: int, as_of: date):
+    """The daily PriceHistory close ON OR BEFORE ``as_of`` (carry-forward for a non-trading day —
+    §9-5). ``None`` when no candle exists on/before the date (honestly unpriced back then)."""
+    end = datetime(as_of.year, as_of.month, as_of.day, 23, 59, 59, tzinfo=UTC)
+    return (await session.execute(
+        select(PriceHistory)
+        .where(
+            PriceHistory.instrument_id == instrument_id,
+            PriceHistory.interval == "1d",
+            PriceHistory.ts <= end,
+        )
+        .order_by(PriceHistory.ts.desc())
+        .limit(1)
+    )).scalars().first()
+
+
+def _hist_convert_checked(amount: Decimal, base: str, quote: str, as_of: date, hist_fx) -> tuple[Decimal, bool]:
+    """As-of analogue of ``fx.convert_checked``: convert via the R-8 per-date rate, reporting
+    availability. An unavailable historical rate returns ``(amount, False)`` so the caller flags
+    it (W-1b per-date) — never a fabricated 1.0 in a base total."""
+    if not base or not quote or base.upper() == quote.upper():
+        return D(amount), True
+    rate = hist_fx.rate(base, quote, as_of) if hist_fx is not None else None
+    if rate is None:
+        return D(amount), False
+    return D(amount) * rate, True
+
+
+async def _asof_holdings(
+    session: AsyncSession, as_of: date, entity_id: int | None
+) -> tuple[list[_AsOfHolding], set[str]]:
+    """Reconstruct instrument-linked positions as they stood on ``as_of`` — FIFO over the ledger
+    truncated at the date (the same pure ``compute_fifo`` the live rebuild uses). Returns the
+    positions plus the set of currencies they touch (for a scoped historical-FX preload). Manual
+    assets (no ledger history) are the orchestrator's concern, not the engine's."""
+    from app.services.tax import resolve_mergers  # local import avoids the portfolio↔tax cycle
+
+    q = select(Txn).where(Txn.deleted_at.is_(None))
+    ef = entity_account_filter(Txn, entity_id)
+    if ef is not None:
+        q = q.where(ef)
+    txns = resolve_mergers((await session.execute(q)).scalars().all())
+    cutoff = datetime(as_of.year, as_of.month, as_of.day, 23, 59, 59)  # naive-UTC, matches _sort_ts
+    by_key: dict[tuple[int, int], list[Txn]] = defaultdict(list)
+    for t in txns:
+        if t.instrument_id is None:
+            continue
+        if _sort_ts(t.ts) <= cutoff:
+            by_key[(t.account_id, t.instrument_id)].append(t)
+
+    out: list[_AsOfHolding] = []
+    currencies: set[str] = set()
+    for (account_id, instrument_id), group in by_key.items():
+        res = compute_fifo(group)
+        if res.quantity <= ZERO:
+            continue
+        instrument = await session.get(Instrument, instrument_id)
+        sym = instrument.symbol if instrument else None
+        inferred = currency_for_symbol(sym, instrument.exchange if instrument else None)
+        ccy = inferred or group[0].currency or (instrument.currency if instrument else "USD")
+        currencies.add((ccy or "").upper())
+        if instrument and instrument.pricing_currency:
+            currencies.add(instrument.pricing_currency.upper())
+        out.append(_AsOfHolding(
+            id=-(len(out) + 1),
+            account_id=account_id,
+            instrument_id=instrument_id,
+            label=(sym or "Manual asset"),
+            asset_class=instrument.asset_class if instrument else AssetClass.EQUITY,
+            quantity=res.quantity,
+            avg_cost=res.avg_cost,
+            manual_value=None,
+            currency=ccy,
+        ))
+    return out, currencies
+
+
+async def _value_one_holding(
+    session: AsyncSession, h, base_currency: str, warm: bool,
+    *, as_of: date | None = None, hist_fx=None,
+) -> HoldingValue:
     """Value a single holding at its latest cached quote, converted to base
     currency. May raise on edge data — value_portfolio catches it and degrades
-    the holding to Unavailable rather than crashing the whole reader."""
+    the holding to Unavailable rather than crashing the whole reader.
+
+    ``as_of`` (R-43 §2.2): when None (default) this is today's live path, unchanged. When a date,
+    price comes from the PriceHistory close on/before it (currency = ``instrument.pricing_currency``)
+    and FX from the R-8 per-date store (``hist_fx``); the output shape is identical."""
     instrument = (
         await session.get(Instrument, h.instrument_id) if h.instrument_id else None
     )
@@ -301,17 +407,30 @@ async def _value_one_holding(session: AsyncSession, h, base_currency: str, warm:
         mv_native = D(h.manual_value)
         val_method = ValuationMethod.MANUAL_VALUATION.value
     elif symbol and instrument and not instrument.is_manual_price:
-        quote = await get_cached_quote(session, symbol, instrument.exchange)
-        if quote.price is None and warm and getattr(get_provider(), "fetch_on_demand", True):
-            # No cached quote yet — fetch one for cheap providers (mock/csv).
-            quote = await refresh_quote(session, symbol, instrument.exchange)
-        if quote.price is not None:
-            price_native = D(quote.price)
+        if as_of is None:
+            # Live path (unchanged): latest cached quote, on-demand fetch for cheap providers.
+            quote = await get_cached_quote(session, symbol, instrument.exchange)
+            if quote.price is None and warm and getattr(get_provider(), "fetch_on_demand", True):
+                quote = await refresh_quote(session, symbol, instrument.exchange)
+            row_close = quote.price
+            row_ccy = quote.currency or native_ccy  # the price's own currency (W-1)
+            row_is_stale = quote.is_stale
+            row_source = quote.source
+        else:
+            # As-of path: the daily close on/before the date, in the instrument's pricing
+            # currency (the candle carries no currency — the W-2 pairing). No on-demand fetch.
+            hist_row = await _price_close_asof(session, instrument.id, as_of)
+            row_close = hist_row.close if hist_row is not None else None
+            row_ccy = instrument.pricing_currency or native_ccy
+            row_is_stale = False
+            row_source = hist_row.source if hist_row is not None else None
+        if row_close is not None:
+            price_native = D(row_close)
             mv_native = D(h.quantity) * price_native
-            price_ccy = quote.currency or native_ccy  # the price's own currency (W-1)
-            is_stale = quote.is_stale
+            price_ccy = row_ccy
+            is_stale = row_is_stale
             val_method = (ValuationMethod.OFFICIAL_NAV.value
-                          if quote.source == "amfi_nav" else ValuationMethod.MARKET_QUOTE.value)
+                          if row_source == "amfi_nav" else ValuationMethod.MARKET_QUOTE.value)
         else:
             mv_native = D(h.quantity) * D(h.avg_cost)  # fall back to cost; mark unpriced
             is_priced = False
@@ -330,9 +449,17 @@ async def _value_one_holding(session: AsyncSession, h, base_currency: str, warm:
 
     # Market value + day change ride the price's currency (price_ccy); the recorded cost
     # basis rides the holding's currency (native_ccy). Each is converted to base independently.
-    mv_base, fx_ok = await fx.convert_checked(mv_native, price_ccy, base_currency)
-    cost_base = await fx.convert(cost_native, native_ccy, base_currency)
-    day_base = await fx.convert(day_change_native, price_ccy, base_currency)
+    if as_of is None:
+        mv_base, fx_ok = await fx.convert_checked(mv_native, price_ccy, base_currency)
+        cost_base = await fx.convert(cost_native, native_ccy, base_currency)
+        day_base = await fx.convert(day_change_native, price_ccy, base_currency)
+    else:
+        # As-of: the R-8 per-date rate. Cost basis carries the native amount unconverted when the
+        # historical rate is unavailable (native-labelled, honest) — the market value is the one
+        # flagged/zeroed below (W-1b), since only that leaks into net worth.
+        mv_base, fx_ok = _hist_convert_checked(mv_native, price_ccy, base_currency, as_of, hist_fx)
+        cost_base, _ = _hist_convert_checked(cost_native, native_ccy, base_currency, as_of, hist_fx)
+        day_base = ZERO
 
     fx_unavailable = not fx_ok
     if fx_unavailable:
@@ -413,7 +540,8 @@ def _unavailable_holding(h, base_currency: str) -> HoldingValue:
 
 
 async def value_portfolio(
-    session: AsyncSession, base_currency: str, warm: bool = True, entity_id: int | None = None
+    session: AsyncSession, base_currency: str, warm: bool = True, entity_id: int | None = None,
+    *, as_of: date | None = None, hist_fx=None,
 ) -> PortfolioValuation:
     """Value every holding at its latest cached quote, converted to base currency.
 
@@ -422,22 +550,33 @@ async def value_portfolio(
     (default) a held instrument with no cached quote is fetched on demand so a
     cold start still shows priced positions and movers. ``entity_id`` optionally scopes
     the valuation to one ownership entity (§4.1); the default (None) values everything.
+
+    ``as_of`` (R-43 §2.2): when None (default) this is the live valuation, byte-for-byte
+    unchanged. When a date, the portfolio is reconstructed from the ledger as it stood then and
+    valued at that date's price history + per-date FX. A caller doing a bulk backfill preloads
+    the historical-FX resolver once and passes it in as ``hist_fx`` (avoids a reload per date).
     """
     val = PortfolioValuation(base_currency=base_currency)
-    # §3.5 R1 (chokepoint): soft-deleted holdings contribute nothing to net worth or any
-    # valuation. This one filter covers the ~25 callers that value through value_portfolio.
-    q = select(Holding).where(Holding.deleted_at.is_(None))
-    ef = entity_account_filter(Holding, entity_id)  # §4.1: no-op when entity_id is None
-    if ef is not None:
-        q = q.where(ef)
-    rows = (await session.execute(q)).scalars().all()
+    if as_of is None:
+        # §3.5 R1 (chokepoint): soft-deleted holdings contribute nothing to net worth or any
+        # valuation. This one filter covers the ~25 callers that value through value_portfolio.
+        q = select(Holding).where(Holding.deleted_at.is_(None))
+        ef = entity_account_filter(Holding, entity_id)  # §4.1: no-op when entity_id is None
+        if ef is not None:
+            q = q.where(ef)
+        rows = (await session.execute(q)).scalars().all()
+    else:
+        rows, ccys = await _asof_holdings(session, as_of, entity_id)
+        if hist_fx is None:
+            from app.services.fx_history import load_historical_fx
+            hist_fx = await load_historical_fx(session, list(ccys | {(base_currency or "").upper()}))
 
     for h in rows:
         # A reader must never 500 on one bad holding: value it in isolation and,
         # on any failure, degrade it to Unavailable (honest, not fabricated) and
         # log which holding + why, so the root cause is diagnosable from the logs.
         try:
-            hv = await _value_one_holding(session, h, base_currency, warm)
+            hv = await _value_one_holding(session, h, base_currency, warm, as_of=as_of, hist_fx=hist_fx)
         except Exception as exc:  # noqa: BLE001
             log.warning(
                 "valuation failed for holding id=%s label=%r — showing it as "

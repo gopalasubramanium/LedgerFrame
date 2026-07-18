@@ -111,6 +111,40 @@ class HistoricalFx:
             return None
         return eq / eb
 
+    def _eur_to_dated(self, ccy: str, on_date: str | date | datetime) -> tuple[Decimal | None, str | None]:
+        """Like :meth:`eur_to` but also returns the SOURCE publication date used (for staleness)."""
+        ccy = (ccy or "").upper()
+        if ccy == "EUR":
+            return Decimal("1"), _iso(on_date)
+        entry = self._series.get(ccy)
+        if not entry:
+            return None, None
+        dates, rates = entry
+        idx = bisect.bisect_right(dates, _iso(on_date)) - 1
+        if idx < 0:
+            return None, None
+        return rates[idx], dates[idx]
+
+    def rate_near(self, base: str, quote: str, on_date: str | date | datetime,
+                  within_days: int = 7) -> tuple[Decimal | None, bool]:
+        """base→quote as-of ``on_date`` for a trade-date fallback (§9-4a): returns ``(rate, ok)``
+        where ``ok`` is True only when BOTH legs' carried-forward publication date is within
+        ``within_days`` of ``on_date`` — otherwise the last-known rate is too stale to stand in as
+        a trade-date rate, and the caller treats the cost as honestly-missing (never today's rate)."""
+        base, quote = (base or "").upper(), (quote or "").upper()
+        if not base or not quote or base == quote:
+            return Decimal("1"), True
+        eb, db = self._eur_to_dated(base, on_date)
+        eq, dq = self._eur_to_dated(quote, on_date)
+        if eb is None or eq is None or eb == 0:
+            return None, False
+        tgt = date.fromisoformat(_iso(on_date))
+
+        def _near(src: str | None) -> bool:
+            return src is not None and abs((tgt - date.fromisoformat(src)).days) <= within_days
+
+        return eq / eb, (_near(db) and _near(dq))
+
     @property
     def currencies(self) -> set[str]:
         return set(self._series)

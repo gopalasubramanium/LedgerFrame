@@ -447,3 +447,68 @@ async def test_performance_series_must_track_per_date_fx_not_todays(session, mon
     # The invested series MUST move with per-date FX. Drifted code holds today's FX constant →
     # a flat line. This is the fail-first RED the consolidation resolves.
     assert max(vals) != min(vals), "performance series must reflect per-date FX movement (▲-B W-1/current-FX drift)"
+
+
+# --------------------------------------------------------------------------- #
+# Step 5(a) (§9-4a) — trade-date cost-basis FX
+# --------------------------------------------------------------------------- #
+async def test_cost_basis_uses_stored_trade_date_fx_not_todays_rate(session):
+    """§9-4(a): a cross-currency holding's cost basis converts at the STORED trade-date rate
+    (transactions.fx_to_base), not today's rate. Buy 100 FOO @ 10 USD with a stored USD→SGD of
+    2.50 → cost_basis_base = 2500 SGD, regardless of today's live USD/SGD. FAILS RED (today's
+    rate) before the reader fix."""
+    from datetime import UTC, datetime
+
+    from app.models import Account, AssetClass, Instrument, TxnType
+    from app.models import Quote as QuoteRow
+    from app.models import Transaction as Txn
+    from app.services.portfolio import rebuild_holdings_from_transactions, value_portfolio
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    foo = Instrument(symbol="FOO", currency="USD", pricing_currency="USD", asset_class=AssetClass.EQUITY)
+    session.add(foo)
+    await session.flush()
+    session.add(QuoteRow(instrument_id=foo.id, price=Decimal("10"), previous_close=Decimal("10"),
+                         currency="USD", source="mock", entitlement="delayed"))
+    session.add(Txn(account_id=acc.id, instrument_id=foo.id, type=TxnType.BUY,
+                    ts=datetime(2024, 1, 2, tzinfo=UTC), quantity=Decimal("100"), price=Decimal("10"),
+                    currency="USD", fx_to_base=Decimal("2.50"), fx_base="SGD"))  # stored trade-date rate
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+    val = await value_portfolio(session, "SGD")
+    foo_hv = [h for h in val.holdings if h.symbol == "FOO"][0]
+    # 100 × 10 USD × 2.50 (stored trade-date) = 2500 SGD — NOT today's live rate.
+    assert foo_hv.cost_basis_base == Decimal("2500.00")
+
+
+async def test_cost_basis_null_fx_is_honestly_flagged_not_todays_rate(session):
+    """§9-4(a): a historical cross-currency trade with NO stored FX and NO per-date rate within
+    ±7 days is honestly-missing — the holding is flagged (cost_fx_unavailable), never silently
+    converted at today's rate. (With an ECB rate within 7 days it would instead be flagged
+    approximate — covered on the owner's populated stack.)"""
+    from datetime import UTC, datetime
+
+    from app.models import Account, AssetClass, Instrument, TxnType
+    from app.models import Quote as QuoteRow
+    from app.models import Transaction as Txn
+    from app.services.portfolio import rebuild_holdings_from_transactions, value_portfolio
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    foo = Instrument(symbol="FOO", currency="USD", pricing_currency="USD", asset_class=AssetClass.EQUITY)
+    session.add(foo)
+    await session.flush()
+    session.add(QuoteRow(instrument_id=foo.id, price=Decimal("10"), previous_close=Decimal("10"),
+                         currency="USD", source="mock", entitlement="delayed"))
+    # NULL fx_to_base (a backdated historical trade), and no ecb_fx_history seeded → no near rate.
+    session.add(Txn(account_id=acc.id, instrument_id=foo.id, type=TxnType.BUY,
+                    ts=datetime(2019, 1, 2, tzinfo=UTC), quantity=Decimal("100"), price=Decimal("10"),
+                    currency="USD", fx_to_base=None, fx_base=None))
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+    val = await value_portfolio(session, "SGD")
+    foo_hv = [h for h in val.holdings if h.symbol == "FOO"][0]
+    assert foo_hv.cost_fx_unavailable is True  # flagged, not fabricated at today's rate

@@ -157,6 +157,11 @@ class HoldingValue:
     is_priced: bool
     valuation_method: str = ValuationMethod.MARKET_QUOTE.value
     fx_unavailable: bool = False  # W-1b: rate genuinely unavailable — value not stated in base
+    # §9-4(a) trade-date cost-basis FX honesty: cost converted at each lot's stored trade-date rate
+    # (or the ≤7-day ECB fallback, `approximate`); `unavailable` = a lot had no honest rate, so the
+    # base cost is incomplete and P/L must be read as flagged (never silently at today's rate).
+    cost_fx_approximate: bool = False
+    cost_fx_unavailable: bool = False
     # Pricing-health provenance (populated from the quote where one was used).
     exchange: str | None = None
     source: str | None = None
@@ -368,9 +373,71 @@ async def _asof_holdings(
     return out, currencies
 
 
+async def _trade_date_cost_map(
+    session: AsyncSession, base_currency: str, entity_id: int | None
+) -> dict[tuple[int, int], tuple[Decimal, str | None]]:
+    """§9-4(a): per-holding base cost basis converted at each open lot's TRADE-DATE FX, not today's
+    rate. Keyed ``(account_id, instrument_id) -> (base_cost, flag)`` where flag ∈ {None,
+    'approximate', 'unavailable'}. Reader-only (no migration): replays the ledger via ``fifo_report``
+    (which carries each lot's stored ``fx_to_base``). GATED — returns ``{}`` when the book has no
+    cross-currency trade, so a domestic book keeps the fast, unchanged path with zero overhead.
+
+    Per lot: base cost = native cost × (stored trade-date rate, else the ≤7-day ECB fallback flagged
+    approximate, else honestly-missing → that lot excluded and the holding flagged 'unavailable').
+    A domestic lot is rate 1. Recorded transaction numbers are never rewritten."""
+    from app.services.tax import fifo_report, resolve_mergers  # local import avoids the ↔tax cycle
+
+    base = (base_currency or "").upper()
+    q = select(Txn).where(Txn.deleted_at.is_(None))
+    ef = entity_account_filter(Txn, entity_id)
+    if ef is not None:
+        q = q.where(ef)
+    raw = (await session.execute(q)).scalars().all()
+    if not any((t.currency or base).upper() != base for t in raw if t.instrument_id is not None):
+        return {}  # all-domestic book: trade-date cost == today's-rate cost (rate 1) — no override
+
+    txns = resolve_mergers(raw, base_currency)
+    by_key: dict[tuple[int, int], list] = defaultdict(list)
+    for t in txns:
+        if t.instrument_id is not None:
+            by_key[(t.account_id, t.instrument_id)].append(t)
+
+    hist_fx = None
+    out: dict[tuple[int, int], tuple[Decimal, str | None]] = {}
+    for key, group in by_key.items():
+        _events, lots = fifo_report(group, base_currency)
+        total = ZERO
+        approx = missing = has_foreign = False
+        for lot in lots:
+            native_cost = D(lot.quantity) * D(lot.unit_cost)
+            lccy = (lot.currency or base).upper()
+            if lccy == base:
+                total += native_cost
+                continue
+            has_foreign = True
+            rate = lot.acq_fx  # the stored trade-date native→base rate (None if not captured)
+            if rate is None:
+                if hist_fx is None:
+                    from app.services.fx_history import load_historical_fx, needed_currencies
+                    hist_fx = await load_historical_fx(session, list(await needed_currencies(session, base)))
+                near, ok = hist_fx.rate_near(lccy, base, lot.acquired_ts, 7)
+                rate = near if (near is not None and ok) else None
+                if rate is not None:
+                    approx = True
+            if rate is None:
+                missing = True  # honest-missing: this lot's base cost cannot be stated
+                continue
+            total += native_cost * D(rate)
+        if not has_foreign:
+            continue  # domestic holding — leave the unchanged today's-rate path (identical)
+        flag = "unavailable" if missing else ("approximate" if approx else None)
+        out[key] = (money(total), flag)
+    return out
+
+
 async def _value_one_holding(
     session: AsyncSession, h, base_currency: str, warm: bool,
-    *, as_of: date | None = None, hist_fx=None,
+    *, as_of: date | None = None, hist_fx=None, cost_override: tuple[Decimal, str | None] | None = None,
 ) -> HoldingValue:
     """Value a single holding at its latest cached quote, converted to base
     currency. May raise on edge data — value_portfolio catches it and degrades
@@ -451,10 +518,18 @@ async def _value_one_holding(
 
     # Market value + day change ride the price's currency (price_ccy); the recorded cost
     # basis rides the holding's currency (native_ccy). Each is converted to base independently.
+    cost_fx_approximate = False
+    cost_fx_unavailable = False
     if as_of is None:
         mv_base, fx_ok = await fx.convert_checked(mv_native, price_ccy, base_currency)
         cost_base = await fx.convert(cost_native, native_ccy, base_currency)
         day_base = await fx.convert(day_change_native, price_ccy, base_currency)
+        # §9-4(a): when a trade-date cost override exists (cross-currency lots), it supersedes the
+        # today's-rate conversion above — cost basis rides each lot's stored trade-date FX.
+        if cost_override is not None and h.manual_value is None:
+            cost_base, ov_flag = cost_override
+            cost_fx_approximate = ov_flag == "approximate"
+            cost_fx_unavailable = ov_flag == "unavailable"
     else:
         # As-of: the R-8 per-date rate. Cost basis carries the native amount unconverted when the
         # historical rate is unavailable (native-labelled, honest) — the market value is the one
@@ -502,6 +577,8 @@ async def _value_one_holding(
         is_priced=is_priced,
         valuation_method=val_method,
         fx_unavailable=fx_unavailable,
+        cost_fx_approximate=cost_fx_approximate,
+        cost_fx_unavailable=cost_fx_unavailable,
         exchange=instrument.exchange if instrument else None,
         source=quote.source if quote else None,
         entitlement=quote.entitlement.value if quote else None,
@@ -559,6 +636,7 @@ async def value_portfolio(
     the historical-FX resolver once and passes it in as ``hist_fx`` (avoids a reload per date).
     """
     val = PortfolioValuation(base_currency=base_currency)
+    cost_map: dict[tuple[int, int], tuple[Decimal, str | None]] = {}
     if as_of is None:
         # §3.5 R1 (chokepoint): soft-deleted holdings contribute nothing to net worth or any
         # valuation. This one filter covers the ~25 callers that value through value_portfolio.
@@ -567,6 +645,8 @@ async def value_portfolio(
         if ef is not None:
             q = q.where(ef)
         rows = (await session.execute(q)).scalars().all()
+        # §9-4(a): trade-date cost-basis FX map (empty + zero-overhead for a domestic-only book).
+        cost_map = await _trade_date_cost_map(session, base_currency, entity_id)
     else:
         rows, ccys = await _asof_holdings(session, as_of, entity_id)
         if hist_fx is None:
@@ -578,7 +658,9 @@ async def value_portfolio(
         # on any failure, degrade it to Unavailable (honest, not fabricated) and
         # log which holding + why, so the root cause is diagnosable from the logs.
         try:
-            hv = await _value_one_holding(session, h, base_currency, warm, as_of=as_of, hist_fx=hist_fx)
+            cov = cost_map.get((h.account_id, h.instrument_id)) if as_of is None else None
+            hv = await _value_one_holding(session, h, base_currency, warm,
+                                          as_of=as_of, hist_fx=hist_fx, cost_override=cov)
         except Exception as exc:  # noqa: BLE001
             log.warning(
                 "valuation failed for holding id=%s label=%r — showing it as "

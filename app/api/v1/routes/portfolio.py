@@ -943,6 +943,49 @@ async def net_worth_history(session: AsyncSession = Depends(get_db)) -> dict:
     }
 
 
+# R-43 §9-2/§9-6: the net-worth backfill orchestrator + snapshot-now. Held refs so a
+# fire-and-forget background task is not garbage-collected mid-run.
+_backfill_tasks: set = set()
+
+
+@router.post("/net-worth/backfill", dependencies=[Depends(require_auth)])
+async def start_backfill() -> dict:
+    """Start the historical net-worth backfill (§9-2 — the 'Build history' trigger). Runs
+    backgrounded from already-cached price/FX (no provider call); the UI polls
+    ``/net-worth/backfill-status``. Idempotent + refuses a concurrent run with a served reason."""
+    import asyncio
+
+    from app.services import backfill
+
+    if backfill.is_running():
+        return {"ok": False, "running": True,
+                "message": "A backfill is already in progress."}
+    base = get_settings().base_currency
+    task = asyncio.create_task(backfill.run_backfill_background(base))
+    _backfill_tasks.add(task)
+    task.add_done_callback(_backfill_tasks.discard)
+    return {"ok": True, "running": True, "message": "Building history…"}
+
+
+@router.get("/net-worth/backfill-status")
+async def backfill_status() -> dict:
+    """Served progress of the backfill (running / done-of-total / current date / ok / failed)."""
+    from app.services import backfill
+
+    return backfill.read_status()
+
+
+@router.post("/net-worth/snapshot", dependencies=[Depends(require_auth)])
+async def take_snapshot(session: AsyncSession = Depends(get_db)) -> dict:
+    """Write a dated net-worth snapshot now (§9-6, provenance=manual). Refused with a served
+    reason (409) while a backfill is in flight — the dr-7 honest-disable pattern."""
+    from app.services import backfill
+
+    if backfill.is_running():
+        raise HTTPException(409, "Backfill in progress — snapshot unavailable until it finishes.")
+    return await backfill.snapshot_now(session, get_settings().base_currency)
+
+
 @router.get("/net-worth/statement")
 async def net_worth_statement(entity_id: int | None = Query(default=None),
                               session: AsyncSession = Depends(get_db)) -> dict:

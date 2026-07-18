@@ -512,3 +512,116 @@ async def test_cost_basis_null_fx_is_honestly_flagged_not_todays_rate(session):
     val = await value_portfolio(session, "SGD")
     foo_hv = [h for h in val.holdings if h.symbol == "FOO"][0]
     assert foo_hv.cost_fx_unavailable is True  # flagged, not fabricated at today's rate
+
+
+# --------------------------------------------------------------------------- #
+# Step 7 (§9-1/§9-2/§9-6) — the backfill orchestrator
+# --------------------------------------------------------------------------- #
+async def _seed_backfill_book(session):
+    """A market holding (TSLA/USD) + a manual cash asset, with generated price + FX history."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.models import Account, AssetClass, EcbFxHistory, Holding, Instrument, PriceHistory, TxnType
+    from app.models import Transaction as Txn
+    from app.services.portfolio import rebuild_holdings_from_transactions
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    tsla = Instrument(symbol="TSLA", currency="USD", pricing_currency="USD", asset_class=AssetClass.EQUITY)
+    session.add(tsla)
+    await session.flush()
+    end = datetime.now(UTC)
+    session.add(Txn(account_id=acc.id, instrument_id=tsla.id, type=TxnType.BUY,
+                    ts=end - timedelta(days=40), quantity=Decimal("10"), price=Decimal("100"), currency="USD"))
+    # A manual cash asset (no ledger history) — must carry flat across the backfill.
+    session.add(Holding(account_id=acc.id, label="Cash", asset_class=AssetClass.CASH,
+                        quantity=Decimal("1"), avg_cost=Decimal("5000"), manual_value=Decimal("5000"), currency="SGD"))
+    start = (end - timedelta(days=45)).date()
+    d = start
+    while d <= end.date():
+        ts = datetime(d.year, d.month, d.day, tzinfo=UTC)
+        session.add(PriceHistory(instrument_id=tsla.id, interval="1d", ts=ts,
+                                 open=Decimal("200"), high=Decimal("200"), low=Decimal("200"),
+                                 close=Decimal("200"), source="mock"))
+        for ccy, rate in (("EUR", Decimal("1")), ("USD", Decimal("1.10")), ("SGD", Decimal("1.45"))):
+            session.add(EcbFxHistory(currency=ccy, as_of=d.isoformat(), rate=rate))
+        d += timedelta(days=1)
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+    return acc
+
+
+async def test_backfill_writes_daily_backfilled_snapshots_with_manual_flat(session):
+    """§9-1: a daily backfilled series from the earliest txn, provenance=backfilled, that includes
+    the manual cash carried flat. TSLA 10×200 USD×(1.45/1.10) + 5000 cash on each covered day."""
+    from app.services import backfill
+
+    await _seed_backfill_book(session)
+    res = await backfill.run_backfill(session, "SGD", write_progress=False)
+    assert res["days"] > 0
+    rows = (await session.execute(
+        select(NetWorthSnapshot).where(NetWorthSnapshot.source == "backfilled").order_by(NetWorthSnapshot.ts)
+    )).scalars().all()
+    assert len(rows) == res["days"]
+    market = Decimal("10") * Decimal("200") * (Decimal("1.45") / Decimal("1.10"))
+    from app.core.money import money
+    # Every covered day: market value + 5000 flat cash (positions constant over the window).
+    assert all(r.net_worth == money(market + Decimal("5000")) for r in rows[-5:])
+    assert all(r.source == "backfilled" for r in rows)
+
+
+async def test_backfill_is_idempotent_and_real_supersedes(session):
+    """§9-1: re-running never duplicates (backfilled rows replaced), and a pre-existing live/manual
+    row for a date is never shadowed by a backfilled one."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import and_, func
+
+    from app.services import backfill
+
+    await _seed_backfill_book(session)
+    # A live row for 3 days ago — must be preserved, not overwritten by a backfilled row.
+    live_day = (datetime.now(UTC) - timedelta(days=3)).date()
+    session.add(NetWorthSnapshot(ts=datetime(live_day.year, live_day.month, live_day.day, tzinfo=UTC),
+                                 base_currency="SGD", assets=Decimal("99999"), liabilities=Decimal("0"),
+                                 net_worth=Decimal("99999"), source="live"))
+    await session.flush()
+
+    r1 = await backfill.run_backfill(session, "SGD", write_progress=False)
+    r2 = await backfill.run_backfill(session, "SGD", write_progress=False)
+    assert r1["days"] == r2["days"]  # idempotent — no growth
+    total_backfilled = (await session.execute(
+        select(func.count()).select_from(NetWorthSnapshot).where(NetWorthSnapshot.source == "backfilled")
+    )).scalar()
+    assert total_backfilled == r2["days"]
+    # The live row survived and no backfilled row shadows its date.
+    shadow = (await session.execute(
+        select(func.count()).select_from(NetWorthSnapshot).where(and_(
+            NetWorthSnapshot.source == "backfilled",
+            func.date(NetWorthSnapshot.ts) == live_day.isoformat()))
+    )).scalar()
+    assert shadow == 0
+
+
+async def test_snapshot_now_writes_manual_row(session):
+    """§9-6: snapshot-now writes a source='manual' dated row from the current full valuation."""
+    from app.services import backfill
+
+    await _seed_backfill_book(session)
+    res = await backfill.snapshot_now(session, "SGD")
+    assert res["ok"]
+    row = (await session.execute(
+        select(NetWorthSnapshot).where(NetWorthSnapshot.source == "manual")
+    )).scalars().one()
+    assert row.net_worth > 0
+
+
+async def test_backfill_and_snapshot_endpoints_served(app_client):
+    """The trigger, the served-progress poll, and snapshot-now are wired at the HTTP boundary."""
+    r = await app_client.post("/api/v1/net-worth/backfill")
+    assert r.status_code == 200 and "message" in r.json()
+    st = (await app_client.get("/api/v1/net-worth/backfill-status")).json()
+    assert set(("running", "done", "total", "ok", "failed")) <= set(st)
+    snap = await app_client.post("/api/v1/net-worth/snapshot")
+    assert snap.status_code in (200, 409)  # 409 only if a backfill is mid-flight

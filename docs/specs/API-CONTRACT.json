@@ -7882,6 +7882,142 @@
         ]
       }
     },
+    "/api/v1/net-worth/backfill": {
+      "post": {
+        "description": "Start the historical net-worth backfill (\u00a79-2 \u2014 the 'Build history' trigger). Runs\nbackgrounded from already-cached price/FX (no provider call); the UI polls\n``/net-worth/backfill-status``. Idempotent + refuses a concurrent run with a served reason.",
+        "operationId": "start_backfill_api_v1_net_worth_backfill_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Start Backfill Api V1 Net Worth Backfill Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Backfill",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/net-worth/backfill-status": {
+      "get": {
+        "description": "Served progress of the backfill (running / done-of-total / current date / ok / failed).",
+        "operationId": "backfill_status_api_v1_net_worth_backfill_status_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Backfill Status Api V1 Net Worth Backfill Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Backfill Status",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
     "/api/v1/net-worth/history": {
       "get": {
         "operationId": "net_worth_history_api_v1_net_worth_history_get",
@@ -7944,6 +8080,74 @@
           }
         },
         "summary": "Net Worth History",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/api/v1/net-worth/snapshot": {
+      "post": {
+        "description": "Write a dated net-worth snapshot now (\u00a79-6, provenance=manual). Refused with a served\nreason (409) while a backfill is in flight \u2014 the dr-7 honest-disable pattern.",
+        "operationId": "take_snapshot_api_v1_net_worth_snapshot_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Take Snapshot Api V1 Net Worth Snapshot Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Take Snapshot",
         "tags": [
           "portfolio"
         ]

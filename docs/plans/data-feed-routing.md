@@ -2305,6 +2305,11 @@ NOT-A-BUG; no open blocker remains.
   fresh-instance confirmation "charts corrected"). **Carryover:** the final chart sign-off rides the
   **R-42 intraday-series** owner walk **AND** the pre-release walk. Rationale recorded: the 1D/5D
   greyed state is the **dr-7 honest-disable**, remedied by R-42 (the next milestone).
+  **→ FULLY ACCEPTED / CLOSED at the R-42 close — owner, in chat, 2026-07-18.** The carryover
+  final chart sign-off is complete: R-42 root-caused the 5D session-boundary spikes (W-3:
+  Alpha Vantage `extended_hours` default), purged the stored extended-hours rows, and the
+  owner visually confirmed clean TSLA 1D/5D on the real-keyed instance. Cross-ref:
+  `docs/plans/intraday-series.md` MILESTONE CLOSE (STEP 1) + `pre-release-walk.md` item 1.
 
 ### §14 ruling 1c — DEFERRED-WALK §-ENTRY (owner ruling, 2026-07-18)
 

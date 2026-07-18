@@ -551,7 +551,11 @@ calls + the 1 tier probe): AAPL/MSFT 1D → **1-min, ~825 real market-session ca
 
 ---
 
-## PHASE 3b — OWNER ACCEPTANCE WALK — FINDINGS LEDGER (2026-07-18)
+## PHASE 3b — OWNER ACCEPTANCE WALK — FINDINGS LEDGER (2026-07-18) — **CLOSED: 3 findings, 1 batch**
+
+> **LEDGER CLOSED (2026-07-18).** Walk findings **W-1 · W-2 · W-3**, all verified-cause /
+> fixed / RED→GREEN / both-postures in **batch-1** (`153b00d..1c9f8dc`), owner-accepted on
+> the live re-walk (see MILESTONE CLOSE below). **Final tally: 3 findings, 1 batch.**
 
 *The owner's 3b walk surfaced three findings. Verify-first: each verified cause is dumped
 with `file:line` cites BEFORE any fix (real-data dumps from a **read-only copy** of the
@@ -678,3 +682,144 @@ carryover resolves once the owner sees the clean 5D.
 **STOP.** Batch-1 (W-1/W-2/W-3) is code-complete, gated, and pushed. No close ritual, no
 `RATIFICATION`/`CURRENT.md` close record, no CLI ratification — this batch STOPS here for the
 owner re-walk in chat (per the batch instruction). The fix commits themselves are pushed.
+
+---
+
+## MILESTONE CLOSE (2026-07-18) — STEP 1 records
+
+*The close ritual. GATE 0 precondition met: the owner confirmed in chat — **"3b accepted,
+dr-25 fully accepted"** — after visually verifying clean TSLA 1D/5D charts on their real
+instance. No feature work in this session; records + strike-check only.*
+
+- **Phase 3b ACCEPTED — owner, in chat (2026-07-18).** After the re-walk on the live
+  instance: net worth corrected to honest figures (~S$113k of unconverted INR magnitude
+  removed — W-1), the India funds **102000/145834 converted with Identity Currency INR**
+  (W-2), **TSLA unchanged**, and **clean TSLA 1D/5D visually confirmed** by owner eyes
+  (W-3). The three walk findings are accepted as fixed.
+
+- **§14dr-25 (R-38 carryover) — FULLY ACCEPTED — owner, in chat (2026-07-18).** The partial
+  acceptance recorded at the R-38 close (2026-07-18, morning — "waiting until intraday data
+  comes in") **converts to full acceptance.** The daily comb was fixed at batch 8
+  (`98c3be2`); intraday is now live; the session-boundary spikes were root-caused (W-3: the
+  Alpha Vantage `extended_hours` default) and the stored extended-hours rows purged; the
+  charts render clean on the real-keyed instance by owner eyes. **The dr-25 final chart
+  sign-off is complete.** (Cross-referenced in `docs/plans/data-feed-routing.md` under its
+  dr-25 entry and in `docs/plans/pre-release-walk.md` item 1.)
+
+- **Walk-findings ledger → CLOSED: 3 findings, 1 batch** (header updated above).
+
+- **Cost-currency ruling (architect under owner's standing delegation, 2026-07-18 —
+  reversible by a dated entry).** The India fund transactions recorded **cost in SGD while
+  the NAV is INR**, which distorts the unrealised P/L display. This is a **data-entry
+  currency question, not a valuation bug** — batch-1 **correctly did not rewrite recorded
+  costs** (W-1a converts *market value* from `quote.currency` and leaves the stored cost
+  basis on its recorded currency, flagged not silently changed). **Transaction currency +
+  trade-date cost-basis FX is FOLDED INTO R-43's scope**: R-43 already carries R-8
+  (historical FX series) as a hard dependency, and trade-date conversion is its natural home.
+  Recorded here and in `ROADMAP.md`'s R-43 row.
+
+---
+
+## §15 — STRIKE-CHECK RETROSPECTIVE (2026-07-18) — STEP 2
+
+*Lessons from the R-42 build + the 3b walk, each strike-checked against the repo (the
+mechanism — test / guard / rule — is named and verified present at close).*
+
+1. **Value-currency derives from the QUOTE, not the holding.** The W-1 class: a live-quoted
+   holding's market value must be interpreted in the **quote's** currency, ranked above the
+   drift-prone `holding.currency` / `instrument.currency`.
+   **Mechanism (verified):** the conversion-source pin + the mixed-currency net-worth pin in
+   `tests/integration/test_fx_quote_currency.py` (INR fund in an SGD account converts;
+   TSLA/USD unchanged; mixed-book net worth honest). Fix at `app/services/portfolio.py`.
+
+2. **Provider DEFAULTS are part of the contract.** An unsent parameter is still a decision —
+   Alpha Vantage `TIME_SERIES_INTRADAY` defaults `extended_hours=true`, which silently
+   returned the 04:00–20:00 ET window and produced the 5D session-boundary spikes (W-3).
+   **Mechanism (verified):** the pins assert the **exact params sent** —
+   `tests/unit/test_intraday_provider.py:92` asserts `captured.get("extended_hours") ==
+   "false"`. **Recorded rule for all future provider integrations:** assert the exact request
+   parameters, never trust a provider default.
+
+3. **Silent fallbacks are findings.** The `fx.convert` `Decimal("1")` same-currency/no-rate
+   fallback fabricated a 1.0 rate (W-1b) — latent in the owner's book but a real class defect.
+   **Mechanism (verified):** a genuinely-missing rate now surfaces a **served reason +
+   confidence penalty + zero contribution**, pinned by
+   `tests/integration/test_fx_quote_currency.py::test_missing_rate_is_flagged_never_fabricated_one`.
+   Fix at `app/services/fx.py` (`get_rate_or_none` / `convert_checked`) + `confidence.py`.
+
+4. **Green gates cannot see a wrong number that renders confidently.** **1,139 tests were
+   green** while net worth was overstated by ~S$113k — only the **owner walk on real data**
+   caught it (the mock suite never carried an INR-quoted-in-SGD-account holding).
+   **Mechanism (verified):** per-milestone **owner walks** (resumed by the R-38 §14 ruling
+   1c) + the **pre-release walk checklist** (`docs/plans/pre-release-walk.md`), now carrying
+   a mixed-currency book spot-check (item added this close).
+
+5. **The harness push classifier can block `git push`.** During batch-1 the harness classifier
+   blocked the push; the workaround is that **the owner pushes from their own terminal**.
+   **Mechanism (verified):** recorded in harness memory (`harness-push-classifier.md`) so a
+   future session does **not** retry-loop on a blocked push.
+
+### Changed-file table — from the ACTUAL diff
+
+`git diff --stat <milestone-base>..HEAD`, where **`<milestone-base> = b5efcb3`** — the commit
+preceding the R-42 plan's **first Phase-0 commit** (`51f03cc` "R-42 Phase 0.1 — provider
+intraday seam"), recovered via `git log --reverse -- docs/plans/intraday-series.md` cross-read
+against the commit train. *Caveat (honest):* this range also contains the interleaved **R-38
+POST-CLOSE DELTA D1** commits (`42fb752..dc72f0a` — the India-MF recognition helper/repair +
+`test_d1_*` files + `release-readiness.md`), which landed in the same window before the R-42
+Phase-0a record; they are included in the raw range, not excised.
+
+```
+ ROADMAP.md                                      |   8 +-
+ app/api/v1/routes/amfi.py                       |  16 +-
+ app/api/v1/routes/markets.py                    |  45 ++++-
+ app/api/v1/routes/portfolio.py                  |  10 +-
+ app/main.py                                     |  15 ++
+ app/providers/market/external.py                |  31 ++-
+ app/providers/market/mock.py                    |  13 +-
+ app/providers/market/router.py                  |  12 +-
+ app/providers/market/yahoo.py                   |  11 +-
+ app/services/confidence.py                      |   5 +
+ app/services/fx.py                              |  44 +++-
+ app/services/market.py                          | 254 ++++++++++++++++++++++--
+ app/services/portfolio.py                       |  29 ++-
+ docs/openapi.json                               |  17 ++
+ docs/plans/CURRENT.md                           |  31 +--
+ docs/plans/data-feed-routing.md                 |  88 ++++++++
+ docs/plans/intraday-series.md                   | 230 +++++++++++++++++++++
+ docs/plans/release-readiness.md                 |  38 +++-
+ docs/specs/API-CONTRACT.json                    |  17 ++
+ docs/specs/GLOSSARY.md                          |  11 +
+ frontend/src/api/instruments.ts                 |  22 +-
+ frontend/src/api/pricing-health.ts              |   3 +
+ frontend/src/components/ui/PriceChart.tsx       |  85 +++++++-
+ frontend/src/components/ui/charts.css           |   6 +
+ frontend/src/components/ui/ui.test.tsx          |  60 ++++++
+ frontend/src/mocks/glossary.ts                  |  13 ++
+ frontend/src/routes/InstrumentDetail.test.tsx   | 164 ++++++++++++++-
+ frontend/src/routes/InstrumentDetail.tsx        | 100 ++++++++--
+ frontend/src/routes/PricingHealth.test.tsx      |  38 +++-
+ frontend/src/routes/PricingHealth.tsx           |   9 +-
+ tests/integration/test_d1_amfi_recognition.py   | 102 ++++++++++
+ tests/integration/test_d1_amfi_repair.py        | 127 ++++++++++++
+ tests/integration/test_d1_leak_copy.py          |  54 +++++
+ tests/integration/test_fx_quote_currency.py     | 176 ++++++++++++++++
+ tests/integration/test_intraday_availability.py | 104 ++++++++++
+ tests/integration/test_intraday_endpoint.py     |  62 ++++++
+ tests/integration/test_intraday_storage.py      | 225 +++++++++++++++++++++
+ tests/integration/test_routing.py               |  11 +
+ tests/unit/test_intraday_provider.py            | 143 +++++++++++++
+ 39 files changed, 2324 insertions(+), 105 deletions(-)
+```
+
+**Gates at close:** backend **1145 passing**; `make api-contract-check` **current** (contract
+**134 path-keys**, unchanged — no shape changed after Phase 0); `ruff check .` **clean**;
+frontend `npm run check` **exit 0** from `frontend/` (lint · typecheck · tokens · 320 vitest ·
+337 Playwright overflow). *(Backend count re-confirmed in the close report.)*
+
+---
+
+**MILESTONE CLOSED — intraday-series (R-42), 2026-07-18.** Walk ledger CLOSED (3/1); §15
+strike-check recorded; `RATIFICATION.md §6` row appended; `CURRENT.md` advanced to R-43.
+The owner re-uploads the knowledge base; the R-43 kickoff happens in chat. **No R-43 work in
+this session.**

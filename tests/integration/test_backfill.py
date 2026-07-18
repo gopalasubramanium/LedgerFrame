@@ -762,3 +762,74 @@ async def test_net_worth_history_serves_provenance_and_gap_fields(app_client):
         assert isinstance(p["carried_forward"], bool)
         # the reason is served (non-null) exactly when carried_forward is set (D-105).
         assert (p["reason"] is not None) == p["carried_forward"]
+
+
+# --------------------------------------------------------------------------- #
+# §12 step 2 — ECB ingest wired into the build-history acquisition preflight
+# --------------------------------------------------------------------------- #
+async def test_acquire_history_fetches_and_ingests_ecb_fx_on_an_empty_store(session, monkeypatch):
+    """§12 step 2: the build-history acquisition preflight fetches eurofxref-hist (one keyless
+    fetch) and ingests it BEFORE valuing, so an empty FX store is populated then the series values
+    from REAL per-date FX (not the F-1 zero-coverage garbage). Egress is allowed (privacy_mode off);
+    the network is monkeypatched so the test makes no real call."""
+    from app.services import acquire, fx_history
+
+    before = await fx_history.status(session)
+    assert before["rows"] == 0  # empty store — the F-1 live-instance condition
+
+    # A REAL-provider posture (not the offline demo): acquisition must actually fetch + ingest.
+    from types import SimpleNamespace
+    monkeypatch.setattr("app.services.acquire.get_settings",
+                        lambda: SimpleNamespace(base_currency="SGD", is_demo=False))
+
+    async def _fake_fetch(timeout: float = 60.0):
+        return _HIST_CSV
+    monkeypatch.setattr("app.services.acquire.fetch_ecb_hist", _fake_fetch)
+
+    res = await acquire.acquire_history(session, "SGD")
+    assert res["ok"] is True and res["acquired"] is True
+    after = await fx_history.status(session)
+    assert after["rows"] > 0 and after["currencies"] >= 3  # USD/INR/SGD (+EUR) now present
+
+
+async def test_acquire_history_refuses_under_no_egress_with_a_served_reason(session, monkeypatch):
+    """§12 step 2 / Guarantee 5: under no-egress the preflight makes ZERO outbound calls and returns
+    a served refusal — building history requires the exchange-rate download. The FX store is left
+    untouched (no fabricated series)."""
+    from app.models import Setting
+    from app.services import acquire, fx_history
+
+    session.add(Setting(key="privacy_mode", value="true"))
+    await session.commit()
+
+    async def _must_not_fetch(timeout: float = 60.0):
+        raise AssertionError("no-egress must make ZERO outbound calls (Guarantee 5)")
+    monkeypatch.setattr("app.services.acquire.fetch_ecb_hist", _must_not_fetch)
+
+    res = await acquire.acquire_history(session, "SGD")
+    assert res["ok"] is False and res["acquired"] is False
+    assert "no-egress" in res["message"].lower()
+    assert "exchange-rate" in res["message"].lower()
+    assert (await fx_history.status(session))["rows"] == 0  # store untouched
+
+
+async def test_build_history_background_refuses_under_no_egress_and_writes_no_series(session, monkeypatch):
+    """§12 step 2 at the flow level: the user-triggered background build refuses under no-egress —
+    the served status carries the honest refusal and NO backfilled snapshots are written (never the
+    F-1 zero-coverage line). Runs on its own session (the real background entry point)."""
+    from app.models import Setting
+    from app.services import backfill
+
+    await _seed_backfill_book(session)  # a real cross-currency book to value
+    session.add(Setting(key="privacy_mode", value="true"))
+    await session.commit()
+
+    await backfill.run_backfill_background("SGD")
+
+    st = backfill.read_status()
+    assert st["running"] is False
+    assert "no-egress" in st["message"].lower()
+    rows = (await session.execute(
+        select(NetWorthSnapshot).where(NetWorthSnapshot.source == "backfilled")
+    )).scalars().all()
+    assert rows == []  # refused — no fabricated series under no-egress

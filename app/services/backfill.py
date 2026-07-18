@@ -178,12 +178,27 @@ async def run_backfill(session: AsyncSession, base_currency: str | None = None,
 
 
 async def run_backfill_background(base_currency: str | None = None) -> None:
-    """Entry point for a fire-and-forget background task: opens its own session, runs the backfill,
-    and records failure in the served status (never crashes the caller)."""
+    """Entry point for a fire-and-forget background task: opens its own session, runs the
+    ACQUISITION preflight (§12 step 2 — fetch + ingest the ECB per-date FX the series values from),
+    then the backfill, and records failure in the served status (never crashes the caller).
+
+    Under no-egress the preflight refuses (Guarantee 5): the served status carries the honest
+    refusal and NO series is written — never the F-1 zero-coverage line built from an empty store."""
     from app.db.base import get_sessionmaker
+    from app.services.acquire import acquire_history
 
     try:
         async with get_sessionmaker()() as session:
+            # §12 step 2: acquire the inputs (ECB FX today; prices in later steps) BEFORE valuing.
+            _write_status(running=True, ok=False, failed=False, done=0, total=0, current=None,
+                          message="Downloading exchange-rate history…")
+            acq = await acquire_history(session, base_currency)
+            if not acq.get("ok"):
+                # No-egress (or acquisition unavailable): refuse honestly, build nothing.
+                _write_status(running=False, ok=False, failed=False, done=0, total=0,
+                              current=None, message=acq.get("message", "History not built."))
+                log.info("backfill refused: %s", acq.get("message"))
+                return
             await run_backfill(session, base_currency)
     except Exception as exc:  # noqa: BLE001
         log.warning("backfill failed: %s", exc)

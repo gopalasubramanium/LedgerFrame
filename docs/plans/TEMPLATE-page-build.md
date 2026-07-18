@@ -595,6 +595,11 @@ tests. Never assemble the page against an endpoint that does not exist.*
   Durability is part of closing, not an afterthought — the entire v2 rebuild once sat unpushed on the
   local trunk (255 commits ahead of `origin/main`). **The session that closes a milestone ends with
   `git push`.**
+  - **CURRENT.md must be in the close commit's diff (data-feed-routing §15 forensic).** Every close
+    updates `CURRENT.md` (the DONE/NEXT pointer the next session starts from). **The close report must
+    show `CURRENT.md` inside the close commit's diff; a claimed CURRENT.md update without the file in
+    the diff FAILS the close.** (A `git log --oneline -- CURRENT.md` at the R-38 close confirmed prior
+    closes did touch it — this rule keeps it that way instead of on trust.)
 
 ---
 

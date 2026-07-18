@@ -225,6 +225,13 @@ async def seed_demo_data(session: AsyncSession) -> bool:
     await session.flush()
     await rebuild_holdings_from_transactions(session)
 
+    # R-43 §9-8: generate the persisted price + per-date FX history the date-aware valuation
+    # engine reads, so the demo/pre-pass lane can value the book as-of any past date (network-free,
+    # deterministic — a fixture, never a claim of real history). Enables the backfilled trend and
+    # the mixed-currency analytics the ▲-B consolidation corrects.
+    from app.seed.demo_history import seed_demo_history
+    await seed_demo_history(session)
+
     # Representative tags on a few holdings so the By-tag donut + /portfolio/tags render
     # populated in demo (page-portfolio §12b-6). Keys match the tag reader — instrument symbol
     # (or manual label), scoped to the holding's account; the seed-flag convention is unchanged.

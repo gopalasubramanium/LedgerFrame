@@ -297,3 +297,50 @@ async def test_edit_recaptures_trade_date_fx_so_it_is_never_left_stale(app_clien
         # Re-captured against the NEW currency+date: a backdated foreign trade is honestly
         # unavailable (proximity guard), so the stale rate-1 is cleared — not preserved.
         assert t.fx_to_base is None and t.fx_base is None
+
+
+# --------------------------------------------------------------------------- #
+# Step 9 (§9-8) — deterministic demo history generation (the step-4 enabler)
+# --------------------------------------------------------------------------- #
+async def test_demo_seeds_price_and_fx_history_so_as_of_prices_the_book(app_client):
+    """§9-8: the demo now persists price_history + ecb_fx_history, so value_portfolio(as_of=<past>)
+    prices the market book from generated history instead of returning 0 priced — the exact gap
+    that would have flattened a consolidated performance line. Mixed USD/SGD/INR so the ▲-B drift
+    can manifest."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import func, select
+    from app.db.base import get_sessionmaker
+    from app.models import EcbFxHistory, PriceHistory
+    from app.services.portfolio import value_portfolio
+
+    async with get_sessionmaker()() as s:
+        ph = (await s.execute(select(func.count()).select_from(PriceHistory))).scalar()
+        fx = (await s.execute(select(func.count()).select_from(EcbFxHistory))).scalar()
+        assert ph > 0 and fx > 0, "demo must generate price + FX history"
+        # value the book 60 days ago: market positions must now be priced from generated history.
+        d = (datetime.now(UTC) - timedelta(days=60)).date()
+        val = await value_portfolio(s, "SGD", as_of=d)
+        priced = [h for h in val.holdings if h.is_priced and h.market_value_base != 0]
+        assert priced, "as-of valuation must price the market book from generated history"
+        # deterministic: same inputs → identical total (a fixture, not a random walk).
+        val2 = await value_portfolio(s, "SGD", as_of=d)
+        assert val.total_value == val2.total_value
+
+
+async def test_demo_fx_history_moves_over_the_span(app_client):
+    """The generated per-date FX must MOVE (today's USD/SGD ≠ a past USD/SGD) — otherwise the
+    current-FX-across-history drift the ▲-B consolidation fixes could not be demonstrated."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.db.base import get_sessionmaker
+    from app.services import fx_history
+
+    async with get_sessionmaker()() as s:
+        fxh = await fx_history.load_historical_fx(s, ["USD", "SGD"])
+        today = datetime.now(UTC).date()
+        early = today - timedelta(days=900)
+        r_now = fxh.rate("USD", "SGD", today)
+        r_then = fxh.rate("USD", "SGD", early)
+        assert r_now is not None and r_then is not None
+        assert r_now != r_then  # the drift the consolidation corrects

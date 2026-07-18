@@ -2387,3 +2387,91 @@ in the diff fails the close.*
 
 **MILESTONE CLOSED — data-feed-routing (R-38): §14 29 findings / 9 batches, §15 recorded, RATIFICATION
 §6 row appended (2026-07-18). See CURRENT.md for the active pointer (NEXT = intraday-series / R-42).**
+
+---
+
+## POST-CLOSE DELTA D1 (2026-07-18)
+
+*The milestone is CLOSED (§14/§15). This is an accepted-page delta under the §26-bis standing
+re-run rule (dated delta note + isolated pre-pass re-run), NOT a §14 reopen. It records ONE
+verified finding from a read-only investigation session + the owner-delegated architect ruling +
+the fix set + both-posture evidence.*
+
+### The finding — the owner's `145834` mutual fund: mapped-but-never-converted
+
+A mutual-fund scheme (`145834`) present in the synced AMFI master **with a valid NAV**, added via
+the Add/buy flow, showed as **unpriced** — despite the NAV being known. Cause (cite-confirmed
+during the investigation, re-verified before editing):
+
+- `_link_amfi_by_symbol` fired from the Add/buy flow (`csv_import.py:487-490` →
+  `services/market.py`) but was a **MINIMAL linker**: it attached `amfi_code` + stamped
+  `listing_country=IN` and did **not** publish the already-known NAV, did **not** convert
+  `pricing_currency` (guard `if not …pricing_currency` left it USD) or `valuation_method` (left
+  `market_quote`).
+- The **full conversion** lived only on the `map_amfi` route (`amfi.py:79-85`:
+  `asset_category=fund`, `liquidity_profile=redeemable`, `valuation_method=official_nav`,
+  `pricing_currency=INR`) and only `publish_navs_to_instruments` (`amfi.py:48`; callers = refresh /
+  map_amfi) ever wrote an `amfi_nav` quote. Result: **mapped-but-never-published** — priced only
+  after a later master refresh.
+- **UI (D-028):** two fields labeled **"Source"** with different semantics
+  (`PricingHealth.tsx:348-349` ProvenanceBadge = value-supplier; `:361` Routing MetaStrip =
+  `route_source`) violated the D-028 GLOSSARY split (`GLOSSARY.md:99-108`); the router's reason
+  "awaiting NAV (refresh AMFI)" (`router.py:265-270`) was never surfaced (masked by the generic
+  UNAVAILABLE `failure_reason`, `portfolio.py:253`).
+- **Internal-literal leak (pre-existing, found in the R-42 Phase-0 specimen):** an unmapped MF's
+  served copy contained "map to a **amfi_code**…" (`router.py:276`) — an internal id_type literal
+  shown to the user, reaching them via BOTH Pricing Health and the Instrument-Detail daily-history
+  empty state (`history_status`).
+
+### Owner-delegated architect ruling (2026-07-18, in chat — recorded verbatim)
+
+> "One recognition derivation: extract the India-MF recognition (full field conversion + inline NAV
+> publish) into a single helper; both `map_amfi` and `_link_amfi_by_symbol` call it. One-time
+> idempotent repair for mapped-but-unconverted instruments. Relabel the Routing block per D-028 and
+> surface the router's served reason."
+
+### Fixes (verify-first; fail-first RED pins; one delta per commit)
+
+| Fix | What | Commit |
+|-----|------|--------|
+| **D1-a** | One recognition helper `recognise_amfi_fund(session, instrument, code)` in `services/market.py` — full conversion + inline NAV publish via the existing `publish_navs_to_instruments` path. `map_amfi` and `_link_amfi_by_symbol` both call it; the divergent partial logic is deleted. Cache-publish guarantee preserved (amfi-owned NAV, never matrix-overwritten). Pins: Add-flow with a synced+priced scheme → fully converted + `amfi_nav` quote immediately; byte-equality of the two paths' converted field-set (anti-drift). | `42fb752` |
+| **D1-b** | One-time idempotent repair `recognise_unconverted_amfi_funds(session)` (the dr-25 cleanup pattern), wired into the lifespan startup (best-effort, non-fatal) — ships as normal product-upgrade code on the live instance. For each `amfi_code`-mapped instrument with unconverted fields and/or a missing `amfi_nav` quote while the master has a NAV → runs the D1-a helper. Idempotent, logged with counts, AuditEvent, strictly additive (never deletes user data). Pin: seeded residue → repaired once; second run = 0. | `d6b2302` |
+| **D1-c** | D-028 relabel + served reason. Backend serves `route_reason` (= `diag.reason`) on `/portfolio/pricing-health`, distinct from `failure_reason`. Frontend: the Routing MetaStrip label "Source" → **"Route"** (routing vocabulary per D-028); the ProvenanceBadge "Source" (value-supplier) stays; the served `route_reason` is rendered in the Routing block. **No new GLOSSARY line** — "Route" is covered by the existing D-028 "Routing / route" entry (`GLOSSARY.md:107`); the Rule/Lane MetaStrip labels are already plain diagnostic labels (owner-confirmed 2026-07-18). Pins: distinct Route/Source labels; served reason asserted at its control. | `a4acfce` |
+| **D1-d** | The internal-literal leak, fixed at the ONE canonical source (`router.py` step-3 mutual_fund reason, owner-confirmed 2026-07-18): reworded to the exact user-facing string **"map this fund to an AMFI scheme (or set a manual value)"** — no internal field name; both served surfaces (Pricing Health reason + `history_status`) are now clean. Pins: the pure `route()` reason + the served `history_status` for an unmapped IN MF contain no `amfi_code` and equal the reworded copy. | `bf229f7` |
+
+### Verification — both postures (§26-bis)
+
+**Mock posture:** backend **1138 passed** (0 fail); `make api-contract-check` green, contract
+**134 path-keys** held (the `route_reason` add lands on a `dict`-returning endpoint — no new
+path-key); frontend `npm run check` **exit 0** (lint+typecheck+tokens+tests+overflow, 337 e2e).
+
+**Real posture** (isolated production instance on spare port 8399, own temp data dir, demo-seeded;
+Vite dev on 5199 proxying to it — the owner's 5173→8321→`~/.ledgerframe-data` stack **never
+touched**, §15c; repo-root `.env` snapshotted before / restored after, verified identical; the AMFI
+master sync is keyless, driven offline via a NAVAll.txt upload):
+
+- **Owner case reproduced (D1-a):** synced the master (145834 NAV 982.4567), added the MF by scheme
+  code via the Add/buy flow → **priced via `amfi_nav` IMMEDIATELY** (no master refresh):
+  `route_source=amfi_nav`, `source=amfi_nav`, `valuation_method=official_nav`, `native_price=982.4567`,
+  status **End-of-day**; instrument converted (`asset_category=fund`, `liquidity_profile=redeemable`,
+  `listing_country=IN`).
+- **D1-c live (diagnostics modal):** the route-detail modal shows **distinct** labels — the
+  ProvenanceBadge **"Source" amfi_nav** and the Routing block **"Route" amfi_nav** (no longer two
+  "Source" labels) — plus Rule `lane` · Lane `in_mutual_fund` · Class `Mutual fund` · Native price
+  `INR 982.4567`. **0 console errors** (clean Vite-dev run).
+- **D1-b repair live:** a seeded mapped-but-unconverted `145834`-like instrument
+  (`pricing_currency=USD`, `valuation_method=market_quote`, no `amfi_nav` quote) was **healed on a
+  real boot** (startup repair; API-verified converted + `amfi_nav` quote 982.4567); a direct run
+  against the same real SQLite DB returned **repaired=1** then **repaired=0** (idempotent).
+
+### Pricing Health pre-pass re-run (accepted-page touch rule — §26-bis)
+
+Pricing Health is an accepted page; D1-c touches it, so a scripted isolated pre-pass re-ran it. On
+the isolated demo instance the Pricing Health diagnostics table + route-detail modal rendered
+correctly at 1366px with the `145834` fund priced via `amfi_nav` and the D-028-corrected
+Route/Source labels; **0 unexpected console errors**. Screenshots captured (Pricing Health table;
+route-detail modal). **PASS** — recorded here per the accepted-page delta rule.
+
+**Delta D1 CLOSED (2026-07-18).** Four fixes + docs; both postures green; owner's live stack
+untouched. Downstream docs recording: RD-9 Amendment 6 (`release-readiness.md`) + ROADMAP/CURRENT
+train update (separate commit).

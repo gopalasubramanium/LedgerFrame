@@ -212,7 +212,7 @@ test("R-42 Phase 1: an intraday range carried over to an instrument where it's s
     { ts: "2026-07-01T00:00:00", open: 1, high: 2, low: 1, close: 1.5 },
     { ts: "2026-07-02T00:00:00", open: 1.5, high: 2, low: 1, close: 1.7 },
   ];
-  vi.mocked(api.getInstrumentHistory).mockImplementation(async (sym: string, _days: number, range?: string) => {
+  vi.mocked(api.getInstrumentHistory).mockImplementation(async (sym: string, _days?: number, range?: string) => {
     const enabled = sym === "AAPL"; // AAPL is intraday-capable; the fund is not
     const ranges = {
       "1D": { interval: "1min", enabled, state: enabled ? "available" : "class_disabled", reason: enabled ? null : NAV_REASON },

@@ -83,9 +83,11 @@ CAPABILITIES: dict[str, ProviderCapabilities] = {
         asset_classes=frozenset({"mutual_fund"}), regions=frozenset({"IN"}),
         entitlement="end-of-day"),
     "coingecko": ProviderCapabilities(
-        name="coingecko", search=True, fetch_on_demand=False, needs_key=False,
-        asset_classes=frozenset({"crypto"}), regions=frozenset({"*"}),
-        entitlement="delayed"),
+        name="coingecko", history=True, search=True, fetch_on_demand=False, needs_key=False,
+        # §12 step 4: CoinGecko IS the crypto daily-history owner (market_chart/range, 00:00 UTC).
+        # AV's crypto history is wrong-instrument garbage (§12-R3) — crypto history rides here, never AV.
+        asset_classes=frozenset({"crypto"}), history_asset_classes=frozenset({"crypto"}),
+        regions=frozenset({"*"}), entitlement="delayed"),
     "ecb_fx": ProviderCapabilities(
         name="ecb_fx", quote=False, fx=True, fetch_on_demand=False, needs_key=False,
         asset_classes=frozenset({"fx"}), regions=frozenset({"*"}),

@@ -12,13 +12,41 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.money import D
 from app.db.upsert import upsert
-from app.models import CoingeckoCoin, InstrumentIdentifier
+from app.models import CoingeckoCoin, InstrumentIdentifier, PriceHistory
 from app.models import Quote as QuoteRow
-from app.providers.market.coingecko import parse_coins_list, parse_simple_price
+from app.providers.market.coingecko import (
+    parse_coins_list,
+    parse_market_chart_range,
+    parse_simple_price,
+)
 
 # The currency we store on the Quote (FX converts to base). Kept as USD for
 # consistency with the existing crypto handling; multi-currency is exposed via search.
 QUOTE_CCY = "USD"
+
+
+async def ingest_history(session: AsyncSession, instrument_id: int, chart_json: dict,
+                         interval: str = "1d") -> int:
+    """§12 step 4: parse a ``market_chart/range`` payload and upsert daily PriceHistory rows for
+    ``instrument_id`` (source='coingecko', keyed to midnight UTC). Idempotent — re-ingesting the
+    same window overwrites in place on the (instrument_id, interval, ts) unique index, never
+    duplicating. Returns the number of candles ingested."""
+    candles = parse_market_chart_range(chart_json)
+    if not candles:
+        return 0
+    payload = [{"instrument_id": instrument_id, "interval": interval, "ts": c.ts,
+                "open": c.open, "high": c.high, "low": c.low, "close": c.close,
+                "volume": c.volume, "source": "coingecko"} for c in candles]
+    stmt = upsert(PriceHistory)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[PriceHistory.instrument_id, PriceHistory.interval, PriceHistory.ts],
+        set_={"open": stmt.excluded.open, "high": stmt.excluded.high, "low": stmt.excluded.low,
+              "close": stmt.excluded.close, "volume": stmt.excluded.volume,
+              "source": stmt.excluded.source},
+    )
+    await session.execute(stmt, payload)
+    await session.flush()
+    return len(candles)
 
 
 async def refresh_coins(session: AsyncSession, list_json: list) -> int:

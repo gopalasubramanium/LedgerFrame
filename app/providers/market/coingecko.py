@@ -19,9 +19,20 @@ from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 
 from app.core.egress import egress_client
+from app.schemas.common import Candle
 
 BASE_URL = "https://api.coingecko.com/api/v3"
 VS_CURRENCIES = ("usd", "sgd", "inr", "eur", "gbp")
+
+# §12 step 4 — CoinGecko free/public-API historical policy (documented, honest):
+#   • /coins/{id}/market_chart/range auto-selects granularity by range width: 1 day → 5-minutely,
+#     2–90 days → hourly, >90 days → DAILY at 00:00 UTC. We always request >90-day ranges so the
+#     points are daily-midnight (the valuation cadence).
+#   • The free/public tier caps historical depth at the PAST 365 DAYS. Older data needs a paid plan
+#     — an honest limit; a date before the cap is honestly-missing, never fabricated.
+# Source: CoinGecko public API docs (Market Chart Range By ID; historical data range on the free
+# plan). The exact free-tier depth is confirmed on the owner's stack (the STOP-window BTC call).
+CRYPTO_HISTORY_FREE_TIER_DAYS = 365
 
 
 @dataclass(frozen=True)
@@ -77,6 +88,56 @@ def parse_simple_price(data: dict) -> dict[str, CoinPrice]:
             last_updated=datetime.fromtimestamp(ts, UTC) if isinstance(ts, (int, float)) else None,
         )
     return out
+
+
+def parse_market_chart_range(data: dict) -> list[Candle]:
+    """Parse ``/coins/{id}/market_chart/range`` into daily candles.
+
+    The ``prices`` array is ``[[ms_epoch, price], …]`` — one reference price per point. For a
+    >90-day range CoinGecko returns one point per day at 00:00 UTC; we key each to midnight UTC.
+    CoinGecko gives a single price per point (not OHLC), so open/high/low/close all carry that
+    daily reference price — honest (no fabricated intraday range). A non-positive price is dropped
+    (unavailable, never a fabricated 0). Volume is matched from ``total_volumes`` by timestamp."""
+    prices = (data or {}).get("prices") or []
+    vols = {int(ts): v for ts, v in ((data or {}).get("total_volumes") or []) if isinstance(ts, (int, float))}
+    out: list[Candle] = []
+    seen: set[str] = set()
+    for point in prices:
+        if not isinstance(point, (list, tuple)) or len(point) < 2:
+            continue
+        ms, raw = point[0], point[1]
+        if not isinstance(ms, (int, float)):
+            continue
+        price = _dec(raw)
+        if price is None:
+            continue  # zero/absent → unavailable, never fabricated
+        # Normalise to midnight UTC (the daily key); dedup if two points land on the same date.
+        day = datetime.fromtimestamp(ms / 1000, UTC).date()
+        iso = day.isoformat()
+        if iso in seen:
+            continue
+        seen.add(iso)
+        vol = _dec(vols.get(int(ms)))
+        out.append(Candle(ts=datetime(day.year, day.month, day.day, tzinfo=UTC),
+                          open=price, high=price, low=price, close=price, volume=vol))
+    out.sort(key=lambda c: c.ts)
+    return out
+
+
+async def fetch_market_chart_range(coin_id: str, vs_currency: str, start: datetime, end: datetime,
+                                   timeout: float = 30.0) -> dict:
+    """One CoinGecko ``market_chart/range`` fetch = the daily reference-price series for ``coin_id``
+    over ``[start, end]`` in ``vs_currency``. Routed through the egress choke point (no-egress →
+    EgressBlocked). Request a >90-day window so the returned granularity is DAILY (00:00 UTC)."""
+    params = {"vs_currency": (vs_currency or "usd").lower(),
+              "from": str(int(start.timestamp())), "to": str(int(end.timestamp()))}
+    async with await egress_client(
+        "crypto history backfill", timeout=timeout,
+        headers={"User-Agent": "LedgerFrame/1.0 (+local)"}, follow_redirects=True,
+    ) as c:
+        r = await c.get(f"{BASE_URL}/coins/{coin_id}/market_chart/range", params=params)
+        r.raise_for_status()
+        return r.json()
 
 
 async def fetch_coins_list(timeout: float = 20.0) -> list:

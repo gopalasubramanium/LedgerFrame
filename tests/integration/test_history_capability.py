@@ -25,8 +25,8 @@ def test_alphavantage_history_capability_is_equity_etf_only():
     assert can_fetch_history(av, "crypto") is False   # the wrong-instrument case
     assert can_fetch_history(av, "fx") is False
     assert can_fetch_intraday(av, "crypto") is False
-    # CoinGecko (step 4) is the crypto owner; AMFI owns funds — never AV.
-    assert can_fetch_history(capabilities_for("coingecko"), "crypto") is False  # history flag off until step 4
+    # CoinGecko (step 4) is the crypto daily-history owner — never AV.
+    assert can_fetch_history(capabilities_for("coingecko"), "crypto") is True
 
 
 def test_history_source_refuses_av_for_a_crypto_instrument_at_the_capability_layer():

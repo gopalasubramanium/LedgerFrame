@@ -587,22 +587,33 @@ Verified empirically on the demo book: `price_history` has **0 rows** and `ecb_f
   cost figures change. Meaningful only once the R-8 store is populated.
 
 **Both depend on demo data population — which is step 9 (demo generation of `PriceHistory` +
-`ecb_fx_history` + backfilled snapshots).** The plan lists step 9 last, but it is in fact the
-ENABLER for the remaining correctness steps to land without regressing accepted pages. Recommended
-revised order: **step 9 (demo/data generation) → step 4 + step 5(a)** (now verifiable, non-
-regressing) → steps 6/7/8 → 0a. Owner to confirm this re-sequence before the coupled changes land.
+`ecb_fx_history`).** RE-SEQUENCE RATIFIED by the owner (2026-07-18): **step 9 → step 4 → step 5(a)**
+→ steps 6/7/8 → 0a. Steps 9 and 4 are now DONE and non-regressing (below).
 
-### NEXT — the remaining Phase-0 cluster
+### DONE (cont.) — the re-sequenced cluster
 
-- **Step 9 (§9-8) — demo generation (now the recommended enabler).** Generate consistent demo
-  `PriceHistory` + `ecb_fx_history` + backfilled `net_worth_snapshots` so the date-aware engine
-  has data in the demo/pre-pass lane (network-free) — unblocks 4 and 5(a) AND feeds the trend.
-- **Step 4 (§9-7 / ⚠-B) — analytics consolidation.** RED proving the W-1 / current-FX drift, THEN
-  both consume the date-aware engine; forked valuation DELETED; before/after figures reported.
-  *Land after step 9 so the demo perf line stays alive.*
-- **Step 5(a) — trade-date cost-basis FX.** Cost basis at the STORED trade-time `fx_base` per lot
-  (via `fifo_report` open lots), ≤7-day nearest-rate fallback flagged else honest-missing. *Land
-  after step 9 so the demo cross-currency costs resolve.*
+- **Step 9 (§9-8) — deterministic demo history generation** — `app/seed/demo_history.py` generates
+  (network-free, deterministic) `price_history` per held MARKET instrument (funds/manual skipped —
+  a fund's history is AMFI NAV, step 6) + `ecb_fx_history` EUR→{USD,SGD,INR,EUR} with rates that
+  MOVE across the span. 5789 price + 3668 FX rows; a full DAILY as-of sweep = **1284 days in ~13s
+  (~10 ms/day) — validates the §9-1 DAILY-throughout ruling** (far under 3 min; no hybrid). Trend
+  moves 11,539 (2023) → 62,158 (today). Full suite 1159 → 0 regressions. — commit `399df6e`.
+- **Step 4 (§9-7 / ▲-B) — analytics consolidation** — `performance_series` + `time_weighted_return`
+  now value each date through the ONE date-aware engine (per-date price + FX); the forked valuation
+  + `_carry_forward` helper are DELETED. Fail-first RED (owner cond. #2): constant-price / moving-FX
+  fixture proves the drifted series is FLAT (1342.618) while the truth moves. Before/after (demo,
+  cond. #3): 2023-03-01 invested value **17,690.10 → 18,149.52 SGD (+459.42, ~2.6%)**; after 365d
+  return 7.94%, TWR 70.58%. include_manual carries manual flat; long windows stride-capped at 500
+  as-of valuations (logged). Full suite 1157, 0 regressions. **Accepted-page (Portfolio perf/TWR)
+  figures legitimately change — dated delta + 3a pre-pass re-run covers it.** **Perf note:** /stats
+  + /performance are heavier now (per-date valuation; key_stats timeouts degrade gracefully) — a
+  batched as-of preload is a worthwhile follow-up for slow real hardware. — commit `d5f9a44`.
+
+### NEXT — remaining Phase-0 cluster
+
+- **Step 5(a) — trade-date cost-basis FX** (IN PROGRESS). Cost basis at the STORED trade-time
+  `fx_base` per lot (via `fifo_report` open lots), ≤7-day nearest-rate fallback flagged else
+  honest-missing. Now unblocked (demo `ecb_fx_history` populated by step 9).
 - **Step 6 — history acquisition.** AMFI authorized confirming call → chunked archive fetcher;
   crypto CoinGecko `market-chart/range` adapter (capability flag per free-tier limits); AV
   `outputsize=full` premium. Budget-aware, user-triggered. *Network-dependent — validate on the

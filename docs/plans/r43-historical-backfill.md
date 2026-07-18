@@ -947,7 +947,104 @@ transcript leak; `.env` updated.
   retriable (no stage can spin indefinitely — the F-4 hang).
 - **AV `entitlement=delayed`** — added to the AV client's base params (owner's working call).
 
-## 15. LESSONS (recorded)
+## 16. F-6 — CRYPTO HISTORY NOT ACQUIRED (2026-07-19, owner on-stack re-run ~04:00) — INVESTIGATED
+
+**Owner evidence (live re-run, 2026-07-19 ~04:00):** FX ingested via the zip (F-4 works live);
+AMFI + AV full-depth acquired (SBICARD, TSLA, both funds); the Max trend renders a real multi-year
+line ending at the headline; TWR honestly "—". **Coverage is 4 of 6 — BTC and XRP acquired
+NOTHING.** The preflight still reads *"No price history yet — run Build history to acquire it"*
+(which the owner just did), and both BTC/XRP quotes show STALE chips post-refresh.
+
+Causes verified **read-only** against a **copy** of the live DB (`.env` sha256
+`460a2da0…97afae6` unchanged, live DB never written — mtime `2026-07-19 03:54`). Reproduced through
+the real routing/acquisition/coverage code.
+
+### F-6 #1 — the BTC/XRP instrument rows (dump, copy)
+| id | symbol | asset_class | pricing_ccy | currency | source_override | identifiers |
+|----|--------|-------------|-------------|----------|-----------------|-------------|
+| 15 | BTC | crypto | NULL | USD | **alphavantage** | **NONE** |
+| 27 | XRP | crypto | USD | USD | **alphavantage** | **NONE** |
+
+Both carry the dr-27-era `source_override='alphavantage'` (expected). **Neither has any
+`instrument_identifiers` row — `coingecko_id` is ABSENT** (expected: the auto-linker only fires when
+the override is being set to *coingecko*; the owner's correction set *alphavantage*, so the id was
+never linked — `market.py:287-295`). `price_history` for both = **0 rows** (the step-3 purge cleared
+the old AV wrong-instrument garbage; nothing replaced it). The other 4 held instruments have deep
+1d history (SBICARD 1562, TSLA 1883, 102000 1846, 145834 2279) and `ecb_fx_history` is populated
+(226,615 rows, 1999→2026-07-17) — so coverage is genuinely 4/6.
+
+### F-6 #2 — what the orchestrator DECIDED for BTC/XRP (routing trace, file:line)
+The acquisition orchestrator `acquire_prices` routes **by asset class**, NOT by the quotes-lane
+override: the crypto branch (`acquire.py:160-164`) never consults `source_override`. So the AV
+override does **not** cause a capability refusal here — crypto is already sent to CoinGecko, not AV.
+**The branch that skipped them is the missing CoinGecko id:** `_identifier(instr.id,
+"coingecko_id")` → `None` → `counts["skipped"] += 1` + logs *"crypto has no coingecko_id — skipped
+(honest)"* + `continue` (`acquire.py:161-164`). **There is no auto-resolution at acquisition time.**
+Verdict: the blocker is **missing coingecko id + no auto-link at acquisition**, not the AV override
+(the override matters only for QUOTES — F-6 #4).
+
+### F-6 #3 — why the served no-history reason is generic, not the blocker (file:line)
+`coverage_summary` derives the served per-instrument string from **row presence only**
+(`coverage.py:90-91`): `if not has_price: summary = "No price history yet — run Build history to
+acquire it"`. It never inspects WHY history is absent (no mapping vs class-unservable vs
+not-yet-run), so BTC/XRP — genuinely blocked on a missing CoinGecko mapping — are served the exact
+CTA the owner just performed. This is the R3 defect.
+
+### F-6 #4 — the stale crypto quote chips (data + file:line)
+Live BTC/XRP quotes (copy): `source='alphavantage'`, `entitlement='delayed'`, BTC `64,494.96 USD`,
+XRP `1.0924 USD`, `received_at 2026-07-18 19:53` — **~8h before the DB mtime (07-19 03:54)**. AV
+serves a **real** crypto quote via its **currency** endpoint (`CURRENCY_EXCHANGE_RATE`, `_raw_fx`),
+NOT `GLOBAL_QUOTE` — `external.py:176-184` (BTC/XRP ∈ `_CRYPTO`), labelled `DELAYED`. Staleness:
+`_is_stale` (`market.py:32-39`) gives a `delayed` quote only the short `stale_after_seconds=900`
+(`config.py:69`) threshold — the end-of-day 30h grace applies only to `end-of-day`/`official_nav`.
+Crypto trades 24/7 and the last successful crypto quote fetch was 07-18 19:53, so at view-time the
+~8h-old value exceeds 900s → **flagged stale**. **Verdict: a GENUINELY stale value (real, delayed,
+~8h old), not a mislabel** — the chip is honest and correct. The deeper issue is that the AV
+quotes-override keeps crypto quotes on AV's FX endpoint instead of the crypto lane's natural
+provider (CoinGecko). Per R4 this is a **recommendation for a chat ruling — NOT an auto-migration**
+(§17-R4 below).
+
+## 17. F-6 FIX BATCH — RULINGS + BUILD ORDER (2026-07-19, architect under the owner's standing delegation)
+
+Rulings dated 2026-07-19, reversible by a later dated entry (the R-38/R-42 precedent):
+
+- **§17-R1 — history acquisition routes by CLASS CAPABILITY, not the quotes-lane override.** A
+  quotes correction is a quotes decision; it must never block history acquisition from the provider
+  that can serve the class (crypto → CoinGecko). `acquire_prices` already routes by class; the AV
+  override is made irrelevant to history by construction. **Pin:** a crypto instrument with an AV
+  quotes-override still acquires CoinGecko history.
+- **§17-R2 — CoinGecko id auto-resolution at acquisition time**, reusing the ONE existing linker
+  `_link_coingecko_by_symbol` (no second implementation). Unambiguous symbol → link + proceed;
+  ambiguous → resolve to the canonical **top-market-cap** primary when it is the clear primary
+  (BTC → bitcoin, XRP → ripple), else serve candidates. **Disambiguation rule (pinned):** the coin
+  master's stored `market_cap_usd` is unreliable (only 2 of 17,630 rows carry it — the `/coins/list`
+  sync has no cap), so on an ambiguous symbol the linker fetches live caps for the candidate ids via
+  the existing `/simple/price?include_market_cap` (`fetch_prices`, ONE call, budget-aware), persists
+  them, and links the candidate whose positive cap **dominates** every other (runner-up is None/0,
+  or top ≥ 10× runner-up). No dominant cap → served candidates (never a silent guess). Graceful
+  fallback to the stored caps if the fetch fails (egress/network). **Pin:** BTC and XRP both resolve;
+  a genuinely ambiguous minor symbol (comparable/no caps) serves candidates.
+- **§17-R3 — no-history reasons state the BLOCKER**, never a CTA the user just performed:
+  `coverage_summary` names the cause for an uncovered instrument (*"No CoinGecko mapping for BTC — …"*
+  / *"No provider supplies <class> price history"*), falling back to the build CTA only for a
+  genuinely not-yet-built, mappable instrument. Served at the trend-card preflight (D-105).
+- **§17-R4 — stale crypto chip: REPORT + RECOMMEND, no auto-migration.** #4 verified the chip is
+  honest (real `delayed` value, ~8h old). The AV quotes-override on a crypto instrument is the
+  wrong-provider root; the **recommendation** (for a chat ruling) is to drop the AV override on
+  BTC/XRP so crypto quotes route to CoinGecko per the crypto lane — the owner's overrides are **NOT**
+  auto-migrated (the R-42 batch-1 no-silent-rewrite precedent, extended to quotes-lane config).
+
+### 17-B — BUILD ORDER (one delta per commit; contract stays 138 — no API-shape change)
+1. **§17-R2 linker disambiguation** — `_link_coingecko_by_symbol` gains top-market-cap resolution
+   for ambiguous symbols. Fail-first RED: BTC/XRP resolve to bitcoin/ripple; a comparable-cap minor
+   symbol serves candidates.
+2. **§17-R1/R2 wiring** — `acquire_prices` auto-resolves via the linker before skipping, then fetches
+   CoinGecko history. Fail-first RED: a crypto with an AV override + no id acquires CoinGecko history.
+3. **§17-R3 blocker strings** — `coverage_summary` names the blocker. Fail-first RED: an uncovered
+   unmapped crypto serves the mapping blocker, not the build CTA.
+4. **Gates + demo** — full suite, ruff, contract 138, frontend `npm run check` exit 0 from `frontend/`.
+
+## 18. LESSONS (recorded)
 
 - **§15-L1 (F-4) — Provenance is not integrity.** Even the genuine, authoritative source served a
   **six-year-stale corrupt object** from its own edge. Authenticating the *source* (WHOIS, CNAME,

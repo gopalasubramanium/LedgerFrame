@@ -16,7 +16,7 @@ from the product spec:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from app.core.egress import egress_client
@@ -24,6 +24,15 @@ from app.core.egress import egress_client
 # AMFI moved this file to the `portal.` host; the old `www.` URL 302-redirects here.
 # We point at the canonical host AND follow redirects, so it works either way.
 NAV_ALL_URL = "https://portal.amfiindia.com/spages/NAVAll.txt"
+
+# §12 step 5 — the AMFI historical-NAV archive (date-range report). The daily NAVAll.txt gives only
+# today's NAV; this report gives a date range (documented ~90-day max per request, back to 2006).
+# ▲-D — the EXACT query params are TO-CONFIRM on the owner's stack (the STOP-window AMFI call). The
+# built assumption (per AMFI's documented report): frmdt / todt as dd-Mon-yyyy, optional mf (fund
+# house) / tp (scheme type). The parser reads the response by HEADER, so column-order variance does
+# not break it; only the request params need on-stack confirmation.
+NAV_HISTORY_URL = "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx"
+NAV_HISTORY_CHUNK_DAYS = 90
 
 # Section-header lines (no ';') that name a scheme *category* rather than a fund house.
 _CATEGORY_PREFIXES = ("Open Ended", "Close Ended", "Closed Ended", "Interval")
@@ -91,6 +100,94 @@ def parse_nav_all(text: str) -> list[SchemeNav]:
             fund_house=fund_house, category=category,
         ))
     return out
+
+
+def _match(header: list[str], *needles: str) -> int | None:
+    """Index of the first header cell containing any needle (case-insensitive) — column mapping by
+    NAME, so AMFI's column-order variance (▲-D) never mis-parses a row."""
+    for i, cell in enumerate(header):
+        low = cell.strip().lower()
+        if any(n in low for n in needles):
+            return i
+    return None
+
+
+def parse_nav_history(text: str) -> list[SchemeNav]:
+    """Parse the AMFI ``DownloadNAVHistoryReport`` payload into one :class:`SchemeNav` per
+    (scheme, date) row. Column positions are resolved from the HEADER row (robust to order — the
+    ▲-D uncertainty). A missing/N.A. NAV → ``nav=None`` (defunct/unpriced, never fabricated); a row
+    with no valid date is skipped."""
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return []
+    header = lines[0].split(";")
+    ci_code = _match(header, "scheme code")
+    ci_name = _match(header, "scheme name")
+    ci_nav = _match(header, "net asset value")
+    ci_date = _match(header, "date")
+    ci_isin_g = _match(header, "isin div payout", "isin growth")
+    ci_isin_r = _match(header, "isin div reinvest")
+    if ci_code is None or ci_nav is None or ci_date is None:
+        return []  # not a recognisable history report — refuse to guess columns
+
+    def _cell(parts: list[str], idx: int | None) -> str:
+        return parts[idx].strip() if idx is not None and idx < len(parts) else ""
+
+    out: list[SchemeNav] = []
+    for raw in lines[1:]:
+        parts = raw.split(";")
+        code = _cell(parts, ci_code)
+        if not code.isdigit():
+            continue
+        nav_date = _parse_date(_cell(parts, ci_date))
+        if nav_date is None:
+            continue
+        out.append(SchemeNav(
+            code=code, name=_cell(parts, ci_name),
+            nav=_parse_nav(_cell(parts, ci_nav)), nav_date=nav_date,
+            isin_growth=_cell(parts, ci_isin_g) or None,
+            isin_reinvest=_cell(parts, ci_isin_r) or None,
+        ))
+    return out
+
+
+def chunk_date_ranges(start: date, end: date, chunk_days: int = NAV_HISTORY_CHUNK_DAYS
+                      ) -> list[tuple[date, date]]:
+    """Split ``[start, end]`` into contiguous, non-overlapping inclusive chunks of at most
+    ``chunk_days`` (AMFI's per-request span cap). The chunks cover the whole span exactly — each
+    begins the day after the previous ends — so a multi-year fund history stitches without gaps."""
+    if end < start:
+        return []
+    out: list[tuple[date, date]] = []
+    cur = start
+    while cur <= end:
+        stop = min(cur + timedelta(days=chunk_days - 1), end)
+        out.append((cur, stop))
+        cur = stop + timedelta(days=1)
+    return out
+
+
+def _amfi_date(d: date) -> str:
+    """AMFI's date format for the report params: dd-Mon-yyyy (e.g. 01-Jan-2026)."""
+    return d.strftime("%d-%b-%Y")
+
+
+async def fetch_nav_history(from_date: date, to_date: date, *, mf: str | None = None,
+                            tp: str | None = None, timeout: float = 30.0) -> str:
+    """Fetch one AMFI history-report chunk for ``[from_date, to_date]`` (≤~90 days). Routed through
+    the egress choke point (no-egress → EgressBlocked). ▲-D — the exact params are confirmed on the
+    owner's stack; the built assumption is ``frmdt``/``todt`` (dd-Mon-yyyy) + optional ``mf``/``tp``."""
+    params: dict[str, str] = {"frmdt": _amfi_date(from_date), "todt": _amfi_date(to_date)}
+    if mf:
+        params["mf"] = mf
+    if tp:
+        params["tp"] = tp
+    headers = {"User-Agent": "LedgerFrame/1.0 (+local)", "Accept": "text/plain, */*"}
+    async with await egress_client("mutual-fund NAV history backfill", timeout=timeout,
+                                   headers=headers, follow_redirects=True) as client:
+        r = await client.get(NAV_HISTORY_URL, params=params)
+        r.raise_for_status()
+        return r.text
 
 
 async def fetch_nav_all(timeout: float = 20.0) -> str:

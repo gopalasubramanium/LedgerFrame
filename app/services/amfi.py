@@ -13,9 +13,37 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.money import D
 from app.db.upsert import upsert
-from app.models import AmfiScheme, InstrumentIdentifier
+from app.models import AmfiScheme, InstrumentIdentifier, PriceHistory
 from app.models import Quote as QuoteRow
-from app.providers.market.amfi import parse_nav_all
+from app.providers.market.amfi import parse_nav_all, parse_nav_history
+
+
+async def ingest_nav_history(session: AsyncSession, instrument_id: int, scheme_code: str,
+                             history_text: str, interval: str = "1d") -> int:
+    """§12 step 5: parse an AMFI history report and upsert daily PriceHistory rows for
+    ``instrument_id`` — but ONLY the rows for ``scheme_code`` (scheme filtering; a report may carry
+    the whole fund house). NAV → close, keyed to the NAV date at midnight UTC, source='amfi_nav'. An
+    N.A. NAV is skipped (never a fabricated candle). Idempotent on the (instrument, interval, ts)
+    unique index. Returns the number of dated NAVs stored."""
+    recs = [r for r in parse_nav_history(history_text)
+            if r.code == str(scheme_code) and r.nav is not None and r.nav_date is not None]
+    if not recs:
+        return 0
+    payload = []
+    for r in recs:
+        ts = datetime(r.nav_date.year, r.nav_date.month, r.nav_date.day, tzinfo=UTC)
+        payload.append({"instrument_id": instrument_id, "interval": interval, "ts": ts,
+                        "open": r.nav, "high": r.nav, "low": r.nav, "close": r.nav,
+                        "volume": None, "source": "amfi_nav"})
+    stmt = upsert(PriceHistory)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[PriceHistory.instrument_id, PriceHistory.interval, PriceHistory.ts],
+        set_={"open": stmt.excluded.open, "high": stmt.excluded.high, "low": stmt.excluded.low,
+              "close": stmt.excluded.close, "source": stmt.excluded.source},
+    )
+    await session.execute(stmt, payload)
+    await session.flush()
+    return len(payload)
 
 
 async def refresh_schemes(session: AsyncSession, text: str) -> dict:

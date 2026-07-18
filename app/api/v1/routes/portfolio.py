@@ -613,6 +613,12 @@ async def update_transaction(
     txn.amount = money(_txn_cash_impact(payload))
     txn.currency = payload.currency.upper()
     txn.note = payload.note
+    # §9-4(c) — edit-path FX consistency. An edit that changes the currency or date invalidates
+    # the stored trade-date rate (captured against the old pair), so RE-CAPTURE it exactly as the
+    # add path does: today's live rate when ts is today, else honestly None (proximity guard) —
+    # never a stale rate left over from before the edit. §2.5 gap: this was previously untouched.
+    txn.fx_to_base, txn.fx_base = await fx.capture_rate(
+        payload.currency.upper(), get_settings().base_currency, txn.ts)
     # §14dr-11 — re-scope the transaction's account. This is a PUT (full replace), so apply
     # account_id whenever the client SENT it (the old `if payload.account_id:` truthy guard
     # couldn't re-scope and swallowed the field). Resolve through `_ensure_account` exactly as

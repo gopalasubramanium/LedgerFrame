@@ -264,3 +264,36 @@ async def test_fund_recorded_in_sgd_infers_inr_cost_currency(session):
     await rebuild_holdings_from_transactions(session)
     h = (await session.execute(_select(Holding).where(Holding.instrument_id == fund.id))).scalars().one()
     assert h.currency == "INR"  # the fund's NAV currency, not the SGD txn default
+
+
+async def test_edit_recaptures_trade_date_fx_so_it_is_never_left_stale(app_client):
+    """§9-4(c): the edit path (PUT …/transactions/{id}) must RE-CAPTURE fx_to_base like the add
+    path — changing currency/date leaves the stored trade-date rate stale otherwise (§2.5 gap).
+    Editing a domestic (rate-1) trade into a FOREIGN, BACKDATED one must re-capture as honestly
+    unavailable (None) — never leave a stale rate 1 that misreads as a real cross-currency rate."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.core.config import get_settings
+    from app.db.base import get_sessionmaker
+    from app.models import Transaction
+
+    base = get_settings().base_currency
+    today = datetime.now(UTC).replace(microsecond=0)
+    r = await app_client.post("/api/v1/portfolio/transactions", json={
+        "symbol": "AAPL", "type": "buy", "ts": today.isoformat(),
+        "quantity": 1, "price": 100, "currency": base})
+    tid = r.json()["transaction_id"]
+    async with get_sessionmaker()() as s:
+        t = await s.get(Transaction, tid)
+        assert t.fx_to_base == Decimal("1") and t.fx_base == base  # domestic capture on add
+
+    foreign = "USD" if base != "USD" else "INR"
+    back = (today - timedelta(days=3)).isoformat()
+    r2 = await app_client.put(f"/api/v1/portfolio/transactions/{tid}", json={
+        "symbol": "AAPL", "type": "buy", "ts": back, "quantity": 1, "price": 100, "currency": foreign})
+    assert r2.status_code == 200
+    async with get_sessionmaker()() as s:
+        t = await s.get(Transaction, tid)
+        # Re-captured against the NEW currency+date: a backdated foreign trade is honestly
+        # unavailable (proximity guard), so the stale rate-1 is cleared — not preserved.
+        assert t.fx_to_base is None and t.fx_base is None

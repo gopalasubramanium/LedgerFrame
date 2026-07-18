@@ -533,3 +533,64 @@ commit, fail-first RED on the real cause, contract regen same-commit with path-k
 (baseline 134), Decimal-only money math, served strings for every rendered state, mutating work
 on demo/isolated instances only. **STOP at the 0a specimen** — the owner ratifies it in chat;
 ratifications never in this CLI. Phase 1 arrives as a separate instruction.
+
+---
+
+## 10. PHASE 0 PROGRESS LOG (2026-07-18 session — the backend spine)
+
+One delta per commit, fail-first RED on the real cause, gates green at each commit. The
+**foundation + load-bearing engine are DONE**; the acquisition/orchestrator/rendering cluster
+that the **0a pixel specimen** needs is **NEXT** (a rendered trend cannot exist until the
+orchestrator writes backfilled snapshots and the served trend + demo generation feed it).
+
+### DONE — committed, tested, gates green
+
+- **Step 1 (§9-1) — provenance migration** — `net_worth_snapshots.source ∈
+  {backfilled|live|manual}` (migration `a8f1c3d5e207`, off head `a7d3f2c15e94`). Idempotent +
+  round-trips; existing forward rows default `live`. Pins green. — commit `7138e7d`.
+- **Step 2 (R-8 / §9-3) — historical per-date FX store** — new `ecb_fx_history` table
+  `(currency, as_of)` (migration `b1d4f7a92c08`); `eurofxref-hist.csv` parser (text-in,
+  egress-free to test) + one-fetch fetcher through the egress choke point;
+  `app/services/fx_history.py` (idempotent ingestion, a preloaded `HistoricalFx` EUR-hub
+  resolver, `needed_currencies()` = the one derivation). Pins: exact cross-rate, §9-3 weekend
+  carry-forward, W-1b pre-coverage → None, idempotent re-ingest, needed-set. **Real ECB numbers
+  still to be validated on the owner's stack** (sandbox egress serves fixture data — §2.4). —
+  commit `542d95f`.
+- **Step 3 (§2.2) — the date-aware valuation engine (LOAD-BEARING)** — `value_portfolio` /
+  `_value_one_holding` take an optional `as_of` behind the three resolvers (position = ledger
+  FIFO truncated at the date; price+currency = `PriceHistory` close on/before, paired with
+  `pricing_currency`; FX = the R-8 store). **The byte-identical pin holds: `as_of=None`
+  reproduces today's valuation exactly — proven across the whole suite (1155 passed, +10 new, 0
+  regressions).** W-1b per-date honesty threads through. — commit `0a6e364`.
+- **Step 5(b) (§9-4b) — India-fund cost-currency inference AT CAUSE** — `portfolio.py:497` (and
+  the as-of path) prefer the instrument's `pricing_currency` over the txn's recorded currency
+  when the venue gives none; an INR fund recorded in SGD now derives INR cost, not SGD (the
+  **pre-release-walk 10c root cause**). Recorded numbers never rewritten. Integration suite 648
+  passed, 0 regressions. — commit `6f6d8aa`.
+
+### NEXT — the remaining Phase-0 cluster (owner to sequence; each RED-first)
+
+- **Step 4 (§9-7 / ⚠-B) — analytics consolidation.** RED proving `performance_series` /
+  `time_weighted_return` mis-value a mixed-currency book (W-1 drift at `analytics.py:262,399` +
+  current-FX-across-history), THEN both consume the date-aware engine; forked valuation DELETED;
+  before/after figures reported. *Risk: a semantics change (as-of positions vs today's-qty) and a
+  per-date perf cost — deserves its own careful commit with the analytics tests as the net.*
+- **Step 5(a)(c) — trade-date cost-basis FX + edit-path.** (a) cost basis at the STORED
+  trade-time `fx_base` per lot (via `fifo_report` open lots), ≤7-day nearest-rate fallback
+  flagged else honest-missing; (c) edit path preserves/recomputes stored trade-time FX.
+- **Step 6 — history acquisition.** AMFI authorized confirming call → chunked archive fetcher;
+  crypto CoinGecko `market-chart/range` adapter (capability flag per free-tier limits); AV
+  `outputsize=full` premium. Budget-aware, user-triggered. *Network-dependent — validate on the
+  owner's stack.*
+- **Step 7 — backfill orchestrator.** Daily snapshots from the earliest txn; `provenance=
+  backfilled`; idempotent + resumable; served file-poll progress (the self-update precedent);
+  **measure + report full-demo-book runtime (§9-1 condition)**; snapshot-now endpoint
+  (`manual`; 409-served refusal while a backfill is in flight, §9-6).
+- **Step 8 — served trend.** `/net-worth/history` serves the unified series (backfilled + live +
+  manual) with per-point gap / carried-forward flags (§9-5); typed `response_model` fields.
+- **Step 9 — demo backfill generation** (§9-8) so the trend renders a real line in demo/pre-pass.
+- **Step 10 — GLOSSARY (§9-T spec-first) + gates + the 0a specimen** (the rendered pixel walk).
+
+**0a is NOT yet reachable** — it is a rendered-trend walk, which needs steps 7–9 + the frontend.
+This session delivered the verified backend spine the rest builds on; there is no pixel specimen
+to ratify yet. The next session continues from this log (files, not memory).

@@ -188,3 +188,38 @@ async def test_intraday_real_supersedes_demo_at_same_ts(session, monkeypatch):
     row = (await session.execute(select(PriceHistory).where(
         PriceHistory.instrument_id == instr.id, PriceHistory.interval == "1min"))).scalars().first()
     assert row.close == Decimal("195") and row.source == "alphavantage"
+
+
+async def _mk_hist(session, instr_id, ts, interval="5min", source="alphavantage"):
+    from app.models import PriceHistory
+    c = Decimal("100")
+    session.add(PriceHistory(instrument_id=instr_id, interval=interval, ts=ts,
+                             open=c, high=c, low=c, close=c, volume=Decimal("1000"),
+                             source=source))
+
+
+async def test_extended_hours_purge_removes_only_out_of_session_intraday(session):
+    """W-3: the one-time cleanup removes persisted EXTENDED-HOURS intraday bars (outside
+    the US regular session 09:30–16:00 ET) and nothing else — regular-session intraday and
+    daily rows are untouched. Idempotent: a second run purges 0. (July = EDT, UTC-4:
+    09:30 ET = 13:30 UTC, 16:00 ET = 20:00 UTC.)"""
+    instr = await _mk_instrument(session)
+    # Regular session (kept), including both boundaries.
+    await _mk_hist(session, instr.id, datetime(2026, 7, 15, 13, 30, tzinfo=UTC))  # 09:30 ET
+    await _mk_hist(session, instr.id, datetime(2026, 7, 15, 14, 0, tzinfo=UTC))   # 10:00 ET
+    await _mk_hist(session, instr.id, datetime(2026, 7, 15, 20, 0, tzinfo=UTC))   # 16:00 ET
+    # Extended hours (purged).
+    await _mk_hist(session, instr.id, datetime(2026, 7, 15, 12, 0, tzinfo=UTC))   # 08:00 ET pre
+    await _mk_hist(session, instr.id, datetime(2026, 7, 15, 23, 0, tzinfo=UTC))   # 19:00 ET post
+    # A daily row must never be touched by the intraday cleanup.
+    await _mk_hist(session, instr.id, datetime(2026, 7, 15, 0, 0, tzinfo=UTC), interval="1d")
+    await session.flush()
+
+    result = await market.repair_extended_hours_intraday(session)
+    await session.flush()
+    assert result["purged"] == 2
+    assert await _row_count(session, instr.id, "5min") == 3   # only regular-session bars remain
+    assert await _row_count(session, instr.id, "1d") == 1     # daily untouched
+
+    again = await market.repair_extended_hours_intraday(session)
+    assert again["purged"] == 0

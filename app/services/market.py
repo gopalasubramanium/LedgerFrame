@@ -8,7 +8,8 @@ returned explicitly on every quote.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, time
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -693,6 +694,48 @@ async def repair_history_demo_residue(session: AsyncSession) -> dict:
     return {"purged": purged, "instruments": len(instruments)}
 
 
+# W-3 (R-42 3b): US regular trading session (DST-correct via the zone). Intraday is a
+# US-equity-only lane (Alpha Vantage TIME_SERIES_INTRADAY), so the US session is the frame.
+_US_MARKET_TZ = ZoneInfo("America/New_York")
+_REGULAR_OPEN = time(9, 30)
+_REGULAR_CLOSE = time(16, 0)
+
+
+async def repair_extended_hours_intraday(session: AsyncSession) -> dict:
+    """W-3 — a served, idempotent, logged purge of EXTENDED-HOURS intraday candles (the
+    dr-25 cleanup pattern). Alpha Vantage's ``TIME_SERIES_INTRADAY`` defaulted
+    ``extended_hours=true``, so persisted 1-/5-min windows carried 04:00–20:00 ET
+    pre/post-market bars; their thin volume against the regular-session open/close rendered
+    as the session-boundary spikes the owner saw on 5D. The client now sends
+    ``extended_hours=false``; this removes rows already stored. A candle is extended-hours
+    when its US/Eastern wall-clock time is outside the regular session [09:30, 16:00]. Reports
+    counts; a second run finds nothing. Additive to USER data — it only removes
+    provider-fetched extended-hours bars, never a daily row (scoped to non-daily intervals)."""
+    from app.models import AuditEvent, PriceHistory
+
+    rows = (await session.execute(
+        select(PriceHistory).where(PriceHistory.interval.notin_(tuple(_DAILY_INTERVALS)))
+    )).scalars().all()
+    purged = 0
+    instruments: set = set()
+    for r in rows:
+        ts = r.ts if r.ts.tzinfo else r.ts.replace(tzinfo=UTC)
+        et = ts.astimezone(_US_MARKET_TZ).time()
+        if not (_REGULAR_OPEN <= et <= _REGULAR_CLOSE):
+            await session.delete(r)
+            purged += 1
+            instruments.add(r.instrument_id)
+    if purged:
+        session.add(AuditEvent(
+            category="mutation", action="repair_extended_hours_intraday",
+            detail=f"purged {purged} extended-hours intraday candle(s) across "
+                   f"{len(instruments)} instrument(s)"))
+        await session.flush()
+    log.info("W-3 extended-hours intraday purge: purged %d candle(s) across %d instrument(s)",
+             purged, len(instruments))
+    return {"purged": purged, "instruments": len(instruments)}
+
+
 async def get_history_cached(
     session: AsyncSession,
     symbol: str,
@@ -719,6 +762,16 @@ async def get_history_cached(
     )).scalars().first() is None:
         await repair_history_demo_residue(session)
         session.add(Setting(key="hist_demo_residue_repaired_v1", value=datetime.now(UTC).isoformat()))
+        await session.flush()
+
+    # W-3 (R-42 3b): one-time served purge of already-stored extended-hours intraday bars
+    # (idempotent, guarded by a Setting marker so it scans once per instance). Belt to the
+    # extended_hours=false client fix — a fresh DB has no such rows, so this is a cheap no-op.
+    if (await session.execute(
+        select(Setting).where(Setting.key == "hist_extended_hours_purged_v1")
+    )).scalars().first() is None:
+        await repair_extended_hours_intraday(session)
+        session.add(Setting(key="hist_extended_hours_purged_v1", value=datetime.now(UTC).isoformat()))
         await session.flush()
 
     instrument = await _get_or_create_instrument(session, symbol, None)

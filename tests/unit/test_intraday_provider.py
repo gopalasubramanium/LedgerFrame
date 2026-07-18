@@ -87,6 +87,9 @@ async def test_av_intraday_routes_to_intraday_endpoint(monkeypatch):
     candles = await prov.get_history("AAPL", "1min", start, end)
     assert captured.get("function") == "TIME_SERIES_INTRADAY"
     assert captured.get("interval") == "1min"
+    # W-3 (R-42 3b): regular trading hours only — AV defaults extended_hours=true, whose
+    # pre/post-market bars rendered as session-boundary spikes on 5D.
+    assert captured.get("extended_hours") == "false"
     assert len(candles) == 2
     # Time-of-day is preserved (intraday is not midnight-normalised) and tz-explicit.
     assert all(c.ts.tzinfo is not None for c in candles)

@@ -224,6 +224,11 @@ class ExternalMarketDataProvider:
                 data = await self._get({
                     "function": "TIME_SERIES_INTRADAY", "symbol": instrument_id,
                     "interval": interval, "outputsize": "full",
+                    # W-3 (R-42 3b): regular trading hours only. AV defaults extended_hours=true,
+                    # which returns 04:00–20:00 ET pre/post-market bars whose thin volume against
+                    # the regular-session open/close rendered as session-boundary spikes on 5D.
+                    # The honest default for this product is the regular session (09:30–16:00 ET).
+                    "extended_hours": "false",
                 })
                 series = data.get(f"Time Series ({interval})") or _find_time_series(data)
             elif is_index:

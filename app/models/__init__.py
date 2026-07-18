@@ -264,6 +264,29 @@ class EcbFxRate(Base):
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class EcbFxHistory(Base):
+    """R-8 (R-43 §9-3): the ECB euro reference rate PER DATE — the historical FX store the
+    retrospective valuation needs. ``ecb_fx_rates`` is PK-on-currency (one row per currency,
+    overwritten each refresh) so it cannot hold history; this table keys on ``(currency, as_of)``.
+
+    One row = EUR→currency on one publication date, ingested from ECB's
+    ``eurofxref-hist.csv`` (the full daily series back to 1999) plus a periodic append of new
+    dates. A cross like INR→SGD on date D is derived (EUR→SGD)/(EUR→INR) on D — the EUR hub, not
+    the live path's USD hub. A date with NO row on/before it for a currency (pre-coverage) is
+    honestly-missing → the resolver returns None, never a fabricated 1.0 (W-1b per-date). ECB
+    non-publication days (weekends/holidays) are NOT stored as rows — the resolver carries the
+    last published rate forward, the standard daily-close convention (§9-3)."""
+
+    __tablename__ = "ecb_fx_history"
+    currency: Mapped[str] = mapped_column(String(3), primary_key=True)
+    as_of: Mapped[str] = mapped_column(String(12), primary_key=True)  # ISO date, a publication day
+    rate: Mapped[Decimal] = mapped_column(DecimalText)                # EUR -> currency on as_of
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    __table_args__ = (
+        Index("ix_ecb_fx_history_asof", "as_of"),
+    )
+
+
 class KiteInstrument(Base):
     """Cached Zerodha Kite instrument master (NSE/BSE/NFO/MCX) — enables exact
     exchange+tradingsymbol matching and F&O identity (expiry/strike/lot). Opt-in.

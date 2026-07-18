@@ -232,3 +232,35 @@ async def test_value_portfolio_as_of_before_purchase_is_empty(session):
     val = await value_portfolio(session, "SGD", as_of=date(2023, 1, 1))
     assert [h for h in val.holdings if h.symbol == "TSLA"] == []
     assert val.total_value == Decimal("0.00")
+
+
+# --------------------------------------------------------------------------- #
+# Step 5 (§9-4) — trade-date cost-basis / fund currency inference (reader fixes)
+# --------------------------------------------------------------------------- #
+async def test_fund_recorded_in_sgd_infers_inr_cost_currency(session):
+    """§9-4(b) at cause (portfolio.py:497): an AMFI fund whose NAV is INR (pricing_currency=INR)
+    but whose buy was RECORDED in SGD must rebuild with holding.currency = INR — the fund's own
+    currency — not the SGD transaction default. The recorded transaction numbers are untouched;
+    only the derived cost currency is inferred correctly (resolves pre-release-walk item 10c)."""
+    from app.models import Account, AssetClass, Instrument, TxnType
+    from app.models import Transaction as Txn
+    from app.services.portfolio import rebuild_holdings_from_transactions
+    from sqlalchemy import select as _select
+    from app.models import Holding
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    # An AMFI scheme-code instrument: no exchange suffix (so venue inference yields nothing),
+    # asset_class mutual_fund, pricing_currency INR (the authoritative NAV currency, W-2 field).
+    fund = Instrument(symbol="102000", exchange=None, asset_class=AssetClass.MUTUAL_FUND,
+                      currency="INR", pricing_currency="INR")
+    session.add(fund)
+    await session.flush()
+    session.add(Txn(account_id=acc.id, instrument_id=fund.id, type=TxnType.BUY,
+                    ts=__import__("app.db.base", fromlist=["utcnow"]).utcnow(),
+                    quantity=Decimal("100"), price=Decimal("50"), currency="SGD"))  # recorded in SGD
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)
+    h = (await session.execute(_select(Holding).where(Holding.instrument_id == fund.id))).scalars().one()
+    assert h.currency == "INR"  # the fund's NAV currency, not the SGD txn default

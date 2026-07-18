@@ -348,7 +348,9 @@ async def _asof_holdings(
         instrument = await session.get(Instrument, instrument_id)
         sym = instrument.symbol if instrument else None
         inferred = currency_for_symbol(sym, instrument.exchange if instrument else None)
-        ccy = inferred or group[0].currency or (instrument.currency if instrument else "USD")
+        pricing_ccy = (instrument.pricing_currency
+                       if instrument and instrument.pricing_currency else None)
+        ccy = inferred or pricing_ccy or group[0].currency or (instrument.currency if instrument else "USD")
         currencies.add((ccy or "").upper())
         if instrument and instrument.pricing_currency:
             currencies.add(instrument.pricing_currency.upper())
@@ -633,7 +635,16 @@ async def rebuild_holdings_from_transactions(session: AsyncSession) -> int:
         # transaction row happened to default to. Fall back to the txn currency.
         sym = instrument.symbol if instrument else None
         inferred = currency_for_symbol(sym, instrument.exchange if instrument else None)
-        ccy = inferred or group[0].currency or (instrument.currency if instrument else "USD")
+        # §9-4(b) — the fund-currency inference fix AT CAUSE. When the venue gives no currency
+        # (an AMFI scheme code has no exchange suffix), the instrument's authoritative
+        # pricing_currency (INR for a fund whose NAV is INR — the W-2 field) wins over the
+        # transaction's recorded currency. Without this an India fund bought in SGD derived an
+        # SGD cost basis while its NAV is INR — the pre-release-walk item 10c distortion. The
+        # recorded transaction numbers are never rewritten; only the derived cost currency is
+        # inferred correctly.
+        pricing_ccy = (instrument.pricing_currency
+                       if instrument and instrument.pricing_currency else None)
+        ccy = inferred or pricing_ccy or group[0].currency or (instrument.currency if instrument else "USD")
         if instrument and inferred and instrument.currency != inferred:
             instrument.currency = inferred  # keep the instrument aligned to its venue
         session.add(Holding(

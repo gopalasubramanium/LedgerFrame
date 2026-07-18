@@ -118,6 +118,18 @@ fetched; a range with no intraday data stays honestly disabled with a **served**
 | **Interval** | The bar granularity of a price series (`1min`, `5min`, `1d`). The **range** you pick (1D / 5D / 1M …) maps to an interval on the server; the interval literal is internal and is never shown in copy. **[Help]** |
 | **Routing matrix** | User-facing (Settings → Data feeds) | Your table of *which provider prices each kind of instrument in each market* — one choice per asset-class × listing-country. It is a **preference layer**, not a price: a cell only takes effect when the provider you named can actually price that instrument, and it **can never fabricate, replace, or worsen** a value — if the named provider can't price a holding, LedgerFrame falls back to its normal source exactly as before. It never executes trades and never advises. Pricing Health shows the outcome **read-only**. **[Help]** *(data-feed-routing §9-T, ruled 2026-07-18.)* |
 
+### Historical valuation backfill (R-43)
+
+The Net-worth trend reads dated valuation records. A **Backfill** reconstructs the ones that
+predate the appliance from price history + the transaction ledger + per-date FX, so the trend
+stops being flat. Every reconstructed point rests on honestly-available inputs — a date without a
+price or an exchange rate is a flagged, carried-forward gap, never a fabricated number.
+
+| Term | Canonical definition |
+|------|----------------------|
+| **Snapshot** | A dated record of the portfolio's valuation — assets, liabilities and **Net worth** — at a point in time. The **Net worth** trend is a series of these; they are written forward as the appliance runs, added on demand (the snapshot-now action), or reconstructed by a **Backfill**. *(Distinct from the retired "Snapshot" page/nav alias for **Net worth**, D-022 — this is the data concept.)* **[Help]** |
+| **Backfill** | Reconstructing past **Snapshot**s from price history + transactions + per-date FX, and persisting them as dated records, so the **Net worth** trend shows real history. A backfilled figure is marked as such and rests only on honestly-available inputs — a date with no price or exchange rate is a flagged, carried-forward gap, never fabricated. **[Help]** *(R-43 §9-T, ruled 2026-07-18.)* |
+
 ---
 
 ## Returns & performance

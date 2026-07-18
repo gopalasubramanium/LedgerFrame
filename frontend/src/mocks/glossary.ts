@@ -21,6 +21,19 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     definition:
       "The bar granularity of a price series (1min, 5min, 1d). The range you pick (1D / 5D / 1M …) maps to an interval on the server; the interval literal is internal and is never shown in copy.",
   },
+  // Historical valuation backfill (R-43 §9-T). Added to docs/specs/GLOSSARY.md FIRST, then here —
+  // the two-store rule; tests/unit/test_glossary_parity.py polices the spelling ("Snapshot",
+  // "Backfill"). Internal enums (source=backfilled/live/manual) never appear in copy.
+  "term-snapshot": {
+    term: "Snapshot",
+    definition:
+      "A dated record of the portfolio's valuation — assets, liabilities and net worth — at a point in time. The Net worth trend is a series of these; they are written forward as the appliance runs, added on demand, or reconstructed by a Backfill.",
+  },
+  "term-backfill": {
+    term: "Backfill",
+    definition:
+      "Reconstructing past snapshots from price history + transactions + per-date FX, and persisting them as dated records, so the Net worth trend shows real history. A backfilled figure is marked as such and rests only on honestly-available inputs — a date with no price or exchange rate is a flagged, carried-forward gap, never fabricated.",
+  },
   // Reports (page-reports §9-9). Added to docs/specs/GLOSSARY.md FIRST, then here — the two-store
   // rule; tests/unit/test_glossary_parity.py polices the spellings. "Statements" (plural) is the
   // confirmed label; copy uses "Realised P/L report", never the deprecated "Realised gains" (D-026).

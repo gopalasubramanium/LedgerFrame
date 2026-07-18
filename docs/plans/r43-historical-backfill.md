@@ -609,11 +609,19 @@ Verified empirically on the demo book: `price_history` has **0 rows** and `ecb_f
   + /performance are heavier now (per-date valuation; key_stats timeouts degrade gracefully) — a
   batched as-of preload is a worthwhile follow-up for slow real hardware. — commit `d5f9a44`.
 
-### NEXT — remaining Phase-0 cluster
+- **Step 5(a) — trade-date cost-basis FX** — cost basis converts at each open lot's trade-date FX
+  (stored `fx_to_base`, else ≤7-day ECB fallback flagged `approximate`, else honest-missing
+  flagged `cost_fx_unavailable`). Reader-only, no migration; gated behind a cross-currency-txn
+  check (zero overhead for a domestic book). Demo: AAPL/RELIANCE at ECB trade-date rate flagged
+  approximate, D05 (SGD) unchanged. Full suite 1159, 0 regressions. — commit `47065d7`.
+  **§9-4 is now COMPLETE (a, b, c).**
 
-- **Step 5(a) — trade-date cost-basis FX** (IN PROGRESS). Cost basis at the STORED trade-time
-  `fx_base` per lot (via `fifo_report` open lots), ≤7-day nearest-rate fallback flagged else
-  honest-missing. Now unblocked (demo `ecb_fx_history` populated by step 9).
+**CORRECTNESS CLUSTER DONE.** Steps 1–5 + 9 are landed, tested, green — the full engine +
+per-date FX + demo data + analytics consolidation + all §9-4 reader fixes. What remains is the
+**acquisition → orchestrator → served-trend → frontend** cluster that reaches the 0a pixel walk.
+
+### NEXT — the rendering cluster (reaches 0a)
+
 - **Step 6 — history acquisition.** AMFI authorized confirming call → chunked archive fetcher;
   crypto CoinGecko `market-chart/range` adapter (capability flag per free-tier limits); AV
   `outputsize=full` premium. Budget-aware, user-triggered. *Network-dependent — validate on the

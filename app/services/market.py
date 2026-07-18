@@ -278,6 +278,79 @@ def av_tier_note(source: str | None, av_tier: str | None) -> str | None:
     return None
 
 
+# --------------------------------------------------------------------------- #
+# R-42 — intraday availability (§9-2/§9-3/§9-9). The range→interval mapping and the
+# enabled/disabled + REASON decision are server-side and SERVED (D-105/P-1): the frontend
+# renders them, never decides them. This is the ONE canonical derivation the fetch trigger
+# also enforces, so the UI can never disagree with what the backend will actually do.
+# --------------------------------------------------------------------------- #
+# The ranges the owner mapped to intraday intervals (§9-2): 1D → 1-minute, 5D → 5-minute.
+# Every other range stays daily and is untouched by this milestone.
+INTRADAY_RANGES: dict[str, dict] = {
+    "1D": {"interval": "1min", "days": 1},
+    "5D": {"interval": "5min", "days": 5},
+}
+# §9-5: the benchmark overlay is hidden on intraday ranges with a SERVED reason (not a
+# frontend literal). Instrument-Detail-only; benchmark-on-intraday is ROADMAP R-48.
+_BENCHMARK_INTRADAY_REASON = "Benchmark comparison is daily-range only."
+# §9-3: the av_tier gate is server-side and tier-keyed — a free/unknown key is refused an
+# intraday interval by the backend, not merely greyed by the UI.
+_AV_INTRADAY_TIER_REASON = {
+    "free": "Intraday needs an Alpha Vantage premium key — this key is on the free tier.",
+    "unknown": "Intraday needs an Alpha Vantage premium key — this key's tier isn't confirmed yet.",
+}
+# Local providers make no outbound call, so no-egress mode never disables their intraday.
+_LOCAL_PROVIDERS = frozenset({"mock", "csv"})
+_PROVIDER_LABELS = {
+    "alphavantage": "Alpha Vantage", "yahoo": "Yahoo", "coingecko": "CoinGecko",
+    "kite": "Kite", "eodhd": "EODHD", "csv": "CSV", "mock": "the demo provider", "amfi_nav": "AMFI",
+}
+
+
+def _provider_label(name: str) -> str:
+    return _PROVIDER_LABELS.get(name, name)
+
+
+async def intraday_availability(session: AsyncSession, instrument, *, no_egress: bool) -> dict:
+    """Served per-range intraday availability (D-105): for each intraday range, the mapped
+    interval + ``enabled`` + a served ``reason``/``state`` for every disabled case. Decides
+    the single gate once, in priority order (class → routing → capability → tier → egress),
+    since 1D and 5D differ only in interval."""
+    from app.providers.market.router import capabilities_for
+
+    provider = get_provider()
+    active = getattr(provider, "name", "mock")
+    av_tier = getattr(provider, "av_tier", None)
+    caps = capabilities_for(active)
+    ac = instrument.asset_class.value if hasattr(instrument.asset_class, "value") else str(instrument.asset_class)
+
+    state, reason = "available", None
+    if ac == "mutual_fund":
+        state = "class_disabled"
+        reason = "Mutual-fund NAV is published once daily — no intraday series."
+    else:
+        diag = await route_for_instrument(session, instrument)
+        hsrc, hreason = _history_source(diag, active)
+        if hsrc is None:
+            state = "class_disabled"
+            reason = hreason or "Intraday prices aren't available for this holding."
+        elif not caps.intraday:
+            state = "provider_incapable"
+            reason = f"{_provider_label(active)} doesn't provide intraday prices."
+        elif active == "alphavantage" and av_tier != "premium":
+            state = "tier_disabled"
+            reason = _AV_INTRADAY_TIER_REASON.get(av_tier or "unknown", _AV_INTRADAY_TIER_REASON["unknown"])
+        elif no_egress and active not in _LOCAL_PROVIDERS:
+            state = "no_egress"
+            reason = "Intraday prices need network access — no-egress mode is on."
+
+    ranges = {
+        r: {"interval": spec["interval"], "enabled": reason is None, "state": state, "reason": reason}
+        for r, spec in INTRADAY_RANGES.items()
+    }
+    return {"ranges": ranges, "benchmark_reason": _BENCHMARK_INTRADAY_REASON}
+
+
 async def matrix_provider_for(session: AsyncSession, asset_class: str, listing_country: str | None) -> str | None:
     """The routing-matrix provider for an instrument's (class, country), or None if the
     matrix has no cell. Exact country wins over the ``"*"`` wildcard (data-feed-routing

@@ -625,3 +625,53 @@ async def test_backfill_and_snapshot_endpoints_served(app_client):
     assert set(("running", "done", "total", "ok", "failed")) <= set(st)
     snap = await app_client.post("/api/v1/net-worth/snapshot")
     assert snap.status_code in (200, 409)  # 409 only if a backfill is mid-flight
+
+
+# --------------------------------------------------------------------------- #
+# Step 8 (§9-5) — served trend: provenance + carried-forward flag
+# --------------------------------------------------------------------------- #
+async def test_backfill_flags_carried_forward_when_fx_missing(session):
+    """§9-5: a date whose valuation could not honestly price a holding (here USD→SGD unavailable —
+    no ecb_fx_history for USD) is marked 'carried_forward', never an unmarked smooth point."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.models import Account, AssetClass, Instrument, PriceHistory, TxnType
+    from app.models import Transaction as Txn
+    from app.services import backfill
+    from app.services.portfolio import rebuild_holdings_from_transactions
+
+    acc = Account(name="A", currency="SGD")
+    session.add(acc)
+    await session.flush()
+    foo = Instrument(symbol="FOO", currency="USD", pricing_currency="USD", asset_class=AssetClass.EQUITY)
+    session.add(foo)
+    await session.flush()
+    end = datetime.now(UTC)
+    session.add(Txn(account_id=acc.id, instrument_id=foo.id, type=TxnType.BUY,
+                    ts=end - timedelta(days=30), quantity=Decimal("10"), price=Decimal("100"), currency="USD"))
+    d = (end - timedelta(days=32)).date()
+    while d <= end.date():
+        session.add(PriceHistory(instrument_id=foo.id, interval="1d",
+                                 ts=datetime(d.year, d.month, d.day, tzinfo=UTC),
+                                 open=Decimal("200"), high=Decimal("200"), low=Decimal("200"),
+                                 close=Decimal("200"), source="mock"))
+        d += timedelta(days=1)
+    await session.flush()
+    await rebuild_holdings_from_transactions(session)  # NOTE: no ecb_fx_history seeded → USD→SGD unavailable
+    await backfill.run_backfill(session, "SGD", write_progress=False)
+    flagged = (await session.execute(
+        select(NetWorthSnapshot).where(NetWorthSnapshot.flags == "carried_forward")
+    )).scalars().all()
+    assert flagged, "a date with unavailable FX must be flagged carried_forward"
+
+
+async def test_net_worth_history_serves_provenance_and_gap_fields(app_client):
+    """§9-1/§9-5 at the HTTP boundary: every trend point carries served provenance + a
+    carried-forward flag (+ reason string when set) — the chart consumes served truth only."""
+    d = (await app_client.get("/api/v1/net-worth/history")).json()
+    assert d["history"], "demo seeds a net-worth trend"
+    for p in d["history"]:
+        assert p["source"] in ("backfilled", "live", "manual")
+        assert isinstance(p["carried_forward"], bool)
+        # the reason is served (non-null) exactly when carried_forward is set (D-105).
+        assert (p["reason"] is not None) == p["carried_forward"]

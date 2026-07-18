@@ -8020,6 +8020,7 @@
     },
     "/api/v1/net-worth/history": {
       "get": {
+        "description": "The unified net-worth trend \u2014 backfilled + live + manual points, each with served\nprovenance and a \u00a79-5 carried-forward flag/reason so the chart consumes served truth only.",
         "operationId": "net_worth_history_api_v1_net_worth_history_get",
         "parameters": [
           {

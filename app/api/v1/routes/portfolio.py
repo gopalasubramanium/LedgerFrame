@@ -928,8 +928,15 @@ async def import_commit(
     return result
 
 
+# R-43 §9-5 served reason for a carried-forward trend point (D-105 — the chart renders this
+# verbatim; it never composes its own honesty copy).
+_CARRIED_FORWARD_REASON = "Carried forward — a price or exchange rate was unavailable on this date."
+
+
 @router.get("/net-worth/history")
 async def net_worth_history(session: AsyncSession = Depends(get_db)) -> dict:
+    """The unified net-worth trend — backfilled + live + manual points, each with served
+    provenance and a §9-5 carried-forward flag/reason so the chart consumes served truth only."""
     rows = (
         await session.execute(select(NetWorthSnapshot).order_by(NetWorthSnapshot.ts))
     ).scalars().all()
@@ -937,7 +944,11 @@ async def net_worth_history(session: AsyncSession = Depends(get_db)) -> dict:
         "history": [
             {"ts": r.ts.isoformat(), "assets": to_display(r.assets),
              "liabilities": to_display(r.liabilities), "net_worth": to_display(r.net_worth),
-             "currency": r.base_currency}
+             "currency": r.base_currency,
+             # §9-1 provenance (backfilled | live | manual) + §9-5 carried-forward marker.
+             "source": r.source,
+             "carried_forward": r.flags == "carried_forward",
+             "reason": _CARRIED_FORWARD_REASON if r.flags == "carried_forward" else None}
             for r in rows
         ]
     }

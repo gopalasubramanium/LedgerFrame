@@ -452,6 +452,11 @@ class NetWorthSnapshot(Base):
     #   live       — written forward by the 6-hour worker (the pre-R-43 behaviour)
     #   manual     — written by the owner's snapshot-now trigger
     source: Mapped[str] = mapped_column(String(20), default="live", server_default="live")
+    # R-43 §9-5 per-point honesty marker. NULL = a fully-priced point. 'carried_forward' = the
+    # date's valuation carried a stale/missing price or FX for some holding (the trend line
+    # continues but the span is reduced-emphasis with a served reason — never an unmarked smooth
+    # line, never a broken one). Internal token; the user-facing reason is a served string.
+    flags: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 
 # --------------------------------------------------------------------------- #

@@ -273,7 +273,10 @@ def route(
                     d.mapping_required = True
                     d.source_selected = "manual" if has_manual else None
                     d.valuation_method = "manual_valuation" if has_manual else "unavailable"
-                    d.reason = f"map to a {needed_id} (or set a manual value)"
+                    # D1-d: user-facing copy — never the internal id_type literal (needed_id
+                    # is "amfi_code" here). This reason is served on BOTH Pricing Health and
+                    # the Instrument-Detail history_status empty state (D-105).
+                    d.reason = "map this fund to an AMFI scheme (or set a manual value)"
                 return _finish(d)
             if asset_class == "crypto" and not mapped:
                 d.mapping_required = True  # canonical id recommended, but symbol pricing works

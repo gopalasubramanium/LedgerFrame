@@ -1304,6 +1304,7 @@ milestone's own lesson 2 waiting to happen**, so each carries what turns RED. Wh
 | 9 | A refusal the product creates, the product undoes (§11-E2) | the entry-epoch remount + "0 occurrences" verification |
 | 10 | Running the parts is not running the gate | `npm run check` as one chain |
 | 11 | A constraint must prove it earns its keep (§11-F) | the permanent **ESCAPES** specimen in `test_licence_spelling.py` |
+| 12 | An inert-looking JSX comment is a **child** (recorded post-close) | `npm run check` typecheck link — **and the 3a pre-pass that actually caught it** |
 
 ---
 
@@ -1387,12 +1388,36 @@ milestone's own lesson 2 waiting to happen**, so each carries what turns RED. Wh
    between a tight rule and a general one, **write the specimen the general one would let through**
    — if you cannot, the tight rule may be costing you nothing.
 
-**One item from the close brief could not be substantiated: a "JSX-comment route kill."** The
-record carries two JSX-comment incidents — §11-E3a (the extractor read quoted literals only, so
-every `<p>` of rendered prose was invisible to a guard reporting those files as covered) and §11-J
-(comment-stripping without newline preservation, giving a wrong line number) — but **no event in
-which a JSX comment removed a route**. It is recorded as *not found* rather than reconstructed:
-inventing a lesson would be exactly the §11-H failure this list opens with.
+12. **AN "OBVIOUSLY INERT" JSX COMMENT IS A CHILD, AND A PARENTHESISED JSX EXPRESSION ADMITS EXACTLY
+   ONE.** *(RECORDED POST-CLOSE, 2026-07-20 — see the provenance note below.)* During this
+   milestone's **PricingHealth regularization delta**, an explanatory JSX comment was placed
+   **inside** `{noEgress && ( … )}` in `PricingHealth.tsx`. The file no longer parsed, and **the
+   entire route was dead** — the first pre-pass attempt rendered **no `h1` at all** and logged a
+   500. **In a diff it reads as inert**: a comment is the one edit a reviewer's eye is trained to
+   skip, which is precisely why this class survives review. It was caught by **driving the browser**
+   (the Pricing Health pre-pass), not by reading the diff — making this the concrete second instance
+   of lesson 5, on a change nobody would have thought worth re-driving. **What turns red:**
+   `npm run check`'s typecheck link fails on the parse error, so the standing chain *does* cover
+   this shape — the gap was never the guard, it was **shipping a "comment-only" edit without
+   re-running the chain**, the exact substitution lesson 10 names.
+
+**PROVENANCE — and a correction to this section's own close-time record.** At the close, this
+section stated that the "JSX-comment route kill" **could not be substantiated** and recorded it as
+*not found* rather than reconstructing it. **That was an honest disposition on an incomplete
+search, and it was wrong.** The incident was written up contemporaneously, in the repo, at
+`docs/plans/page-pricing-health.md:584-588` ("**A REAL DEFECT THE PRE-PASS CAUGHT, recorded because
+it is the argument for driving the browser**"). The close-time search read the *Legal* record —
+where the two JSX-comment incidents are §11-E3a and §11-J — and did not reach the plan file of the
+**accepted surface this milestone had amended**. The owner supplied the lesson from the chat
+transcript; the repo corroborates it independently, so it is recorded here on the **file** cite,
+not on recollection.
+
+**The meta-lesson, which is the more useful one:** *"not found"* is a claim about a **search**, not
+about the **world**, and it meets the §11-H completeness bar like any other summary word — this
+milestone's own lesson 1. **A milestone that ships deltas onto other pages' surfaces has its
+evidence spread across those pages' plan files** (this milestone shipped three such delta notes —
+§14-A), so a retrospective search scoped to one plan file is scoped too narrowly **by
+construction**. **Nothing turns red on this**; it is a search-scope discipline, stated as one.
 
 ---
 
@@ -1400,7 +1425,9 @@ inventing a lesson would be exactly the §11-H failure this list opens with.
 
 **§-LEDGER CLOSED.** §9 CLOSED · §11 CLOSED (all six items ratified) · §12 walk ledger **CLOSED,
 0 findings** · §13 pre-pass **54/54** · §15 strike-check complete, **11 lessons, each with what
-turns red**. **F-items: none were filed** — the milestone's defects were all found and fixed
+turns red** *(**12 as of 2026-07-20 post-close** — §15 lesson 12, the JSX-comment route kill,
+recorded after the close when the incident was located at `page-pricing-health.md:584`; the close
+record stands as written and is annotated, not rewritten)*. **F-items: none were filed** — the milestone's defects were all found and fixed
 *inside* the deltas that introduced them (§11-E2's two browser-found defects, §11-E3a's extractor,
 §11-I's contract drift, §11-J's raw checkbox), so there is no triage list. **Polish carried to the
 pre-release backlog:** 10-D item 4 (prose rhythm — a shared-`HelpProse` question, never a Legal

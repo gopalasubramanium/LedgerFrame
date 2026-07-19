@@ -68,10 +68,8 @@ def test_the_prose_field_set_is_derived_and_covers_the_new_redesign_fields():
     this is what goes red — not a content test that quietly checks less than it claims.
     """
     covered = {f for e in HELP for f in _prose_fields(e)}
-    # `example` joins this list with the Glossary content in the next delta — it is deliberately
-    # absent here rather than asserted-and-vacuous.
     for field in ("body", "keywords", "what", "why", "improves",
-                  "inputs", "options", "outputs", "interpret"):
+                  "inputs", "options", "outputs", "interpret", "example", "level"):
         assert field in covered, (
             f"{field!r} is authored nowhere in HELP, so every prose guard below is vacuous for it. "
             f"Either the content regressed or the field was renamed without the guards following."
@@ -402,4 +400,71 @@ def test_every_enumerated_option_value_exists_in_the_shipped_product(entry: dict
         f'{entry["id"]}.options lists choices that exist NOWHERE in the shipped product: '
         f"{invented}\nAn option the user cannot actually pick is a fabricated fact about the "
         f"product. Use the served vocabulary's own labels."
+    )
+
+
+# --- Section 3: sample-marked examples, and the reading order (9-bis-1 / 9-bis-3) --------------- #
+_GLOSSARY = [e for e in HELP if e["category"] == "Glossary"]
+_SAMPLE_MARK = "Sample — "
+
+
+@pytest.mark.parametrize("entry", _GLOSSARY, ids=lambda e: e["id"])
+def test_every_glossary_example_is_marked_as_an_illustrative_sample(entry: dict):
+    """9-bis-3: examples are STATIC and clearly marked as illustrative samples.
+
+    The marker lives in the SERVED STRING, not only in the page's styling. An example is a set of
+    figures beside a definition — the single most impersonatable thing this catalogue holds — and
+    it is read by more than the page: `app/ai/tools.py` pulls this content into the grounded fact
+    pack. A chip rendered in the UI would leave the AI quoting bare numbers with nothing marking
+    them as invented. So the honesty travels with the content, wherever the content goes.
+
+    R-53 (post-release) is what would make examples personal, and it needs the ENGINE to serve
+    derivation traces — re-deriving a figure here to narrate it would make Help a second derivation
+    site, which is the failure the one-derivation law exists to prevent.
+    """
+    example = entry.get("example")
+    assert example, f'{entry["id"]} has no worked example; §9-bis-1 gives every term one.'
+    assert example.startswith(_SAMPLE_MARK), (
+        f'{entry["id"]}.example must open with {_SAMPLE_MARK!r} so the figures are marked as '
+        f"invented wherever the string is read — the page, the API, and the AI fact pack alike. "
+        f"Got: {example[:40]!r}"
+    )
+    # A sample must never present itself as the reader's own position. "your" in an example is the
+    # exact sentence that turns an illustration into a false statement about someone's money.
+    assert "your" not in example.lower(), (
+        f'{entry["id"]}.example says "your" — that claims the sample figures are the reader\'s. '
+        f"Write the illustration in the third person."
+    )
+
+
+def test_the_glossary_reading_order_covers_every_term_exactly_once():
+    """Basics > expert is ordered by an explicit list, so the list must not drift from the terms.
+
+    A term missing from it still RENDERS (it sorts to the end — a forgotten list must never delete
+    content from the page), which is precisely why the omission needs a test to be audible.
+    """
+    from app.services.help import _GLOSSARY_ORDER
+
+    ids = [e["id"] for e in _GLOSSARY]
+    assert len(_GLOSSARY_ORDER) == len(set(_GLOSSARY_ORDER)), "_GLOSSARY_ORDER repeats an id"
+    missing = [i for i in ids if i not in _GLOSSARY_ORDER]
+    stale = [i for i in _GLOSSARY_ORDER if i not in ids]
+    assert not missing, f"glossary terms with no place in the reading order: {missing}"
+    assert not stale, f"_GLOSSARY_ORDER names terms that no longer exist: {stale}"
+
+
+def test_the_served_reading_order_is_sections_then_basics_to_expert():
+    """The ORDER IS THE FEATURE here, so it is asserted on what is served, not on the source list."""
+    from app.services.help import _GLOSSARY_ORDER, all_help
+
+    served = all_help()["entries"]
+    cats = [e["category"] for e in served]
+    assert cats == sorted(cats, key=["Orientation", "Pages", "Glossary"].index), (
+        "sections are served out of journey order; Orientation must precede Pages, and Pages "
+        "the Glossary."
+    )
+    assert [e["id"] for e in served if e["category"] == "Glossary"] == _GLOSSARY_ORDER
+    levels = [e["level"] for e in served if e["category"] == "Glossary"]
+    assert levels == sorted(levels, key=["Basics", "Core", "Advanced"].index), (
+        f"glossary levels are not in basics > expert order: {levels}"
     )

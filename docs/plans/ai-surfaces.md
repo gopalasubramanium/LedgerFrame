@@ -530,10 +530,10 @@ owner** — 0a is ratified by looking, not by report.
 
 ---
 
-## 9-BIS. ⚑ BLOCKING OWNER CALL — R-22 vs the shipped egress gate (found 2026-07-20, Phase 0.5)
+## 9-BIS. R-22 vs the shipped egress gate — **RULED (b), 2026-07-20** (owner, in chat)
 
-**Status: BUILD-BLOCKING for one of the three ruled posture states in Step 3. Phase 0 continues;
-the Ask panel's no-egress copy cannot be written until this is ruled.** Nothing is decided below.
+**Status: CLOSED. Was build-blocking for one posture state; unblocked.** The conflict and both
+options are left standing below exactly as they were put to the owner — the ruling is at the end.
 
 ### The conflict
 
@@ -576,12 +576,38 @@ The other two posture states are unaffected and buildable today.
 | **(a)** | **R-22 stands; the gate is wrong.** Exempt loopback from the egress gate so local AI works under no-egress. | The proposed copy becomes true. | Edits `SECURITY-BASELINE.md`'s choke point and **reverses a ratified test's assertion**. Defensible on Commitment 5's own wording — *"zero **outbound** network calls"*, and a loopback call never leaves the device — but it is a change to the product's strongest guarantee and needs the owner, not an inference. |
 | **(b)** | **The gate stands; R-22 is superseded.** No-egress means zero calls **including loopback**. | R-22 gains a dated amendment; the posture copy is re-worded to the truth — no-egress + local provider is **the same state** as no-egress + no provider: AI is off, answers are deterministic fact-only. Three posture states collapse to two. | Strictly safer, and matches every line of code and test shipping today. Costs R-22 its normative claim. |
 
-**No recommendation is recorded here.** The plan's §9 proposals were written where the evidence
-supported one; here the evidence supports *both*, and the choice is about what the product's
-strongest promise means — which is the owner's, not the architect's and certainly not this CLI's.
+**No recommendation was recorded.** The plan's §9 proposals were written where the evidence
+supported one; here the evidence supported *both*, and the choice was about what the product's
+strongest promise means — the owner's, not the architect's and certainly not this CLI's.
+
+### ⚖ THE RULING — **(b)**, owner, 2026-07-20
+
+**The gate stands. R-22's "local-only" clause is superseded** by a dated amendment
+(`DECISIONS.md` R-22 AMENDMENT; `ROADMAP.md:36`). **No-egress means zero calls including
+loopback.**
+
+**The rationale is the durable part, and it is stronger than the question asked.** Option (a) was
+framed here as *"a loopback call never leaves the device"*. The owner's answer is that this
+frames the wrong object: **a loopback exemption delegates the promise to a process LedgerFrame
+does not control.** A local Ollama server is a **separate program that makes its own outbound
+calls** — **model pull is the counterexample** — so *"we only talked to localhost"* would stop
+being a statement about the device's network behaviour and become a statement about someone
+else's software. Commitment 5 promises zero outbound calls as an **observable property of the
+device**; it cannot rest on a component whose egress the product can neither see nor prevent.
+*(This retires the (a) column's Commitment-5 argument outright — the plan had it as the strongest
+point for (a), and it was answered rather than outweighed.)*
+
+**What could reopen it: in-process inference only** — inference inside the LedgerFrame process,
+no separate server, no delegated egress. A loopback allow-list does not clear that bar, and no
+future proposal should be read as clearing it by being local.
+
+**Consequence for Step 3 — TWO posture states, not three.** *no-egress + local provider* and
+*no-egress + no provider* are **the same state**: AI is off, answers are the deterministic
+fact-only template. The third state (egress on) is unchanged. The unwritten string is **deleted
+rather than worded**, exactly as §9-BIS said it would be if (b) were ruled. Posture copy is
+PROPOSED at 0a.
 
 ### What proceeds meanwhile
 
-Phase 0 deltas 6–8 are unaffected and continue. Step 3 builds the Ask panel and the two unaffected
-posture states; **the no-egress + local-provider string is left unwritten**, not guessed. If (b) is
-ruled, that state is deleted rather than worded.
+*(Recorded before the ruling: Phase 0 deltas 6–8 were unaffected and continued; the string was left
+unwritten rather than guessed. (b) was ruled, and the state was deleted rather than worded.)*

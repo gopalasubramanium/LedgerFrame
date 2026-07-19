@@ -906,7 +906,35 @@ D-105's ruling.
 | R-20 | External widget API — scoped long-lived keys for read-only summary widgets (read-only only; D-001 LAN/VPN posture) | D-069 |
 | R-21 | External-connectivity adaptors (FIX, ISO 20022) as read-only provider lanes (no order flow; honest stale under no-egress) | Product Guarantee 1 & 5 |
 | R-21a | MCP surface — AI-tool integration, evaluate in the AI-surfaces milestone (not a market-data lane) | D-067, D-068 |
-| R-22 | AI provider configuration — local (Ollama) vs cloud API; key handling via the D-069 token pattern; under no-egress AI is local-only; explicit input to the AI-surfaces milestone plan (incl. whether first-run/Settings gain an AI step there) | D-067, D-068, D-069 |
+| R-22 | AI provider configuration — local (Ollama) vs cloud API; key handling via the D-069 token pattern; ~~under no-egress AI is local-only~~ **(SUPERSEDED — see AMENDMENT below)**; explicit input to the AI-surfaces milestone plan (incl. whether first-run/Settings gain an AI step there) | D-067, D-068, D-069 |
+
+- **R-22 AMENDMENT — "under no-egress AI is local-only" is SUPERSEDED; no-egress
+  means zero calls INCLUDING LOOPBACK** (owner, 2026-07-20; AI-surfaces §9-BIS,
+  ruled option (b)). R-22 stated as **normative** that under no-egress a local
+  (Ollama) provider keeps answering. **The shipped gate never implemented that**
+  and was never wrong to: `egress_client` (`app/core/egress.py:73`) checks the
+  toggle **before it looks at any URL** (`:82-83`), has no loopback exemption, and
+  `tests/integration/test_egress_guard.py:120` has pinned the blocking behaviour
+  at a **loopback** base URL since it was written. The amendment brings the
+  **record** into line with the guarantee, not the other way round.
+  - **The owner's rationale, and it is the durable part:** *a loopback exemption
+    **delegates the promise to a process LedgerFrame does not control**.* A local
+    Ollama server is a separate program that makes **its own outbound calls** —
+    **model pull is the counterexample** — so "we only talked to localhost" would
+    stop being a statement about the device's network behaviour and become a
+    statement about someone else's software. Commitment 5 promises **zero
+    outbound network calls** as an **observable property of the device**; it
+    cannot rest on a component whose egress LedgerFrame can neither see nor
+    prevent.
+  - **What could reopen it:** **in-process inference only** — inference inside the
+    LedgerFrame process, with no separate server and therefore no delegated
+    egress. Any future local-AI-under-no-egress proposal must clear that bar; a
+    loopback allow-list does not.
+  - **Consequence for the AI surfaces:** under no-egress there are **two** posture
+    states, not three. *no-egress + local provider* and *no-egress + no provider*
+    are **the same state** — AI is off, answers are the deterministic fact-only
+    template. The Ask panel's posture copy is written to that truth
+    (AI-surfaces §9-BIS; strings PROPOSED at 0a).
 | R-23 | RSS / user-defined news feeds as a news provider lane (provenance-labelled; zero calls under no-egress) | owner 2026-07-11 |
 | R-24 | First-boot license acceptance gate — **cannot be a D-045 step (skippable ≠ acceptance)**; a separate blocking gate; revisit only if licensing/distribution posture demands (owner may instead strike + build now) | owner 2026-07-11 |
 | R-25 | Personal-profile fields (name for personalization) — **hard-gated on a deliberate D-045/PRODUCT-SPEC no-profiling amendment + owner re-affirmation against the privacy identity; DOB/gender remain out** | D-045 (amend), PRODUCT-SPEC |

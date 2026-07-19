@@ -139,7 +139,7 @@ owed · **R-40** (Alpha Vantage premium feed expansion) — parked, definition o
 
 ## Needs decision
 
-- **⚑ OPEN 2026-07-20 — R-22 vs the shipped egress gate.** *(AI-surfaces §9-BIS; found at
+- **✅ RESOLVED 2026-07-20 (owner, option (b)) — R-22 vs the shipped egress gate.** *(AI-surfaces §9-BIS; found at
   Phase 0.5. **Blocks one of three ruled posture states in the Ask panel; does not block the
   rest of the milestone.**)* **R-22 is normative** — *"under no-egress AI is **local-only**
   (Ollama), a cloud provider makes zero calls"* (`ROADMAP.md:36`, `DECISIONS.md:909`) — i.e.
@@ -155,8 +155,14 @@ owed · **R-40** (Alpha Vantage premium feed expansion) — parked, definition o
   product's strongest guarantee and reverses a ratified assertion; **(b)** the gate stands,
   R-22 gains a dated amendment, and no-egress + local provider is re-worded as what it actually
   is — the same state as no-egress + no provider, AI off, deterministic answers. Evidence
-  supports both; the choice is what the strongest promise *means*, which is the owner's.
-  **The string is left unwritten, not guessed.**
+  **RULED (b): the gate stands; R-22's "local-only" clause is superseded by a dated amendment**
+  (`DECISIONS.md` R-22 AMENDMENT, `ROADMAP.md:36`). *Owner's rationale — the durable part:* a
+  loopback exemption **delegates the promise to a process LedgerFrame does not control**; a local
+  Ollama server makes its own outbound calls, **model pull being the counterexample**, so
+  Commitment 5's *zero outbound calls* would stop being an observable property of the device.
+  **Only in-process inference could reopen it.** Consequence: **two** no-egress posture states,
+  not three — local-provider and no-provider are the same state (AI off, deterministic answers).
+  The unwritten string was **deleted, not worded**.
 
 - (none otherwise open). **RESOLVED 2026-07-19 — the author photograph's licence terms**
    (page-help §9-bis-14, `docs/audit/ASSETS.md`). The owner ruled:

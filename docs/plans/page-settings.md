@@ -1069,6 +1069,13 @@ reason verbatim), both new tables at all widths, 0 console errors, suites + cont
 
 ## DELTA NOTE — 2026-07-19 (page-help §9-bis-6 · the About card moves in)
 
+> ## ⚠ SUPERSEDED THE SAME DAY — see the REVISION note below this one (2026-07-19).
+> **The "it is a CARD, not a tab" ruling recorded here was REVERSED by the owner** at
+> page-help §9-bis-11(c). About ships as a **dedicated 7th tab**. Everything else in this
+> note — why About left Help, the six links, and the accuracy obligations — **still stands.**
+> This note is kept, not rewritten: it recorded a real decision that was really reversed,
+> and a plan file that erases its own reversals cannot be audited.
+
 **Settings is CLOSED/accepted; this is a dated delta note on a touched accepted surface,
 recorded per convention — not a re-opening.**
 
@@ -1113,3 +1120,36 @@ looking, not by reading it here.
 **Required by the accepted-page convention:** this dated note **+ a Settings pre-pass re-run** on
 an isolated instance (spare ports, temp data dir, owner `.env` untouched). Both are owed at the
 0a report; neither is satisfied by this note alone.
+
+---
+
+## DELTA NOTE — REVISION — 2026-07-19 (page-help §9-bis-11(c) · About becomes the 7th TAB)
+
+**Supersedes the "It is a CARD, not a tab" clause of the note above. Owner's ruling, reversing the
+delegated one.** Everything else in that note stands unchanged.
+
+**What changes.** About is a **DEDICATED 7th tab**, not a card inside System. The tab strip becomes
+**General · Appearance · Privacy · Data feeds · AI · System · About**.
+
+**This IS D-069 amendment #3** — and the earlier note's instruction *"this note must not be read as
+amendment #3"* is **withdrawn**, because it now is one. `INFORMATION-ARCHITECTURE.md`'s Settings row
+and the D-069 section are updated and dated.
+
+**Why the reversal is not a wash.** The card ruling reasoned from *"About is platform-level, and
+System already holds platform-level things"* — true, but it treated shelf-space as the deciding
+question. About is not configuration at all: **every other tab CHANGES something; About only tells
+you what the thing is and who made it.** Filing it inside System put a read-only identity surface
+behind a tab named for controls, where nobody looking for it would go. A dedicated tab is the
+honest shape.
+
+**What this touches beyond the page — the count is ASSERTED in several places, and they all move:**
+
+- the **Settings tab strip** and its tests;
+- any **guard** asserting a six-tab count;
+- **Help's own Settings entry (Section 2)** — it currently says six tabs and must now say seven and
+  describe About. *This is the **HELP CURRENCY LAW** (page-help §9-bis-11(d)) in its first
+  application: the Help delta ships in the same milestone as the platform change, unsaid.*
+
+**Still required, unchanged from the note above:** a **Settings pre-pass re-run** on an isolated
+instance. **PROPOSED copy** (ethos/brand/ethics, author bio) and **any new DS pattern** the tab
+needs (avatar, brand block) are ratified by the owner **at the look**, not here.

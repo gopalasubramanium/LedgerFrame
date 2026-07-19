@@ -939,3 +939,59 @@ disable rule** (a control with an honest reason — no-egress, invalid input —
 with that reason). **No spinner substitutes for a served result** — the toast still tells the
 truth about what happened. Applied at the reported defect (Pricing Health) and swept across
 the data-feeds surfaces (Settings feed save/test, routing-matrix Add rule).
+
+## §5 AMENDMENT — the five HELP-page patterns (RATIFIED 2026-07-19 by the owner, by looking; proposed as page-help §9-bis-7 / §9-bis-8, ratified at page-help §9-bis-11(a))
+
+**Five patterns entered the system together**, because the Help redesign needed four things the
+library did not have (`src/components/ui/index.ts` was inventoried in full: **no Accordion, no
+Tabs, no CardGrid, no generic type-ahead-with-results-list**) plus one honesty affordance. Each is
+built from ratified primitives where possible. **Each ships with its implementation note, and the
+note is PART of the ratification** — in every one of the five, the note is where the accessibility
+or containment obligation actually lives, so a future re-implementation that keeps the look and
+drops the note has not kept the pattern.
+
+### (1) Content Accordion — `<button aria-expanded>`, never `<details>`
+
+A disclosure pair: a **`<button aria-expanded>`** controlling a panel (`role="region"`, `hidden`
+when closed). **`<details>`/`<summary>` is FORBIDDEN for this pattern** — `<details>` owns its open
+state privately, and this pattern's open state is **URL-DRIVEN** (`?topic=`, HashRouter — a second
+`#` fragment is not addressable), so a deep link must be able to open it. The closed panel uses
+`[hidden] { display: none }`; **the entry TITLE always stays visible.**
+
+> **This pattern lives beside a written DECLINATION and does not overturn it.**
+> `frontend/src/theme/tokens.css:186-191` records that **accordion/collapsible groups were DECLINED**
+> ("hiding destinations costs a click + orientation"). That declination is **SCOPED TO SIDEBAR
+> NAVIGATION** and **STANDS UNTOUCHED** — **R-39 chrome-sidebar-refresh must not reintroduce nav
+> collapse.** A help entry is **CONTENT DISCLOSURE, not navigation**: the title stays visible and
+> **nothing navigable is hidden**, so the concern the declination protects is not triggered.
+> *(Ruled: page-help §9-bis-8.)*
+
+### (2) Topic CardGrid — `auto-fit` + `minmax`, with the containment in the `min()`
+
+`grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr))` — the **same shape the six
+existing page-local card grids already used**, now one shared class rather than six copies (the
+centralization rule). **The `min(20rem, 100%)` IS the containment**, not decoration: without it a
+long title pushes the track wider than the shell and the page overflows at narrow widths.
+
+### (3) Type-ahead results list — grouped, with a SERVED count
+
+Results **grouped by section**, above a count in `role="status"`. **The count is a SERVED string**
+(D-105) — the frontend never composes it. Ranking for this list is **client-side**, and the honest
+cost is recorded rather than glossed: **two rankers now exist and could drift** (this one, and the
+server ranker behind `GET /help?q=` / `app/ai/tools.py:145`). They serve different consumers, each
+is tested on its own side, and **neither is authoritative for the other**. *(page-help §9-bis-9(a).)*
+
+### (4) Reveal-on-hover Link — opacity, NEVER `display:none`
+
+A secondary per-entry affordance (first use: "Link to this topic") revealed on **hover OR
+focus-within**, via **`opacity`**. **`display: none` is FORBIDDEN** — it removes the control from
+the tab order, making the affordance pointer-only. Forced permanently visible under coarse-pointer
+/ narrow widths, where there is no hover to reveal it.
+
+### (5) ILLUSTRATIVE SAMPLE chip — it REPEATS a served marker, it never creates one
+
+A chip marking a figure as illustrative. **The marking must ALREADY be in the served string**
+(`"Sample — …"`); the chip **repeats** it visually. **A chip that is the ONLY marking is a defect**,
+not a lighter-weight version of this pattern: an AI surface quoting the entry reads the served
+string and not the styling, so invented figures would travel out of the page with nothing marking
+them invented. *(page-help §9-bis-9(b) — this failure mode was found in the flesh, not theorised.)*

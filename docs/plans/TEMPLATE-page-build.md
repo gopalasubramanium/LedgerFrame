@@ -600,6 +600,27 @@ tests. Never assemble the page against an endpoint that does not exist.*
     show `CURRENT.md` inside the close commit's diff; a claimed CURRENT.md update without the file in
     the diff FAILS the close.** (A `git log --oneline -- CURRENT.md` at the R-38 close confirmed prior
     closes did touch it — this rule keeps it that way instead of on trust.)
+  - **HELP CURRENCY — a permanent line on every close checklist (THE HELP CURRENCY LAW, owner
+    2026-07-19, page-help §9-bis-11(d); CLAUDE.md hard rule).** *"Help is live documentation: any
+    platform change updates Help in the same milestone, unsaid, as a mandatory part of every close."*
+    The close report states **one of two things, never neither**:
+    1. **the Help delta that shipped** (which entries changed, and where in the diff), or
+    2. an explicit **"no Help impact"** — and it must be **GUARD-CORROBORATED**, not asserted.
+    **"Guard-corroborated" is a specific claim:** the **HELP CURRENCY SUITE** is green **and** the
+    suite can actually SEE the changed surface. Two recorded failure modes make that second clause
+    load-bearing (page-help §9-bis-9(d)): a guard whose corpus includes the string that made the
+    claim is **circular, not weak**, and a guard that reads **comments** will find "the control
+    exists" corroborated by a comment saying *it does not exist yet*. A green suite that never
+    looked is indistinguishable from a green suite that found nothing.
+    **THE HELP CURRENCY SUITE** — named so it can be run rather than remembered:
+    | Guard | Where |
+    |---|---|
+    | Accuracy corpus (binds help claims to live product strings; runs on **markup-stripped** text) | `tests/unit/test_help_content_accuracy.py` |
+    | Built-page-without-entry | `test_every_built_page_has_a_help_entry` |
+    | Nav-label casing in prose | `test_page_names_in_PROSE_use_the_canonical_casing` |
+    | Three-store glossary parity + the Tier-3 counter | `tests/unit/test_glossary_parity.py` |
+    *A page that ships a new control, renames a tab, or changes a count has a Help impact by
+    default. "No Help impact" is the exception and carries the burden of proof.*
 
 ---
 

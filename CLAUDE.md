@@ -16,6 +16,11 @@
   financial values.
 - No new dependencies without an ADR.
 - The platform never executes trades, never advises, never fabricates a number.
+- **THE HELP CURRENCY LAW** (owner, 2026-07-19, page-help §9-bis-11(d)): *Help is live
+  documentation: any platform change updates Help in the same milestone, unsaid, as a
+  mandatory part of every close.* Every close states either the Help delta that shipped,
+  or an explicit **guard-corroborated** "no Help impact". The guards are the **HELP
+  CURRENCY SUITE** (TEMPLATE-page-build.md §8) and they run at every close.
 
 ## Session protocol
 - Start: read the current plan file; state what you will do; get confirmation.

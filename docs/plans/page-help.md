@@ -1160,6 +1160,110 @@ shell-inset and tile-integrity guards among them). Contract **138 path keys / 63
 **NOT ratified. NOT closed. NOT pushed.** The owner ratifies structure, voice and every PROPOSED
 DS item at the 0a, by looking.
 
+> **SUPERSEDED 2026-07-19 by §9-bis-11 (a): the owner ratified the 0a by looking.**
+
+### §9-bis-11 — THE 0a RATIFICATION, AND THE FINAL RULINGS (2026-07-19)
+
+*Recorded from the owner's rulings in chat. This section is the record; the rulings are not
+re-litigated here. Each item states who ruled and under what standing.*
+
+#### (a) 0a RATIFIED — owner, BY LOOKING, 2026-07-19
+
+The owner drove the rendered page and **ratified**:
+
+- the **three-section structure** (Orientation · Pages · Glossary) in journey order;
+- the **full-width landing**;
+- the **voice as rendered** *(with the caveat at (f) below — the 47-entry register sweep is the
+  owner's, at the 3b look, not a claim this pass may make for him)*;
+- **all five PROPOSED DS items**, listed below.
+
+**The five patterns enter `DESIGN-SYSTEM.md` as RATIFIED (dated 2026-07-19, citing page-help
+§9-bis-7 + this ratification), each carrying its recorded implementation note** — the note is
+part of the ratification, not commentary on it, because in every one of the five the note is
+where the accessibility or containment obligation lives:
+
+| # | Pattern | The implementation note that ships with it |
+|---|---|---|
+| 1 | **Content Accordion** | A `<button aria-expanded>` + panel pair, **not `<details>`/`<summary>`** — the open state is **URL-driven** (`?topic=`), and `<details>` owns its own state privately, so a deep link could not open it. `Help.tsx:107,137,163`. |
+| 2 | **Topic CardGrid** | `repeat(auto-fit, minmax(min(20rem, 100%), 1fr))` — the shape the six existing page-local grids already used, now shared. The **`min(…, 100%)` is the containment**: a long title cannot push the track wider than the shell. `Help.css:38`. |
+| 3 | **Type-ahead results list** | Results **grouped by section** with a **SERVED count** (`role="status"`) — the count is a served string, never composed client-side (D-105). `Help.tsx:379`. |
+| 4 | **Reveal-on-hover Link** *(the §9-bis-7(b) affordance)* | Revealed on hover **or focus-within**, via `opacity` — **never `display:none`**, so it stays in the tab order and a keyboard user can reach it. Forced visible under coarse-pointer/narrow. `Help.css:137-171`. |
+| 5 | **ILLUSTRATIVE SAMPLE chip** | The chip **repeats a marker already in the served string** (`"Sample — …"`). It never *creates* the marking — otherwise an AI surface quoting the entry would carry the invented figures with nothing marking them invented (§9-bis-9(b)). `Help.css:240`. |
+
+#### (b) §9-bis-9 (owner) — expanded entry bodies gain typographic structure, at FULL width
+
+Expanded entry bodies gain **headings, bold, italic, lists and spacing**, and use the **FULL
+responsive entry width**. **This SUPERSEDES the 78ch relocation of §9-bis-0** — the measure cap
+recorded green at the Phase 1-bis walk (689px ≈ 78ch, §9-bis-10) is retired by this ruling.
+
+**Formatting is a CONSTRAINED SERVED MARKUP MODEL, and the constraint is the ruling's substance:**
+
+- a **minimal sanctioned subset** is defined in the served shape — **no freeform HTML injection**,
+  ever, in either direction;
+- rendering goes through **DS typography tokens**, not per-page type;
+- **accuracy guards run on MARKUP-STRIPPED text**, so formatting can never hide a claim from the
+  guard that would have caught it. *This is the whole reason the model is constrained rather than
+  freeform: a claim inside markup the guard cannot see is a claim nobody is checking.*
+
+Contract shape change is **declared and regenerated in the same commit, with both counts stated**
+(baseline **138 path keys / 63 schemas**).
+
+#### (c) §9-bis-6-REVISED (owner) — About is a DEDICATED 7th Settings tab
+
+**This REVERSES the delegated card ruling.** About is **not** a card inside System; it is the
+**7th tab**: **General · Appearance · Privacy · Data feeds · AI · System · About**.
+
+This is **D-069 amendment #3** — `INFORMATION-ARCHITECTURE.md`'s Settings row is updated and dated
+accordingly. The System-card delta note in `page-settings.md` is **superseded by a dated
+revision**, not deleted: the note recorded a real decision that was really reversed, and a plan
+file that erases its own reversals cannot be audited.
+
+*Consequence that must not be missed: the tab-strip count is asserted in tests, guards, and in
+Help's own Settings entry. All three move — see (d).*
+
+#### (d) THE HELP CURRENCY LAW (owner, STANDING RULE — not scoped to this milestone)
+
+> **"Help is live documentation: any platform change updates Help in the same milestone, unsaid,
+> as a mandatory part of every close."**
+
+**Written into:** `CLAUDE.md` (hard rules) · `TEMPLATE-page-build.md` (the close checklist gains a
+permanent **Help currency** line: *the Help delta shipped, OR an explicit, guard-corroborated
+"no Help impact"*) · the close-ritual definition itself.
+
+**The mechanised half — the HELP CURRENCY SUITE.** The law is not left to memory. The existing
+guard block is **named**, and runs at every close:
+
+| Guard | File |
+|---|---|
+| Accuracy corpus — binds help claims to live product strings | `tests/unit/test_help_content_accuracy.py` |
+| Built-page-without-entry | `test_every_built_page_has_a_help_entry` |
+| Nav-label casing in prose | `test_page_names_in_PROSE_use_the_canonical_casing` |
+| Three-store parity (+ the Tier-3 counter) | `tests/unit/test_glossary_parity.py` |
+
+*"Guard-corroborated" has a specific meaning here: a "no Help impact" claim is only acceptable if
+the suite is GREEN and the suite can actually SEE the changed surface. The 0-bis lesson stands —
+a guard whose corpus includes the string that made the claim is circular, and a guard that reads
+comments will find a claim corroborated by a comment saying the thing does not exist (§9-bis-9(d)).*
+
+#### (e) Policy ruling (architect, under standing delegation, R-52 lane, 2026-07-19)
+
+The duplicate render found at §9-bis-9 is **confirmed and assigned**: `Policy.tsx:416` and `:447`
+both render the `Default band` + `Concentration limit` pair; the comment at `:439` says **"ONE
+header block"**, which makes **`:416` the leftover**.
+
+**Fixed as its OWN accepted-page delta — never inside a help commit.** Fail-first e2e RED
+asserting the block renders exactly once, dated delta note in `page-policy.md` citing this ruling,
+and a Policy scripted pre-pass re-run on the isolated instance.
+
+#### (f) What this ratification does NOT cover — stated so it is not read as broader than it is
+
+- The **47-entry voice register sweep** is **the owner's to do at the 3b look**. §9-bis-11(a)
+  ratifies the voice **as rendered on the entries he saw**; it does not certify all 47.
+- **About copy** (ethos/brand/ethics + author bio) is **PROPOSED**, drafted here, ratified only at
+  the look.
+- Any **new visual pattern** the About tab needs (avatar, brand block) is **PROPOSED DS**, listed
+  for the look — the same standard the five patterns above just cleared.
+
 ---
 
 ## SCOPE-NOTES *(preserved verbatim — owner rulings recorded ahead of the draft; inputs to §9)*

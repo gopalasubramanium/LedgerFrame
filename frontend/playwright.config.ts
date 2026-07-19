@@ -8,7 +8,14 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   // e2e/smoke/ is a DEV-ONLY manual harness (live backend + destructive reset) — never
-  // part of `npm run check` / CI. It has its own config (playwright.smoke.config.ts).
+  // part of `npm run check` / CI. It has its own config, `e2e/smoke/playwright.smoke.config.ts`
+  // — run it with `npx playwright test --config e2e/smoke/playwright.smoke.config.ts`.
+  //
+  // The path is spelled in full deliberately (§9-bis-11, Step E). The bare filename here read as
+  // a sibling of THIS file, so a reader who looked for `frontend/playwright.smoke.config.ts`
+  // found nothing and recorded the config as MISSING (page-help §9-bis-10). It was never
+  // missing; it sits in `e2e/smoke/` beside the specs it configures, which is where it belongs.
+  // Nothing was created to fix this — the reference was wrong, not the repo.
   testIgnore: "**/smoke/**",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

@@ -1150,9 +1150,18 @@ This is precisely why §9-bis-6 makes the re-run mandatory for an accepted-page 
 
 **Note for the re-run protocol:** `e2e/smoke/` is a destructive live harness and the Settings spec
 **locks the instance** (the API answered `401` afterwards). Re-seed on a fresh temp data dir before
-driving anything else. Also: `playwright.config.ts:11` points at a `playwright.smoke.config.ts`
-that **does not exist** — the smoke specs need a config supplied. Not fixed here (out of scope);
-worth a row.
+driving anything else. ~~Also: `playwright.config.ts:11` points at a `playwright.smoke.config.ts`
+that **does not exist** — the smoke specs need a config supplied.~~
+
+> **CORRECTED 2026-07-19 (Step E) — THE CONFIG WAS NEVER MISSING.** It exists, at
+> **`frontend/e2e/smoke/playwright.smoke.config.ts`**, beside the specs it configures, and it is
+> complete (its own `testDir`, `workers: 1`, and the `SMOKE_BASE` override the isolated pre-pass
+> uses for spare ports). The comment in `playwright.config.ts` spelled only the **bare filename**,
+> which reads as a sibling of that file — so looking for `frontend/playwright.smoke.config.ts`
+> found nothing, and "not found" was written down as "does not exist".
+> **Fixed by correcting the REFERENCE to the full path, not by creating a config** — creating one
+> would have shadowed a working file and split the harness in two. *A missing-file report is a
+> claim like any other, and this one did not survive being checked.*
 
 **Gates:** `npm run check` **exit 0** — 36 test files / 342 unit tests, 361 e2e (the 1728px
 shell-inset and tile-integrity guards among them). Contract **138 path keys / 63 schemas**.

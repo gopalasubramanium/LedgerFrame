@@ -162,22 +162,58 @@ def test_the_served_walker_actually_SEES_the_legal_page():
 
 _STRING = re.compile(r'"([^"\n]{4,300})"')
 
+#: JSX TEXT CONTENT — the copy between a tag's `>` and the next `<`, carrying no braces.
+#:
+#: THIS SECOND PATTERN EXISTS BECAUSE ITS ABSENCE WAS A LIVE DEFECT IN THIS GUARD. The first
+#: version read quoted literals only, which is what `test_copy_hygiene.py` does and what this
+#: module copied without questioning. It caught the `Legal.tsx` subtitle purely because that copy
+#: happens to sit in an ATTRIBUTE (`subtitle="…"`). Rendered children are not quoted:
+#:
+#:     <p className="ph__egress">Refresh unavailable — no-egress is on…</p>
+#:
+#: is prose a user reads, in a file the guard was "covering", and the quoted-literal scan does not
+#: see one character of it. The gap was found by grepping for an unrelated term and noticing the
+#: scanner had missed a string that was plainly there. **A guard's coverage claim is only worth
+#: what its extractor can actually reach**, and "it scans this file" is not the same claim as "it
+#: reads this file's copy".
+_JSX_TEXT = re.compile(r">([^<>{}\n]{4,300})<")
+
 
 def _user_facing_files() -> list[Path]:
     files = [*(SRC / "routes").glob("*.tsx"), *(SRC / "components" / "ui").glob("*.tsx")]
     return [f for f in files if ".test." not in f.name]
 
 
+def _copy_on_line(line: str) -> list[str]:
+    """Every user-readable fragment on one line: quoted literals AND JSX text children."""
+    out = []
+    for literal in _STRING.findall(line):
+        if literal.startswith(("./", "../", "/", "#/")):
+            continue  # an import path or route, not copy
+        out.append(literal)
+    out.extend(_JSX_TEXT.findall(line))
+    return out
+
+
 def _offending_strings(path: Path) -> list[str]:
     out: list[str] = []
+    in_block_comment = False
     for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         stripped = line.lstrip()
-        if stripped.startswith(("//", "*", "/*")):
+        # JSX block comments `{/* … */}` span lines and are where lineage notes live — including
+        # notes that legitimately quote a retired or misspelled term in order to retire it. Tracked
+        # across lines, because a one-line `startswith` check reads continuation lines as copy.
+        if in_block_comment:
+            if "*/" in line:
+                in_block_comment = False
+            continue
+        if stripped.startswith(("{/*", "/*")) and "*/" not in line:
+            in_block_comment = True
+            continue
+        if stripped.startswith(("//", "*", "/*", "{/*")):
             continue  # a comment is where SPDX headers and lineage notes BELONG
-        for literal in _STRING.findall(line):
-            if literal.startswith(("./", "../", "/", "#/")):
-                continue  # an import path or route, not copy
-            out.extend(f"{path.relative_to(REPO)}:{lineno}: {hit}" for hit in _offending(literal))
+        for fragment in _copy_on_line(line):
+            out.extend(f"{path.relative_to(REPO)}:{lineno}: {hit}" for hit in _offending(fragment))
     return out
 
 
@@ -223,6 +259,44 @@ def test_the_guard_BITES_its_red_specimens(label: str, specimen: str):
         f"the §9-7 guard did not catch the {label} specimen: {specimen!r}. A spelling guard that "
         "misses the defect it was written for is worse than none — it certifies the surface."
     )
+
+
+#: Lines in the shape real copy actually ships in. The extractor must reach the copy in each.
+_EXTRACTOR_SPECIMENS = (
+    ("a quoted attribute", '        subtitle="License, disclaimer, and the terms."', True),
+    ("JSX text content", '        <p className="x" role="status">Read the License before you begin.</p>', True),
+    ("JSX text, no attributes", "        <p>Your License has changed.</p>", True),
+    ("a line comment", "        // the old copy said License, kept here as lineage", False),
+    ("an import path", '        import { License } from "./legal/License";', False),
+)
+
+
+@pytest.mark.parametrize(
+    "label,line,must_bite", _EXTRACTOR_SPECIMENS, ids=[s[0] for s in _EXTRACTOR_SPECIMENS]
+)
+def test_the_EXTRACTOR_reaches_copy_in_every_shape_it_ships_in(label: str, line: str, must_bite: bool):
+    """The coverage claim, tested directly rather than assumed.
+
+    This is the test that would have caught this module's own first version. That version read
+    quoted literals only and would have passed every assertion in this file while being blind to
+    every `<p>`-rendered sentence in the app — a guard reporting green over copy it could not see.
+    Scanning a file and reading its copy are different claims, and only the second one matters.
+    """
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", suffix=".tsx", delete=False) as fh:
+        fh.write(line + "\n")
+        tmp = Path(fh.name)
+    try:
+        # `_offending_strings` reports paths relative to REPO; a tmp file is outside it, so the
+        # extraction is exercised through `_copy_on_line` directly.
+        hits = [h for frag in _copy_on_line(line) for h in _offending(frag)]
+    finally:
+        tmp.unlink(missing_ok=True)
+    if must_bite:
+        assert hits, f"the extractor did not reach copy shaped as {label}: {line!r}"
+    else:
+        assert not hits, f"the extractor wrongly treated {label} as user copy: {line!r}"
 
 
 @pytest.mark.parametrize("label,specimen", _MUST_SPARE, ids=[label for label, _ in _MUST_SPARE])

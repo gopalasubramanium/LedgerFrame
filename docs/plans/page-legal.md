@@ -706,3 +706,16 @@ content and authored frontend copy**. It does **not** read `docs/specs/`, where 
 lived. Those were corrected in §11-B and a grep confirms the specs are currently clean, but **that
 is a measurement, not a guard** — a spec regression would not be caught. Widening to the specs is a
 judgement about what counts as "user-facing" and is left for the owner rather than assumed.
+
+**§11-E3a — A DEFECT IN THIS GUARD, FOUND AND FIXED THE SAME DAY (2026-07-20).** The first version
+read **quoted literals only** — copied from `test_copy_hygiene.py` without asking whether that
+extractor was sufficient here. It caught the `Legal.tsx` subtitle purely by luck of shape:
+`subtitle="…"` is an attribute. **Rendered JSX children are not quoted**, so a whole class of
+user-facing prose — every `<p>Sentence a user reads</p>` in the app — was invisible to a guard that
+reported itself as covering those files. Found by grepping for an unrelated term and noticing the
+scanner had missed a string that was plainly there. Now extracts **both** shapes, with the JSX
+block-comment state tracked across lines so lineage notes are still spared, and with
+`test_the_EXTRACTOR_reaches_copy_in_every_shape_it_ships_in` asserting the coverage claim directly
+rather than leaving it assumed. Proven live: `License` injected into `PricingHealth.tsx`'s served
+`<p>` → **RED at `PricingHealth.tsx:254`**. *Scanning a file and reading its copy are different
+claims, and only the second one is worth a green.*

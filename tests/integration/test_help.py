@@ -100,6 +100,47 @@ async def test_help_endpoint_all_and_query(app_client):
     assert q["entries"] and any("Pricing" in e["title"] for e in q["entries"])
 
 
+async def test_help_wire_response_keeps_the_conditional_glossary_triad(app_client):
+    """§9-12 Phase 0 — the SHAPE guard, asserted on the WIRE, not the projection.
+
+    `test_all_help_surfaces_glossary_for_terms_only` proves `all_help()` projects the triad
+    onto Terms entries only. It calls the SERVICE, so it stays green even if the ENDPOINT
+    stops serving the triad — which is exactly what a `response_model` does by default: it
+    STRIPS undeclared keys, and it EMITS declared-but-unset ones as `null`
+    (the `HoldingView.price_display` trap, TEMPLATE §3b).
+
+    Seen RED on a naive `response_model` in two distinct ways before the fix landed:
+      - triad omitted from the model      -> Terms entries lose what/why/improves entirely
+      - triad declared without exclusion  -> Pages/About entries gain "what": null
+    Both are silent losses a service-level test cannot see.
+    """
+    body = (await app_client.get("/api/v1/help")).json()
+    assert body["categories"] == ["Pages", "Terms", "About"]
+
+    by_id = {e["id"]: e for e in body["entries"]}
+    assert len(by_id) == len(HELP), "the wire dropped entries"
+
+    for e in HELP:
+        served = by_id[e["id"]]
+        assert set(served) >= {"id", "category", "title", "body"}
+        if e["category"] == "Terms":
+            for k in _GLOSSARY_FIELDS:
+                assert served.get(k), f"{e['id']} lost {k} on the wire"
+        else:
+            # Absent, not null — a null triad would render an empty section on the page.
+            for k in _GLOSSARY_FIELDS:
+                assert k not in served, f"{e['id']} leaked a null {k} onto the wire"
+
+
+async def test_help_search_wire_response_omits_the_triad(app_client):
+    """Search results are the compact projection (`search_help` returns 4 keys only)."""
+    body = (await app_client.get("/api/v1/help", params={"q": "what is xirr"})).json()
+    assert body["query"] == "what is xirr"
+    assert body["entries"]
+    for e in body["entries"]:
+        assert set(e) == {"id", "category", "title", "body"}
+
+
 async def test_ai_facts_grounded_in_help(app_client):
     d = (await app_client.get("/api/v1/ai/facts", params={"q": "what is XIRR?"})).json()
     assert any(f["label"].startswith("Help") for f in d["facts"])

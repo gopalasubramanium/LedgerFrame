@@ -742,7 +742,46 @@ async def run_admin(payload: AdminAction) -> dict:
         raise HTTPException(500, f"admin action failed: {exc}") from exc
 
 
-@router.get("/help")
+# §9-12 (page-help Phase 0) — the /help shape, pinned. The route was declared `-> dict`, so
+# the frozen contract recorded `additionalProperties: true`: an endpoint IN the contract whose
+# shape was frozen NOT AT ALL. Typing it surfaced something the untyped dict had hidden — the
+# route serves TWO shapes, the full catalogue and a search result, so it is a UNION, not one
+# model. Saying so in the contract is the point; a single loose model would have re-hidden it.
+class HelpEntry(BaseModel):
+    """A catalogue entry. The glossary triad rides Terms entries ONLY (`all_help()` omits it
+    elsewhere), so the three fields are optional AND excluded-when-unset — declared-but-unset
+    would serve `"what": null` and render an empty section on the page."""
+    id: str
+    category: str
+    title: str
+    body: str
+    what: str | None = None
+    why: str | None = None
+    improves: str | None = None
+
+
+class HelpSearchEntry(BaseModel):
+    """A ranked search hit — `search_help()` serves the compact four-key projection only."""
+    id: str
+    category: str
+    title: str
+    body: str
+
+
+class HelpResponse(BaseModel):
+    """`GET /help` — the whole catalogue."""
+    categories: list[str]
+    entries: list[HelpEntry]
+
+
+class HelpSearchResponse(BaseModel):
+    """`GET /help?q=` — ranked hits for a query."""
+    query: str
+    entries: list[HelpSearchEntry]
+
+
+@router.get("/help", response_model=HelpResponse | HelpSearchResponse,
+            response_model_exclude_unset=True)
 async def help_content(q: str | None = None) -> dict:
     """In-app help — all entries, or ranked results for a query. Read-only, no secrets."""
     from app.services.help import all_help, search_help

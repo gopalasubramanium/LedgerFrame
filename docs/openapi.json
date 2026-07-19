@@ -713,6 +713,144 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HelpEntry": {
+        "description": "A catalogue entry. The glossary triad rides Terms entries ONLY (`all_help()` omits it\nelsewhere), so the three fields are optional AND excluded-when-unset \u2014 declared-but-unset\nwould serve `\"what\": null` and render an empty section on the page.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "improves": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Improves"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "what": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "What"
+          },
+          "why": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Why"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "title",
+          "body"
+        ],
+        "title": "HelpEntry",
+        "type": "object"
+      },
+      "HelpResponse": {
+        "description": "`GET /help` \u2014 the whole catalogue.",
+        "properties": {
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/HelpEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "categories",
+          "entries"
+        ],
+        "title": "HelpResponse",
+        "type": "object"
+      },
+      "HelpSearchEntry": {
+        "description": "A ranked search hit \u2014 `search_help()` serves the compact four-key projection only.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "title",
+          "body"
+        ],
+        "title": "HelpSearchEntry",
+        "type": "object"
+      },
+      "HelpSearchResponse": {
+        "description": "`GET /help?q=` \u2014 ranked hits for a query.",
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/HelpSearchEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "entries"
+        ],
+        "title": "HelpSearchResponse",
+        "type": "object"
+      },
       "HoldingTagsIn": {
         "properties": {
           "tags": {
@@ -5965,9 +6103,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Help Content Api V1 Help Get",
-                  "type": "object"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HelpResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HelpSearchResponse"
+                    }
+                  ],
+                  "title": "Response Help Content Api V1 Help Get"
                 }
               }
             },

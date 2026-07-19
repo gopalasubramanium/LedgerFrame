@@ -100,7 +100,7 @@ HELP: list[dict] = [
      "improves": "Refreshing the holding fetches a newer quote and clears a stale flag when the "
                  "source responds. An 'unavailable' entitlement is a limit of the source itself, "
                  "not something a refresh can change."},
-    {"id": "term-confidence", "category": "Terms", "title": "Data confidence",
+    {"id": "term-data-confidence", "category": "Terms", "title": "Data confidence",
      "body": "A 0–100 score of how well-sourced a holding's value is: a base by valuation "
              "method minus penalties (stale, needs-mapping, unavailable). Every deduction is "
              "listed. It's a data-quality signal, not a view on the holding.",
@@ -157,7 +157,7 @@ HELP: list[dict] = [
      "improves": "The ladder reflects the asset classes you hold, so it shifts as your holdings "
                  "change. Keeping each holding's asset-class classification accurate is what keeps "
                  "the grouping correct; there is no other action to take."},
-    {"id": "term-runway", "category": "Terms", "title": "Cash runway",
+    {"id": "term-cash-runway", "category": "Terms", "title": "Cash runway",
      "body": "Liquid assets ÷ your recorded recurring net burn (recurring expenses − income "
              "from Planning). 'Positive' means income covers expenses; 'no data' means add "
              "recurring obligations. Not a forecast of income.",

@@ -43,50 +43,66 @@ The product shell + every built page + the platform milestones, owner-accepted:
   his own instance. Includes **R-8** (historical per-date FX). `RATIFICATION.md §6` row
   appended. **Open, ruling owed:** §21-3 (a `TimeoutError` escaping the AMFI chunk loop);
   **R-50** filed POST-RELEASE.
+- **Legal (`/legal`) + the acceptance gate** — **closed 2026-07-20**, `page-legal.md` §11 (all six
+  items ratified by the owner, by looking) · §12 walk ledger **CLOSED, 0 findings** · §13 pre-pass
+  **54/54** · §14 close · §15 **11 lessons, each with what turns red**. **"Product Guarantees" →
+  PRODUCT COMMITMENTS** (the page had contradicted itself: warranty vocabulary above an AGPL §15
+  NO-WARRANTY section). **A server-side acceptance gate** — 451 on every `/api/v1` read until
+  accepted, **before** the PIN check, binding to the **sha256 of the served document**; three
+  states (`accepted`/`stale`/`none`); **a reset erases acceptance** (the gate binds the person, not
+  the machine); decline is a real answer; **/legal readable without accepting**. **§20-P
+  unchanged** — a consent boundary, never an authentication one. **Three DS entries RATIFIED**
+  (Checkbox · page-scoped Legal typography · reading-return bar, **its strings served** — §11-K).
+  **`check:primitives`** added, and **"a hard rule without a guard is a request" escalated into
+  CLAUDE.md**. `RATIFICATION.md §6` row appended. Contract **141 paths / 71 schemas**.
 
 ---
 
-## NEXT — Legal
+## NEXT — AI-surfaces (D-067 / D-068)
 
-**The v2.0.0 legal surface** (RD-9 Amendment 4, item 2 — Help is closed above).
+**⚠ INTAKE CROSS-NOTE — READ BEFORE THE GROUNDING REVIEW** (page-help §9-9 ruling, 2026-07-19):
+the **help knowledge base was REWRITTEN in the Help milestone**. `app/services/help.py` is not just
+the Help page's content — **`app/ai/tools.py:145` pulls it into the grounded fact pack**, so it is
+what the AI cites as fact. The v1-era entries it used to serve were **factually wrong** (they
+described "Snapshot", "Planning", "Investment policy", a removed Simple/Expert toggle, and four
+Settings tabs where six ship). **The grounding review must read the NEW content**, and **no
+pre-2026-07-19 review of AI help-grounding is still valid.** Accuracy is now mechanised by
+`tests/unit/test_help_content_accuracy.py`.
 
-**PLAN ONLY first — verify-first, STOP at §9** (the R-35/R-38/R-42/R-43/Help plan-file-first
+**And it moved again since that note was written:** the **Legal milestone** added Legal's own Help
+entry and rewrote the gate/lock/reset truth in the affected entries (2026-07-20, §14-B). The
+grounding corpus the AI cites therefore includes **the acceptance gate's behaviour and the
+Commitments rename** — an AI that still says *"Product Guarantees"*, or that describes entry
+without the consent gate, is citing retired fact.
+
+**Intake (R-43 §18-F7d):** `test_performance_question_pulls_risk_metrics` streams `/ai/chat` and
+asserts the risk facts arrive; it is **contention-fragile** — it fails only when the suite shares
+the machine with other pytest processes, and passes solo (controlled comparison in
+`r43-historical-backfill.md` §18-F7d). **The robustness fix belongs to this milestone** as the
+natural owner of the AI streaming surface, NOT to R-43.
+
+**PLAN ONLY first — verify-first, STOP at §9** (the R-35/R-38/R-42/R-43/Help/Legal plan-file-first
 precedent). No code before the owner's §9 one-pass.
 
-**Carried in from the Help close, and binding on this milestone:**
+**Binding on this milestone:**
 
-- **THE HELP CURRENCY LAW applies from the first commit.** Legal ships user-facing surfaces and
-  terminology, so it has a **Help impact by default**; "no Help impact" is the exception and carries
-  the burden of proof. The **HELP CURRENCY SUITE** (TEMPLATE §8) runs at the close.
-- **`docs/audit/ASSETS.md` is the register for vendored redistributed assets**, and the author
-  photograph's licence line is settled there — *© Gopala Subramanium, all rights reserved; …  not
-  covered by the AGPL licence of the code.* Legal must reconcile with it rather than restate it:
-  `LICENSES.md` and `NOTICE` are **generated** and would erase a hand-edit.
-- **DS §3 standing rule** — prose in content surfaces is **full-width responsive by default**; a
-  fixed reading measure only where explicitly ratified, per surface. A legal surface is prose
-  end-to-end, so this is the rule most likely to be tripped.
+- **THE HELP CURRENCY LAW applies from the first commit** — and with unusual force here, because
+  Help content *is* this milestone's input: a change to the knowledge base changes what the AI
+  asserts as fact. The **HELP CURRENCY SUITE** runs at the close.
+- **A NEW GUARD THAT REDS AN ACCEPTED SURFACE IS A DELTA ON THAT SURFACE** (CLAUDE.md standing
+  rule) — a dated delta note in that page's plan file **and** that page's pre-pass re-run, in the
+  same delta.
+- **A HARD RULE WITHOUT A GUARD IS A REQUEST** (CLAUDE.md, added at the Legal close): ask of every
+  constraint this milestone states, *what turns red?*
 
 ## THEN — the road to v2.0.0 (RD-9 Amendment 4 + 5 + 6)
 
-The remaining v2.0.0 set, in sequence (**Help** is the active NEXT above):
+The remaining v2.0.0 set, in sequence (**AI-surfaces** is the active NEXT above):
 
 1. ~~**Help**~~ — **CLOSED 2026-07-19** (DONE above).
-2. ~~**Legal**~~ — the active NEXT above.
-3. **AI-surfaces** — D-067 / D-068. **⚠ INTAKE CROSS-NOTE (added 2026-07-19, page-help §9-9 ruling —
-   READ BEFORE THE GROUNDING REVIEW):** the **help knowledge base was REWRITTEN in the Help
-   milestone**. `app/services/help.py` is not just the Help page's content — `app/ai/tools.py:145`
-   pulls it into the **grounded fact pack**, so it is what the AI cites as fact. The v1-era entries
-   it used to serve were **factually wrong** (they described "Snapshot", "Planning", "Investment
-   policy", a removed Simple/Expert toggle, four Settings tabs where six ship, and wording D-021 /
-   D-026 had retired). **AI-surfaces' grounding review must read the NEW content — never the
-   pre-Help entries**, and must not treat any pre-2026-07-19 review of AI help-grounding as still
-   valid. Accuracy is now mechanised by `tests/unit/test_help_content_accuracy.py`. **Intake (added
-   2026-07-19, R-43 §18-F7d):**
-   `test_performance_question_pulls_risk_metrics` streams `/ai/chat` and asserts the risk
-   facts arrive; it is **contention-fragile** — it fails only when the suite shares the
-   machine with other pytest processes, and passes solo (controlled comparison in
-   `r43-historical-backfill.md` §18-F7d). The robustness fix belongs to this milestone as
-   the natural owner of the AI streaming surface, NOT to R-43.
+2. ~~**Legal**~~ — **CLOSED 2026-07-20** (DONE above).
+3. ~~**AI-surfaces**~~ — the active NEXT above (D-067 / D-068; the Help-grounding
+   cross-note and the contention-fragile streaming test are carried there in full).
 4. **R-45** — per-instrument + default news coverage (pulled into v2.0.0, RD-9
    Amendment 5; egress ruling required, take together with R-44). **Verification item
    (observed 2026-07-18):** the **Home holdings-scoped headlines vs per-ticker feed

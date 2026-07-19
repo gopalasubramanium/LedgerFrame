@@ -1285,10 +1285,27 @@ was held until both backend runs had finished.
 
 ---
 
-## 15. LESSONS — carried to the close
+## 15. STRIKE-CHECK RETROSPECTIVE — the lessons, MECHANISED (2026-07-20)
 
-*Seeded here at the re-look so the close inherits them rather than re-deriving them. The close
-ritual arrives as its own instruction; this list is its input.*
+*Seeded at the re-look, completed at the close. **A lesson that is only written down is this
+milestone's own lesson 2 waiting to happen**, so each carries what turns RED. Where the answer is
+"nothing", it says so — an honest gap beats a decorative one.*
+
+| # | Lesson | What turns RED |
+|---|---|---|
+| 1 | Commit messages are records (§11-H) | **Nothing — stated.** No guard can read intent; the discipline is the numbers-before-summary-words rule below. |
+| 2 | A convention in a plan file is enforced by nobody (§11-E3) | `test_licence_spelling.py` (**104**) — and, generally, the requirement that a ruling ships with its guard |
+| 3 | Scanning ≠ reading the copy (§11-E3a) | `test_the_EXTRACTOR_reaches_copy_in_every_shape_it_ships_in` |
+| 4 | A routed handler's docstring is served text (§11-I) | `scripts/check_api_contract.py` — *it fired again at this very close* |
+| 5 | Drive the browser; a green suite is not an entry (§11-E2) | `test_the_gate_can_RENDER_ITSELF_on_a_PIN_PROTECTED_install` + the 3a pre-pass |
+| 6 | A hard rule without a guard is a request (§11-J) | `npm run check:primitives` — **and the rule is now in CLAUDE.md** |
+| 7 | The instrument-at-fault pattern (§11-D/§11-J/§13-C) | **Nothing — a habit, stated with its counter-caveat** |
+| 8 | The PIN × acceptance matrix gap (§11-E2) | the PIN-protected gate tests + 3a's PIN-protected phase |
+| 9 | A refusal the product creates, the product undoes (§11-E2) | the entry-epoch remount + "0 occurrences" verification |
+| 10 | Running the parts is not running the gate | `npm run check` as one chain |
+| 11 | A constraint must prove it earns its keep (§11-F) | the permanent **ESCAPES** specimen in `test_licence_spelling.py` |
+
+---
 
 1. **COMMIT MESSAGES ARE RECORDS, AND THEY MEET THE SAME TRUTH BAR AS SERVED COPY.** (Owner,
    2026-07-20, from §11-H.) A commit message is read by every future maintainer, cannot be
@@ -1325,3 +1342,106 @@ ritual arrives as its own instruction; this list is its input.*
    test of a hard rule is not that it is written prominently — it is that something goes red.
    **Ask of every hard rule: what turns red?** Where the answer is *nothing*, the rule is a
    request, and the correct response is a guard in the standing suite, not a reminder.
+   **ESCALATED TO `CLAUDE.md` AT THIS CLOSE** as a standing hard rule, because it is a rule *about*
+   that list: a hard rule there is exactly the kind most likely to be believed and least likely to
+   be checked.
+7. **THE INSTRUMENT-AT-FAULT PATTERN — FOUR TIMES THIS MILESTONE, AND THE CAVEAT MATTERS AS MUCH AS
+   THE PATTERN.** (§11-D's guard matching `AGPL-3.0-or-later`; §11-J's guard reporting the wrong
+   line after stripping comments without preserving newlines; §11-J's `getComputedStyle` returning
+   the **interpolated mid-transition** value; §13-C's three pre-pass reds.) *"The guard is wrong"*
+   and *"the code is wrong"* look **identical** for exactly as long as it takes to check which —
+   and a new probe disagreeing with three established gates is usually the probe. **But the caveat
+   is the lesson:** *"suspect the instrument"* is also precisely how a real defect gets waved
+   through, so it is a **hypothesis, never a disposition**. Each of the four was confirmed against
+   the source — `deps.py`, the transition list, the guard's own output — *before* being
+   reclassified. **Nothing turns red here**; this is a habit, and it is recorded as one rather than
+   dressed up as a mechanism.
+8. **THE MATRIX GAP: EVERY GATE TEST RAN PIN-LESS UNTIL THE WIDENING.** (§11-E2.) The gate has two
+   independent axes — PIN set / not, and acceptance none / stale / accepted — and the whole module
+   exercised **one column**. The suite was not thin; it was **thorough along one axis and blind
+   along the other**, which is the shape that reads as coverage. **Ask of any new state machine:
+   what is the second axis, and does anything test the cells off the diagonal?** Mechanised as the
+   PIN-protected gate tests, and driven again in 3a's PIN-protected phase — where the three gate
+   states turned out **byte-identical** (§13-B), which is only a meaningful result *because* the
+   off-diagonal cell is now driven.
+9. **A REFUSAL THE PRODUCT CREATES MUST BE UNDONE BY THE PRODUCT.** (§11-E2.) Pages mounted behind
+   the gate cached their honest "Couldn't load this summary" and had no reason to re-ask, so Home
+   after accepting was a wall of errors with six working **Retry** buttons. **A per-card Retry that
+   works is not a defence** — making a person clear a refusal the product itself manufactured is
+   *a mess wearing the costume of an honest empty state*. The subtree is keyed on an entry epoch
+   and remounts when the gate clears; verified at **0 occurrences**.
+10. **RUNNING THE PARTS IS NOT RUNNING THE GATE.** `npm run check` is a **chain** — lint →
+   typecheck → tokens → copy → smoke-isolation → primitives → vitest → overflow. Running vitest and
+   the guards individually and reporting them green says nothing about whether the chain **exits
+   0**: an early link failing is exactly what a hand-picked sequence hides, and the chain is the
+   thing CI and the next contributor actually run. Every gate table in this milestone reports
+   `npm run check` **as one command with its exit code**, with the parts as sub-rows beneath it —
+   evidence, not substitutes.
+11. **A CONSTRAINT MUST PROVE IT EARNS ITS KEEP.** (§11-F.) §9-7's amendment could have exempted
+   official titles either as a **named allow-list** or by a free-form *title-shaped* pattern. The
+   two were **implemented and measured against the same specimens** instead of argued: the
+   free-form version let `Released under the Widget Foundation Public License.` through — it hands
+   every author a way to spell it the American way by capitalising a noun in front of it. That
+   escaping specimen is now **pinned as a permanent RED** (*"a title-shaped string nobody listed"*),
+   so the **closure of the list is tested rather than trusted**. The general form: when choosing
+   between a tight rule and a general one, **write the specimen the general one would let through**
+   — if you cannot, the tight rule may be costing you nothing.
+
+**One item from the close brief could not be substantiated: a "JSX-comment route kill."** The
+record carries two JSX-comment incidents — §11-E3a (the extractor read quoted literals only, so
+every `<p>` of rendered prose was invisible to a guard reporting those files as covered) and §11-J
+(comment-stripping without newline preservation, giving a wrong line number) — but **no event in
+which a JSX comment removed a route**. It is recorded as *not found* rather than reconstructed:
+inventing a lesson would be exactly the §11-H failure this list opens with.
+
+---
+
+## 14. MILESTONE CLOSE — LEGAL (2026-07-20)
+
+**§-LEDGER CLOSED.** §9 CLOSED · §11 CLOSED (all six items ratified) · §12 walk ledger **CLOSED,
+0 findings** · §13 pre-pass **54/54** · §15 strike-check complete, **11 lessons, each with what
+turns red**. **F-items: none were filed** — the milestone's defects were all found and fixed
+*inside* the deltas that introduced them (§11-E2's two browser-found defects, §11-E3a's extractor,
+§11-I's contract drift, §11-J's raw checkbox), so there is no triage list. **Polish carried to the
+pre-release backlog:** 10-D item 4 (prose rhythm — a shared-`HelpProse` question, never a Legal
+one) and the §9-7 guard's **scope gap** (it reads served content + frontend copy, **not**
+`docs/specs/` — currently clean by measurement, not by guard).
+
+### 14-A. CHANGED FILES — from the ACTUAL diff (`b14a15e~1..HEAD`, 28 commits)
+
+**48 files · +5 070 / −441** (excluding `docs/plans/assets/`).
+
+| Area | Files | Note |
+|---|---|---|
+| **Backend — the gate** | `app/api/deps.py` (+80) · `app/api/v1/routes/system.py` (+177) · `app/models/__init__.py` (+26) · `alembic/…/b8d3f1a97c25_legal_acceptance.py` (+55) | Server-side enforcement **before** the PIN check; the append-only event table |
+| **Backend — the content** | `app/services/legal.py` (**+423**) · `app/services/help.py` (+95) | The six articles, the Commitments, the gate copy, `PACK_FOOTER`, `content_hash()`; Help's Legal entry |
+| **Contract** | `docs/specs/API-CONTRACT.json` · `docs/openapi.json` (+398 each) | **141 paths · 71 schemas** |
+| **Frontend — the gate** | `AcceptanceGate.tsx` (+138) · `AppShell.tsx` (+130) · `api/legal.ts` (+94) · `api/client.ts` (+9) · `chrome.css` (+72) | Consent before PIN; the 451 listener; the reading-return bar |
+| **Frontend — the primitive** | `Checkbox.tsx` (+67) · `inputs.css` (+71) · `ui/index.ts` · `KitchenSink.tsx` (+30) · `scripts/check-ui-primitives.mjs` (**+114**) · `package.json` | The DS Checkbox, its specimen, **and the guard that should have existed** |
+| **Frontend — the page** | `routes/Legal.tsx` (+114) · `routes/Legal.css` (+103) · `nav.ts` · `PricingHealth.tsx` · `Settings.tsx` | The formal register; the `built:true` flip; the Commitment rename's two call sites |
+| **Specs** | `PRODUCT-SPEC.md` (+63) · `GLOSSARY.md` (+63) · `DESIGN-SYSTEM.md` (+62) · `IA.md` · `SECURITY-BASELINE.md` · `README.md` | §3 cleaned + renamed; the three DS entries; §20-P **unchanged**, annotated |
+| **Tests** | `test_licence_spelling.py` (**+347**, new) · `test_legal_acceptance.py` (+315) · `test_legal_accuracy.py` (+142) · `test_legal_content.py` (+138) · `AcceptanceGate.test.tsx` (+206) · `Legal.test.tsx` (+144) · `Checkbox.test.tsx` (+73) · `test_reset_data.py` (+71) · `conftest.py` (+28) · 4 others | The guards the rulings needed |
+| **Plans** | `page-legal.md` (**+1 021**) · `page-chrome.md` (+43) · `page-first-run-checklist.md` (+27) · `page-pricing-health.md` (+47) | **The three delta notes on accepted surfaces** — the standing CLAUDE.md rule honoured, not footnoted |
+
+### 14-B. HELP CURRENCY — the delta this milestone shipped
+
+**Help changed, and it was atomic with the surface.** `app/services/help.py` (+95): **Legal's own
+entry** (`page-legal`, Pages category, with the nav `built:true` flip in the *same commit* —
+`b14a15e`), plus **the gate/lock/reset truth** written into the affected entries as the behaviour
+landed: the acceptance gate as a real entry condition (§11-E2), and **reset now erasing acceptance**
+(§11-D3) — both dated in-file. This is the Currency Law working as intended: the Help edits are
+*inside* the commits that changed the product, not swept up afterwards.
+
+**Guard corroboration: HELP CURRENCY SUITE — 313 passed, 15 skipped**, and it can *see* this
+surface: the accuracy corpus binds Help's Legal entry to the gate's **live served strings**, which
+is why §11-J could claim "no Help impact" credibly and why §11-K's byte-identical wording claim was
+adjudicated rather than asserted.
+
+### 14-C. GATES AT THE CLOSE
+
+Backend **1822 / 15 skipped** solo, **ordered and randomized** · `npm run check` **exit 0**
+(40 files / 379 vitest · 361 Playwright · 89 tokens · 137 files primitive-clean) · HELP CURRENCY
+**313 / 15** · licence + legal guards **181** · contract **exit 0, 141 / 71** · pre-pass **54 / 54**.
+
+**MILESTONE CLOSED — Legal, 2026-07-20.** Walk ledger CLOSED (0 findings); §15 strike-check
+complete; `RATIFICATION.md §6` row appended.

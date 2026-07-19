@@ -24,6 +24,17 @@
   *Why:* 20 specs hardcoded `:8321`; an "isolated" re-run sent its writes at the owner's
   live DB and one spec would have SET A PIN on an unlocked install. It held by luck (a
   401), not by design (08-TECH-DEBT, resolved `4af11f5`).
+- **A HARD RULE WITHOUT A GUARD IS A REQUEST** (page-legal §11-J, 2026-07-20 — escalated to this
+  file because it is *about* this file). *"Raw `<input>` is forbidden"* stood in these hard rules
+  and in DESIGN-SYSTEM §6 since the design-system milestone, and was enforced by **nobody**: the
+  acceptance gate — the most consequential surface in the product — shipped a hand-rolled checkbox
+  through `npm run check`, a green suite, a Playwright pre-pass and a written review. **Every one
+  of those asks whether a control WORKS; none asked whether it is the SANCTIONED one**, and a
+  working violation is the kind no correctness gate can see. **Ask of every hard rule on this list:
+  what turns red?** Where the answer is *nothing*, the rule is a request — and the response is a
+  guard in the standing suite (`npm run check` / the backend gate), not a reminder. A guard is
+  **pinned against going blind**: if the thing it protects disappears, it must fail loudly rather
+  than pass by protecting nothing.
 - **THE HELP CURRENCY LAW** (owner, 2026-07-19, page-help §9-bis-11(d)): *Help is live
   documentation: any platform change updates Help in the same milestone, unsaid, as a
   mandatory part of every close.* Every close states either the Help delta that shipped,

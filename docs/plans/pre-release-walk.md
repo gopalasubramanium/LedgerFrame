@@ -75,6 +75,16 @@
    News/quotes surfaces (stale-flagged, never fabricated — Guarantee 5). *Verified:* a
    network trace shows zero egress; News/quotes degrade to honest stale/empty.
 
+9a. **Smoke isolation fails closed.** Before any pre-pass is trusted as evidence, confirm the
+    smoke harness **refuses** to drive the owner's live stack by accident. *Verified:* with no
+    `SMOKE_BASE`/`SMOKE_API` set, `npx playwright test --config
+    e2e/smoke/playwright.smoke.config.ts --list` **refuses to collect** (it does not silently
+    default to `:5173`/`:8321`); with `SMOKE_API` pointed at `:8321` it **refuses** by name; and
+    `npm run check:smoke-isolation` reports **zero hardcoded live ports**. The owner's own walk
+    against the live instance is the deliberate `SMOKE_ALLOW_LIVE=1` path — *this walk item is
+    what makes that flag meaningful.* **A pre-pass run without this confirmed is not evidence:**
+    it may have been reporting on the wrong machine (08-TECH-DEBT, resolved `4af11f5`).
+
 10. **Milestones append their own walk items here at close.** Still to ship: Help · Legal ·
     AI-surfaces (D-067/D-068) · R-45 (per-instrument + default news) · R-46 (Home summary
     cards) · chrome-sidebar-refresh (R-39). Each milestone's close ritual **adds its walk

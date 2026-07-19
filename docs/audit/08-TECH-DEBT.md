@@ -345,7 +345,39 @@ it is attributed to a change.
 scoped. Reproducing ref: `pytest tests/unit/test_reports_pack.py tests/integration/test_performance.py`
 run in that order.
 
-## The "isolated" pre-pass protocol is NOT enforced — 18 smoke specs hardcode the owner's backend port (found 2026-07-19, page-help §9-bis-11 Step F) — **OPEN**
+## The "isolated" pre-pass protocol is NOT enforced — 18 smoke specs hardcode the owner's backend port (found 2026-07-19, page-help §9-bis-11 Step F) — **RESOLVED 2026-07-19 (`4af11f5`)**
+
+> ### ✅ RESOLVED — the harness now FAILS CLOSED (`4af11f5`, R-ISO delta)
+> *Ruled release-train blocking (architect under delegation, 2026-07-19, owner-unvetoed). The
+> narrative below is kept as the record of how it was found; this block is the disposition.*
+>
+> **`frontend/e2e/smoke/smoke-target.mjs`** is now the ONE place a smoke driver learns its target,
+> and it is fail-closed **twice over**:
+> 1. **Unset `SMOKE_BASE`/`SMOKE_API` REFUSES.** There is no silent default to the owner's live
+>    stack — the exact defect that made the env var "opt-in, so forgetting it silently re-targets
+>    the owner's machine."
+> 2. **An explicitly-configured live port (`:8321`/`:5173`) REFUSES.** A half-isolated run
+>    (`SMOKE_BASE` set, `SMOKE_API` forgotten) is now *impossible to express*, which is exactly the
+>    fix this entry called for.
+>
+> The owner-driven acceptance walk opts in **deliberately** with `SMOKE_ALLOW_LIVE=1`.
+>
+> **All 23 smoke drivers + `playwright.smoke.config.ts` derive from it — zero hardcoded ports,
+> comments included** (a documented port becomes a copy-pasted port). This closes the full list of
+> "remaining 18" below, *plus* `policy-smoke`, `settings-smoke` and `reports-smoke` — which this
+> entry had recorded as *fixed* but which still **defaulted to live** when the env var was absent.
+>
+> **The guard:** `frontend/scripts/check-smoke-isolation.mjs`, wired into `npm run check`, makes it
+> grep-provable. **Fail-first honoured:** RED at **33 violations across 20 drivers**, green after.
+>
+> **Verified:** resolver refuses unset-env / live-API / live-UI and allows isolated ports + the
+> owner-walk flag (5/5); Playwright refuses to collect with no env, and collects 62 tests across 21
+> files under isolated ports; `npm run check` 361 passed.
+>
+> **The second failure mode in this entry — `settings-smoke` leaving the instance PIN-locked — is
+> NOT closed by this delta.** Port isolation means it can now only lock an *isolated* instance,
+> which removes the blast radius but not the order-dependence. Its standing catch below still
+> stands as an ordering rule.
 
 **The protocol says** every walk/re-run happens on an **isolated instance** (spare ports, temp data
 dir, owner's live stack never touched). **`SMOKE_BASE` redirects only the BROWSER.**

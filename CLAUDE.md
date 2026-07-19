@@ -16,6 +16,14 @@
   financial values.
 - No new dependencies without an ADR.
 - The platform never executes trades, never advises, never fabricates a number.
+- **SPECS NEVER HARDCODE LIVE PORTS.** No test, spec, or dev driver may name the owner's
+  live stack (`:8321`/`:5173`) — comments included, since a documented port becomes a
+  copy-pasted port. Smoke drivers derive their target from
+  `frontend/e2e/smoke/smoke-target.mjs`, which is **fail-closed**: unset config refuses,
+  and an explicitly-configured live port refuses. Guard: `npm run check:smoke-isolation`.
+  *Why:* 20 specs hardcoded `:8321`; an "isolated" re-run sent its writes at the owner's
+  live DB and one spec would have SET A PIN on an unlocked install. It held by luck (a
+  401), not by design (08-TECH-DEBT, resolved `4af11f5`).
 - **THE HELP CURRENCY LAW** (owner, 2026-07-19, page-help §9-bis-11(d)): *Help is live
   documentation: any platform change updates Help in the same milestone, unsaid, as a
   mandatory part of every close.* Every close states either the Help delta that shipped,

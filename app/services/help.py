@@ -611,17 +611,22 @@ HELP: list[dict] = [
     # fails the flip without this entry. Neither can land alone. That vice IS the HELP CURRENCY
     # LAW mechanised for this page.
     {"id": "page-legal", "category": "Pages", "title": "Legal",
-     "body": "The terms you have LedgerFrame under, and what it will never do. Four things live "
-             "here: the product's position — it reports, it does not give advice and does not "
-             "act; the seven Product Commitments, reproduced word for word from the specification "
-             "that fixes them; the licence the product is released under, with the files that "
-             "hold the full record; and its stance on tax rules, which is that it has none for "
-             "any country. The limits on individual figures are NOT here — each figure states "
-             "its own, in the place you read it.",
+     "body": "The terms you have LedgerFrame under, and what it will never do. It is written as a "
+             "formal document — a short preamble that fixes what its capitalised words mean, then "
+             "six numbered articles, so any part of it can be quoted by its number. The articles "
+             "are: the product's position, which is that it reports, gives no advice, and does not "
+             "act; "
+             "where the limit on an individual figure lives; the licence, and the warranty "
+             "position that licence sets; its stance on tax rules, which is that it has none for "
+             "any country; the seven Product Commitments, reproduced word for word from the "
+             "specification that fixes them; and where to find the full record on disk. The "
+             "limits on individual figures are NOT restated here — each figure states its own, in "
+             "the place you read it.",
      "keywords": "legal terms disclaimer licence agpl commitments guarantees warranty liability jurisdiction accept acceptance "
                  "tax advice reporting only rights redistribute",
      "inputs": ["Nothing to fill in — Legal is a page you read"],
-     "outputs": ["The product's position — it reports, it does not act",
+     "outputs": ["Six numbered articles, each clause addressable by its own number",
+                 "The product's position — it reports, it does not act",
                  "The seven Product Commitments, word for word",
                  "The licence, and the files that hold the full dependency and asset record",
                  "Its stance on tax rules for any country"],
@@ -631,6 +636,13 @@ HELP: list[dict] = [
                   "- The Commitments are reproduced **word for word** from the specification that "
                   "fixes them, so what you read here and what the product is held to are the same "
                   "sentence.\n"
+                  "- They are called **Commitments** and not guarantees on purpose. The licence's "
+                  "warranty position is that there is **no warranty**, and the product will not "
+                  "use warranty language it cannot honour. These seven are undertakings it "
+                  "enforces against itself, and each one has a test behind it.\n"
+                  "- Where a link to an outside text appears, it is marked as a **convenience**. "
+                  "The file named beside it is the one that ships with the product, and that file "
+                  "is the one that counts — the page is complete without ever following a link.\n"
                   "- The licence text, the third-party notices and the dependency record are not "
                   "copied onto this page. They **ship with the source**, and a copy of a generated "
                   "file goes stale the moment the file is regenerated.\n"

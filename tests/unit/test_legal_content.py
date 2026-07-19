@@ -106,8 +106,13 @@ def test_the_page_serves_all_seven_and_in_the_spec_order():
 def _all_prose() -> list[tuple[str, str]]:
     """(where, text) for every user-visible string the Legal page serves, markup stripped."""
     d = all_legal()
-    out = [(f"section:{s['id']}", strip_markup(s["body"])) for s in d["sections"]]
-    out += [(f"section-title:{s['id']}", s["title"]) for s in d["sections"]]
+    out = [("preamble", strip_markup(d["preamble"]))]
+    for s in d["sections"]:
+        out.append((f"section-title:{s['id']}", s["title"]))
+        for ci, c in enumerate(s["clauses"], 1):
+            out.append((f"clause:{s['id']}.{ci}", strip_markup(c["text"])))
+            for ii, item in enumerate(c["items"], 1):
+                out.append((f"subclause:{s['id']}.{ci}.{ii}", strip_markup(item)))
     out.append(("commitments:intro", strip_markup(d["commitments"]["intro"])))
     out += [(f"commitment:{i}", strip_markup(g)) for i, g in enumerate(d["commitments"]["items"], 1)]
     out += [(f"pointer:{p['file']}", strip_markup(p["what"])) for p in d["pointers"]]
@@ -217,19 +222,84 @@ def test_the_page_carries_the_four_contents_the_IA_says_it_owns():
     assert d["commitments"]["items"], "the Commitments block is empty"
 
 
-def test_pointers_name_files_and_never_urls():
-    """§9-5: a pointer NAMES THE FILE THAT SHIPS WITH THE SOURCE, never a URL.
+# --- 9-5-bis — CONVENIENCE LINKS, AND THE THREE CONDITIONS THAT MAKE THEM SAFE ----------------- #
+# The owner amended §9-5's flat "never a URL" on 2026-07-20 (page-legal §11-3): a convenience link
+# to an external authoritative text is permitted, marked as a convenience, never load-bearing.
+#
+# "Never load-bearing" is the condition with teeth and the only one that is hard to keep by
+# intention alone, because it is violated by OMISSION — someone writes `what: "see the link"` and
+# the page is now broken offline, with no rule visibly broken. These three tests make each
+# condition mechanical.
 
-    `LegalPointer` has no url field, so this cannot be violated by adding one — but a URL pasted
-    into `file` or `what` would slip through the schema. A local-first product's legal page is the
-    last surface that should stop working offline.
+
+def test_a_pointer_always_names_a_shipped_file():
+    """The canonical thing on every row is the FILE. §9-5 stands; §11-3 only added a shortcut."""
+    d = all_legal()
+    assert d["pointers"], "the pointer list is empty"
+    for p in d["pointers"]:
+        assert p["file"].strip(), f"pointer {p!r} names no shipped file"
+
+
+def test_no_url_is_smuggled_into_prose():
+    """A URL belongs in `url`, where the renderer can mark it and rel-protect it.
+
+    Pasted into `file` or `what` it renders as bare text — unmarked, unprotected, and indexed by
+    the accuracy corpus as prose. The schema cannot stop this; this does.
     """
     d = all_legal()
     for p in d["pointers"]:
         blob = f"{p['file']} {p['what']}"
         assert not re.search(r"https?://|www\.", blob, re.I), (
-            f"pointer {p['file']!r} carries a URL. A local-first product cannot link to a hosted "
-            f"licence page (page-legal §9-5) — name the file that ships with the source."
+            f"pointer {p['file']!r} carries a URL in its prose. Put it in the `url` field, where "
+            f"it is marked as a convenience and rel-protected (page-legal §11-3)."
+        )
+
+
+def test_the_page_is_complete_with_every_convenience_link_DEAD():
+    """THE LOAD-BEARING TEST, and the reason 9-5-bis is safe to have granted.
+
+    Simulates the offline reader — and the no-egress reader, who is the more important one because
+    the product PROMISES them zero outbound calls (Commitment 5). Strip every url and assert the
+    remaining row still answers the question "where is this?" on its own: a real file name, and a
+    description that stands without the link.
+
+    The specific failure this catches is a description that DEFERS to its link — "see the online
+    text", "full terms at the link below". That reads fine on a developer's machine and is a dead
+    end for the reader the page was built for.
+    """
+    d = all_legal()
+    for p in d["pointers"]:
+        stripped = {"file": p["file"], "what": p["what"]}  # url removed, as if the link were dead
+        assert stripped["file"].strip() and stripped["what"].strip(), (
+            f"pointer {p['file']!r} is empty once its link is gone"
+        )
+        low = stripped["what"].lower()
+        for deferral in ("see the link", "at the link", "link below", "online version",
+                         "follow the link", "click here"):
+            assert deferral not in low, (
+                f"pointer {p['file']!r} DEFERS to its convenience link ({deferral!r}). The link "
+                f"may never be load-bearing (page-legal §11-3): this row has to be complete with "
+                f"the link dead, because offline and no-egress readers are exactly who it is for."
+            )
+
+
+def test_every_convenience_url_is_https_and_points_at_an_authoritative_text():
+    """A convenience link is still an egress affordance on a local-first product.
+
+    `https` is not negotiable, and the host is allow-listed rather than free-form: the owner's
+    ruling names *authoritative texts* (it cites gnu.org for the AGPL), and an open `url` field
+    with no allow-list is how a legal page eventually points somewhere nobody vetted.
+    """
+    allowed = {"www.gnu.org"}
+    for p in all_legal()["pointers"]:
+        url = p.get("url")
+        if url is None:
+            continue
+        assert url.startswith("https://"), f"{p['file']}: convenience link is not https: {url!r}"
+        host = url.split("/")[2]
+        assert host in allowed, (
+            f"{p['file']}: convenience link points at {host!r}, which is not in the allow-list "
+            f"{sorted(allowed)}. Add it here deliberately, with a reason, or drop the link."
         )
 
 

@@ -1615,6 +1615,55 @@
         "title": "InstrumentPatch",
         "type": "object"
       },
+      "LegalArticle": {
+        "description": "One article of the Legal page \u2014 a numbered heading over a run of clauses.\n\nWas `LegalSection` with a single `body` string until page-legal \u00a711-4 (owner, 2026-07-20)\nruled the formal register. Rendered as a `Card` (page-legal \u00a79-1); the template is unchanged.",
+        "properties": {
+          "clauses": {
+            "items": {
+              "$ref": "#/components/schemas/LegalClause"
+            },
+            "title": "Clauses",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "clauses"
+        ],
+        "title": "LegalArticle",
+        "type": "object"
+      },
+      "LegalClause": {
+        "description": "One numbered clause, and its lettered sub-clauses if it has any.\n\nTHE CLAUSE CARRIES NO NUMBER, and that omission is deliberate (page-legal \u00a711-4). Numbering is\nDERIVED FROM POSITION by the renderer \u2014 article index, clause index, item index \u2014 so \"2.1.a\"\nis a fact about where the clause sits rather than a string someone typed. Typed numbers are\nhow a formal document rots: insert one clause and every later number is silently wrong, with\nnothing able to detect it because the numbers are prose. There is nowhere here to put one.",
+        "properties": {
+          "items": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "LegalClause",
+        "type": "object"
+      },
       "LegalCommitments": {
         "description": "The seven Product Commitments, reproduced VERBATIM.\n\n`items` are byte-equal to `docs/specs/PRODUCT-SPEC.md` \u00a73 (whitespace-normalised), asserted by\n`tests/unit/test_legal_content.py` (AC-L3) \u2014 string equality, never by eye. The page renders\nthem; it does not paraphrase, summarise, reorder or number them itself.",
         "properties": {
@@ -1643,11 +1692,22 @@
         "type": "object"
       },
       "LegalPointer": {
-        "description": "A file that ships with the source.\n\nDeliberately carries NO url field, and the omission is the contract (page-legal \u00a79-5): a\nlocal-first product cannot link to a hosted licence page, so a pointer NAMES A FILE. There is\nnowhere here to put a URL, which is how the rule is kept rather than remembered.",
+        "description": "A file that ships with the source, and optionally a convenience link to its public text.\n\n`file` is REQUIRED and `url` is OPTIONAL, and that asymmetry is the contract (page-legal \u00a79-5\nas amended by \u00a711-3, owner 2026-07-20). The shipped file is canonical; a URL is a convenience\nand never a substitute. A pointer with no `file` is unrepresentable here, which is how the\nlocal-first rule is kept structurally rather than remembered \u2014 the page must stay complete and\ntrue with every `url` dead.",
         "properties": {
           "file": {
             "title": "File",
             "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
           },
           "what": {
             "title": "What",
@@ -1682,9 +1742,13 @@
             "title": "Pointers",
             "type": "array"
           },
+          "preamble": {
+            "title": "Preamble",
+            "type": "string"
+          },
           "sections": {
             "items": {
-              "$ref": "#/components/schemas/LegalSection"
+              "$ref": "#/components/schemas/LegalArticle"
             },
             "title": "Sections",
             "type": "array"
@@ -1692,36 +1756,13 @@
         },
         "required": [
           "markup",
+          "preamble",
           "sections",
           "commitments",
           "pointers",
           "pack_footer"
         ],
         "title": "LegalResponse",
-        "type": "object"
-      },
-      "LegalSection": {
-        "description": "One prose section of the Legal page. Rendered as a `Card` (page-legal \u00a79-1).",
-        "properties": {
-          "body": {
-            "title": "Body",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "body"
-        ],
-        "title": "LegalSection",
         "type": "object"
       },
       "ManualHoldingIn": {

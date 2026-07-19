@@ -165,7 +165,16 @@ def test_legal_does_not_claim_to_own_the_scoped_caveats():
     from app.services.help_markup import strip_markup
     from app.services.legal import all_legal
 
-    blob = " ".join(strip_markup(s["body"]) for s in all_legal()["sections"]).lower()
+    # Walks CLAUSES and SUB-CLAUSES since the formal register (page-legal §11-4): an overreach
+    # buried in one sub-clause is exactly as damaging as one in a heading, and a guard that only
+    # read clause text would miss the lettered items entirely.
+    d = all_legal()
+    parts = [strip_markup(d["preamble"])]
+    for s in d["sections"]:
+        for c in s["clauses"]:
+            parts.append(strip_markup(c["text"]))
+            parts.extend(strip_markup(i) for i in c["items"])
+    blob = " ".join(parts).lower()
     for overreach in ("supersedes", "replaces the", "instead of the notes",
                       "all disclaimers are", "the only disclaimer"):
         assert overreach not in blob, (

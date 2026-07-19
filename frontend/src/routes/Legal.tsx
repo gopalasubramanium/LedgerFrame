@@ -37,6 +37,12 @@ import { HelpProse } from "./helpMarkup";
 // surface to need served prose, so the rule says REUSE IN PLACE. If a third arrives, that is when
 // this lifts into the DS — and this comment is the note that the count is now at two.
 
+// Sub-clause letters. Deliberately NOT computed from a char code: `String.fromCharCode(97 + i)`
+// runs off the end of the alphabet silently at the 27th item and starts emitting punctuation. An
+// explicit list makes the ceiling visible, and 26 sub-clauses in one clause would be a drafting
+// problem long before it were a rendering one.
+const LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
+
 export function Legal() {
   // `undefined` = still loading · `null` = the read failed · a value = the served page.
   // Three states, distinguished, because "no content yet" and "content unavailable" are different
@@ -81,50 +87,116 @@ export function Legal() {
 
       {content && (
         <>
-          {content.sections.map((s) => (
+          {/* THE PREAMBLE. Register apparatus, not a seventh content (§11-4): it introduces no
+              claim and states no limit, it only fixes what the document's Capitalised words mean.
+              Unnumbered, because it is not a clause anything could cross-refer to. */}
+          <section className="lf-card legal__preamble" aria-labelledby="legal-preamble">
+            <h2 className="lf-card__title" id="legal-preamble">
+              Preamble
+            </h2>
+            <div className="lf-card__body">
+              <HelpProse text={content.preamble} />
+            </div>
+          </section>
+
+          {content.sections.map((s, ai) => (
             <section className="lf-card legal__section" key={s.id} aria-labelledby={`legal-${s.id}`}>
               <h2 className="lf-card__title" id={`legal-${s.id}`}>
-                {s.title}
+                <span className="legal__artnum">{ai + 1}.</span> {s.title}
               </h2>
               <div className="lf-card__body">
-                <HelpProse text={s.body} />
+                <ol className="legal__clauses">
+                  {s.clauses.map((c, ci) => (
+                    <li className="legal__clause" key={ci}>
+                      <span className="legal__num" aria-hidden="true">
+                        {ai + 1}.{ci + 1}
+                      </span>
+                      <div className="legal__clausebody">
+                        <HelpProse text={c.text} />
+                        {c.items.length > 0 && (
+                          <ol className="legal__subclauses">
+                            {c.items.map((it, ii) => (
+                              <li className="legal__subclause" key={ii}>
+                                <span className="legal__num" aria-hidden="true">
+                                  {ai + 1}.{ci + 1}.{LETTERS[ii]}
+                                </span>
+                                <div className="legal__clausebody">
+                                  <HelpProse text={it} />
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
             </section>
           ))}
 
-          {/* THE COMMITMENTS. Rendered from the served array in the served order, as an ORDERED
-              list: their numbering is part of what they are ("Commitment 5" is cited by name across
-              the specs), so the list carries it rather than the prose repeating it. */}
+          {/* THE COMMITMENTS — Article 5. Rendered from the served array in the served order.
+              Their numbering is part of what they are ("Commitment 5" is cited by name across the
+              specs), and here it coincides with the clause numbering: Commitment n IS clause 5.n.
+              That is why this article is NOT re-implemented as a plain list — the register's
+              numbering and the Commitments' own numbering must be the same numbers, not two
+              schemes that happen to agree today. */}
           <section className="lf-card legal__section" aria-labelledby="legal-commitments">
             <h2 className="lf-card__title" id="legal-commitments">
+              <span className="legal__artnum">{content.sections.length + 1}.</span>{" "}
               {content.commitments.title}
             </h2>
             <div className="lf-card__body">
               <HelpProse text={content.commitments.intro} />
-              <ol className="legal__commitments">
+              <ol className="legal__clauses legal__commitments">
                 {content.commitments.items.map((g, i) => (
-                  <li className="legal__commitment" key={i}>
-                    <HelpProse text={g} />
+                  <li className="legal__clause legal__commitment" key={i}>
+                    <span className="legal__num" aria-hidden="true">
+                      {content.sections.length + 1}.{i + 1}
+                    </span>
+                    <div className="legal__clausebody">
+                      <HelpProse text={g} />
+                    </div>
                   </li>
                 ))}
               </ol>
             </div>
           </section>
 
-          {/* THE POINTERS. File names, never links (§9-5) — a local-first product cannot link to a
-              hosted licence page, and an anchor here would be the one element on the page that
-              stops working offline. Rendered as a description list because that is what it is:
-              a name and what it holds. */}
+          {/* THE POINTERS — Article 6. The FILE NAME is canonical (§9-5). §11-3 (9-5-bis) now
+              permits a CONVENIENCE link beside it, and the three conditions are enforced here:
+              it is marked as a convenience in the rendered text, it carries rel="noreferrer
+              noopener", and it is NEVER LOAD-BEARING — delete every url and this article still
+              says everything it says now, which is what a local-first page has to do. */}
           <section className="lf-card legal__section" aria-labelledby="legal-pointers">
             <h2 className="lf-card__title" id="legal-pointers">
-              Where to find the full record
+              <span className="legal__artnum">{content.sections.length + 2}.</span> Where to Find
+              the Full Record
             </h2>
             <div className="lf-card__body">
               <dl className="legal__pointers">
                 {content.pointers.map((p) => (
                   <div className="legal__pointer" key={p.file}>
                     <dt className="legal__file">{p.file}</dt>
-                    <dd className="legal__what">{p.what}</dd>
+                    <dd className="legal__what">
+                      {p.what}
+                      {p.url && (
+                        <>
+                          {" "}
+                          <a
+                            className="legal__convenience"
+                            href={p.url}
+                            rel="noreferrer noopener"
+                            target="_blank"
+                          >
+                            Read it online
+                          </a>{" "}
+                          <span className="legal__conveniencenote">
+                            (a convenience link — the file above is the canonical text)
+                          </span>
+                        </>
+                      )}
+                    </dd>
                   </div>
                 ))}
               </dl>

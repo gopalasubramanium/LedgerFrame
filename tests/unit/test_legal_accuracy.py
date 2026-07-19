@@ -58,8 +58,16 @@ from app.services.legal import all_legal
 def _authored() -> list[tuple[str, str]]:
     """Every string this milestone WROTE. Held to the full Help bar, no exemptions."""
     d = all_legal()
-    out = [(f"section:{s['id']}", strip_markup(s["body"])) for s in d["sections"]]
-    out += [(f"section-title:{s['id']}", s["title"]) for s in d["sections"]]
+    out = [("preamble", strip_markup(d["preamble"]))]
+    # EVERY CLAUSE AND EVERY SUB-CLAUSE, individually. Flattening an article to one blob would let
+    # a violation in clause 2.3 be reported as "article 2", and the point of a per-string corpus is
+    # that a red NAMES THE CLAUSE the author has to go and fix.
+    for s in d["sections"]:
+        out.append((f"section-title:{s['id']}", s["title"]))
+        for ci, c in enumerate(s["clauses"], 1):
+            out.append((f"clause:{s['id']}.{ci}", strip_markup(c["text"])))
+            for ii, item in enumerate(c["items"], 1):
+                out.append((f"subclause:{s['id']}.{ci}.{ii}", strip_markup(item)))
     out.append(("commitments:title", d["commitments"]["title"]))
     out.append(("commitments:intro", strip_markup(d["commitments"]["intro"])))
     out += [(f"pointer:{p['file']}", strip_markup(p["what"])) for p in d["pointers"]]

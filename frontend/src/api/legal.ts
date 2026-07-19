@@ -10,10 +10,24 @@ import { apiGet } from "./client";
 // The page renders every string VERBATIM and composes nothing. There is no money on this surface,
 // so D-105 is N/A here — and D-105 governs money, never prose (the correction recorded at §9-3).
 
-export interface LegalSection {
+/** One numbered clause, and its lettered sub-clauses if it has any.
+ *
+ *  CARRIES NO NUMBER, deliberately (§11-4). Numbering is DERIVED FROM POSITION by the renderer —
+ *  article index, clause index, item index — so "2.1.a" is a fact about where the clause sits
+ *  rather than a string someone typed. Typed numbers are how a formal document rots: insert one
+ *  clause and every later number is silently wrong, and nothing can detect it because the numbers
+ *  are prose. There is nowhere in this type to put one. */
+export interface LegalClause {
+  text: string;
+  items: string[];
+}
+
+/** One article — a numbered heading over a run of clauses. Was `LegalSection` with a single
+ *  `body` string until the owner ruled the formal register (§11-4, 2026-07-20). */
+export interface LegalArticle {
   id: string;
   title: string;
-  body: string;
+  clauses: LegalClause[];
 }
 
 export interface LegalCommitments {
@@ -25,14 +39,19 @@ export interface LegalCommitments {
   items: string[];
 }
 
-/** A file that ships with the source.
+/** A file that ships with the source, and optionally a convenience link to its public text.
  *
- *  Deliberately carries NO url, and the omission is the contract (§9-5): a local-first product
- *  cannot link to a hosted licence page, so a pointer NAMES A FILE. There is nowhere in this type
- *  to put a URL, which is how the rule is kept rather than remembered. */
+ *  `file` is REQUIRED and `url` is OPTIONAL, and that asymmetry IS the contract (§9-5 as amended
+ *  by §11-3, owner 2026-07-20). The shipped file is canonical; a URL is a convenience and never a
+ *  substitute. The renderer marks it as a convenience and applies rel="noreferrer noopener".
+ *
+ *  NEVER LOAD-BEARING: the page must remain complete and true with every url dead. A reader
+ *  offline, or with no-egress on, sees the file name and the description and loses a shortcut and
+ *  nothing else. */
 export interface LegalPointer {
   file: string;
   what: string;
+  url?: string | null;
 }
 
 export interface LegalResponse {
@@ -40,7 +59,10 @@ export interface LegalResponse {
    *  Help uses, rendered by the same route-local renderer. Versioned, so a future change to the
    *  subset is a visible contract change rather than a silent reinterpretation. */
   markup: string;
-  sections: LegalSection[];
+  /** Register apparatus, not a seventh content: it fixes what the document's Capitalised
+   *  words refer to, and states no claim and no limit of its own (§11-4). */
+  preamble: string;
+  sections: LegalArticle[];
   commitments: LegalCommitments;
   pointers: LegalPointer[];
   /** The single product-level line the Reports Pack renders (§9-4). Served here because Legal

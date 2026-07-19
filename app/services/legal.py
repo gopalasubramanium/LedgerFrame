@@ -97,57 +97,116 @@ COMMITMENTS: tuple[str, ...] = (
 #   * "reporting only" / "organisation"   — accounts.py:103 / tax.py:424, the scoped caveats' own
 #                                            wording, generalised to the product level
 # ---------------------------------------------------------------------------------------------
-_POSITION = (
-    "LedgerFrame reports; **it does not act**.\n"
+# ---------------------------------------------------------------------------------------------
+# THE FORMAL REGISTER (page-legal §11-4, owner, 2026-07-20).
+#
+# The owner read the 0a and ruled that this page must READ AS A FORMAL AGREEMENT: numbered clauses
+# and sub-clauses, defined-term capitals, bold/italic conventions.
+#
+# **REGISTER CHANGES DRESS, NEVER CLAIMS.** That is the ruling's own wording and it is the
+# constraint that matters: AC-L5 (the NEVER list), AC-L6 (the scoped-caveat registry), AC-L7 (the
+# accuracy corpus, markup-stripped) and AC-L8 (the Pack footer) all still bind, unchanged and
+# unrelaxed. A document that acquired gravitas and lost a guard would be the exact failure this
+# page exists to prevent.
+#
+# TWO BUILD DECISIONS, BOTH PROPOSED UNTIL THE OWNER'S RE-LOOK:
+#
+# 1. **NUMBERING IS STRUCTURAL, NEVER TYPED.** No clause number appears in any string below. The
+#    renderer derives "2.1.a" from position — article index, clause index, item index. Typed
+#    numbers are how formal documents rot: insert a clause at 2.1 and every later number in every
+#    cross-reference is silently wrong, and nothing can detect it because the numbers are prose.
+#    Deriving them makes renumbering free and makes a wrong number impossible rather than unlikely.
+#
+# 2. **DEFINED TERMS NEED NO MARKUP CONSTRUCT.** They are Capitalised in the text itself — the
+#    Platform, the Commitments, the Licence — and defined once in the preamble. This was checked
+#    against the alternative (a new inline marker in the sanctioned subset) and rejected: the
+#    subset stays at five constructs, `validate_markup` needs no new arm, and — decisively — the
+#    accuracy guards read `strip_markup` output, so a new inline marker would be one more way for a
+#    phrase to be split and a guard to go quietly green on copy it exists to catch.
+#
+#    **THE SUBSET IS THEREFORE UNCHANGED, AND `MARKUP_DIALECT` IS NOT BUMPED.** The contract change
+#    in this delta is the SHAPE of the served content (bodies become clauses), not the dialect.
+# ---------------------------------------------------------------------------------------------
+
+# The preamble is register apparatus, NOT a seventh content: it introduces no claim and states no
+# limit, it only fixes what the document's capitalised words refer to. The six contents the IA
+# fixes are unchanged and are the six articles below.
+_PREAMBLE = (
+    "This page states the terms on which you have LedgerFrame, and what it undertakes never to "
+    "do. In this document **the Platform** means LedgerFrame, the software running on this "
+    "device; **the Licence** means the licence named in Article 3; **the Commitments** means the "
+    "seven undertakings set out in Article 5; and **you** means the person operating this "
+    "installation.\n"
     "\n"
-    "- It never places or executes trades, and has no mechanism for doing so — the capability was "
-    "never built into the product.\n"
-    "- It never gives buy/sell/hold, tax, or financial advice. Nothing it shows you is a "
-    "recommendation, and nothing it shows you is a forecast.\n"
-    "- It never fabricates a price, headline, or figure. Where a value cannot be established it "
-    "shows a dash and a reason rather than a guess.\n"
-    "\n"
-    "Every figure here is a record of what you entered and what the sources you configured "
-    "returned — **organisation and reporting only**. What you do with it is your decision, taken "
-    "with whatever professional advice you choose to seek."
+    "*The Platform is operated by you, on your own device, on your own data. There is no other "
+    "party to this document.*"
 )
 
-# The general position does NOT replace the scoped caveats — this paragraph exists so that a
-# reader who arrives here first is told where the real limits live, and so that a future reviewer
-# reading "one canonical home" does not delete ten of them (D-106).
-_SCOPED = (
-    "Individual figures carry their own limits, stated where the figure is shown.\n"
-    "\n"
-    "- Those notes are **part of the figure**, not a copy of this page: they say what that "
-    "particular number is and is not, in the place you read it.\n"
-    "- Exports and the Reports Pack carry them into the file, so a figure never travels without "
-    "the limit it was published under.\n"
-    "- This page states the product's position. It does not restate, replace or shorten them."
+_POSITION_CLAUSES: tuple[dict, ...] = (
+    {"text": "The Platform **reports; it does not act.**"},
+    {"text": "Specifically, and without qualification:",
+     "items": (
+         "It **never places or executes trades**, and has no mechanism for doing so — the "
+         "capability was never built into it.",
+         "It **never gives buy, sell or hold recommendations**, and never gives tax or financial "
+         "advice. Nothing it shows you is a recommendation, and nothing it shows you is a "
+         "forecast.",
+         "It **never fabricates a price, headline or figure**. Where a value cannot be "
+         "established it shows a dash and a reason rather than a guess.",
+     )},
+    {"text": "Every figure the Platform shows is a record of what you entered and what the "
+             "sources you configured returned — **organisation and reporting only**."},
+    {"text": "What you do with that record is your decision, taken with whatever professional "
+             "advice you choose to seek. The Platform does not participate in that decision."},
 )
 
-_LICENCE = (
-    "LedgerFrame is released under the **AGPL-3.0-or-later** licence, and your rights to use, "
-    "study, modify and redistribute it are the ones that licence grants.\n"
-    "\n"
-    "The warranty and liability position is the one stated in the licence itself, in its sections "
-    "15 and 16. **This page does not restate it in other words** — a paraphrase that drifted "
-    "would contradict the licence the product actually ships under.\n"
-    "\n"
-    "LedgerFrame is built on open-source software. The full dependency and licence record, the "
-    "third-party notices, and the provenance of every vendored asset are **generated and ship "
-    "with the source**; they are not reproduced here, because a copy of a generated file goes "
-    "stale the moment the file regenerates."
+# The general position does NOT replace the scoped caveats — this article exists so that a reader
+# who arrives here first is told where the real limits live, and so that a future reviewer reading
+# "one canonical home" does not delete twenty-five of them (D-106).
+_SCOPED_CLAUSES: tuple[dict, ...] = (
+    {"text": "Individual figures carry their own limits, stated **where the figure is shown**."},
+    {"text": "Those limits are **part of the figure**, and not a copy of anything on this page:",
+     "items": (
+         "each says what that particular number **is and is not**, in the place you read it;",
+         "exports and the Reports Pack **carry them into the file**, so a figure never travels "
+         "without the limit it was published under.",
+     )},
+    {"text": "This page states the Platform's position at the level of the product. It **does "
+             "not restate, replace or shorten** the limit on any individual figure, and the limit "
+             "on an individual figure is never satisfied by this page."},
 )
 
-_JURISDICTION = (
-    "LedgerFrame contains **no tax logic for any country, and never will**.\n"
-    "\n"
-    "- It holds no rates, no thresholds, no residency rules and no filing calendars for anywhere.\n"
-    "- `long_term_days` is a neutral threshold **you set yourself**, with no jurisdiction "
-    "presets — the product does not know where you are and never assumes which rules apply "
-    "to you.\n"
-    "- Statements and Realised P/L are prepared **for your accountant**, who knows both. They "
-    "are an organised record of what happened, not a tax computation and not a filing."
+_LICENCE_CLAUSES: tuple[dict, ...] = (
+    {"text": "The Platform is released under the **AGPL-3.0-or-later** Licence. Your rights to "
+             "use, study, modify and redistribute it are the rights that Licence grants, and it "
+             "grants them in its own words."},
+    {"text": "**The warranty and liability position is the one stated in the Licence itself, at "
+             "its sections 15 and 16.** This page does **not** restate that position in other "
+             "words, and nothing on this page adds to it, narrows it, or interprets it. A "
+             "paraphrase that drifted would contradict the Licence the Platform actually ships "
+             "under, and the Licence would govern."},
+    {"text": "The Platform is built on open-source software. The full dependency and licence "
+             "record, the third-party notices, and the provenance of every vendored asset are "
+             "**generated and ship with the source**. They are not reproduced here, because a "
+             "copy of a generated file is stale the moment that file regenerates. Article 6 says "
+             "where each one is."},
+)
+
+_JURISDICTION_CLAUSES: tuple[dict, ...] = (
+    {"text": "The Platform contains **no tax logic for any country, and never will.**"},
+    {"text": "It holds none of the following, for anywhere:",
+     "items": (
+         "rates;",
+         "thresholds;",
+         "residency rules;",
+         "filing calendars.",
+     )},
+    {"text": "The Long-term threshold is a neutral number of days **you set yourself**, with no "
+             "jurisdiction presets. The Platform does not know where you are and never assumes "
+             "which rules apply to you."},
+    {"text": "Statements and Realised P/L are prepared **for your accountant**, who knows both "
+             "your circumstances and your jurisdiction. They are an organised record of what "
+             "happened — **not a tax computation, and not a filing.**"},
 )
 
 # ---------------------------------------------------------------------------------------------
@@ -158,12 +217,33 @@ _JURISDICTION = (
 # stops working offline. Legal reproduces none of these files (§9-5): three of the four are
 # GENERATED, and `LICENSES.md` says of itself *"This file reports; it does not adjudicate"*.
 # ---------------------------------------------------------------------------------------------
-_POINTERS: tuple[tuple[str, str], ...] = (
-    ("LICENSE", "The full text of the GNU Affero General Public License, version 3."),
-    ("NOTICE", "Third-party notices. Generated."),
-    ("docs/audit/LICENSES.md", "The licence of every dependency, with its full transitive "
-                               "graph. Generated."),
-    ("docs/audit/ASSETS.md", "Where each vendored asset came from and under what terms."),
+# 9-5-bis AMENDS THE "NEVER A URL" RULE (owner, 2026-07-20, page-legal §11-3) — narrowly.
+#
+# The shipped file REMAINS CANONICAL. What is now permitted is a CONVENIENCE link to an external
+# authoritative text, and the three conditions are the whole of the amendment:
+#   * it is MARKED as a convenience, in the served copy, so no reader mistakes it for the source;
+#   * it carries rel="noreferrer noopener" (applied by the renderer, guarded in Legal.test.tsx);
+#   * it is NEVER LOAD-BEARING — this page must remain complete and true with every link dead.
+#
+# That last condition is the one with teeth, and it is why `url` is OPTIONAL and separate from
+# `file` rather than replacing it. A reader offline, or running with no-egress on, sees the file
+# name and the description and loses nothing but a shortcut. Test the amendment by deleting every
+# url: the page must still say everything it says now.
+#
+# NOTE FOR THE RE-LOOK: a convenience link is an EGRESS AFFORDANCE on a local-first product. It
+# does not itself make a call — nothing is fetched, prefetched or preconnected, and the anchor is
+# inert until the reader clicks it — but clicking it does leave the device. Flagged rather than
+# assumed to be fine.
+_POINTERS: tuple[dict, ...] = (
+    {"file": "LICENSE",
+     "what": "The full text of the GNU Affero General Public License, version 3, exactly as the "
+             "Platform ships it. This file is the Licence; anything else is a convenience.",
+     "url": "https://www.gnu.org/licenses/agpl-3.0.html"},
+    {"file": "NOTICE", "what": "Third-party notices. Generated."},
+    {"file": "docs/audit/LICENSES.md",
+     "what": "The licence of every dependency, with its full transitive graph. Generated."},
+    {"file": "docs/audit/ASSETS.md",
+     "what": "Where each vendored asset came from and under what terms."},
 )
 
 # ---------------------------------------------------------------------------------------------
@@ -183,18 +263,28 @@ PACK_FOOTER = (
     "returned."
 )
 
+# THE SIX ARTICLES — the IA's four contents plus the two the 0a added and justified (the
+# per-figure limits, which is D-106 stated to the reader, and the pointer list, which is §9-5's).
+# Order is served, and the ARTICLE NUMBER IS THE INDEX: the renderer never reorders.
 _SECTIONS: tuple[dict, ...] = (
-    {"id": "position", "title": "Disclaimer", "body": _POSITION},
-    {"id": "scoped-caveats", "title": "The limits on each figure", "body": _SCOPED},
-    {"id": "licence", "title": "Licence", "body": _LICENCE},
-    {"id": "jurisdiction", "title": "No jurisdiction tax logic", "body": _JURISDICTION},
+    {"id": "position", "title": "The Platform's Position", "clauses": _POSITION_CLAUSES},
+    {"id": "scoped-caveats", "title": "Limits Stated With Each Figure",
+     "clauses": _SCOPED_CLAUSES},
+    {"id": "licence", "title": "Licence", "clauses": _LICENCE_CLAUSES},
+    {"id": "jurisdiction", "title": "No Jurisdiction Tax Logic", "clauses": _JURISDICTION_CLAUSES},
 )
 
 COMMITMENTS_TITLE = "Product Commitments"
 COMMITMENTS_INTRO = (
-    "These seven are what the product will never do. They are not aspirations and not a policy "
-    "that could be revised for convenience — each one is a decision on the record, and the "
-    "wording below is reproduced **verbatim** from the specification that fixes it."
+    "The seven Commitments are what the Platform will never do. They are **not aspirations**, and "
+    "**not a policy that could be revised for convenience** — each is a decision on the record, "
+    "each is enforced by a test, and the wording below is reproduced **verbatim** from the "
+    "specification that fixes it.\n"
+    "\n"
+    "*They are called Commitments and not guarantees deliberately: the Licence's warranty "
+    "position, at Article 3, is that there is no warranty. These seven are undertakings the "
+    "Platform enforces against itself, and the Platform will not borrow warranty language it "
+    "cannot honour.*"
 )
 
 
@@ -208,12 +298,18 @@ def all_legal() -> dict:
     """
     return {
         "markup": MARKUP_DIALECT,
-        "sections": [dict(s) for s in _SECTIONS],
+        "preamble": _PREAMBLE,
+        "sections": [
+            {"id": s["id"], "title": s["title"],
+             "clauses": [{"text": c["text"], "items": list(c.get("items", ()))}
+                         for c in s["clauses"]]}
+            for s in _SECTIONS
+        ],
         "commitments": {
             "title": COMMITMENTS_TITLE,
             "intro": COMMITMENTS_INTRO,
             "items": list(COMMITMENTS),
         },
-        "pointers": [{"file": f, "what": w} for f, w in _POINTERS],
+        "pointers": [dict(p) for p in _POINTERS],
         "pack_footer": PACK_FOOTER,
     }

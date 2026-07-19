@@ -11,41 +11,100 @@
 
    Semantic colour tokens only; no palette, no raw hex, no raw px (check:tokens). */
 
-.legal__section + .legal__section {
+.legal__section + .legal__section,
+.legal__preamble + .legal__section {
   margin-top: var(--space-4);
 }
 
-/* --- The Product Commitments ------------------------------------------------------------------
+/* --- The formal register (page-legal §11-4, owner 2026-07-20) --------------------------------
 
-   An ORDERED list, and the numbering is load-bearing rather than decorative: the commitments are
-   cited by number across the specs and in the AI's grounding ("Commitment 5"), so the list renders
-   the number the prose would otherwise have to repeat. `HelpProse` emits a paragraph per item, so
-   the marker is aligned to the first line rather than centred on the block. */
-.legal__commitments {
+   The owner ruled this page must read as a FORMAL AGREEMENT. Everything below is DRESS: numbering,
+   indentation, and the hanging-marker rhythm a clause-numbered document has. No claim, no limit
+   and no guard depends on any of it — AC-L5/L6/L7/L8 read the SERVED STRINGS, markup-stripped, and
+   never the DOM.
+
+   THE NUMBERS ARE RENDERED FROM POSITION, NEVER FROM CONTENT. `Legal.tsx` derives "2.1.a" from
+   three indices; no served string contains a clause number. That is why these are real elements
+   rather than `::before` counters: a counter would put the number in CSS, where a copy-paste of
+   the page silently loses it, and the whole point of a numbered clause is that it can be quoted.
+
+   The marker sits in its own column so a wrapped clause aligns under its text and not under its
+   number — the hanging indent that makes a long clause readable. */
+.legal__artnum {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.legal__clauses,
+.legal__subclauses {
   margin: var(--space-3) 0 0;
-  padding-left: var(--space-5);
+  padding: 0;
+  list-style: none; /* the marker is a real element, not a list bullet — see above */
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
-.legal__commitment {
-  padding-left: var(--space-1);
+.legal__subclauses {
+  margin-top: var(--space-2);
+  gap: var(--space-2);
+}
+.legal__clause,
+.legal__subclause {
+  display: grid;
+  /* `ch` keeps the column proportional to the digits it holds, so "2.10.a" does not collide with
+     its own text at the width where a two-digit clause first appears. */
+  grid-template-columns: 4ch minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+}
+.legal__subclause {
+  grid-template-columns: 5ch minmax(0, 1fr);
+}
+.legal__num {
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 /* The renderer wraps each block in its own element; collapse its outer margin so the list's own
    `gap` is the single source of rhythm and the spacing does not double. */
-.legal__commitment > .help__prose > :first-child {
+.legal__clausebody > .help__prose > :first-child {
   margin-top: 0;
 }
-.legal__commitment > .help__prose > :last-child {
+.legal__clausebody > .help__prose > :last-child {
   margin-bottom: 0;
 }
 
+/* At 320px a 4ch gutter plus a long unbroken term can still push the card wide; the number moves
+   above its clause rather than the page scrolling sideways. Containment is a hard gate at
+   320/375/768/1366 and a formal document is the wrong place to lose it to decoration. */
+@media (max-width: 22.5rem) {
+  .legal__clause,
+  .legal__subclause {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+  .legal__subclauses {
+    padding-left: var(--space-3);
+  }
+}
+
+/* --- The Product Commitments ------------------------------------------------------------------
+
+   Article 5's clauses ARE the seven Commitments, so they use the register's own clause rhythm
+   rather than a second list style: "Commitment 5" and "clause 5.5" must be the same number, not
+   two schemes that happen to agree today. There is deliberately NO rule here: Article 5 carries
+   `legal__clause` and inherits the register's geometry, and a style hook that overrode it would be
+   the beginning of the two schemes drifting apart. */
+
 /* --- The file pointers -----------------------------------------------------------------------
 
-   A description list: a file NAME and what it holds. Deliberately NOT links (§9-5) — a local-first
-   product cannot link to a hosted licence page, and an anchor here would be the one element on the
-   page that stops working offline. The name is set in the mono face because it is a path the
-   reader will look for on disk, not a title. */
+   A description list: a file NAME and what it holds. The name is set in the mono face because it
+   is a path the reader will look for on disk, not a title.
+
+   §11-3 (9-5-bis) AMENDED THE "NEVER A URL" RULE, narrowly. A convenience link may now sit beside
+   the file name, and it is styled DELIBERATELY QUIETER than the name it accompanies — the reader
+   must not read the link as the source. The page stays whole with every link dead: offline, or
+   with no-egress on, the file name and its description are still the complete answer. */
 .legal__pointers {
   margin: 0;
   display: flex;
@@ -82,4 +141,16 @@
     gap: var(--space-4);
     align-items: baseline;
   }
+}
+
+/* The convenience link and its marking. Quieter than the file name by design (see above): the
+   canonical thing on this row is the path, and the link is a shortcut to a copy of it. */
+.legal__convenience {
+  color: var(--text-link, var(--text-primary));
+  text-decoration: underline;
+  font-size: var(--font-size-13);
+}
+.legal__conveniencenote {
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
 }

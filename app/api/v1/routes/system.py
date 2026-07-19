@@ -843,11 +843,28 @@ async def help_content(q: str | None = None) -> dict:
 # ---------------------------------------------------------------------------------------------
 
 
-class LegalSection(BaseModel):
-    """One prose section of the Legal page. Rendered as a `Card` (page-legal §9-1)."""
+class LegalClause(BaseModel):
+    """One numbered clause, and its lettered sub-clauses if it has any.
+
+    THE CLAUSE CARRIES NO NUMBER, and that omission is deliberate (page-legal §11-4). Numbering is
+    DERIVED FROM POSITION by the renderer — article index, clause index, item index — so "2.1.a"
+    is a fact about where the clause sits rather than a string someone typed. Typed numbers are
+    how a formal document rots: insert one clause and every later number is silently wrong, with
+    nothing able to detect it because the numbers are prose. There is nowhere here to put one.
+    """
+    text: str
+    items: list[str] = []
+
+
+class LegalArticle(BaseModel):
+    """One article of the Legal page — a numbered heading over a run of clauses.
+
+    Was `LegalSection` with a single `body` string until page-legal §11-4 (owner, 2026-07-20)
+    ruled the formal register. Rendered as a `Card` (page-legal §9-1); the template is unchanged.
+    """
     id: str
     title: str
-    body: str
+    clauses: list[LegalClause]
 
 
 class LegalCommitments(BaseModel):
@@ -863,14 +880,17 @@ class LegalCommitments(BaseModel):
 
 
 class LegalPointer(BaseModel):
-    """A file that ships with the source.
+    """A file that ships with the source, and optionally a convenience link to its public text.
 
-    Deliberately carries NO url field, and the omission is the contract (page-legal §9-5): a
-    local-first product cannot link to a hosted licence page, so a pointer NAMES A FILE. There is
-    nowhere here to put a URL, which is how the rule is kept rather than remembered.
+    `file` is REQUIRED and `url` is OPTIONAL, and that asymmetry is the contract (page-legal §9-5
+    as amended by §11-3, owner 2026-07-20). The shipped file is canonical; a URL is a convenience
+    and never a substitute. A pointer with no `file` is unrepresentable here, which is how the
+    local-first rule is kept structurally rather than remembered — the page must stay complete and
+    true with every `url` dead.
     """
     file: str
     what: str
+    url: str | None = None
 
 
 class LegalResponse(BaseModel):
@@ -885,7 +905,8 @@ class LegalResponse(BaseModel):
     renderers are provably reading the same bytes.
     """
     markup: str
-    sections: list[LegalSection]
+    preamble: str
+    sections: list[LegalArticle]
     commitments: LegalCommitments
     pointers: list[LegalPointer]
     pack_footer: str

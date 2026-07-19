@@ -49,7 +49,15 @@ test("Sidebar shows only built pages as entries; showAll reveals the full skelet
   // INVERTED rather than deleted: the sidebar's progressive reveal is the invariant, and Help
   // moving from hidden to shown is exactly the transition it exists to police.
   expect(screen.getByRole("link", { name: "Help" })).toBeTruthy();
-  expect(screen.queryByRole("link", { name: "Legal" })).toBeNull();
+  // Legal SHIPS (page-legal Phase 1) — INVERTED, not deleted, for the same reason Help's was: the
+  // progressive reveal is the invariant, and a page moving from hidden to shown is exactly the
+  // transition these assertions exist to police.
+  //
+  // With this flip EVERY nav item carries `built: true` — the dead-affordance backlog is empty for
+  // the first time. These assertions are therefore no longer proving that SOMETHING is hidden;
+  // they are proving the mechanism still renders what is built. If a future milestone adds an
+  // unbuilt nav item, this is the file that must gain its absence assertion.
+  expect(screen.getByRole("link", { name: "Legal" })).toBeTruthy();
 
   rerender(
     <MemoryRouter initialEntries={["/holdings"]}>

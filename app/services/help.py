@@ -598,6 +598,44 @@ HELP: list[dict] = [
                   "- Glossary examples are **illustrative samples with made-up figures, not yours** — "
                   "they are there to show the shape of a calculation, and they are marked as "
                   "samples wherever they appear."},
+    # THE DEBT OWED TO THIS MILESTONE, PAID (page-help §9-5 Tier 2 deviation; page-legal §9-6).
+    # Tier 2 named 8 pages and 7 shipped: Legal's entry was withheld because the page was in the
+    # nav model with `built: false`, so an entry would have sent a reader to "isn't built yet" —
+    # a dead end, in the milestone whose whole point was retiring dead ends.
+    #
+    # This entry and the `nav.ts` `built: true` flip are ONE COMMIT, and the atomicity is
+    # STRUCTURAL rather than remembered: `test_help_never_documents_a_page_the_user_cannot_open`
+    # blocks this entry while the flag is false, and `test_every_built_page_has_a_help_entry`
+    # fails the flip without this entry. Neither can land alone. That vice IS the HELP CURRENCY
+    # LAW mechanised for this page.
+    {"id": "page-legal", "category": "Pages", "title": "Legal",
+     "body": "The terms you have LedgerFrame under, and what it will never do. Four things live "
+             "here: the product's position — it reports, it does not give advice and does not "
+             "act; the seven Product Guarantees, reproduced word for word from the specification "
+             "that fixes them; the licence the product is released under, with the files that "
+             "hold the full record; and its stance on tax rules, which is that it has none for "
+             "any country. The limits on individual figures are NOT here — each figure states "
+             "its own, in the place you read it.",
+     "keywords": "legal terms disclaimer licence agpl guarantees warranty liability jurisdiction "
+                 "tax advice reporting only rights redistribute",
+     "inputs": ["Nothing to fill in — Legal is a page you read"],
+     "outputs": ["The product's position — it reports, it does not act",
+                 "The seven Product Guarantees, word for word",
+                 "The licence, and the files that hold the full dependency and asset record",
+                 "Its stance on tax rules for any country"],
+     "interpret": "Read this page for what the product will never do, not for what your figures "
+                  "mean.\n"
+                  "\n"
+                  "- The Guarantees are reproduced **word for word** from the specification that "
+                  "fixes them, so what you read here and what the product is held to are the same "
+                  "sentence.\n"
+                  "- The licence text, the third-party notices and the dependency record are not "
+                  "copied onto this page. They **ship with the source**, and a copy of a generated "
+                  "file goes stale the moment the file is regenerated.\n"
+                  "- The limit on a particular figure stays **with that figure**. This page states "
+                  "the product's position; it does not replace the note you see beside a number, "
+                  "and removing one of those notes would take honesty away rather than tidy "
+                  "anything up."},
     # --- Glossary ----------------------------------------------------------- #
     # Section 3 (9-bis-1/9-bis-2): Tier-1+2 terms only, ordered basics > expert, each with a
     # STATIC worked example clearly marked as an illustrative sample (9-bis-3).

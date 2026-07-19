@@ -20,24 +20,23 @@ behavioural commitments, each one tested**. The name now says that. The **claims
 this is a rename, not a weakening, and nothing the product promised before it promises less of now.
 *Deprecated synonym:* **Product Guarantees** (see [Deprecated terms](#deprecated-terms)).
 
-> Destined verbatim for the commitments block, the Legal page, and README:
->
-> 1. **No trades.** LedgerFrame never places or executes trades. No order
->    endpoints exist (Kite is market-data read-only).
-> 2. **No advice.** Never gives buy/sell/hold, tax, or financial advice. Every
->    AI answer ends with the fixed information-only disclaimer.
-> 3. **No fabrication.** Never fabricates a price, headline, or figure.
->    Insufficient inputs produce "—"/None with a reason, never a made-up number.
-> 4. **No jurisdiction tax logic — ever** (D-077). `long_term_days` is a
->    neutral user-set threshold with no jurisdiction presets. Statements and
->    Realised P/L outputs are "for your accountant".
-> 5. **No egress (opt-in)** (D-004). With the no-egress toggle enabled the
->    device makes zero outbound network calls — version check, feeds, and
->    banner included (D-066, D-075).
-> 6. **No stored AI conversations** (D-016). AI questions and answers are
->    never persisted.
-> 7. **The validation contract never weakens** (D-071). Implementation may
->    improve; the contract (below, §8) may not be loosened.
+**THE SEVEN LIVE IN `PRODUCT-SPEC.md` §3 — THIS FILE POINTS AT THEM AND DOES NOT COPY THEM.**
+
+*Changed 2026-07-20 (page-legal §11-2), and the reason is this file's own rule.* There were
+**three** copies of the commitments block — `DECISIONS.md`, `PRODUCT-SPEC.md` §3, and one here —
+and **exactly one of them was guarded**: `tests/unit/test_legal_content.py` (AC-L3) asserts string
+equality between §3 and the served page, and nothing at all watched this copy. When §3 was cleaned
+for rendering, this copy went stale **silently**, which is precisely the failure the
+one-canonical-home rule exists to prevent — and a glossary that quietly disagreed with the spec
+would be the worst possible place for the drift to land.
+
+So: **`PRODUCT-SPEC.md` §3 is the rendering source of record**, guarded, and served verbatim to
+the Legal page. **`DECISIONS.md` is the ratifying record** — history, not rewritten. This block is
+a **pointer to the first**, which is what the rest of this file already does for every term it
+does not own.
+
+See **[Product Commitments](#system)** in the System table for the one-line definition, and
+`docs/specs/PRODUCT-SPEC.md` §3 for the seven as the user reads them.
 
 ---
 
@@ -321,6 +320,7 @@ values ride their parent term's entry (no per-value rows). **RATIFIED 2026-07-16
 | **Per-entity** | Scoped to one ownership **Entity** — figures filtered to the accounts that entity owns. The Reports Pack renders a **Per-entity** section for each entity (net worth, drift, realised P/L, risk + attribution), composed server-side from the same canonical readers as the whole-household view (reports-pack Pack-2/Pack-7; §9-2 — the entity axis stays UI-dormant, no switcher). |
 | **Home** | The summary dashboard (`/`). It **owns nothing** — every figure on it is a **linked summary** of the page that owns it, read from that page's canonical reader (P-1/D-038). Composition is **fixed** (D-046) and there is **ONE layout** — the ratified grid (D-046 AMENDMENT; page-home §12ho1-5/§12ho1-6). **[Help]** *(PROPOSED 2026-07-13, page-home §9-13 — ratify at the walk.)* |
 | **Heatmap** | A treemap visualisation of your holdings — tile size is position value, colour is **Today's change**. It owns no figure; every number comes from the canonical readers. Priced holdings only; assets only (liabilities excluded), with an honest coverage note. **[Help]** *(RATIFIED 2026-07-13, page-heatmap ND-11.)* |
+| **Long-term threshold** | The number of days a holding must be held before Realised P/L and the tax-lots report show it as **long-term**. **A neutral figure you set yourself** — it has **no jurisdiction presets**, and the product does not know or assume which country's rules apply to you (Commitment 4). It is an **organisation split, not tax advice**. The Settings → General control carries this exact label. *(Added 2026-07-20, page-legal §11-2 — the term entered served copy when §3's `long_term_days` was replaced by the human label; it had been user-visible in Settings since that control shipped, with no glossary row.)* |
 | **Product Commitments** | The seven things LedgerFrame **will never do** — no trades · no advice · no fabrication · no jurisdiction tax logic · no egress when you switch it off · no stored AI conversations · a validation contract that never weakens. **Self-enforced behavioural commitments, each one tested** — deliberately **not** called *guarantees*, because the licence's warranty position is **no warranty** and the product will not borrow warranty vocabulary it cannot honour. **Defined once, in full, in the [Product Commitments](#product-commitments-verbatim-from-decisionsmd) block above** — this row is a pointer, never a second copy. Rendered verbatim on **Legal**. *(RENAMED 2026-07-20, page-legal §11-1 — ratify at the re-look.)* |
 | **Legal** | The page (`/legal`) stating the terms you have LedgerFrame under: the product-level position (it reports, it does not advise or act), the seven **Product Commitments** rendered verbatim, the **licence**, and the no-jurisdiction-tax stance (D-077). It owns the **product-level position only** — the scoped caveat on each figure stays with the figure (D-106). **[Help]** *(PROPOSED 2026-07-19, page-legal §9-7 — ratify at the 0a.)* |
 | **Disclaimer** | A stated limit on what a figure or the product means. **Two kinds, deliberately (D-106):** a **scoped caveat** is served by the reader that owns a figure, sits at the point of use, and is **part of the figure** (*"Open lots by FIFO. Organisation only — not tax advice."*); the **product-level position** is stated once, on **Legal**. Removing a scoped caveat is an **honesty regression**, never a de-duplication. *(PROPOSED 2026-07-19, page-legal §9-2/§9-7 — ratify at the 0a.)* |

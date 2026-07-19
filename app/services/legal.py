@@ -47,9 +47,10 @@ from app.services.help_markup import MARKUP_DIALECT
 # warranty-family vocabulary, and the licence section below states NO WARRANTY. These seven are
 # self-enforced behavioural commitments, each one tested. The CLAIMS ARE UNCHANGED.
 #
-# Ratified source: `docs/specs/PRODUCT-SPEC.md` §3 (lines 62-77), itself verbatim from DECISIONS.md,
-# and already destined for this page by name: *"Destined verbatim for the commitments block,
-# THE LEGAL PAGE, and README"* (PRODUCT-SPEC.md:60).
+# Rendering source of record: `docs/specs/PRODUCT-SPEC.md` §3, which names this page as its
+# destination: *"Destined verbatim for the commitments block, THE LEGAL PAGE, and README"*.
+# `DECISIONS.md` is the RATIFYING record and is no longer character-identical to §3 — §3 states
+# that relationship precisely, and the apparatus §3 dropped is preserved in its annotation table.
 #
 # VERBATIM IS ENFORCED, NOT INTENDED: `tests/unit/test_legal_content.py` parses the spec and asserts
 # STRING EQUALITY against this tuple (AC-L3). Editing either side alone goes RED. Do not "improve"
@@ -60,31 +61,30 @@ from app.services.help_markup import MARKUP_DIALECT
 # both sides identically, so "verbatim" means the same words in the same order — not the same line
 # breaks.
 #
-# ⚠ TWO ARTEFACTS OF VERBATIM-NESS, FLAGGED FOR THE OWNER AT THE 0a rather than silently edited
-# (editing them here would be this CLI overriding a ruling):
-#   1. Commitment 7 ends "the contract (below, §8) may not be loosened" — "below, §8" is a
-#      PRODUCT-SPEC-internal cross-reference that points at nothing on the Legal page.
-#   2. Commitment 4 contains `long_term_days` in backticks. The served markup subset has no
-#      code-span construct, so the backticks render LITERALLY.
-# Both are consequences of the verbatim ruling meeting a new surface. The owner decides at the 0a
-# whether to amend PRODUCT-SPEC.md (which the guard would then carry here automatically) or to
-# accept them as they read.
+# THE 0a's TWO ARTEFACTS ARE RESOLVED AT THEIR SOURCE (owner, 2026-07-20, page-legal §11-2).
+# The 0a shipped with a dangling cross-reference ("the contract (below, §8)") and with
+# `long_term_days` rendering its backticks literally, both flagged rather than edited because
+# editing them HERE would have been this CLI overriding a ruling. The owner authorized the edit to
+# §3 instead. AC-L3 then carried the cleaned text into this tuple automatically — no hand-edit on
+# this side, which is the whole argument for that guard existing. The decision-ID exemption in
+# `test_legal_accuracy.py` was DELETED with them, and these seven now meet the full served-copy
+# bar unexempted.
 # ---------------------------------------------------------------------------------------------
 COMMITMENTS: tuple[str, ...] = (
-    "**No trades.** LedgerFrame never places or executes trades. No order endpoints exist "
-    "(Kite is market-data read-only).",
+    "**No trades.** LedgerFrame never places or executes trades, and has no mechanism for doing "
+    "so. Its market connections are read-only price data.",
     "**No advice.** Never gives buy/sell/hold, tax, or financial advice. Every AI answer ends "
     "with the fixed information-only disclaimer.",
     '**No fabrication.** Never fabricates a price, headline, or figure. Insufficient inputs '
     'produce "—"/None with a reason, never a made-up number.',
-    "**No jurisdiction tax logic — ever** (D-077). `long_term_days` is a neutral user-set "
-    "threshold with no jurisdiction presets. Statements and Realised P/L outputs are "
+    "**No jurisdiction tax logic — ever.** The Long-term threshold is a neutral number of days "
+    'you set yourself, with no jurisdiction presets. Statements and Realised P/L outputs are '
     '"for your accountant".',
-    "**No egress (opt-in)** (D-004). With the no-egress toggle enabled the device makes zero "
-    "outbound network calls — version check, feeds, and banner included (D-066, D-075).",
-    "**No stored AI conversations** (D-016). AI questions and answers are never persisted.",
-    "**The validation contract never weakens** (D-071). Implementation may improve; the "
-    "contract (below, §8) may not be loosened.",
+    "**No egress (opt-in).** With the no-egress toggle enabled the device makes zero outbound "
+    "network calls — version check, feeds, and banner included.",
+    "**No stored AI conversations.** AI questions and answers are never persisted.",
+    "**The validation contract never weakens.** Implementation may improve; the contract that "
+    "every AI answer is checked against may not be loosened.",
 )
 
 # ---------------------------------------------------------------------------------------------

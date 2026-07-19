@@ -55,26 +55,55 @@ layer, but must not build for it either.
 
 ---
 
-## 3. Product Commitments (verbatim from DECISIONS.md)
+## 3. Product Commitments (the rendering source of record)
 
-> Destined verbatim for the glossary guarantee block, the Legal page, and README:
+**THE BLOCKQUOTE BELOW IS WHAT THE USER READS.** It is served verbatim to the Legal page —
+`app/services/legal.py` holds a copy and `tests/unit/test_legal_content.py` (AC-L3) asserts
+**string equality** between the two, per commitment. Edit this blockquote and the guard carries
+the change to the product; edit the product alone and the guard goes red. It is therefore
+**reader-facing prose, not an internal note**, and everything in it is held to the served-copy bar
+that every other user-visible string is held to.
+
+**RELATIONSHIP TO `DECISIONS.md` — stated precisely, because it changed (owner, 2026-07-20,
+page-legal §11-2).** This block was previously headed *"(verbatim from DECISIONS.md)"* and was a
+character-for-character copy of `DECISIONS.md`'s ratified block. It is **no longer a copy**, and
+the old subtitle would now assert a relationship that does not hold. `DECISIONS.md` remains the
+**ratifying record** — it is history, and history is not rewritten — while **this block is the
+rendering source**: the same commitments, with the **apparatus of a decision log removed** so they
+can be read by someone who has never seen that log. **The claims are identical in substance.** The
+apparatus that was removed is preserved, in full, in the annotation table beneath the blockquote.
+
+> Destined verbatim for the commitments block, the Legal page, and README:
 >
-> 1. **No trades.** LedgerFrame never places or executes trades. No order
->    endpoints exist (Kite is market-data read-only).
+> 1. **No trades.** LedgerFrame never places or executes trades, and has no
+>    mechanism for doing so. Its market connections are read-only price data.
 > 2. **No advice.** Never gives buy/sell/hold, tax, or financial advice. Every
 >    AI answer ends with the fixed information-only disclaimer.
 > 3. **No fabrication.** Never fabricates a price, headline, or figure.
 >    Insufficient inputs produce "—"/None with a reason, never a made-up number.
-> 4. **No jurisdiction tax logic — ever** (D-077). `long_term_days` is a
->    neutral user-set threshold with no jurisdiction presets. Statements and
->    Realised P/L outputs are "for your accountant".
-> 5. **No egress (opt-in)** (D-004). With the no-egress toggle enabled the
->    device makes zero outbound network calls — version check, feeds, and
->    banner included (D-066, D-075).
-> 6. **No stored AI conversations** (D-016). AI questions and answers are
->    never persisted.
-> 7. **The validation contract never weakens** (D-071). Implementation may
->    improve; the contract (below, §8) may not be loosened.
+> 4. **No jurisdiction tax logic — ever.** The Long-term threshold is a neutral
+>    number of days you set yourself, with no jurisdiction presets. Statements
+>    and Realised P/L outputs are "for your accountant".
+> 5. **No egress (opt-in).** With the no-egress toggle enabled the device makes
+>    zero outbound network calls — version check, feeds, and banner included.
+> 6. **No stored AI conversations.** AI questions and answers are never
+>    persisted.
+> 7. **The validation contract never weakens.** Implementation may improve; the
+>    contract that every AI answer is checked against may not be loosened.
+
+**ANNOTATIONS — NOT RENDERED, NOT SERVED, NOT PARSED.** These sit outside the blockquote, which is
+exactly what makes them non-rendered: AC-L3's parser reads **blockquote lines only**, so nothing
+here can reach a user, and the decision lineage is kept rather than lost.
+
+| # | Deciding record | Apparatus removed from the rendered line, and why |
+|---|---|---|
+| 1 | — | *"No order endpoints exist (Kite is market-data read-only)"* → **"has no mechanism for doing so. Its market connections are read-only price data."** `endpoints` is an implementation term, and naming one provider understated the commitment: it binds **every** market connection, not just Kite. |
+| 2 | — | none |
+| 3 | — | none |
+| 4 | **D-077** | `long_term_days` → **"the Long-term threshold"**, the label the Settings control actually carries. The identifier rendered with its backticks literally on the page, and a user has no way to know what a code symbol means. |
+| 5 | **D-004**, D-066, D-075 | parenthetical IDs moved here |
+| 6 | **D-016** | parenthetical ID moved here |
+| 7 | **D-071** | *"the contract (below, §8)"* → **"the contract that every AI answer is checked against"**. The cross-reference was internal to this document and pointed at nothing once the line was rendered on the Legal page. |
 
 (The validation contract itself is normative in SECURITY-BASELINE.md.)
 

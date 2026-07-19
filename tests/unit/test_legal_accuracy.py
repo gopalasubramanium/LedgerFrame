@@ -14,33 +14,31 @@ Same bar means the same three things, and the FIRST is not optional:
 * **advice-free**, across every string;
 * **no decision IDs and no implementation notes** in served prose (page-chrome §11-8).
 
-THE ONE EXEMPTION, AND WHY IT IS NAMED RATHER THAN QUIET
---------------------------------------------------------
-The seven Product Commitments **fail the Help bar on two counts, inherently**:
+THE EXEMPTION IS GONE — AND THAT IS THE POINT (page-legal §11-2, owner, 2026-07-20)
+-----------------------------------------------------------------------------------
+This module used to carry a **named, scoped, self-measuring exemption**. The seven Commitments
+failed the Help bar on two counts, inherently: four cited a decision ID — `(D-077)`, `(D-004)`,
+`(D-016)`, `(D-071)` — and Commitment 1 contained the word "endpoints". It was a genuine collision
+between two live rules (AC-L3 rules the Commitments **verbatim**; page-chrome §11-8 bars decision
+IDs from served prose), and the 0a flagged it for the owner because **no edit available to the
+build could satisfy both** — the only edit that would was an edit to the ratified source.
 
-* four of them cite a decision ID — `(D-077)`, `(D-004)`, `(D-016)`, `(D-071)`;
-* Commitment 1 contains the word "endpoints".
+**The owner authorized that edit.** `PRODUCT-SPEC.md` §3 was cleaned: the parenthetical IDs became
+non-rendered annotations below the blockquote, the backticked identifier became the label the
+Settings control actually carries, the document-internal cross-reference was made self-contained,
+and *"No order endpoints exist"* became *"has no mechanism for doing so"*. AC-L3 carried every one
+of those to the served copy automatically, which is exactly what that guard was built to do.
 
-This is a **genuine collision between two live rules**, not an oversight, and it was found by
-running the bar rather than by reasoning about it:
+**So the exemption is DELETED rather than narrowed, and the bar below now runs unexempted over
+every string on the page — authored and verbatim alike.** The two tests that measured the
+exemption's width are deleted with it: an exemption that no longer exists cannot be measured, and
+leaving a green test named after it would be a monument to a problem that was solved.
 
-* AC-L3 / §9-8 ruled the Commitments are rendered **VERBATIM** from `PRODUCT-SPEC.md` §3, which is
-  itself verbatim from DECISIONS.md. Their wording is **not this milestone's to change**;
-* page-chrome §11-8 bars decision IDs and implementation notes from served prose.
-
-Both rules are right. They cannot both be satisfied by any edit available to this build, because
-the only edit that would satisfy the second is an edit to the first's ratified source.
-
-So the exemption is **scoped to the verbatim block, named, and reasoned** — never a blanket
-relaxation, and never applied to a single string this build authored. **Every string this milestone
-WROTE meets the full bar**, and the guard below proves that separately, so the exemption can never
-grow quietly to cover new copy.
-
-**FLAGGED FOR THE OWNER AT THE 0a** (page-legal §9-8 bars this CLI from deciding it): either
-PRODUCT-SPEC.md §3 is amended to drop the parenthetical IDs — in which case AC-L3's guard carries
-the change here automatically and this exemption is deleted — or the collision is accepted and the
-Commitments show their decision IDs to users on this one page. It is a real choice with a real
-cost either way.
+**Why the corpus split survives the exemption's deletion.** `_authored()` and `_verbatim()` are
+still separate, and still tested separately, because they differ in **who may edit them** even now
+that they meet the same bar: authored strings are this milestone's, and verbatim strings are the
+spec's — a red on the second means *"go amend PRODUCT-SPEC.md"*, never *"reword it here"*. The
+split stopped being about latitude and is now about provenance.
 """
 
 from __future__ import annotations
@@ -104,55 +102,39 @@ def test_authored_legal_copy_meets_the_full_help_bar(where: str, text: str):
 
 
 @pytest.mark.parametrize("where,text", _verbatim(), ids=[w for w, _ in _verbatim()])
-def test_verbatim_commitments_are_advice_free(where: str, text: str):
-    """The part of the bar the verbatim block IS held to — and it is the part that matters most.
+def test_verbatim_commitments_meet_the_full_help_bar_UNEXEMPTED(where: str, text: str):
+    """THE SAME BAR AS `_authored`, with nothing carved out (§11-2, owner, 2026-07-20).
 
-    The exemption covers decision IDs and implementation notes. It does NOT cover advice: the
-    Commitments are the product's no-advice promise, and a promise that advised would be
-    self-refuting.
+    This test previously checked advice ONLY, because the exemption held decision IDs and
+    implementation notes out of scope. The spec was cleaned, so the carve-out is gone and this
+    runs the full bar — the identical three checks the authored corpus faces.
+
+    ⚠ **A RED HERE IS NOT A TEST TO UPDATE, AND NOT A STRING TO REWORD IN `legal.py`.** These
+    seven are the spec's, and AC-L3 asserts byte-equality with it. The fix is always to amend
+    `docs/specs/PRODUCT-SPEC.md` §3 and let AC-L3 carry the change here — which is precisely how
+    the exemption this test replaced came to be deletable.
     """
     low = text.lower()
     for banned in _ADVISORY:
         assert banned not in low, f"{where} contains advisory phrasing: {banned!r}"
-
-
-# --- The exemption, asserted rather than assumed ----------------------------------------------- #
-# An exemption nobody measures is a hole. These two tests pin its EXACT extent, so the day the
-# collision is resolved — or the day it grows — the suite says so instead of staying quiet.
-
-_EXEMPT_IDS = {"commitment:4", "commitment:5", "commitment:6", "commitment:7"}
-_EXEMPT_IMPL = {"commitment:1"}
-
-
-def test_the_verbatim_exemption_is_exactly_as_wide_as_recorded():
-    """If this goes RED the collision CHANGED — which is news either way, and news that must be
-    read rather than patched.
-
-    Narrower means PRODUCT-SPEC.md §3 was amended and the exemption should SHRINK or be deleted
-    (delete the entries here, and delete the module docstring's flag with them). Wider means new
-    verbatim text arrived carrying new violations, and the 0a flag needs re-raising with the owner
-    before it ships.
-    """
-    ids = {w for w, t in _verbatim() if _DECISION_ID.search(t)}
-    impl = {w for w, t in _verbatim()
-            if any(leak in t.lower() for leak in _IMPLEMENTATION)}
-    assert ids == _EXEMPT_IDS, (
-        f"the decision-ID exemption no longer matches the shipped Commitments.\n"
-        f"  recorded: {sorted(_EXEMPT_IDS)}\n  actual  : {sorted(ids)}\n"
-        f"See this module's docstring — this is the owner's 0a call, not a test to update."
-    )
-    assert impl == _EXEMPT_IMPL, (
-        f"the implementation-note exemption no longer matches.\n"
-        f"  recorded: {sorted(_EXEMPT_IMPL)}\n  actual  : {sorted(impl)}"
+    for leak in _IMPLEMENTATION:
+        assert leak not in low, (
+            f"{where} leaks an implementation note: {leak!r} — amend PRODUCT-SPEC.md §3, "
+            f"never app/services/legal.py alone (AC-L3 asserts they are byte-equal)."
+        )
+    m = _DECISION_ID.search(text)
+    assert not m, (
+        f"{where} leaks a decision ID into served copy: {m.group(0)!r} — §3's annotation table "
+        f"below the blockquote is where lineage lives; the blockquote is what the user reads."
     )
 
 
-def test_no_authored_string_relies_on_the_exemption():
-    """The exemption's containment, stated as a test.
+def test_the_two_corpora_stay_disjoint():
+    """Provenance, not latitude — the split's remaining job (see the module docstring).
 
-    The failure mode of every named exemption is drift: a new string gets written near the exempt
-    one, inherits its latitude by proximity, and nobody notices because the suite is green. The
-    authored corpus is held to the full bar above; this asserts the two corpora do not overlap, so
-    "authored" can never quietly acquire an exempt member.
+    Both corpora now meet the same bar, so this no longer guards an exemption from spreading. It
+    guards the FAILURE MESSAGE: a red in `_verbatim` must route the author to PRODUCT-SPEC.md, and
+    a red in `_authored` must route them to legal.py. A string that drifted into both corpora
+    would make one of those two instructions wrong.
     """
     assert not ({w for w, _ in _authored()} & {w for w, _ in _verbatim()})

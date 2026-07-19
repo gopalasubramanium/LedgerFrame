@@ -24,7 +24,7 @@ def test_terms_entries_have_glossary_fields():
 def test_metric_glossary_terms_present():
     # The portfolio-metric terms authored for key_stats() coverage (Phase 3.2).
     expected = {
-        "term-total-value", "term-unrealised-pl", "term-income", "term-income-yield",
+        "term-gross-assets", "term-unrealised-pl", "term-income", "term-income-yield",
         "term-total-return", "term-period-return", "term-volatility", "term-return-volatility",
         "term-max-drawdown", "term-allocation-weight", "term-concentration",
     }
@@ -86,7 +86,10 @@ def test_all_help_surfaces_glossary_for_terms_only():
 
 def test_search_ranks_relevant_entries():
     r = search_help("how do I set a target allocation")
-    assert r and r[0]["title"] == "Investment policy"
+    # "Policy", not "Investment policy" — this assertion PINNED the stale v1 title until the
+    # page-help content pass (§9-5 Tier 1). A test can hold a defect in place; when the content
+    # is corrected the test is corrected with it, in the same commit, deliberately.
+    assert r and r[0]["title"] == "Policy"
     assert search_help("what is xirr")[0]["title"] == "XIRR & TWR"
 
 
@@ -94,7 +97,7 @@ async def test_help_endpoint_all_and_query(app_client):
     all_ = (await app_client.get("/api/v1/help")).json()
     assert all_["entries"] and "categories" in all_
     titles = {e["title"] for e in all_["entries"]}
-    assert {"Investment policy", "XIRR & TWR", "Pricing health"} <= titles
+    assert {"Policy", "XIRR & TWR", "Pricing Health"} <= titles
 
     q = (await app_client.get("/api/v1/help", params={"q": "how do I refresh a stale price"})).json()
     assert q["entries"] and any("Pricing" in e["title"] for e in q["entries"])

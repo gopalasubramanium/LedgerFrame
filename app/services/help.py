@@ -11,64 +11,136 @@ from __future__ import annotations
 
 HELP: list[dict] = [
     # --- Pages -------------------------------------------------------------- #
+    # Titles ARE the nav labels, exactly (nav label = H1 = route). Casing traps: "Net worth",
+    # "Cash flow", "Pricing Health". Every body describes what the page IS and what it is FOR;
+    # figures, procedures and definitions stay owned by the page or the term that owns them.
     {"id": "page-home", "category": "Pages", "title": "Home",
-     "body": "Your at-a-glance dashboard: total portfolio value and today's change, top "
-             "movers, a performance sparkline, top holdings, watchlist & FX, and the AI "
-             "Daily Briefing. Use the top-bar Simple/Expert toggle to declutter it — Simple "
-             "shows just the essentials, Expert shows everything.",
-     "keywords": "home dashboard overview today movers briefing"},
+     "body": "Your summary. Net worth and Today's change lead, then performance, allocation by "
+             "class, what needs a look, contributors and detractors, gainers and losers, quotes, "
+             "and the news briefing with top headlines. Every card summarises a page that owns the "
+             "figure, and the arrow on the card opens it. Home computes nothing of its own.",
+     "keywords": "home summary overview dashboard today briefing cards"},
+    {"id": "page-net-worth", "category": "Pages", "title": "Net worth",
+     "body": "Your headline and liquidity. Four figures lead: Net worth, Gross assets, Liabilities, "
+             "and Cash & deposits. Below them sit the net-worth trend, composition by class, the "
+             "liquidity ladder and the cash runway. Insurance cash value is shown as a named "
+             "exclusion — it is deliberately not counted in the headline. Investment analytics live "
+             "on Portfolio.",
+     "keywords": "net worth headline liabilities cash deposits trend liquidity runway snapshot"},
     {"id": "page-portfolio", "category": "Pages", "title": "Portfolio",
-     "body": "Performance analytics vs a benchmark, allocation, and key stats (XIRR, TWR, "
-             "volatility, drawdown, concentration). Links to Holdings and Reports.",
-     "keywords": "portfolio analytics performance benchmark stats"},
+     "body": "Investment analytics. Performance against a benchmark over a window you choose; "
+             "allocation by class, sector, currency and tag; contributors and detractors for today; "
+             "concentration; return attribution; and costs, which keep recorded fees and estimated "
+             "ongoing cost separate rather than blending them. Return / volatility is a ratio of "
+             "those two figures — it is not a Sharpe ratio and subtracts no risk-free rate. "
+             "Positions are managed on Holdings.",
+     "keywords": "portfolio analytics performance benchmark allocation concentration attribution costs"},
     {"id": "page-holdings", "category": "Pages", "title": "Holdings",
-     "body": "The one place to add, edit and delete positions. 'Add asset' opens a guided "
-             "wizard; 'Edit / import' opens the transaction editor and CSV import (preview "
-             "then commit). New market instruments can be classified with an asset class "
-             "and country so they land in the right allocation.",
-     "keywords": "holdings add edit import csv transactions positions"},
+     "body": "The one place to add, edit and delete positions. The header carries Import, Export CSV "
+             "and Add. Add branches once: a listed instrument you search for, or a manual asset you "
+             "describe. Transactions are a section on the page, and a row opens its editor. Import "
+             "shows you every row before you commit it and queues any symbol it could not resolve. "
+             "Deleted rows stay recoverable for a short while, and purging them for good asks for "
+             "your PIN. Exports are produced by the server over your whole dataset, not the rows on "
+             "screen.",
+     "keywords": "holdings add edit delete import export csv transactions positions purge undo"},
+    {"id": "page-accounts", "category": "Pages", "title": "Accounts",
+     "body": "Your accounts, the entities that hold them, and the institution master. An account "
+             "carries its institution, kind, currency, cost-basis method and entity. Entities are "
+             "created and renamed here; one cannot be deleted while an account still points at it. "
+             "The institution master is shared with Insurance, so a broker and an insurer come from "
+             "the same list, and duplicates can be merged. Per-account value is a summary of your "
+             "holdings, never a second figure.",
+     "keywords": "accounts entity institution master merge cost basis currency kind"},
     {"id": "page-markets", "category": "Pages", "title": "Markets",
-     "body": "Region-first market view — India, Singapore, US, Global and your Watchlists — "
-             "each with indices, movers and search. World indices use ETF proxies unless a "
-             "provider serves real index levels.",
-     "keywords": "markets indices region watchlist search global"},
-    {"id": "page-pricing-health", "category": "Pages", "title": "Pricing health",
-     "body": "Per-holding data quality: valuation method, source, routing, freshness, and a "
-             "data-confidence score. Actions: refresh a holding, override its source, or "
-             "correct its mapping. 'map' means an identifier mapping is missing; 'auth' means "
-             "a configured provider is missing credentials.",
-     "keywords": "pricing health source routing stale confidence refresh override map auth"},
-    {"id": "page-snapshot", "category": "Pages", "title": "Snapshot",
-     "body": "The net-worth view: KPI strip, net-worth trend, net worth by asset class, the "
-             "liquidity ladder, the cash runway, and the 'Needs a look' review feed.",
-     "keywords": "snapshot net worth liquidity runway review"},
-    {"id": "page-policy", "category": "Pages", "title": "Investment policy",
-     "body": "Set a target allocation across asset class, currency and region, each with a "
-             "tolerance band, plus an optional single-holding concentration limit. The page "
-             "shows current-vs-target drift and band status. This is reporting only — it "
-             "never tells you to buy or sell.",
-     "keywords": "policy ips target allocation drift band rebalance risk"},
-    {"id": "page-planning", "category": "Pages", "title": "Planning",
-     "body": "Goals (with a basis of net worth, liquid assets, or a manual target) and "
-             "obligations (recurring or one-off cash flows, expense or income). Edit an item "
-             "with the ✎ button. Feeds the cash runway.",
-     "keywords": "planning goals obligations income expense recurring edit"},
-    {"id": "page-reports", "category": "Pages", "title": "Reports",
-     "body": "Realised gains by year (FIFO-matched, grouped by native currency, with a "
-             "short/long-term split you configure) and open tax lots, plus a CSV export. "
-             "Organisation and reporting only — not tax advice.",
-     "keywords": "reports realised gains tax lots fifo csv"},
+     "body": "Quotes, indices, market status, gainers and losers, the instrument grid and your "
+             "watchlists. World indices are grouped into Americas, Europe, Asia-Pacific, Commodities "
+             "and Crypto. Where a provider does not serve a real index level, the figure comes from "
+             "an ETF proxy and says so. Watchlists are created and edited here and nowhere else.",
+     "keywords": "markets indices quotes gainers losers watchlist search proxy status"},
+    {"id": "page-heatmap", "category": "Pages", "title": "Heatmap",
+     "body": "One view of your holdings: tile size is position value, tile colour is Today's change, "
+             "and the strength of the colour tracks how large the move was. Filter by asset class or "
+             "region. Holdings with no price are left out and the page says how many; liabilities are "
+             "not shown. Every tile opens its instrument.",
+     "keywords": "heatmap treemap tiles today change filter asset class region visualisation"},
     {"id": "page-news", "category": "Pages", "title": "News",
-     "body": "Headlines from your RSS feeds plus an AI briefing. 'News by area' groups "
-             "headlines (My holdings, India, Singapore, US, Global, Macro/FX); the My "
-             "holdings group is ranked by relevance (your position weight × recency).",
-     "keywords": "news headlines feeds relevance grouped briefing"},
+     "body": "The market briefing and grouped headlines. Headlines are grouped into My holdings, "
+             "India, Singapore, US, Global and Macro / FX; the My holdings group is ranked by how "
+             "much of your portfolio a story touches and how recent it is. Headlines are retrieved, "
+             "never invented, and the briefing states figures that were computed elsewhere rather "
+             "than producing any of its own. Refresh is unavailable while no-egress is on. News about "
+             "a single instrument lives on that instrument's page.",
+     "keywords": "news headlines briefing feeds groups relevance refresh macro fx"},
+    {"id": "page-review", "category": "Pages", "title": "Review",
+     "body": "What needs a look. A rail carries Net worth, Today's change, data confidence, the "
+             "attention count and when you last reviewed. Every signal names the page that owns it "
+             "and links there. Mark reviewed records the moment — the figures as they stood, your "
+             "note, and an optional next review date — and the history keeps your recent runs. "
+             "Reporting only: a signal is something to look at, not an instruction.",
+     "keywords": "review attention signals mark reviewed history confidence next review"},
+    {"id": "page-policy", "category": "Pages", "title": "Policy",
+     "body": "Your investment policy: targets, bands and drift. Set a target weight and a tolerance "
+             "band for asset class, currency and region, plus an optional limit on any single "
+             "holding. The page shows where you stand against each target and which buckets sit "
+             "outside their band. Drift is worked out when you look at it and is never stored. "
+             "Reporting, never a trade instruction.",
+     "keywords": "policy target allocation band drift concentration limit rebalance"},
+    {"id": "page-cash-flow", "category": "Pages", "title": "Cash flow",
+     "body": "What you owe, what you're putting away, and what you're aiming at. Three registers: "
+             "income and expenses, contributions, and goals. An obligation can recur or fall once, "
+             "and a one-off is not counted in your recurring burn. Contributions do not reduce your "
+             "cash runway — they move money rather than spend it. The runway itself belongs to Net "
+             "worth; this page shows that figure and links to it.",
+     "keywords": "cash flow goals obligations contributions income expense recurring runway planning"},
+    {"id": "page-scenarios", "category": "Pages", "title": "Scenarios",
+     "body": "What today's values would look like under a hypothetical shock. A scenario, never a "
+             "forecast. Exposures cover equities, crypto, property, and holdings in currencies other "
+             "than your base. A fixed set of downside shocks is applied to today's figures, and the "
+             "liquidity what-ifs ask what happens if income stops or a large obligation is drawn now. "
+             "Nothing here is a prediction, and nothing is saved.",
+     "keywords": "scenarios shock stress exposure liquidity downside hypothetical simulation"},
+    {"id": "page-insurance", "category": "Pages", "title": "Insurance",
+     "body": "Your protection register — policies, cover and renewals. A register, never an adequacy "
+             "judgment. Each policy carries its insurer, type, cover amount, premium and frequency, "
+             "renewal date, insured person and nominee, and a checklist of the papers you hold for "
+             "it. Cover by type and upcoming renewals are summarised. Any cash value is recorded "
+             "here and is excluded from your net worth; Net worth names that exclusion and links "
+             "back.",
+     "keywords": "insurance policy cover premium renewal nominee insured cash value documents"},
+    {"id": "page-estate", "category": "Pages", "title": "Estate",
+     "body": "A readiness register — will, contacts and key documents. A record and reminders, never "
+             "legal advice. It holds your will's status and where it is kept, who the executor is, "
+             "contacts and the roles they hold, and a register of documents with where each one "
+             "lives and when it was last reviewed. It counts what is present and what is missing "
+             "or out of date. It carries no money and links to nothing else in the app.",
+     "keywords": "estate will executor beneficiary guardian nominee documents readiness contacts"},
+    {"id": "page-reports", "category": "Pages", "title": "Reports",
+     "body": "Statements, the Realised P/L report and open tax lots — organised for your accountant. "
+             "Statements cover income, fees, cash flow, and realised against unrealised. The Realised "
+             "P/L report matches sales to purchases first-in, first-out, shows each event in its own "
+             "currency, and gives base-currency totals two ways — at today's rates and at the rates "
+             "on the trade dates — saying how many events it could not convert. You set the holding "
+             "period that counts as long-term. Every export is produced by the server and carries "
+             "the same disclaimers you see on screen. The printable Reports Pack opens from here.",
+     "keywords": "reports statements realised tax lots fifo csv export pack accountant"},
+    {"id": "page-pricing-health", "category": "Pages", "title": "Pricing Health",
+     "body": "Why a number is what it is. For every holding: how it was valued, which source served "
+             "it, the route that reached that source, how fresh it is, and a confidence score with "
+             "the reasons behind it. Each row offers two actions — refresh it, or correct its "
+             "source. A holding may say it needs an identifier mapping, or that a provider needs an "
+             "API key. The route is shown here so you can see it, and changed in Settings. Refresh "
+             "is unavailable while no-egress is on.",
+     "keywords": "pricing health source route freshness stale confidence refresh mapping api key"},
     {"id": "page-settings", "category": "Pages", "title": "Settings",
-     "body": "Tabs for Data & prices (provider + opt-in adapters), General & security (PIN, "
-             "theme, accessibility), AI & news, and System (status, About, controls). Set a "
-             "PIN to protect changes; nothing leaves the device unless you configure a "
-             "remote provider.",
-     "keywords": "settings provider pin theme ai security about"},
+     "body": "Preferences for this install, across six tabs. General covers how figures are "
+             "reported. Appearance is theme, density, high contrast and reduced motion, and applies "
+             "to this device only. Privacy states what this device is doing — with no-egress on it "
+             "makes no network calls — and manages API tokens. Data feeds is your market data "
+             "provider and its key, how long a price may go without refreshing, your news feeds and "
+             "the routing matrix. AI shows the current configuration. System covers your PIN, "
+             "auto-lock, network access and data controls.",
+     "keywords": "settings tabs appearance privacy data feeds ai system pin token provider theme"},
     # --- Concepts / terms --------------------------------------------------- #
     {"id": "term-valuation-method", "category": "Terms", "title": "Valuation method",
      "body": "How a value was established: market quote (a delayed/EOD price), official NAV "
@@ -172,18 +244,18 @@ HELP: list[dict] = [
      "improves": "The figure is only as complete as its inputs: adding recurring obligations "
                  "(expenses and income) in Planning replaces 'no data' with a computed runway, and "
                  "keeping them current keeps it accurate. It reflects only what you record."},
-    {"id": "term-realised-gains", "category": "Terms", "title": "Realised gains & tax lots",
-     "body": "A realised gain is proceeds minus FIFO-matched cost when you sell. A tax lot is "
-             "an open (unsold) parcel with its acquisition date and cost. Reported in native "
-             "currency (exact); any base figure uses today's FX and is not for filing. Not "
-             "tax advice.",
-     "keywords": "realised gains tax lot fifo cost proceeds holding period",
-     "what": "A realised gain is sale proceeds minus the FIFO-matched cost of the parcels sold. A "
-             "tax lot is an open, unsold parcel with its acquisition date and cost. Figures are "
-             "reported in native currency (exact); any base-currency figure uses today's FX and is "
+    {"id": "term-realised-pl", "category": "Terms", "title": "Realised P/L",
+     "body": "What a sale actually made or lost: proceeds minus the cost of the parcels sold, "
+             "matched first-in, first-out. Reported in the currency of the trade, which is exact; "
+             "any base-currency figure uses today's exchange rates and is not for filing. Not tax "
+             "advice.",
+     "keywords": "realised profit loss sale proceeds cost fifo tax lot holding period",
+     "what": "Sale proceeds minus the first-in, first-out matched cost of the parcels sold — the "
+             "profit or loss a sale actually crystallised. Figures are reported in the trade's own "
+             "currency, which is exact; any base-currency figure uses today's exchange rates and is "
              "not for filing.",
-     "why": "It shows the gain or loss actually crystallised by your sales, lot by lot, so holding "
-            "periods and cost basis are visible — organised for review, not as tax advice.",
+     "why": "It shows what your sales actually realised, parcel by parcel, so holding periods and "
+            "cost are visible — organised for review, not as tax advice.",
      "improves": "Accuracy depends on complete buy and sell history with correct dates and costs, "
                  "since FIFO matching walks the recorded lots. For filing, use native-currency "
                  "figures and your own records; the base-currency total is indicative only."},
@@ -205,26 +277,26 @@ HELP: list[dict] = [
     {"id": "term-fifo", "category": "Terms", "title": "FIFO (first-in, first-out)",
      "body": "FIFO is the lot-matching rule used for cost basis: when you sell, the "
              "earliest-acquired parcels are treated as sold first. It determines which acquisition "
-             "costs are matched against sale proceeds to compute a realised gain, and which lots "
+             "costs are matched against sale proceeds to compute Realised P/L, and which lots "
              "remain open.",
-     "keywords": "fifo first in first out lot matching cost basis realised gains",
+     "keywords": "fifo first in first out lot matching cost basis realised profit loss",
      "what": "First-in, first-out: the rule that matches a sale against the earliest-acquired "
              "parcels first when computing cost basis, deciding which purchase costs offset the "
              "proceeds and which lots stay open.",
-     "why": "The matching rule changes both the realised gain and the remaining open lots, so "
+     "why": "The matching rule changes both the Realised P/L and the remaining open lots, so "
             "knowing FIFO is applied explains why a particular acquisition cost and holding period "
             "were used for a sale.",
      "improves": "FIFO is applied deterministically from your recorded transactions, so correct "
                  "buy and sell dates and costs are what make the matching accurate. It is a fixed "
                  "method, not a setting to tune."},
-    {"id": "term-total-value", "category": "Terms", "title": "Total value",
-     "body": "The current worth of everything you hold, summed in your base currency at today's "
-             "exchange rates. It is a market snapshot — it moves with prices and FX and reflects the "
-             "valuation method behind each holding.",
-     "keywords": "total value portfolio worth current snapshot base currency",
-     "what": "The sum of every holding's current market value, expressed in your base currency and "
-             "converted at today's exchange rates. It is a point-in-time snapshot, not an average or "
-             "a target.",
+    {"id": "term-gross-assets", "category": "Terms", "title": "Gross assets",
+     "body": "What everything you hold is worth right now, summed in your base currency at today's "
+             "exchange rates. Liabilities are not subtracted — that figure is Net worth. It moves "
+             "with prices and exchange rates, and reflects how each holding was valued.",
+     "keywords": "gross assets holdings worth current base currency positive value",
+     "what": "The sum of every holding's current market value, in your base currency at today's "
+             "exchange rates, before any liability is subtracted. Subtracting what you owe gives "
+             "Net worth.",
      "why": "It is the headline figure the rest of the panel is measured against — weights, yield, "
             "and concentration are all shares of this total — so its accuracy depends on how well "
             "each holding is priced.",
@@ -258,11 +330,11 @@ HELP: list[dict] = [
      "improves": "It is only as complete as the dividend and interest transactions you record; "
                  "missing entries understate it. It measures cash received, not a stream to steer."},
     {"id": "term-income-yield", "category": "Terms", "title": "Income yield",
-     "body": "Income yield is recorded income divided by current total value, as a percent. It is "
+     "body": "Income yield is recorded income divided by current gross assets, as a percent. It is "
              "trailing and backward-looking — income already received against today's value — not a "
              "forward or annualised yield.",
      "keywords": "income yield trailing dividend interest percent backward",
-     "what": "Recorded income (dividends and interest) divided by current total value, as a percent. "
+     "what": "Recorded income (dividends and interest) divided by current gross assets, as a percent. "
              "It is a trailing ratio of income already received to today's value — not a forward, "
              "projected, or annualised yield.",
      "why": "It gives a rough sense of how much cash income the portfolio has generated relative to "
@@ -375,18 +447,18 @@ HELP: list[dict] = [
     {"id": "term-attribution", "category": "Terms", "title": "Return attribution",
      "body": "Return attribution splits the portfolio's return into per-holding contributions — a "
              "holding's contribution is its weight × its return — rolled up to asset class and "
-             "sector. The residual is the part current holdings can't explain (income, realised "
-             "gains, positions closed in the period). A descriptive, single-period approximation.",
+             "sector. The residual is the part current holdings can't explain (income, Realised "
+             "P/L, positions closed in the period). A descriptive, single-period approximation.",
      "keywords": "attribution contribution decomposition residual weight return holding sector "
                  "percentage points unattributed",
      "what": "Each holding's contribution to the portfolio's total return, as signed percentage "
              "points — its weight × its return — a descriptive split of the headline return by "
              "holding, asset class, and sector. The residual is the remainder a current-holdings "
-             "price decomposition can't place (income, realised gains, positions closed in the "
+             "price decomposition can't place (income, Realised P/L, positions closed in the "
              "period), shown explicitly so the contributions plus the residual reconcile to the "
              "total return — nothing is dropped.",
      "why": "It shows where the period's return came from — which holdings and groups moved the "
-            "number, and how much sits in income, realised gains, or closed positions (the "
+            "number, and how much sits in income, Realised P/L, or closed positions (the "
             "residual) rather than in current price moves.",
      "improves": "This is a descriptive, single-period approximation — the more exact multi-period "
                  "method is not applied — and a decomposition being reported, not a target. It "

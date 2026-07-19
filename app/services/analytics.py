@@ -186,9 +186,9 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
         "base_realised_total_historical_fx": float(round(realised_historical, 2)),
         "realised_fx_events_excluded": realised_fx_excluded,
         "metrics": [
-            {"label": "Total value", "value": to_display(val.total_value), "kind": "money", "term_id": "term-total-value"},
+            {"label": "Total value", "value": to_display(val.total_value), "kind": "money", "term_id": "term-gross-assets"},
             {"label": "Unrealised P/L", "value": to_display(val.unrealised_pl), "kind": "money", "signed": True, "term_id": "term-unrealised-pl"},
-            {"label": "Realised P/L", "value": to_display(money(realised)), "kind": "money", "signed": True, "term_id": "term-realised-gains"},
+            {"label": "Realised P/L", "value": to_display(money(realised)), "kind": "money", "signed": True, "term_id": "term-realised-pl"},
             {"label": "Income (div/int)", "value": to_display(money(income)), "kind": "money", "signed": True, "term_id": "term-income"},
             {"label": "Income yield", "value": round(income_yield, 2), "kind": "pct", "term_id": "term-income-yield"},
             # Total return rides the LIVE valuation (current quotes + current FX) — basis stated so it

@@ -79,14 +79,9 @@ def _served_terms() -> list[tuple[str, str]]:
 _HEADING_NOT_A_TERM = {
     "Entitlement & stale": "covers two terms (Entitlement, Stale) under one heading",
     "XIRR & TWR": "covers two terms (XIRR, TWR) under one heading",
-    # ⚠ TWO ROWS BELOW ARE EXEMPTED ONLY UNTIL THE CONTENT PASS (delta 3) — they are not
-    # headings, they are DEPRECATED TERMS that GLOSSARY.md's "Deprecated terms" table says
-    # "must not appear in UI copy". Exempting them here would launder the defect, so each
-    # carries its deciding ID and its removal is owed:
-    "Realised gains & tax lots": "⚠ DEPRECATED WORDING (D-026: 'Realised gain(s), incl. headings' → "
-                                 "'Realised P/L'). Retitled in the content pass; exemption expires there.",
-    "Total value": "⚠ DEPRECATED TERM (D-021 → 'Net worth' / 'Gross assets' per context). "
-                   "Retitled in the content pass; exemption expires there.",
+    # The two rows that sat here — "Realised gains & tax lots" (D-026) and "Total value" (D-021) —
+    # were DEPRECATED TERMS, not headings. Their exemptions EXPIRED in the content pass, as written:
+    # the entries are now "Realised P/L" and "Gross assets", both of which pass on their own merit.
     "FIFO (first-in, first-out)": "term plus its parenthetical expansion",
     "Income (dividends & interest)": "term plus its parenthetical expansion",
     "1-year return": "a windowed instance of Period return, not a distinct term",

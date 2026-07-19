@@ -1736,7 +1736,7 @@
         "type": "object"
       },
       "LegalGateCopy": {
-        "description": "The gate's served strings. PROPOSED (page-legal \u00a79-8) until the owner's look.\n\nServed rather than hardcoded in the lock screen for the same reason the page is (\u00a79-3): this\nis the most consequential copy in the product \u2014 it is what the user is recorded as having\nagreed to \u2014 and served copy is the copy the accuracy guards can reach.",
+        "description": "The gate's served strings. PROPOSED (page-legal \u00a79-8) until the owner's look.\n\nServed rather than hardcoded in the lock screen for the same reason the page is (\u00a79-3): this\nis the most consequential copy in the product \u2014 it is what the user is recorded as having\nagreed to \u2014 and served copy is the copy the accuracy guards can reach.\n\n`reading_note` / `reading_return` are the reading-return bar's strings, added by the \u00a711-K\nruling. The bar exists only while the gate has stood down so its document can be read, so it\nis ON the consent path, and `reading_note` states what the acceptance record currently holds.\nThey were authored in the shell until that ruling: the scope of \"served\" is the PATH, not the\npanel.",
         "properties": {
           "declined_note": {
             "title": "Declined Note",
@@ -1750,6 +1750,14 @@
             "title": "Prompt",
             "type": "string"
           },
+          "reading_note": {
+            "title": "Reading Note",
+            "type": "string"
+          },
+          "reading_return": {
+            "title": "Reading Return",
+            "type": "string"
+          },
           "stale_note": {
             "title": "Stale Note",
             "type": "string"
@@ -1759,7 +1767,9 @@
           "prompt",
           "explainer",
           "stale_note",
-          "declined_note"
+          "declined_note",
+          "reading_note",
+          "reading_return"
         ],
         "title": "LegalGateCopy",
         "type": "object"

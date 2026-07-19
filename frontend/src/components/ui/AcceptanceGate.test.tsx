@@ -24,6 +24,11 @@ const COPY = {
   explainer: "You can read the full document before answering.",
   stale_note: "The Legal page has changed since you last accepted it.",
   declined_note: "You have declined. The app stays locked until the terms are accepted.",
+  // Deliberately NOT the shipped wording. Every string here is a stand-in, so a test passes only
+  // if the surface renders what the SERVER sent — a component that authored its own copy would
+  // render the real sentence and fail against these.
+  reading_note: "You are reading it. Nothing is accepted.",
+  reading_return: "Go back and answer",
 };
 
 interface Opts {
@@ -176,8 +181,12 @@ test("the Legal page is readable WITHOUT accepting, and the way back is visible"
     expect(screen.queryByRole("dialog", { name: "Accept the terms" })).toBeNull(),
   );
   // Nothing was accepted by reading, and the state is not a trap: there is a visible way back.
-  expect(screen.getByText(/Nothing has been accepted yet/)).toBeTruthy();
-  await userEvent.click(screen.getByRole("button", { name: "Return to accept" }));
+  // Both strings are asserted VERBATIM against the stubbed payload (§11-K): the bar sits on the
+  // consent path and states what has been accepted, so it is served like the rest of the path.
+  // Matching the stub rather than the shipped sentence is what makes this a served-copy test —
+  // against a component holding its own strings, both of these fail.
+  expect(screen.getByText(COPY.reading_note)).toBeTruthy();
+  await userEvent.click(screen.getByRole("button", { name: COPY.reading_return }));
   expect(await screen.findByRole("dialog", { name: "Accept the terms" })).toBeTruthy();
 });
 

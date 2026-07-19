@@ -107,6 +107,10 @@ export interface LegalGateCopy {
   explainer: string;
   stale_note: string;
   declined_note: string;
+  /** The reading-return bar (§11-K). On the consent path, so served like the rest of it:
+   *  `reading_note` is a claim about what the acceptance record holds, not chrome. */
+  reading_note: string;
+  reading_return: string;
 }
 
 export function fetchAcceptance() {

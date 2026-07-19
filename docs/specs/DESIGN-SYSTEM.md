@@ -1133,7 +1133,14 @@ asking for consent it had made impossible to inform. It carries **a statement of
 trap — without it, a person who left a gate to read its terms would face a document with no visible
 way to answer the question that sent them there.
 
-**⚑ OPEN, raised not decided (page-legal §11-J):** the bar's two strings are **authored in
-`AppShell.tsx`**, not served, unlike every string in the gate itself (§9-3/§9-8). They state UI
-state rather than terms, which is why it was not caught — but they sit **on the consent path**. For
-the owner.
+**STRINGS SERVED — resolved 2026-07-20** (page-legal §11-K; architect under delegation,
+owner-ratified). Raised at §11-J as an open question: the bar's two strings were **authored in
+`AppShell.tsx`**, unlike every string in the gate itself (§9-3/§9-8). The ruling: they are **state
+claims on the consent path** — *"nothing has been accepted yet"* is an assertion about the
+acceptance record, not chrome — and the distinction that let them through (*UI state, not terms*)
+is not one the accuracy corpus can act on, because the corpus reaches served strings only. Both are
+now fields on `/legal/gate-copy` (`reading_note`, `reading_return`) and the frontend-authored
+copies are **deleted**; the bar renders what the server sent, verbatim. **Consequence, recorded:**
+the gate's *"Read the Legal page"* is now disabled until the copy loads — the reading state's way
+back is a served string, so the gate is inert as a whole rather than able to enter a state it
+cannot render its exit from.

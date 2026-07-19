@@ -248,12 +248,17 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* While the terms are being READ, the gate is hidden and the shell is showing /legal. This
           bar is the way back, and it exists so the state cannot become a trap: without it a user
           who clicked "Read the Legal page" would be looking at a document with no visible way to
-          answer the question that sent them there. */}
-      {readingLegal && (
+          answer the question that sent them there.
+          BOTH STRINGS ARE SERVED (§11-K) — this bar is on the consent path, and "nothing has been
+          accepted yet" is a claim about the acceptance record, not chrome. Nothing here authors
+          consent copy, exactly as in the gate itself. The `gateCopy` guard is not defensive
+          padding: the gate's "Read the Legal page" is disabled until copy loads, so this state is
+          unreachable without it, and a fallback string would re-author what was just served. */}
+      {readingLegal && gateCopy && (
         <div className="lf-gate__readingbar" role="region" aria-label="Accept the terms">
-          <span>You are reading the Legal page. Nothing has been accepted yet.</span>
+          <span>{gateCopy.reading_note}</span>
           <button type="button" className="lf-btn lf-btn--primary" onClick={() => setReadingLegal(false)}>
-            Return to accept
+            {gateCopy.reading_return}
           </button>
         </div>
       )}

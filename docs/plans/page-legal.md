@@ -1068,6 +1068,82 @@ answers that question, and it is green.
 
 ---
 
+### 11-K. THE READING BAR IS SERVED — the §11-J open question, ruled and shipped (2026-07-20)
+
+**THE RULING** (architect under delegation, **owner-ratified in chat 2026-07-20**): the
+reading-return bar's two strings are **state claims on the consent path and must be SERVED**.
+§11-J raised them and deliberately did not decide them; this delta closes that, and it is the
+**last code of the milestone**.
+
+**The reasoning, because the counter-argument is the one that let them ship.** They look like
+chrome. *"Return to accept"* is a button label, and *"You are reading the Legal page. Nothing has
+been accepted yet."* describes a UI state — which is exactly why nobody questioned them while every
+string inside the gate was served under §9-3/§9-8. The distinction does not survive the test that
+matters: **"nothing has been accepted yet" is an assertion about the acceptance record**, made to a
+person mid-consent, and the record is the server's. A claim about server state authored in a `.tsx`
+file is one **no accuracy guard can reach** — the corpus binds Help's Legal entry to the SERVED
+strings, so a frontend-authored sentence could contradict the document indefinitely with every gate
+green. The scope of *served* is **the PATH, not the panel**.
+
+**SCHEMA CHANGE, DECLARED.** `LegalGateCopy` gains `reading_note` + `reading_return`, fed from new
+`app/services/legal.py` constants beside the other four. **Contract regenerated in THIS commit**
+(the §11-I lesson, applied rather than re-learned). **Both counts, measured after the regen:**
+**141 paths · 71 schemas** — *unchanged*, and that is the expected result, not an omission: this
+adds two **fields to an existing schema**, no route and no new model. A moved count here would have
+meant something else had drifted in.
+
+**FAIL-FIRST — driven RED before a line of source moved, on both sides:**
+- Backend `test_the_reading_bar_strings_are_SERVED_with_the_rest_of_the_gate_copy` — pins the
+  payload's key set exactly (*every string on the path, or none*) and both values against the
+  constants. RED: `AttributeError`/key mismatch, no such fields.
+- Frontend — the gate test's stubbed `COPY` gained the two strings as **deliberate non-shipping
+  stand-ins** (*"You are reading it. Nothing is accepted."* / *"Go back and answer"*), and the
+  reading-state test now asserts **`COPY.reading_note` / `COPY.reading_return` verbatim**. RED
+  against the authored strings, which is the whole point: a component holding its own copy renders
+  the real sentence and **fails** against a stub. Matching the shipped wording would have passed
+  either way and proved nothing — the §11-J *"is the guard or the code wrong"* discipline, applied
+  to a test's fixture.
+
+**Shipped:** the two constants; the schema + endpoint fields; `LegalGateCopy` consumed by
+`AcceptanceGate`'s prop **in place of a restated four-field structural type** (which had already
+been a drift waiting to happen and would have gone stale on this very commit); `AppShell` renders
+`gateCopy.reading_note` / `.reading_return` and **the authored strings are deleted**.
+
+**ONE CONSEQUENCE, NOT HIDDEN.** *"Read the Legal page"* is now **disabled until the copy loads**,
+as the checkbox already was. Serving the bar's strings means the reading state's **way back** is
+served, so entering it with `copy === null` would strand a reader in a document with no rendered
+exit. The alternative — a hardcoded fallback label — would **re-author the string this delta
+exists to remove**, so the gate is made inert as a whole instead of half-usable: it does not enter
+a state it cannot render the exit from. The `readingLegal && gateCopy` guard in `AppShell` is that
+invariant restated at the render site, not defensive padding.
+
+**Also:** `AppShell.test.tsx`'s gate-copy stub was **three inline four-field literals**; they are
+now one `GATE_COPY` constant. A stub duplicated per call site drifts from the contract in silence,
+because an under-described stub still parses and the surface simply renders `undefined` — the same
+genre as the restated prop type above, found in the same delta.
+
+**GATES — this delta (frontend run as the GATE, not the parts — §15 lesson 10):**
+
+| Gate | Result |
+|---|---|
+| `npm run check` (full chain) | **exit 0** |
+| ├ lint · typecheck · `check:copy` · `check:smoke-isolation` | clean |
+| ├ `check:tokens` | ✓ **89** referenced tokens all defined |
+| ├ `check:primitives` | ✓ no raw checkbox |
+| ├ vitest | **40 files / 379 passed** |
+| └ Playwright | **361 passed** |
+| `scripts/check_api_contract.py` | **exit 0** — current, regenerated this commit |
+| `tests/integration/test_legal_acceptance.py` | **10 passed** |
+
+Backend FULL solo (ordered + randomized) and the HELP CURRENCY SUITE run at **Phase 2/3a**, below —
+this delta changes served strings, so unlike §11-J it does **not** get to skip them.
+
+**HELP CURRENCY:** ⚑ assessed at Phase 3a with the suite, not asserted here. Two new served strings
+exist; the *user-visible wording is byte-identical* to what shipped, so the expectation is **no Help
+delta** — but that is a claim the corpus adjudicates, not this note.
+
+---
+
 ## 15. LESSONS — carried to the close
 
 *Seeded here at the re-look so the close inherits them rather than re-deriving them. The close

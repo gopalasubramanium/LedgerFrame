@@ -23,6 +23,18 @@ interface FetchOpts {
   acceptance?: "none" | "stale" | "accepted";
 }
 
+// The full served gate-copy payload, in ONE place. It was three inline literals of four fields
+// each until §11-K added two more: a stub duplicated per call site drifts from the contract
+// silently, because an under-described stub still parses and the surface just renders undefined.
+const GATE_COPY = {
+  prompt: "P",
+  explainer: "E",
+  stale_note: "S",
+  declined_note: "D",
+  reading_note: "R",
+  reading_return: "B",
+};
+
 function stubFetch(opts: FetchOpts = {}) {
   const json = (obj: unknown) =>
     new Response(JSON.stringify(obj), {
@@ -38,7 +50,7 @@ function stubFetch(opts: FetchOpts = {}) {
       // this file are about the lock, the ticker and first-run — not about consent. The gate's own
       // behaviour is driven explicitly in AcceptanceGate.test.tsx and in the e2e walk.
       if (url.includes("/legal/gate-copy"))
-        return json({ prompt: "P", explainer: "E", stale_note: "S", declined_note: "D" });
+        return json(GATE_COPY);
       if (url.includes("/legal/acceptance"))
         return json({ status: opts.acceptance ?? "accepted", content_sha256: "x", accepted_at: null });
       if (url.includes("/auth/state")) return json({ pin_set: opts.pinSet ?? false });
@@ -224,7 +236,7 @@ test("first-run provider list re-fetches after unlock: empty while locked → po
       const url = String(input);
       // Acceptance gate stubs (§11-5) — accepted, so this test exercises what it is named for.
       if (url.includes("/legal/gate-copy"))
-        return json({ prompt: "P", explainer: "E", stale_note: "S", declined_note: "D" });
+        return json(GATE_COPY);
       if (url.includes("/legal/acceptance"))
         return json({ status: "accepted", content_sha256: "x", accepted_at: null });
       if (url.includes("/auth/state")) return json({ pin_set: true });
@@ -295,7 +307,7 @@ function stubFirstRunSettings() {
       const url = String(input);
       // Acceptance gate stubs (§11-5) — accepted, so this test exercises what it is named for.
       if (url.includes("/legal/gate-copy"))
-        return json({ prompt: "P", explainer: "E", stale_note: "S", declined_note: "D" });
+        return json(GATE_COPY);
       if (url.includes("/legal/acceptance"))
         return json({ status: "accepted", content_sha256: "x", accepted_at: null });
       if (url.includes("/auth/state")) return json({ pin_set: false });

@@ -378,6 +378,13 @@ ACCEPTANCE_DECLINED_NOTE = (
     "You declined. Your answer is recorded and nothing has been deleted. LedgerFrame stays locked "
     "until the terms are accepted; you can read Legal at any time, or close the app."
 )
+# The reading-return bar (DESIGN-SYSTEM §5.1(3)) — shown only while the gate has stood down so its
+# own document can be read. SERVED, not authored in the shell, by the ruling at page-legal §11-K:
+# the first string is a CLAIM ABOUT THE ACCEPTANCE RECORD, not chrome, and a claim that lives in a
+# .tsx file is one the accuracy corpus cannot reach. The second is the way back, and it names the
+# act it returns to — never "Close" or "Back", which would describe leaving rather than answering.
+ACCEPTANCE_READING_NOTE = "You are reading the Legal page. Nothing has been accepted yet."
+ACCEPTANCE_READING_RETURN = "Return to accept"
 
 
 async def acceptance_status(session) -> dict:

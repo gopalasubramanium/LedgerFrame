@@ -157,6 +157,39 @@ async def test_LEGAL_IS_READABLE_before_acceptance(app_client):
 
 
 @pytest.mark.anyio
+async def test_the_reading_bar_strings_are_SERVED_with_the_rest_of_the_gate_copy(app_client):
+    """**THE CONSENT PATH IS SERVED END TO END** (page-legal §11-K, architect under delegation,
+    owner-ratified 2026-07-20).
+
+    The reading-return bar appears only when the gate has stood down so its own document can be
+    read — i.e. it exists ONLY on the consent path, and its first string is a **state claim about
+    what has been accepted**. It shipped authored in `AppShell.tsx` while every other string on
+    that path was served (§9-3/§9-8), and the reason it was never questioned is that it looks like
+    UI chrome rather than terms.
+
+    That distinction does not survive contact with the requirement. *"Nothing has been accepted
+    yet"* is a claim about the acceptance record, and the accuracy guards cannot reach a claim that
+    lives in a `.tsx` file: the corpus binds Help's Legal entry to the SERVED strings, so a
+    frontend-authored sentence can contradict the document indefinitely with every gate green.
+    Serving it puts it where the guards already look.
+    """
+    from app.services import legal
+
+    body = (await app_client.get("/api/v1/legal/gate-copy")).json()
+    assert set(body) == {
+        "prompt",
+        "explainer",
+        "stale_note",
+        "declined_note",
+        "reading_note",
+        "reading_return",
+    }, "the gate-copy payload is the consent path's copy — every string on it, or none"
+    assert body["reading_note"] == legal.ACCEPTANCE_READING_NOTE
+    assert body["reading_return"] == legal.ACCEPTANCE_READING_RETURN
+    assert all(v.strip() for v in body.values()), "an empty served string renders as a blank claim"
+
+
+@pytest.mark.anyio
 async def test_the_exempt_set_does_not_leak_a_data_endpoint(app_client):
     """The exemption list's containment, as a test rather than as care.
 

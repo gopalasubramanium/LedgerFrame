@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { LegalGateCopy } from "../../api/legal";
 import { Checkbox } from "./Checkbox";
 import "./chrome.css";
 import "./structure.css";
@@ -25,8 +26,10 @@ export interface AcceptanceGateProps {
   open: boolean;
   /** `stale` = a returning user being re-asked because the document changed. Greeted differently. */
   state: "none" | "stale";
-  /** Served copy — `null` while it is still loading. */
-  copy: { prompt: string; explainer: string; stale_note: string; declined_note: string } | null;
+  /** Served copy — `null` while it is still loading. The API type is the single definition; a
+   *  restated structural type here would drift the moment the payload gained a field, which is
+   *  exactly what §11-K added two of. */
+  copy: LegalGateCopy | null;
   onAccept: () => void;
   onDecline: () => void;
   /** Set once a decline has been recorded in this session — the install stays locked. */
@@ -80,8 +83,12 @@ export function AcceptanceGate({
         {/* READABLE WITHOUT ACCEPTING — a ruling, not a convenience (§11-E1). A gate demanding
             acceptance of a text it would not show is asking for consent that cannot be informed.
             The server exempts /legal for the same reason. */}
+        {/* Disabled until the copy has loaded, for the same reason the checkbox is (§11-K): the
+            reading state's way back is now a SERVED string, so entering that state without copy
+            would strand the reader in a document with no rendered return. The gate is inert as a
+            whole until it can render itself, rather than half-usable. */}
         <div className="lf-gate__row">
-          <button type="button" className="lf-btn" onClick={onReadLegal}>
+          <button type="button" className="lf-btn" disabled={!copy} onClick={onReadLegal}>
             Read the Legal page
           </button>
         </div>

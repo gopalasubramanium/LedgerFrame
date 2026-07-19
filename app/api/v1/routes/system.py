@@ -988,11 +988,19 @@ class LegalGateCopy(BaseModel):
     Served rather than hardcoded in the lock screen for the same reason the page is (§9-3): this
     is the most consequential copy in the product — it is what the user is recorded as having
     agreed to — and served copy is the copy the accuracy guards can reach.
+
+    `reading_note` / `reading_return` are the reading-return bar's strings, added by the §11-K
+    ruling. The bar exists only while the gate has stood down so its document can be read, so it
+    is ON the consent path, and `reading_note` states what the acceptance record currently holds.
+    They were authored in the shell until that ruling: the scope of "served" is the PATH, not the
+    panel.
     """
     prompt: str
     explainer: str
     stale_note: str
     declined_note: str
+    reading_note: str
+    reading_return: str
 
 
 @router.get("/legal/acceptance", response_model=LegalAcceptanceStatus)
@@ -1014,6 +1022,8 @@ async def legal_gate_copy() -> dict:
         "explainer": legal.ACCEPTANCE_EXPLAINER,
         "stale_note": legal.ACCEPTANCE_STALE_NOTE,
         "declined_note": legal.ACCEPTANCE_DECLINED_NOTE,
+        "reading_note": legal.ACCEPTANCE_READING_NOTE,
+        "reading_return": legal.ACCEPTANCE_READING_RETURN,
     }
 
 

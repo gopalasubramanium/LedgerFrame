@@ -29,6 +29,17 @@
   mandatory part of every close.* Every close states either the Help delta that shipped,
   or an explicit **guard-corroborated** "no Help impact". The guards are the **HELP
   CURRENCY SUITE** (TEMPLATE-page-build.md §8) and they run at every close.
+- **A NEW GUARD THAT REDS AN ACCEPTED SURFACE IS A DELTA ON THAT SURFACE, NOT A FOOTNOTE**
+  (architect, 2026-07-19, from the Help-close review): when a guard introduced by one
+  milestone goes RED on a page ratified by an earlier one, the fix ships **with a dated
+  delta note in that page's plan file and that page's pre-pass re-run, in the same delta**.
+  **Flagging it in a close report is not sufficient.** *Why:* the Help close fixed
+  `var(--radius-2)` in `NetWorth.css` — a correct fix on an accepted surface, outside the
+  ruling's scope — and only flagged it. An accepted page had then changed with no record on
+  its own plan file and no re-walk, so the next reader of `page-net-worth.md` would see a
+  ratified page that no longer matched its record. Same convention the About-tab amendment
+  already used (IA §5 Settings: *"dated delta note in `page-settings.md` + a Settings
+  pre-pass re-run"*); this makes it standing rather than per-case.
 
 ## Session protocol
 - Start: read the current plan file; state what you will do; get confirmation.

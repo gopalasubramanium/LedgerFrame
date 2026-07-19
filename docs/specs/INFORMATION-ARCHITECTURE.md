@@ -409,6 +409,48 @@ summary reuses the canonical page's reader, never a second code path.
   release bar. Accepted-page touch: dated delta note in `page-settings.md` +
   a Settings pre-pass re-run.
 
+### Legal (`/legal`) — D-077, D-106; page-legal §9 (owner, 2026-07-19)
+
+- **Owns:** the **product-level position** — no advice / no execution / reporting
+  only, stated **once, canonically, here**; the **seven Product Guarantees**,
+  rendered **verbatim** from their ratified source (`PRODUCT-SPEC.md` §3); the
+  **no-jurisdiction-tax stance** (D-077) as a stated position; the **licence
+  position** for LedgerFrame itself (AGPL-3.0-or-later).
+- **Summarises:** nothing. Legal has no readers, no figures, and no data.
+- **Links:** by **file pointer only** — `LICENSE`, `NOTICE`, `docs/audit/LICENSES.md`,
+  `docs/audit/ASSETS.md`. **A pointer here NAMES THE FILE THAT SHIPS WITH THE
+  SOURCE — never a URL**: a local-first product cannot link to a hosted licence
+  page. **Legal reproduces no generated file** (duplicating one guarantees
+  staleness — the reasoning `Settings.tsx:908-912` already records).
+- **⊕ 2026-07-19 (page-legal §9-2, owner) — THE TWO-KIND DISCLAIMER SPLIT.**
+  The one-canonical-home rule collides here, and the collision is ruled rather
+  than left to a later reviewer's inference. **Disclaimers are two different
+  kinds of thing:**
+  - **(a) Scoped caveats** — served per reader, at the **point of use**, about
+    **that reader's own limits** (*"Open lots by FIFO. Organisation only — not
+    tax advice."*, `app/services/tax.py`). They are **PART OF THE FIGURE**, not
+    copies of a general legal statement. They are **owned by their own
+    surfaces**, and **exports carry them into the file**. **Legal does not own,
+    absorb, shorten, or centralise them.** Given a decision ID as **D-106**.
+  - **(b) The product-level position** — no advice / no execution / reporting
+    only. **Legal owns this, and only this.**
+  - **Corollary, binding: removing a scoped caveat is an HONESTY REGRESSION, not
+    a de-duplication.** Against Guarantee 2 and every per-page honesty ruling.
+    Enforced as a **diff-level check (AC-L6)**, because a naive one-canonical-home
+    reading would otherwise delete all ten of them and look like tidying.
+- **⊕ 2026-07-19 (page-legal §9-5, owner) — LEGAL vs the SETTINGS→ABOUT LICENCE
+  LINE: both are kept, with distinct jobs.** **About answers *"what is this and
+  who built it"* — a credit.** **Legal answers *"under what terms do you have
+  it"* — the position.** They are not two homes for one fact; they are two facts
+  that both mention a licence. *(The honest alternative — delete the About
+  sentence and let Legal own the licence entirely — was considered and
+  **declined**; recorded because it was a real option, not a strawman.)* The
+  **About tab is untouched** by the Legal milestone.
+- **Terminology (page-legal §9-7, owner):** user-facing prose says British
+  **"licence"**; **filenames and SPDX identifiers say "License"** (fixed by
+  convention — `LICENSE`, `AGPL-3.0-or-later` — and not freely changeable). The
+  split is **deliberate** and recorded in GLOSSARY.md as such.
+
 ### Instrument Detail (`/instrument/:symbol`) — D-037, D-068 (scoped view, P-3)
 
 - **Nature:** a scoped view (filter) of canonical readers — quote/news scoped

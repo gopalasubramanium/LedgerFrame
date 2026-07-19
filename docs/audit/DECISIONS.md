@@ -815,13 +815,51 @@ clarifying notes recorded in the guide.
     fabricated 0). Contract: `HoldingView.price_display` added (API-CONTRACT
     regenerated same commit; no path change).
 
+- **D-106 — The per-reader served-disclaimer convention** (owner, 2026-07-19;
+  page-legal §9-2 / §9-3). **Every reader that has a limit worth stating serves its
+  own scoped `disclaimer` string, and the frontend renders it VERBATIM.** This was
+  already the product's settled practice across ten surfaces — `confidence.py`,
+  `estate.py`, `insurance.py`, `planning.py` (goals and cash flow),
+  `contributions.py`, `accounts.py`, `tax.py`, `schemas/ai.py`, and the Estate page
+  subtitle — and **exports carry the disclaimer INTO the file** (`tax.py` —
+  *"BORN WITH ITS DISCLAIMER"*). **It had no decision ID.** The Legal page-build
+  survey found it live and unruled, which is precisely the state in which a later
+  reviewer "fixes" it in the wrong direction; it is given an ID here.
+  - **The two kinds (the load-bearing part).** A **scoped caveat** is **part of the
+    figure** — served at the point of use, about **that reader's own** limits. The
+    **product-level position** (no advice / no execution / reporting only) is a
+    separate thing, stated **once** on the **Legal** page. **One-canonical-home
+    applies to the second and NOT to the first.** A scoped caveat is not a copy of
+    the legal statement, so it is not a duplication of it.
+  - **Corollary, binding:** **removing a scoped caveat is an HONESTY REGRESSION, not
+    a de-duplication** — against Guarantee 2 (*no advice*) and Guarantee 3 (*no
+    fabrication*: a figure shown without its stated limit overstates what it is).
+    Enforced by a **diff-level guard** (page-legal AC-L6), because the wrong move
+    here looks exactly like tidying and would otherwise pass review.
+  - **Consequence for transport (ruled at §9-3):** Legal's own copy is **SERVED**
+    (`GET /api/v1/legal`, `app/services/legal.py`), for the same reason as the ten:
+    **server-side copy is bound by the accuracy guards**, so it inherits the Help
+    truth bar. The deciding question was **the guard bar, not the transport**.
+  - **⚠ Citation correction, recorded rather than silently fixed.** The Legal
+    kickoff brief cited *"served strings per D-105"*. **D-105 is about MONEY** —
+    even after its scope amendment (*"D-105 BINDS ALL MONEY"*, percentages
+    explicitly out of scope). **D-105 does not govern prose, and never did.** The
+    real precedent is this convention, which is why it needed an ID rather than an
+    inference.
+  - **Where recorded:** INFORMATION-ARCHITECTURE.md §5 (**Legal**, the two-kind
+    split); page-legal.md §9-2 / §9-3.
+
 **Post-spec note:** D-089/D-092/D-093 are Holdings page-build decisions recorded
 after the 12-batch spec close (D-001–D-088); they change no earlier decision.
 **D-090 and D-091 were ratified 2026-07-10** (D-090 with the ETF-Bonus amendment);
 **D-094** records the table dataset-size posture; **D-095** the CSV round-trip
 contract; **D-096** the generated import template; **D-097** the class-aware
 instrument picker; **D-104** the tag normalise-vs-verbatim posture; **D-105** the
-backend quote-price display precision by asset class. None changes an earlier decision.
+backend quote-price display precision by asset class; **D-106** the per-reader
+served-disclaimer convention (page-legal, 2026-07-19). None changes an earlier
+decision — **D-106 gives an ID to practice that was already universal**, and
+**corrects the record on D-105's scope** (money, never prose) without altering
+D-105's ruling.
 
 ---
 

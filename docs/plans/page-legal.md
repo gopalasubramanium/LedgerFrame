@@ -1,8 +1,8 @@
 # page-legal — LEGAL milestone build plan
 
-*Per `TEMPLATE-page-build.md`. **STATUS: KICKOFF — PLAN ONLY, STOPPED AT §9.** No §9 item is
-resolved; every row carries a PROPOSED resolution for the owner. **No build starts until §9 closes**
-(TEMPLATE §9: *"do not start build on any item still open here"*).*
+*Per `TEMPLATE-page-build.md`. **STATUS: §9 CLOSED (owner in chat, 2026-07-19) — BUILD OPEN.**
+All eight items are ruled; the rulings are recorded in §9 below, and §3b / §4 / §7 / §8 are completed
+from them. Phase 0 begins.*
 
 **Milestone position:** Help is CLOSED (RATIFICATION §6). Legal is the next milestone, and
 `page-help.md:718` names it as such — *"It is authored in the Legal milestone, which is the very
@@ -174,17 +174,27 @@ No `app/services/legal.py`. Whether Legal needs one at all is → §9-3.
 ## 3. API SURFACE
 
 ### 3a. Endpoints consumed (already in the frozen contract)
-**None identified.** → depends entirely on §9-3.
+**None.** Legal consumes only its own new endpoint (§3b).
 
-### 3b. Contract deltas
-⚑ **→ §9-3.** If Legal's copy is served, this section is non-empty and the milestone is
-**backend-first**. If it is client-rendered constants, §3b is empty and Phase 0 is skipped
-(TEMPLATE §1 fast-path). *This single ruling sets the milestone's shape and schedule.*
+### 3b. Contract deltas — **NON-EMPTY; the milestone is BACKEND-FIRST** (§9-3 ruled SERVED)
+
+| Delta | Detail |
+|---|---|
+| **`GET /api/v1/legal`** | **NEW path.** Read-only, no query params, no secrets, no DB. Backed by `app/services/legal.py`, mirroring `app/services/help.py`'s shape (a module-level structured constant + an `all_legal()` accessor). |
+| Response schema | **NEW.** `LegalResponse` — the product-level position, the seven Guarantees verbatim, the licence position + file pointers, and the Pack footer string. |
+| Path count | **138 → 139.** Contract regenerated **in the same commit** as the route, both counts stated in the commit message (standing rule). |
 
 ## 4. COMPONENTS
-⚑ **→ §9-1.** No new components (DESIGN-SYSTEM forbids them). Candidate existing surfaces: `Card`,
-`PageHeader`. Whether a static prose document is expressible in ratified components without an
-amendment is the open question.
+**§9-1 ruled: no new components, no new template, no DESIGN-SYSTEM amendment.** Legal is a
+**prose document composed from ratified primitives**:
+
+| Primitive | Use on Legal |
+|---|---|
+| `PageHeader` | H1 **"Legal"** (= nav label = route, D-022) + the IA one-line purpose as subtitle |
+| `Card` | one per IA content — **Disclaimer · Product Guarantees · Licence · No jurisdiction tax** |
+
+**Full-width prose** per the standing DESIGN-SYSTEM §3 rule ruled and guarded at `page-help
+§9-bis-14` (`4b0727e`) — **reused, not re-minted.**
 
 ## 5. VOCABULARIES
 No categorical fields — Legal has no enums, no MASTER-DATA dependency. Terminology → §9-7.
@@ -195,31 +205,88 @@ D-001 (single-user appliance; future-proprietary-layer path — bears on licence
 D-022 (H1 = nav label = route) · **D-038 / D-061** (Reports Pack; disclaimers preserved) ·
 D-060 (*"for your accountant"*) · D-069 (Settings tabs, incl. About) · **D-071** (validation
 contract never weakens, Guarantee 7) · **D-077** (no jurisdiction tax logic, Guarantee 4) ·
-D-105 (money = served display strings — ⚑ see §9-3's citation note) ·
+D-105 (money = served display strings — **does NOT govern prose**; the kickoff's citation is
+corrected on the record at §9-3) · **D-106** (*the per-reader served-disclaimer convention* — minted
+by this milestone at §9-3, giving an ID to the §0-D convention that was live and unruled) ·
 **THE HELP CURRENCY LAW** (CLAUDE.md; page-help §9-bis-11(d)).
 
-## 7. ACCEPTANCE CRITERIA
-*Deferred — written after §9 closes. Fixed in advance regardless of §9:*
-- **AC-L1.** `/legal` renders real contents; `NotBuilt` is unreachable at that path.
-- **AC-L2.** `nav.ts` Legal carries `built: true`; the sidebar renders it as a link
-  (inverting `chrome.test.tsx:52`, and repointing `AppShell.test.tsx:346-350` — whose comment
-  *names Legal as the last unbuilt example* and will need a successor or deletion).
-- **AC-L3.** The Product Guarantees render **verbatim** against `PRODUCT-SPEC.md:62-78` — guarded by
-  string equality, not by eye.
-- **AC-L4.** `test_every_built_page_has_a_help_entry` is **green** with a real Legal entry.
-- **AC-L5.** The page claims **nothing** the product does not do; advice-free guard extends to it.
-- **AC-L6.** No per-surface disclaimer was removed by this milestone (a diff-level check, §9-2).
+## 7. ACCEPTANCE CRITERIA *(completed from the §9 rulings)*
 
-## 8. BUILD PHASES
-*Deferred — sequencing depends on §9-3 (served vs client) and §9-1 (template).*
-Fixed regardless: **the `built: true` flip and the Help entry land together** (§0-F's vice), and the
-close runs the **HELP CURRENCY SUITE** with the Help delta named (HELP CURRENCY LAW).
+| # | Criterion | How it is guarded |
+|---|---|---|
+| **AC-L1** | `/legal` renders real contents; `NotBuilt` is unreachable at that path | route test + the 0a walk |
+| **AC-L2** | `nav.ts` Legal carries `built: true` and the sidebar renders it as a link | **inverts** `chrome.test.tsx:52`; **repoints** `AppShell.test.tsx:346-350`, whose comment names Legal as the last unbuilt example and needs a successor or deletion |
+| **AC-L3** | The seven Product Guarantees render **verbatim** | **string equality against `PRODUCT-SPEC.md:62-77`**, not by eye |
+| **AC-L4** | `test_every_built_page_has_a_help_entry` green with a real Legal entry | `test_help_content_accuracy.py:142` (the vice's second bite) |
+| **AC-L5** | The page claims **nothing** the product does not do — the **§9-8 NEVER list (a)–(d)** | new guard, **fail-first with RED specimens**: a jurisdiction-compliance claim · a warranty term beyond AGPL · abstract *"secure/compliant/audited"* · implied counsel review |
+| **AC-L6** | **No per-surface disclaimer was removed by this milestone** (§9-2 corollary) | new **scoped-caveat registry** guard, **RED on a removed per-reader disclaimer** |
+| **AC-L7** | Legal's copy meets the **Help truth bar** | Legal's strings join the **accuracy corpus**, markup-stripped, same bar as Help (§9-3's deciding rationale) |
+| **AC-L8** | The Pack footer line matches Legal's served string **byte-for-byte** | fail-first test in the Pack suite (§9-4, one source / two renderers) |
+
+## 8. BUILD PHASES *(completed — backend-first per §9-3)*
+
+**Delta 0 (precedes Phase 0, own commit).** NetWorth `var(--radius-2)` regularization — dated delta
+note in `page-net-worth.md` + Net worth pre-pass re-run (the new CLAUDE.md standing rule's first
+application).
+
+**Phase 0 — backend, one delta per commit.**
+1. **GLOSSARY.md rows FIRST** — Legal · Disclaimer · Licence (§9-7 split noted); then the code
+   stores; parity guard green; **Tier-3 counter movement stated honestly**.
+2. **`app/services/legal.py` + `GET /api/v1/legal`** — contract regen **same commit**, **138 → 139**.
+3. **Guards fail-first** — AC-L5 (RED specimens → green), AC-L6 (RED on a removed caveat → green);
+   Legal joins the accuracy corpus.
+4. **Reports Pack** — the single footer line from the served string; fallback caption unchanged;
+   AC-L8 fail-first.
+
+**Phase 1 — assembly.**
+5. `/legal` page — prose document, both themes, containment **320 / 375 / 768 / 1366**, served
+   strings for **all** states including the **load-failure** state.
+6. **ATOMIC (§9-6, one commit):** Legal's Help entry **+** `nav.ts` `built: true`. Both accuracy-guard
+   bites green. **HELP CURRENCY satisfied by construction.** About tab untouched (§9-5).
+
+**Then STOP at the 0a specimen** for the owner's ratification — including every prose string.
 
 ---
 
-## 9. NEEDS DECISION — **OPEN. Nothing below is resolved.**
+## 9. NEEDS DECISION — **CLOSED (owner in chat, 2026-07-19).**
 
-*Resolutions are **PROPOSED for the owner**. ⚑ = owner call. The §9 one-pass happens in chat.*
+*The one-pass ran in chat on 2026-07-19. All eight items are ruled. **No ruling was typed in this
+CLI** — the table below is the record of what the owner (and, where marked, the architect under
+delegation) decided. The PROPOSED table that follows it is left standing unedited: it is the
+reasoning the rulings were made against, and a plan that erases its own deliberation cannot be
+audited.*
+
+### 9-RULINGS — the record
+
+| # | Ruled by | Ruling |
+|---|---|---|
+| **9-1** | architect, under delegation | **ACCEPTED as proposed.** Legal is a **prose-document composed from ratified primitives** — `PageHeader` + a stack of `Card` sections, one per IA content — **reusing the existing full-width prose rule** (`page-help §9-bis-14`, commit `4b0727e`). **No fifth template is minted and no DESIGN-SYSTEM amendment is taken.** The System-group⇒settings-template inference stays forbidden (`TEMPLATE:145-149`). |
+| **9-2** | owner | **ACCEPTED — the two-kind split is ruled, in writing.** (a) **Scoped caveats** are **part of the figure**, served at the point of use, and **owned by their own surfaces**; Legal does not own, absorb, shorten, or centralise them. (b) Legal owns **ONLY the product-level position** (no-advice / no-execution / reporting-only). **Corollary, binding:** *removing a scoped caveat is an **honesty regression**, not a de-duplication* — enforced as a diff-level check by **AC-L6**. Written into **IA §5** (below) so it survives this milestone. |
+| **9-3** | owner | **ACCEPTED — SERVED.** `GET /api/v1/legal`, backed by **`app/services/legal.py`** mirroring `help.py`. **The deciding rationale is the guard bar, not the transport:** served copy inherits the **Help truth-bar machinery** (the accuracy corpus), which client constants cannot. The milestone is therefore **backend-first** and **§3b is non-empty**. The kickoff's D-105 citation is **corrected on the record** — D-105 binds **money**, not prose; the real precedent is the per-reader served-`disclaimer` convention (§0-D), now given an ID as **D-106**. |
+| **9-4** | owner | **ACCEPTED as proposed.** The Reports Pack gains **ONE product-level reporting-only / no-advice footer line**, sourced from the **SAME served string Legal renders** — one source, two renderers, no second code path (D-038 lane). **Per-reader disclaimers in the Pack are untouched**, and the **reporting-only fallback caption** (`reports_pack.py:50`) is **unchanged**. **The seven Guarantees stay OFF print artifacts** — they are a page, not a report footer. |
+| **9-5** | owner | **ACCEPTED — keep BOTH licence mentions, with distinct jobs.** **About = credit** (*what this is and who built it*); **Legal = terms** (*under what terms you have it*). The honest alternative — delete the About sentence — was considered and **declined**. **Legal reproduces no generated file** (`NOTICE`, `LICENSES.md` stay canonical where they are generated). **"Pointer" means: names the file that ships with the source. Never a URL** — a local-first product cannot link to a hosted licence page. **The About tab is untouched by this milestone.** |
+| **9-6** | architect, under delegation | **ACCEPTED — the scheduling commitment stands and is ATOMIC.** Legal's `Pages` entry in `app/services/help.py` and the `nav.ts` `built: true` flip are **ONE commit**. The two accuracy-guard bites (`test_help_content_accuracy.py:127` blocks the entry before the flip; `:142` fails the flip without the entry) **form the vice** — neither can land alone. HELP CURRENCY is satisfied **by construction**, not by promise. |
+| **9-7** | owner | **ACCEPTED as proposed.** **User-facing prose = British "licence"**; **filenames and SPDX identifiers = "License"** (fixed by convention, not freely changeable). **The split is written into GLOSSARY.md as deliberate**, so it reads as a decision rather than as sloppiness. Three rows land this milestone: **Legal · Disclaimer · Licence**. |
+| **9-8** | owner | **ACCEPTED — the NEVER list (a)–(d) is binding page-copy constraint, guarded by AC-L5.** The page **never**: **(a)** claims compliance with any **named jurisdiction's** regulation, statute or tax code (the product has no jurisdiction logic at all — D-077 / Guarantee 4, so any such claim is a fabrication); **(b)** offers **indemnity, warranty, or limitation-of-liability** terms **beyond what the AGPL already states** (restating §15/§16 in the product's own words risks contradicting the licence it ships under); **(c)** describes itself as **"secure" / "compliant" / "audited"** in the abstract; **(d)** implies **review by counsel** unless the owner states counsel reviewed it. **No legal text is drafted by this CLI.** Connective prose is composed from **ratified primitives only** and ships **PROPOSED until the owner's 0a look**. **Counsel review is recorded as the owner's OPTION, not a gate.** |
+
+### 9-CONSEQUENCES — what the rulings changed elsewhere, this commit
+
+- **IA §5** gains a **`### Legal (/legal)`** section carrying the **9-2 two-kind split** and the
+  **9-5 About/Legal distinction**, dated 2026-07-19.
+- **DECISIONS.md** mints **D-106** — *the per-reader served-disclaimer convention*, the convention
+  §0-D found live with no decision ID (precedent: §0-D's ten surfaces; ruled at 9-3).
+- **CLAUDE.md** gains a standing rule from the Help-close review (architect ruling): *when a new
+  guard REDs an accepted surface, the fix ships **with** a dated delta note and that page's pre-pass
+  re-run **in the same delta** — flagging alone is not sufficient.* Its first application is the
+  **NetWorth `var(--radius-2)` regularization** (`page-net-worth.md`, own delta, before Phase 0).
+
+---
+
+### 9-PROPOSED — the reasoning of record (unedited, pre-ruling)
+
+*⚑ = was an owner call. Every row's PROPOSED resolution was accepted; see 9-RULINGS above for the
+authoritative wording and for the two places the ruling went beyond the proposal (9-3's D-106 mint,
+9-5's explicit declining of the delete-About alternative).*
 
 | # | Item | Why it blocks / what's needed | PROPOSED resolution (for owner to approve) |
 |---|------|-------------------------------|--------------------------------------------|
@@ -234,6 +301,6 @@ close runs the **HELP CURRENCY SUITE** with the Help delta named (HELP CURRENCY 
 
 ---
 
-**STOPPED AT §9 per the kickoff instruction.** No item above is resolved; no build has started; no
-ruling was typed in this CLI. The §9 one-pass happens in chat, after which §3b, §4, §7 and §8 are
-completed and Phase 0 begins.
+**§9 CLOSED 2026-07-19 (owner in chat).** §3b, §4, §7 and §8 above are completed from the rulings.
+No ruling was typed in this CLI. **Phase 0 is open**; the build stops at the **0a specimen** for the
+owner's ratification — including **every prose string on this page**, which ships **PROPOSED**.

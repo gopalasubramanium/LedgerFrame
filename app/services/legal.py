@@ -313,3 +313,125 @@ def all_legal() -> dict:
         "pointers": [dict(p) for p in _POINTERS],
         "pack_footer": PACK_FOOTER,
     }
+
+
+# =============================================================================================
+# THE ACCEPTANCE GATE (page-legal §11-5, owner, 2026-07-20)
+# =============================================================================================
+#
+# WHAT IS BEING RECORDED. Not "the user clicked a box" but "this person was shown THIS TEXT and
+# answered". Those are different facts, and only the second is worth storing: a consent record
+# that cannot say what was consented to is not a record, it is a reassurance.
+#
+# WHY THE HASH IS OVER THE SERVED CONTENT AND NOTHING ELSE. `content_hash()` digests exactly what
+# `all_legal()` returns — every clause, every sub-clause, the Commitments, the pointers, the
+# preamble. So:
+#   * reword one sub-clause and the hash moves, and every install is asked again;
+#   * change a code comment, a CSS rule or a test and it does NOT move, because none of that is
+#     the document.
+# The alternative — hashing a hand-maintained "legal version" constant — was rejected: it is a
+# number someone has to remember to bump, and the failure mode is silent and one-directional
+# (text changes, version doesn't, users are held to terms they were never shown).
+#
+# ⚠ A CONSEQUENCE, STATED PLAINLY RATHER THAN DISCOVERED LATER: because the hash covers the whole
+# served document, ANY edit to this file's copy — including a typo fix — re-locks every install
+# until the user accepts again. That is the honest behaviour for a consent record and it is also
+# a real operational cost. It is flagged for the owner at the re-look as a PROPOSED item: the
+# alternative (a curated "material change" flag) trades that cost for a judgement call about
+# which edits matter, made by whoever is editing.
+
+_ACCEPTANCE_ACTIONS = ("accepted", "declined")
+
+
+def content_hash() -> str:
+    """The sha256 an acceptance binds to: a digest of the served document, and only that.
+
+    Serialised with `sort_keys` and a fixed separator so the digest is a function of the CONTENT
+    and not of dict ordering — otherwise a Python version or a field reorder would silently
+    re-lock every install without a word of the document having changed.
+    """
+    import hashlib
+    import json
+
+    payload = json.dumps(all_legal(), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+# The gate's own copy. PROPOSED (§9-8 bars this CLI from drafting legal text) and it is the most
+# consequential string in the product: it is what the user is recorded as having agreed to. It
+# names exactly what is being accepted and nothing more, and it does NOT thank, reassure, or
+# describe the act as a formality.
+ACCEPTANCE_PROMPT = (
+    "I have read the Legal page, and I accept the licence terms and the product position set out "
+    "there."
+)
+ACCEPTANCE_EXPLAINER = (
+    "LedgerFrame reports; it does not give advice and does not act. It is released under the "
+    "AGPL-3.0-or-later licence, whose warranty position is stated in the licence itself. You can "
+    "read the full document before answering — Legal opens without accepting anything."
+)
+ACCEPTANCE_STALE_NOTE = (
+    "The Legal page has changed since you last accepted it. Please read it again and answer "
+    "again — an earlier answer covered the earlier text, and cannot stand in for this one."
+)
+ACCEPTANCE_DECLINED_NOTE = (
+    "You declined. Your answer is recorded and nothing has been deleted. LedgerFrame stays locked "
+    "until the terms are accepted; you can read Legal at any time, or close the app."
+)
+
+
+async def acceptance_status(session) -> dict:
+    """Where this install stands: the current hash, and whether a live acceptance covers it.
+
+    THREE STATES, NOT TWO, and the third is the one a boolean would lose:
+      * ``accepted``  — the newest event is an acceptance OF THE CURRENT HASH;
+      * ``stale``     — an acceptance exists, but of an EARLIER text. The user is not a stranger
+                        and should not be greeted as one; the gate says the document changed;
+      * ``none``      — no answer has ever been recorded (a fresh install), or the newest answer
+                        was a decline.
+
+    "Newest event wins" is deliberate. A decline after an acceptance re-locks, which is what makes
+    a decline meaningful rather than decorative — a user who changes their mind must be able to.
+    """
+    from sqlalchemy import select
+
+    from app.models import LegalAcceptanceEvent
+
+    current = content_hash()
+    rows = (await session.execute(
+        select(LegalAcceptanceEvent).order_by(LegalAcceptanceEvent.id.desc()).limit(1)
+    )).scalars().all()
+
+    if not rows:
+        return {"status": "none", "content_sha256": current, "accepted_at": None}
+    latest = rows[0]
+    if latest.action != "accepted":
+        return {"status": "none", "content_sha256": current, "accepted_at": None}
+    if latest.content_sha256 != current:
+        return {"status": "stale", "content_sha256": current, "accepted_at": None}
+    return {
+        "status": "accepted",
+        "content_sha256": current,
+        "accepted_at": latest.ts.isoformat() if latest.ts else None,
+    }
+
+
+async def is_accepted(session) -> bool:
+    """The one question the server-side gate asks. Kept separate so the gate cannot accidentally
+    treat ``stale`` as acceptable by reading a truthy dict."""
+    return (await acceptance_status(session))["status"] == "accepted"
+
+
+async def record_acceptance(session, action: str) -> dict:
+    """Append one event. Never updates, never deletes — see the model's note on why.
+
+    The hash is taken HERE, server-side, and never accepted from the client. A client-supplied
+    hash would let a caller record acceptance of a document that was never served.
+    """
+    from app.models import LegalAcceptanceEvent
+
+    if action not in _ACCEPTANCE_ACTIONS:
+        raise ValueError(f"action must be one of {_ACCEPTANCE_ACTIONS}, got {action!r}")
+    session.add(LegalAcceptanceEvent(action=action, content_sha256=content_hash()))
+    await session.commit()
+    return await acceptance_status(session)

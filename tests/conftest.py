@@ -52,6 +52,20 @@ async def session():
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     async with get_sessionmaker()() as s:
+        # THE ACCEPTANCE GATE (page-legal §11-5) again — this fixture's `drop_all` destroys the
+        # acceptance `app_client` recorded, and a test that asks for BOTH fixtures would then be
+        # served 451 by every data endpoint. Found exactly that way: three tests using both went
+        # red on 451 and nothing else changed about them.
+        #
+        # Inserted DIRECTLY here, unlike in `app_client`, and the difference is not laziness:
+        # there is no HTTP client in this fixture to post with. `app_client` deliberately goes
+        # through the real endpoint so the accept path stays continuously smoke-tested; this one
+        # only has to put the install into the state the other fixture already established.
+        from app.models import LegalAcceptanceEvent
+        from app.services.legal import content_hash
+
+        s.add(LegalAcceptanceEvent(action="accepted", content_sha256=content_hash()))
+        await s.commit()
         yield s
         await s.rollback()
 
@@ -102,4 +116,18 @@ async def app_client():
     async with app.router.lifespan_context(app), AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
+        # THE ACCEPTANCE GATE IS ON (page-legal §11-5): every /api/v1 read refuses with 451 until
+        # the Legal terms are accepted on this install. Accept once here so the ~1700 tests that
+        # exist to exercise the PRODUCT are not all re-testing the gate.
+        #
+        # This is done through the REAL ENDPOINT rather than by inserting a row, deliberately. A
+        # direct insert would let the gate and the acceptance path drift apart and every suite
+        # would stay green while the endpoint was broken — the fixture would be testing a
+        # database, not a product. Going through the API means this line is itself a continuous
+        # smoke test of the accept flow.
+        #
+        # The gate's OWN tests (`tests/integration/test_legal_acceptance.py`) clear the log and
+        # drive the unaccepted, stale and declined states explicitly. They must not rely on this.
+        r = await client.post("/api/v1/legal/acceptance", json={"action": "accepted"})
+        assert r.status_code == 200, f"test fixture could not accept the Legal terms: {r.text}"
         yield client

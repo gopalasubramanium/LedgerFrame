@@ -1615,6 +1615,50 @@
         "title": "InstrumentPatch",
         "type": "object"
       },
+      "LegalAcceptanceIn": {
+        "description": "The answer. `action` only \u2014 the hash is taken SERVER-SIDE and never accepted from the\nclient, or a caller could record acceptance of a document that was never served.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "LegalAcceptanceIn",
+        "type": "object"
+      },
+      "LegalAcceptanceStatus": {
+        "description": "Where this install stands on the Legal terms.\n\n`status` is a THREE-VALUE vocabulary, not a boolean, and the third value is the reason:\n  * `accepted` \u2014 a live acceptance of the CURRENT text;\n  * `stale`    \u2014 an acceptance exists, but of an earlier text. The user is not a stranger and\n                 the gate must not greet them as one;\n  * `none`     \u2014 never answered, or the newest answer was a decline.",
+        "properties": {
+          "accepted_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "content_sha256"
+        ],
+        "title": "LegalAcceptanceStatus",
+        "type": "object"
+      },
       "LegalArticle": {
         "description": "One article of the Legal page \u2014 a numbered heading over a run of clauses.\n\nWas `LegalSection` with a single `body` string until page-legal \u00a711-4 (owner, 2026-07-20)\nruled the formal register. Rendered as a `Card` (page-legal \u00a79-1); the template is unchanged.",
         "properties": {
@@ -1689,6 +1733,35 @@
           "items"
         ],
         "title": "LegalCommitments",
+        "type": "object"
+      },
+      "LegalGateCopy": {
+        "description": "The gate's served strings. PROPOSED (page-legal \u00a79-8) until the owner's look.\n\nServed rather than hardcoded in the lock screen for the same reason the page is (\u00a79-3): this\nis the most consequential copy in the product \u2014 it is what the user is recorded as having\nagreed to \u2014 and served copy is the copy the accuracy guards can reach.",
+        "properties": {
+          "declined_note": {
+            "title": "Declined Note",
+            "type": "string"
+          },
+          "explainer": {
+            "title": "Explainer",
+            "type": "string"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "stale_note": {
+            "title": "Stale Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt",
+          "explainer",
+          "stale_note",
+          "declined_note"
+        ],
+        "title": "LegalGateCopy",
         "type": "object"
       },
       "LegalPointer": {
@@ -8116,7 +8189,7 @@
     },
     "/api/v1/legal": {
       "get": {
-        "description": "The Legal page's copy \u2014 the product-level position, the Commitments, the licence, the\nno-jurisdiction-tax stance. Read-only, no secrets, no database, never personalised.",
+        "description": "The Legal page's copy \u2014 the product-level position, the Commitments, the licence, the\nno-jurisdiction-tax stance. Read-only, no secrets, no database, never personalised.\n\nREADABLE WITHOUT ACCEPTING (page-legal \u00a711-5). This endpoint is exempt from the acceptance\ngate, and the exemption is not a convenience: a gate that demanded acceptance of a document it\nwould not let you read would be asking for consent that could not be informed.",
         "operationId": "legal_content_api_v1_legal_get",
         "parameters": [
           {
@@ -8175,6 +8248,212 @@
           }
         },
         "summary": "Legal Content",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/legal/acceptance": {
+      "get": {
+        "description": "Current acceptance state + the current content hash. Exempt from the gate \u2014 the lock\nscreen has to be able to ask whether it should be showing itself.",
+        "operationId": "legal_acceptance_api_v1_legal_acceptance_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalAcceptanceStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Legal Acceptance",
+        "tags": [
+          "system"
+        ]
+      },
+      "post": {
+        "description": "Record an answer. Append-only: a decline never erases an earlier acceptance, and an\nacceptance never erases an earlier decline.\n\nNOT behind `require_auth`, deliberately, and this is worth stating because it looks like an\nomission. The gate sits in FRONT of the PIN in the entry sequence: on a PIN-protected install\nthe user has not unlocked yet when they answer, so requiring a session here would make the\nterms un-acceptable on exactly the installs that are most protected. The endpoint is\nloopback-reachable, writes one row to a local database, and exposes nothing \u2014 the threat it\nwould defend against is a local caller who could already read the whole database.",
+        "operationId": "post_legal_acceptance_api_v1_legal_acceptance_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegalAcceptanceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalAcceptanceStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Legal Acceptance",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/legal/gate-copy": {
+      "get": {
+        "description": "The gate's own strings. Exempt from the gate, for the obvious reason.",
+        "operationId": "legal_gate_copy_api_v1_legal_gate_copy_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalGateCopy"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Legal Gate Copy",
         "tags": [
           "system"
         ]

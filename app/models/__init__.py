@@ -726,3 +726,29 @@ class Contribution(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+# --------------------------------------------------------------------------- #
+# Legal acceptance (page-legal §11-5, owner 2026-07-20).
+#
+# AN APPEND-ONLY EVENT LOG, not a boolean. The temptation is one row with
+# `accepted: bool`, and it is wrong for a reason that matters: what is being
+# recorded is that a person was shown a specific text and answered. A flag that
+# is flipped keeps the answer and loses the question — and a DECLINE overwriting
+# an earlier ACCEPT would erase the fact that the earlier one happened.
+#
+# `content_sha256` is what binds an answer to WHAT WAS ANSWERED. Acceptance is of
+# a document, not of an idea: change the served text and the old acceptance no
+# longer covers it, which is why the hash is stored per event and re-acceptance
+# is required when it moves. Without it, "you accepted the terms" is a claim the
+# product could not substantiate about terms it has since rewritten.
+# --------------------------------------------------------------------------- #
+class LegalAcceptanceEvent(Base):
+    __tablename__ = "legal_acceptance_events"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ts: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    # "accepted" | "declined". A plain string rather than an enum, matching this
+    # file's convention for two-value vocabularies (see Contribution.kind).
+    action: Mapped[str] = mapped_column(String(16))
+    # The sha256 of the served legal content at the moment of the answer.
+    content_sha256: Mapped[str] = mapped_column(String(64), index=True)

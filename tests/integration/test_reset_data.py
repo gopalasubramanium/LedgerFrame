@@ -64,11 +64,18 @@ async def test_reset_demands_a_fresh_pin_not_the_ambient_session(app_client):
 # provider reference caches + the provider routing preference (provider config).
 # (alembic_version is preserved automatically — it is alembic-managed, not a mapped
 # model, so it never appears in the Base.metadata iteration the purge walks.)
+# legal_acceptance_events added 2026-07-20 (page-legal §11-5). It is install-level CONSENT, in
+# the same family as the PIN this list already preserves — not portfolio data. Wiping it would
+# silently re-lock the app behind the legal gate as a side effect of "clear my holdings", which
+# the control's copy does not mention. ⚑ PROPOSED for the owner at the re-look: the privacy-maximal
+# reading (a user resetting an install to hand it on wants the consent record gone too) is a real
+# counter-argument, and this guard exists so the choice is made rather than defaulted into.
 _RESET_KEEP_EXPECTED = {
     "settings", "users", "api_token", "revoked_token",   # settings / PIN / access
     "audit_events", "backup_records",                     # security + backup bookkeeping
     "amfi_schemes", "coingecko_coins", "ecb_fx_rates",    # provider reference caches
     "kite_instruments", "routing_matrix",                 # (re-syncable) + provider config
+    "legal_acceptance_events",                            # install-level consent — see above
 }
 
 

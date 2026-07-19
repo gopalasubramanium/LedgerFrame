@@ -62,6 +62,45 @@ def _read_stays_open(path: str) -> bool:
     return path.startswith("/api/v1/auth/")
 
 
+# --- The acceptance gate's exempt set (page-legal §11-5, owner 2026-07-20) --------------------- #
+#
+# THE GATE IS SERVER-SIDE, AND THE CHOICE WAS NOT CLOSE. A frontend-only lock is theatre: the
+# React app would refuse to render while `curl http://127.0.0.1:PORT/api/v1/portfolio` returned
+# the whole portfolio to anyone who skipped the UI. That is not a weaker version of a gate, it is
+# the absence of one — so the check lives here, beside `require_read_auth`, on the router-wide
+# dependency that every /api/v1 read already passes through.
+#
+# THE EXEMPT SET IS EXACTLY WHAT RENDERING THE GATE REQUIRES, AND NOTHING ELSE. Each entry earns
+# its place:
+#   * `/legal`            — the document itself. A gate that demanded acceptance of a text it
+#                           refused to show would be asking for consent that cannot be informed.
+#                           This is the one exemption that is a MATTER OF PRINCIPLE, not plumbing.
+#   * `/legal/acceptance` — read, so the gate can ask whether it should be showing itself;
+#                           write, so an answer can be recorded.
+#   * `/legal/gate-copy`  — the gate's own served strings.
+#   * `/auth/*`           — already open via `_read_stays_open`; the PIN flow is untouched by this
+#                           and composes with it (SECURITY-BASELINE §20-P unchanged).
+#   * `/system/status`    — the shell reads it before it can render anything at all, including the
+#                           gate. ⚠ THE ONE ENTRY THAT IS NOT SELF-EVIDENT, so it is named as a
+#                           deliberate widening rather than buried: it serves version, demo flag,
+#                           base currency and whether a PIN is set. It exposes NO holding, NO
+#                           figure and NO personal record — but it is not nothing, and if the gate
+#                           is ever asked to be strict, this is the entry to revisit first.
+#
+# WHAT THE GATE IS NOT. It is a CONSENT boundary, not an authentication one. It composes with the
+# PIN flow and replaces no part of it: an install with no PIN is exactly as protected after this
+# milestone as before it, and nothing here should ever be read as a security control.
+_ACCEPTANCE_EXEMPT_PREFIXES = (
+    "/api/v1/auth/",
+    "/api/v1/legal",          # covers /legal, /legal/acceptance, /legal/gate-copy
+    "/api/v1/system/status",
+)
+
+
+def _acceptance_not_required(path: str) -> bool:
+    return any(path.startswith(p) for p in _ACCEPTANCE_EXEMPT_PREFIXES)
+
+
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1"})
 
 
@@ -154,6 +193,23 @@ async def require_read_auth(
     state and unlock. Mutating endpoints additionally carry ``require_auth``."""
     if request.method == "OPTIONS" or _read_stays_open(request.url.path):
         return
+
+    # THE ACCEPTANCE GATE, BEFORE THE PIN CHECK (page-legal §11-5). Order matters and it is the
+    # entry sequence the owner ruled: terms first, then unlock. Placing it after the PIN check
+    # would leave an unaccepted, PIN-less install wide open — which is every fresh install.
+    #
+    # It runs for API TOKENS TOO. A read-only token is a LAN widget reading a summary out of this
+    # database; the terms have not been accepted for this install, and a token is not a second
+    # party who can be exempt from them.
+    if not _acceptance_not_required(request.url.path):
+        from app.services.legal import is_accepted
+
+        if not await is_accepted(session):
+            raise HTTPException(
+                status_code=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS,
+                detail="The Legal terms have not been accepted on this install.",
+            )
+
     # §2.4 — a valid read-only API token authenticates GET/HEAD (and is rejected on any
     # mutation with 403). This applies regardless of whether a PIN is set.
     if await _api_token_or_none(request, session, authorization) is not None:

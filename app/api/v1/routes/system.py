@@ -410,11 +410,23 @@ async def set_ai_config(payload: AIConfigIn) -> dict:
 #     which D-103 preserves as "provider config".
 # (alembic_version is preserved automatically — it is not a mapped model, so it never
 # appears in the Base.metadata purge walk.)
+#   legal consent — legal_acceptance_events records that a PERSON was shown a specific text and
+#     answered. It sits in the same family as the PIN, which D-103 already preserves: it is
+#     install-level, not portfolio data, and "clear my holdings" is not a request to withdraw
+#     consent. Wiping it would silently RE-LOCK the app behind the legal gate as a side effect of
+#     a data reset — a consequence the control's copy does not mention and the user did not ask
+#     for. It is also an append-only record of something that HAPPENED, and erasing it would make
+#     the product unable to say what it truthfully can.
+#     ⚑ PROPOSED (page-legal §11-5, for the owner at the re-look). The honest counter-argument is
+#     real: a user resetting an install to hand it on may well want the consent record gone too,
+#     and the privacy-maximal reading says erase it. Recorded as a decision, not a default —
+#     §14dr-26 exists precisely so a new table cannot survive an erase by nobody noticing.
 RESET_KEEP_TABLES: frozenset[str] = frozenset({
     "settings", "users", "api_token", "revoked_token",
     "audit_events", "backup_records",
     "amfi_schemes", "coingecko_coins", "ecb_fx_rates", "kite_instruments",
     "routing_matrix",
+    "legal_acceptance_events",
 })
 
 
@@ -915,7 +927,95 @@ class LegalResponse(BaseModel):
 @router.get("/legal", response_model=LegalResponse)
 async def legal_content() -> dict:
     """The Legal page's copy — the product-level position, the Commitments, the licence, the
-    no-jurisdiction-tax stance. Read-only, no secrets, no database, never personalised."""
+    no-jurisdiction-tax stance. Read-only, no secrets, no database, never personalised.
+
+    READABLE WITHOUT ACCEPTING (page-legal §11-5). This endpoint is exempt from the acceptance
+    gate, and the exemption is not a convenience: a gate that demanded acceptance of a document it
+    would not let you read would be asking for consent that could not be informed.
+    """
     from app.services.legal import all_legal
 
     return all_legal()
+
+
+# --- The acceptance gate (page-legal §11-5, owner 2026-07-20) --------------------------------- #
+
+
+class LegalAcceptanceStatus(BaseModel):
+    """Where this install stands on the Legal terms.
+
+    `status` is a THREE-VALUE vocabulary, not a boolean, and the third value is the reason:
+      * `accepted` — a live acceptance of the CURRENT text;
+      * `stale`    — an acceptance exists, but of an earlier text. The user is not a stranger and
+                     the gate must not greet them as one;
+      * `none`     — never answered, or the newest answer was a decline.
+    """
+    status: str
+    #: sha256 of the served legal document. An acceptance binds to this, so a changed document
+    #: requires a fresh answer — "you accepted the terms" must be a statement the product can
+    #: substantiate about the terms it actually showed.
+    content_sha256: str
+    accepted_at: str | None = None
+
+
+class LegalAcceptanceIn(BaseModel):
+    """The answer. `action` only — the hash is taken SERVER-SIDE and never accepted from the
+    client, or a caller could record acceptance of a document that was never served."""
+    action: str
+
+
+class LegalGateCopy(BaseModel):
+    """The gate's served strings. PROPOSED (page-legal §9-8) until the owner's look.
+
+    Served rather than hardcoded in the lock screen for the same reason the page is (§9-3): this
+    is the most consequential copy in the product — it is what the user is recorded as having
+    agreed to — and served copy is the copy the accuracy guards can reach.
+    """
+    prompt: str
+    explainer: str
+    stale_note: str
+    declined_note: str
+
+
+@router.get("/legal/acceptance", response_model=LegalAcceptanceStatus)
+async def legal_acceptance(session: AsyncSession = Depends(get_db)) -> dict:
+    """Current acceptance state + the current content hash. Exempt from the gate — the lock
+    screen has to be able to ask whether it should be showing itself."""
+    from app.services.legal import acceptance_status
+
+    return await acceptance_status(session)
+
+
+@router.get("/legal/gate-copy", response_model=LegalGateCopy)
+async def legal_gate_copy() -> dict:
+    """The gate's own strings. Exempt from the gate, for the obvious reason."""
+    from app.services import legal
+
+    return {
+        "prompt": legal.ACCEPTANCE_PROMPT,
+        "explainer": legal.ACCEPTANCE_EXPLAINER,
+        "stale_note": legal.ACCEPTANCE_STALE_NOTE,
+        "declined_note": legal.ACCEPTANCE_DECLINED_NOTE,
+    }
+
+
+@router.post("/legal/acceptance", response_model=LegalAcceptanceStatus)
+async def post_legal_acceptance(
+    payload: LegalAcceptanceIn, session: AsyncSession = Depends(get_db)
+) -> dict:
+    """Record an answer. Append-only: a decline never erases an earlier acceptance, and an
+    acceptance never erases an earlier decline.
+
+    NOT behind `require_auth`, deliberately, and this is worth stating because it looks like an
+    omission. The gate sits in FRONT of the PIN in the entry sequence: on a PIN-protected install
+    the user has not unlocked yet when they answer, so requiring a session here would make the
+    terms un-acceptable on exactly the installs that are most protected. The endpoint is
+    loopback-reachable, writes one row to a local database, and exposes nothing — the threat it
+    would defend against is a local caller who could already read the whole database.
+    """
+    from app.services.legal import record_acceptance
+
+    try:
+        return await record_acceptance(session, payload.action)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e

@@ -171,3 +171,87 @@ async def test_egress_is_allowed_again_when_no_egress_is_OFF(app_client) -> None
 
     await app_client.put("/api/v1/settings", json={"values": {"privacy_mode": "1"}})
     assert await egress_allowed() is False
+
+
+# --- BOTH providers refuse with the SAME TYPE, and neither retries ------------------------------
+#
+# AI-surfaces §0-E found the gap: `openai_compatible` deliberately re-raised `EgressBlocked`
+# before its retry, with the reason written out — *"No-egress is a REFUSAL, not a transient
+# failure … retrying it would be the very thing Guarantee 5 forbids."* `hailo_ollama` had no
+# such case: its `except Exception` swallowed the refusal into `RuntimeError(str(exc))`.
+#
+# No call was made either way, so the behaviour was already safe. **The TYPE is the honesty.**
+# Commitment 3 turns on telling *"you turned this off"* apart from *"it broke"*, and a caller
+# holding a `RuntimeError` cannot tell them apart — so the Ask panel could not render a refusal
+# as the product's posture WORKING rather than as an error. These tests hold both providers to
+# the same contract so they cannot drift apart again.
+
+
+async def _chat_raises(provider) -> Exception | None:
+    from app.schemas.ai import AIRequest, ChatMessage
+
+    req = AIRequest(messages=[ChatMessage(role="user", content="hi")])
+    try:
+        async for _ in provider.chat(req):
+            pass
+    except Exception as exc:  # noqa: BLE001 — the TYPE is what this test is about
+        return exc
+    return None
+
+
+async def test_openai_compatible_chat_propagates_EgressBlocked_untyped_never_retried(
+    no_egress, forbid_http
+) -> None:
+    from app.providers.ai.openai_compatible import OpenAICompatibleProvider
+
+    p = OpenAICompatibleProvider(base_url="http://127.0.0.1:9/v1", api_key="k", model="m")
+    exc = await _chat_raises(p)
+
+    assert isinstance(exc, EgressBlocked), (
+        f"openai_compatible turned a no-egress refusal into {type(exc).__name__}: {exc}. "
+        "A refusal must keep its type all the way to the caller."
+    )
+    assert not forbid_http, "the client was constructed — the refusal came too late"
+
+
+async def test_hailo_chat_propagates_EgressBlocked_untyped_never_retried(
+    no_egress, forbid_http
+) -> None:
+    """The §0-E gap, closed.
+
+    The model is passed explicitly: with no model configured, `chat()` calls `_select_model()`
+    → `list_models()`, which catches every exception and returns `[]`, so `chat()` returns
+    before it ever reaches the gate. That path is honest (no model → no answer) but it is not
+    the one under test, and a test that never reached the gate would prove nothing.
+    """
+    from app.providers.ai.hailo_ollama import HailoOllamaProvider
+
+    p = HailoOllamaProvider(base_url="http://127.0.0.1:8000", model="m")
+    exc = await _chat_raises(p)
+
+    assert isinstance(exc, EgressBlocked), (
+        f"hailo turned a no-egress refusal into {type(exc).__name__}: {exc}. This was the "
+        "§0-E gap: `except Exception` swallowed EgressBlocked into RuntimeError, losing the "
+        "distinction between 'you turned this off' and 'it broke' — the exact distinction "
+        "Commitment 3 turns on."
+    )
+    assert not forbid_http, "the client was constructed — the refusal came too late"
+
+
+async def test_the_two_providers_refuse_identically(no_egress, forbid_http) -> None:
+    """Pinned against drift: the guard above is per-provider, so it cannot see disagreement.
+
+    Two tests that each pass in isolation can still describe two different products. This
+    asserts the property that actually matters — a caller cannot tell the providers apart by
+    how they refuse.
+    """
+    from app.providers.ai.hailo_ollama import HailoOllamaProvider
+    from app.providers.ai.openai_compatible import OpenAICompatibleProvider
+
+    a = await _chat_raises(OpenAICompatibleProvider(base_url="http://127.0.0.1:9/v1", api_key="k", model="m"))
+    b = await _chat_raises(HailoOllamaProvider(base_url="http://127.0.0.1:8000", model="m"))
+
+    assert type(a) is type(b) is EgressBlocked, (
+        f"the providers refuse differently: openai_compatible→{type(a).__name__}, "
+        f"hailo→{type(b).__name__}. No-egress means the same thing on both."
+    )

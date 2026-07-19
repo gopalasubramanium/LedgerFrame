@@ -17,7 +17,7 @@ from collections.abc import AsyncIterator
 
 import httpx
 
-from app.core.egress import egress_client
+from app.core.egress import EgressBlocked, egress_client
 from app.schemas.ai import AIChunk, AIRequest, HealthStatus, ModelInfo
 
 log = logging.getLogger(__name__)
@@ -138,6 +138,18 @@ class HailoOllamaProvider:
                             yield AIChunk(delta="", done=True)
                             return
             yield AIChunk(delta="", done=True)
+        except EgressBlocked:
+            # No-egress is a REFUSAL, not a transient failure — the same reasoning the
+            # openai_compatible provider already applied, mirrored here so the two
+            # providers cannot disagree about what "off" means.
+            #
+            # The generic handler below swallows this into RuntimeError(str(exc)). No call
+            # is made either way, so the behaviour was already safe — but the TYPE is the
+            # honesty. Commitment 3 turns on telling "you turned this off" apart from "it
+            # broke", and a caller holding a RuntimeError cannot tell them apart. Letting
+            # EgressBlocked propagate is what lets the Ask panel render a refusal as the
+            # product's posture WORKING rather than as an error.
+            raise
         except Exception as exc:  # noqa: BLE001
             log.warning("hailo chat failed: %s", exc)
             if not produced:

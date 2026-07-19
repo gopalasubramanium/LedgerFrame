@@ -25,34 +25,31 @@ The product shell + every built page + the platform milestones, owner-accepted:
   **CLOSED (3 findings / 1 batch)** + §15 strike-check. Owner-accepted on the live 3b
   re-walk; the **§14dr-25 carryover is FULLY ACCEPTED** (clean TSLA 1D/5D on the real
   instance). `RATIFICATION.md §6` row appended.
+- **historical-backfill (R-43)** — **closed 2026-07-19**, `r43-historical-backfill.md`
+  walk ledger **CLOSED (8 numbered findings, F-1..F-4 + F-6..F-9 — no F-5 was ever
+  assigned; 14 defects counting the lettered sub-findings)** + §23 strike-check.
+  **The milestone that made the Net-worth trend REAL** — a real multi-year series
+  (2019→today) at **6/6 coverage ending at the live headline**, owner-accepted in chat on
+  his own instance. Includes **R-8** (historical per-date FX). `RATIFICATION.md §6` row
+  appended. **Open, ruling owed:** §21-3 (a `TimeoutError` escaping the AMFI chunk loop);
+  **R-50** filed POST-RELEASE.
 
 ---
 
-## NEXT — R-43 — historical valuation backfill
+## NEXT — Help
 
-**Owner priority** (RD-9 Amendment 6). Retrospective portfolio valuation so the Net worth
-trend stops being flat/linear (only forward snapshots exist today).
+**[Help] retrofit, owner-picked targets** (RD-9 Amendment 4).
 
-Scope: a **Decimal engine** (no client money math, D-105); **persisted snapshots**;
-powered from price history + transactions + per-date FX. Includes:
-
-- **R-8 — historical FX series** (its **hard dependency**; pulled in with R-43).
-- **Transaction currency + trade-date cost-basis FX** — **folded into R-43 by ruling at
-  the R-42 close (2026-07-18)**: the India funds recorded cost in SGD while NAV is INR
-  (a data-entry currency question, not a valuation bug); trade-date conversion is R-43's
-  natural home, adjacent to R-8.
-- **The Net-worth snapshot-now trigger** — an icon `Button` on the trend card.
-
-**PLAN ONLY first — verify-first, STOP at §9** (the R-35/R-38/R-42 plan-file-first
+**PLAN ONLY first — verify-first, STOP at §9** (the R-35/R-38/R-42/R-43 plan-file-first
 precedent). No code before the owner's §9 one-pass.
 
 ---
 
 ## THEN — the road to v2.0.0 (RD-9 Amendment 4 + 5 + 6)
 
-The remaining v2.0.0 set, in sequence (R-43 is the active NEXT above):
+The remaining v2.0.0 set, in sequence (**Help** is the active NEXT above):
 
-1. **Help** — `[Help]` retrofit, owner-picked targets (RD-9 Amendment 4).
+1. ~~**Help**~~ — the active NEXT above.
 2. **Legal.**
 3. **AI-surfaces** — D-067 / D-068. **Intake (added 2026-07-19, R-43 §18-F7d):**
    `test_performance_question_pulls_risk_metrics` streams `/ai/chat` and asserts the risk
@@ -69,7 +66,10 @@ The remaining v2.0.0 set, in sequence (R-43 is the active NEXT above):
 6. **chrome-sidebar-refresh (R-39)** — the **FINAL pre-release** milestone.
 7. **Pre-release owner walk** — `docs/plans/pre-release-walk.md` (the thorough capstone;
    carries the deferred verifications — dr-25 chart sign-off **[DONE at the R-42 close]**,
-   dr-28 owner-eyes; plus the R-42-appended mixed-currency / intraday / fund-P/L checks).
+   dr-28 owner-eyes; plus the R-42-appended mixed-currency / intraday / fund-P/L checks
+   and the **R-43-appended 10d–10g** — mixed-provider backfill spot-check, 6/6 trend with
+   the carried note, **§20-P `LEDGERFRAME_SECRET_KEY` as a Gate-C blocker**, TWR/1Y once
+   coverage fills).
 8. **Gates C→F clear** (`release-readiness.md`) → **tag v2.0.0.**
 
 **R-41 / R-43 / R-44 — RESOLVED (RD-9 Amendment 6, owner 2026-07-18):** R-43 **IN** (with

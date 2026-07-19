@@ -1062,6 +1062,68 @@ therefore **not triggered**, and **§9-bis-1 orders the pattern explicitly**.
 list** are **three PROPOSED DS patterns**, built from **ratified primitives where possible**, each
 **listed explicitly in the 0a report** for **owner ratification by looking**. **Reversible.**
 
+### §9-bis-9 — Phase 0-bis DONE (backend + content), 2026-07-19
+
+Four deltas: the counter (`87d53d1`), the three-section shape (`9f06277`), Section 2 + its guards
+(`120c836`), Section 3 (`badd755`). **Contract: 138 path keys unchanged · 62 → 63 schemas
+(+`HelpTopicLink`), regenerated in the same commit as the shape change.**
+
+**(a) SEARCH IS CLIENT-SIDE, and the one-line reason (§9-bis-4).** The page's type-ahead ranks in
+the browser over the already-served bundle, because the whole catalogue arrives in one read on a
+local-first appliance — so per-keystroke ranking costs nothing, needs no debounce-to-server, and
+keeps working with no-egress on, none of which a per-keystroke request can claim. **The server
+ranker stays** and is not duplicated work: `GET /help?q=` and `app/ai/tools.py:145` are its
+consumers. The honest cost, recorded rather than glossed: **two rankers now exist and could drift**.
+They serve different consumers, each is tested on its own side, and neither is authoritative for the
+other.
+
+**(b) AI-GROUNDING TOUCH DECLARED (§B5).** `app/ai/tools.py:145` `help_facts()` consumes this
+content unchanged in shape — it reads `title` + `body`, both of which every entry still carries — so
+**AI surfaces ground on POST-redesign content automatically**, with no edit to `tools.py`. Two
+consequences were verified rather than assumed:
+* **A ranking regression reached the AI before it reached the page.** Adding "What LedgerFrame is"
+  made `search_help("what is xirr")` return it first; the AI would have answered a question about
+  XIRR with the platform blurb. Fixed at the ranker (stopwords, then coverage-over-tier).
+* **The sample marker had to live in the served string**, not in the page's styling — otherwise the
+  AI quotes an example's figures with nothing marking them invented.
+
+**(c) A DEAD AFFORDANCE FOUND IN SHIPPED COPY.** The Settings entry described Data feeds as carrying
+*"how long a price may go without refreshing"*. **No such control exists** — `Settings.tsx:70`
+records the stale-after posture as *"not yet built — served only"*. It survived the whole Tier-1
+content pass because nothing compared an affordance claim to the product. Removed, and the guard
+that would have caught it now exists.
+
+**(d) THE GUARD WAS VACUOUS UNTIL ITS OWN RED SPECIMEN SAID SO.** The first dead-affordance guard
+returned GREEN on the exact defect it was written for, twice over: its corpus included
+`app/services/help.py` (so every claim was checked against the string that made it — circular, not
+weak) and it included **comments**, one of which carries the words "stale-after" while saying "not
+yet built". *A comment stating a thing does not exist is the last place a claim that it exists
+should find corroboration.* Both excluded. **Seven fail-first specimens** in total, each RED on the
+real cause: dead affordance · invented option value · retired term in `interpret` · lowercase
+"Pricing health" in `outputs` · unmarked example · an example saying "your" · a term dropped from
+the reading order.
+
+**(e) The prose guards no longer carry a hardcoded field tuple.** The redesign added five prose
+fields, and every existing guard would have stayed green while checking none of them. The field set
+is derived from the entries, with a meta-test that fails if it stops covering the redesign's fields.
+
+**(f) §B6 — no new glossary-visible term was introduced.** Section headings (Orientation · Pages ·
+Glossary) are page furniture, on the same footing as the Settings tab labels, none of which are
+GLOSSARY rows either. **Three-store parity is untouched** and the Tier-3 counter still reads
+**71 / 29 / 58**.
+
+> **⚠ A DEFECT ON AN ACCEPTED PAGE, FOUND WHILE VERIFYING COPY — NOT FIXED HERE.**
+> `Policy.tsx:416` and `Policy.tsx:447` **both** render the `Default band` + `Concentration limit`
+> pair. Both are live, both bound to the same state, and **nothing hides either**: `Policy.css:89`
+> (`.pol__metarow`) and `:195` (`.pol__edithead`) were read, and neither suppresses the other. The
+> user sees two identical bands and two identical concentration limits, and each `aria-label` is
+> duplicated with it. The comment at `:439` says "**ONE header block**" — so the block at `:416` is
+> a leftover the §12po2-3 fix was meant to remove.
+> **Not fixed in this milestone:** Policy is a closed accepted page, and touching it needs its own
+> dated delta note plus a Policy pre-pass — the Settings protocol, not a drive-by. **Help copy was
+> written around it**: the Policy entry names the controls without asserting how many of each there
+> are. **Owner's call at 0a.**
+
 ---
 
 ## SCOPE-NOTES *(preserved verbatim — owner rulings recorded ahead of the draft; inputs to §9)*

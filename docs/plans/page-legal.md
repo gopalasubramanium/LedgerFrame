@@ -926,6 +926,86 @@ already applied when it renamed the response models.
 
 ---
 
+### 11-J. THE HARD-RULE VIOLATION — a raw checkbox in the gate; the primitive and the guard (2026-07-20)
+
+**Found by honest self-report at the re-look, not by any check.** Nothing went red. `npm run check`
+exited 0, the suite was green, the Playwright pre-pass passed, and the §11-E2 review was written and
+read. This was found by re-reading the file against CLAUDE.md's hard rules, one at a time.
+
+**THE VIOLATION.** `AcceptanceGate.tsx:90` (`§11-E2`) rendered a hand-rolled
+`<input type="checkbox">` with its own `useId`, its own label wiring, and no focus ring of its own.
+CLAUDE.md and DESIGN-SYSTEM §6 both say, in as many words: *"Every user input uses a component from
+`src/components/ui/`. Raw `<input>`, `<select>`, or ad-hoc styling is forbidden."*
+
+**Why nothing caught it.** Every gate that ran asks whether the control **works**. The unit tests
+found it by `getByRole("checkbox")` and clicked it; it ticked, and the Accept button enabled. The
+token check asks whether values resolve through tokens — this element had **no** styling at all, so
+there was nothing to fail. The pre-pass asks whether the page contains itself and logs no errors; an
+unstyled native checkbox does both. **Not one of them asks whether the control is the SANCTIONED
+one**, because until this delta no gate in this repo ever did.
+
+**It is a mitigating fact and not an excuse that the file lives in `src/components/ui/`.** The rule
+is about *primitives owning native elements*; `ui/` is where primitives live, which is exactly why
+a raw element there is harder to see and not easier to justify. The other fifteen raw `<input>`s in
+this tree are each inside their own primitive — `TextInput`, `MoneyInput`, `DateInput`, `FileInput`,
+the PIN fields — which is what the rule looks like when it is being kept.
+
+**THE FIX — three parts, `7011522`.**
+
+1. **The Checkbox primitive** (`Checkbox.tsx` + `inputs.css`): label association, Space-key
+   operation, `:focus-visible` ring from `--focus-ring`, disabled state that dims the label too,
+   both themes via semantic tokens only. **The native input is kept and visually replaced**, not
+   reimplemented on a `<button>` the way `Switch` is — `role="switch"` has no native element so
+   Switch had to build one, whereas a checkbox **has** one and every part of consent machinery
+   (announcement, the Space key, submission) is got right by construction only by using it.
+   **No copy lives in the component**; `label` is the caller's string.
+2. **The gate consumes it.** **No copy change** — the served prompt is passed through **verbatim**
+   as the label; the acceptance sentence remains PROPOSED as served (§11-OPEN item 2, still open).
+   `.lf-gate__check` keeps the **frame** only, and `.lf-gate__prompt` is **deleted** because its
+   styling now belongs to the primitive: a surface that keeps its own copy of a primitive's
+   typography is the next drift.
+3. **`check:primitives`** (`scripts/check-ui-primitives.mjs`), wired into `npm run check` beside
+   `check:tokens` / `check:copy` / `check:smoke-isolation` — **the standing suite, not a one-off**.
+   No raw `<input type="checkbox">` anywhere in `src`, allow-list of **exactly one file**: the
+   primitive that owns the element. Scope is deliberately the type that was **violated** rather
+   than a speculative sweep over every input type; widening it to `<select>` is a deliberate act
+   with a ratified primitive behind it, not a regex someone broadens on a hunch. It is **pinned
+   against going blind** — if `Checkbox.tsx` ever stops holding a native checkbox the guard fails
+   loudly rather than passing by protecting nothing (the `--text-primary` lesson from the token
+   check).
+
+**FAIL-FIRST — driven RED twice.** Blind first (guard present, primitive absent → *"the guard would
+pass by protecting nothing"*), then on the real violation: `✗ Raw checkbox input: 1 occurrence(s)
+… src/components/ui/AcceptanceGate.tsx:90`. Green only after the gate consumed the primitive.
+
+**A defect in the guard, found while driving it and fixed before it was trusted.** The first version
+stripped comments **without preserving newlines** and therefore reported `AcceptanceGate.tsx:87` for
+a violation on line **90**. A guard that names the wrong line sends its reader to innocent code and
+teaches them to distrust it — the same genre as the §11-D numbering guard that matched
+`AGPL-3.0-or-later`, and the note lives in the script for the same reason.
+
+**Also shipped:** the primitive exported from `ui/index.ts`; a four-state **KitchenSink §5.1
+specimen** (unticked · ticked · disabled · long wrapping label) so the owner ratifies it on the
+surface primitives are ratified on; **5 unit tests**, one per behaviour the primitive exists to
+centralise, so *"the gate has a working checkbox"* and *"the checkbox is correct"* stop being the
+same claim.
+
+**DESIGN-SYSTEM** (`9d14994`, all **PROPOSED** pending the owner's look): Checkbox into the §5.1
+inventory; **Legal formal-document typography registered as page-scoped** and deliberately not
+promoted; the **reading-return bar**.
+
+**⚑ RAISED, NOT DECIDED.** The reading-return bar's two strings (*"You are reading the Legal page.
+Nothing has been accepted yet."* / *"Return to accept"*) are **authored in `AppShell.tsx`**, not
+served — unlike every string inside the gate (§9-3/§9-8). They state **UI state** rather than terms,
+which is the likely reason they were never questioned, but they sit **on the consent path**. Not
+changed here; for the owner.
+
+**HELP CURRENCY:** **no Help impact** — corroborated. No served string, no route, no user-visible
+copy and no user-facing behaviour changed in this delta; the gate renders the same served prompt,
+verbatim, through a different control. The HELP CURRENCY SUITE runs in the gates refresh below.
+
+---
+
 ## 15. LESSONS — carried to the close
 
 *Seeded here at the re-look so the close inherits them rather than re-deriving them. The close
@@ -956,3 +1036,13 @@ ritual arrives as its own instruction; this list is its input.*
    missed that a PIN-protected install showed the PIN prompt instead of the consent panel, because
    every test in the gate's module ran on a PIN-less install. The defect was on the installs most
    likely to have a real user behind them.
+6. **A HARD RULE WITHOUT A GUARD IS A REQUEST.** (§11-J.) *"Raw `<input>` is forbidden"* has stood
+   in CLAUDE.md and DESIGN-SYSTEM §6 since the design-system milestone, and it was enforced by
+   **nobody**: the gate shipped a hand-rolled checkbox through `npm run check`, a green suite, a
+   Playwright pre-pass and a written review. **Every one of those asks whether a control WORKS;
+   none asked whether it is the SANCTIONED one**, and a working violation is the kind no
+   correctness gate can see. This is lesson 2 (*a convention that lives only in a plan file is
+   enforced by nobody*) escalated: **the same is true of a convention in CLAUDE.md itself.** The
+   test of a hard rule is not that it is written prominently — it is that something goes red.
+   **Ask of every hard rule: what turns red?** Where the answer is *nothing*, the rule is a
+   request, and the correct response is a guard in the standing suite, not a reminder.

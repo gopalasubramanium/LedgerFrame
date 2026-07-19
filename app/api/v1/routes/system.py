@@ -410,23 +410,36 @@ async def set_ai_config(payload: AIConfigIn) -> dict:
 #     which D-103 preserves as "provider config".
 # (alembic_version is preserved automatically — it is not a mapped model, so it never
 # appears in the Base.metadata purge walk.)
-#   legal consent — legal_acceptance_events records that a PERSON was shown a specific text and
-#     answered. It sits in the same family as the PIN, which D-103 already preserves: it is
-#     install-level, not portfolio data, and "clear my holdings" is not a request to withdraw
-#     consent. Wiping it would silently RE-LOCK the app behind the legal gate as a side effect of
-#     a data reset — a consequence the control's copy does not mention and the user did not ask
-#     for. It is also an append-only record of something that HAPPENED, and erasing it would make
-#     the product unable to say what it truthfully can.
-#     ⚑ PROPOSED (page-legal §11-5, for the owner at the re-look). The honest counter-argument is
-#     real: a user resetting an install to hand it on may well want the consent record gone too,
-#     and the privacy-maximal reading says erase it. Recorded as a decision, not a default —
-#     §14dr-26 exists precisely so a new table cannot survive an erase by nobody noticing.
+#
+# LEGAL CONSENT IS *NOT* KEPT, AND THAT ABSENCE IS RULED, NOT OVERLOOKED (page-legal §11-D3,
+# architect under delegation, 2026-07-20). `legal_acceptance_events` is named here precisely
+# because §14dr-26's premise is that every table's fate is triaged — "absent from the keep list"
+# and "nobody thought about it" are indistinguishable by inspection, and this comment is the
+# difference.
+#
+# It was briefly KEPT, on a defensible argument: acceptance is install-level, it sits in the same
+# family as the PIN this list preserves, and "clear my holdings" is not obviously a request to
+# withdraw consent. The ruling INVERTED that. The gate binds the PERSON using the install, not the
+# machine; a reset returns the install to first-run posture, and the commonest reason to press it
+# is to hand the install to somebody else. A surviving acceptance would then be the PREVIOUS
+# user's, and the app would treat a new person as having read and accepted a document they have
+# never seen — a FALSE RECORD OF CONSENT, which is the one thing this table must never hold.
+#
+# The two failure modes are not symmetric, which is what decided it: keeping the record fails by
+# attributing an agreement to someone who never gave it; erasing it fails by asking a returning
+# user to press Accept again. Only one of those is a lie.
+#
+# THE ERASURE IS STATED IN THE CONFIRMATION COPY (Settings.tsx `ResetDataControl`), and that is a
+# CONDITION of the ruling rather than a courtesy — an unannounced erase is a silent re-lock, which
+# is what the preceding decision refused. Pinned from both ends:
+#   * `test_a_data_reset_ERASES_acceptance_and_the_gate_RE_FIRES` (test_legal_acceptance.py)
+#   * `test_the_reset_confirmation_copy_STATES_the_erasure`       (test_reset_data.py)
+# ⚑ REVERSIBLE — a delegated ruling, carried to the owner at the re-look.
 RESET_KEEP_TABLES: frozenset[str] = frozenset({
     "settings", "users", "api_token", "revoked_token",
     "audit_events", "backup_records",
     "amfi_schemes", "coingecko_coins", "ecb_fx_rates", "kite_instruments",
     "routing_matrix",
-    "legal_acceptance_events",
 })
 
 
@@ -446,6 +459,11 @@ async def reset_data(body: PinConfirm, session: AsyncSession = Depends(get_db)) 
     from live metadata minus :data:`RESET_KEEP_TABLES` (§14dr-26) so a table added by a
     future milestone can never silently survive an erase. Keeps your settings, PIN, and
     provider config. Sets a flag so demo data is NOT re-seeded afterwards.
+
+    ALSO ERASES YOUR ACCEPTANCE OF THE LEGAL TERMS (page-legal §11-D3), which re-locks the app
+    behind the acceptance gate — the install is returned to first-run posture, terms included,
+    because a reset commonly means handing the install to someone else and the next person must
+    be asked for themselves. Stated in the confirmation copy; see :data:`RESET_KEEP_TABLES`.
     """
     await verify_fresh_pin(session, body.pin)
     from app.db.base import Base

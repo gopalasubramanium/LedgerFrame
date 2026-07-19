@@ -193,28 +193,49 @@ async def test_an_invalid_action_is_refused_rather_than_recorded(app_client):
 
 
 @pytest.mark.anyio
-async def test_acceptance_SURVIVES_a_data_reset(app_client):
-    """A deliberate decision, pinned so it cannot be reversed by accident either way.
+async def test_a_data_reset_ERASES_acceptance_and_the_gate_RE_FIRES(app_client):
+    """**RESET ERASES ACCEPTANCE — the SPECIFIED behaviour** (page-legal §11-D3, architect under
+    delegation, 2026-07-20). This test is the inversion of an earlier one that pinned the opposite.
 
-    `reset-data` derives its purge set from live metadata minus `RESET_KEEP_TABLES` (§14dr-26), so
-    a new table is wiped unless someone deliberately keeps it. This one is kept: it records
-    install-level CONSENT, in the same family as the PIN that list already preserves, and *"clear
-    my holdings"* is not a request to withdraw consent. Wiping it would re-lock the app behind the
-    legal gate as an unannounced side effect of a data reset.
+    THE RULING'S REASONING, because a later reader will find this surprising: **the gate binds the
+    PERSON using the install, not the machine.** A data reset returns the install to **first-run
+    posture** — that is what the control is for, and the commonest reason to press it is to hand
+    the install to somebody else. A preserved consent record would then be **the previous user's**,
+    and the app would greet a new person as though they had read and accepted a document they have
+    never seen. That is not a convenience; it is a **false record of consent**, which is the one
+    thing this table exists not to be.
 
-    ⚑ PROPOSED (page-legal §11-5) — the privacy-maximal reading is a real counter-argument and the
-    owner may rule the other way. Either way it should be a ruling, and this test is what makes the
-    behaviour visible enough to rule on. It was found by the suite, not by reasoning: four tests
-    went red on 451 after a reset and the cause was this table being purged.
+    The earlier behaviour was defensible and was defended: acceptance is install-level, in the same
+    family as the PIN, and *"clear my holdings"* is not obviously a request to withdraw consent.
+    What decided it against that reading is the **direction of the failure**. Keeping the record
+    fails by attributing an agreement to someone who never gave it. Erasing it fails by asking a
+    returning user to press Accept a second time. Only one of those is a lie.
+
+    **THE COPY CARRIES IT.** The old test said, of this exact behaviour, *"if that is the intended
+    behaviour it must be stated in the reset control's copy — silently re-locking the app is not
+    it."* That condition is now binding rather than hypothetical, and it is enforced by
+    `test_the_reset_confirmation_copy_STATES_the_erasure` in `test_reset_data.py`. **This test and
+    that one must be read together**: erasure without the copy is precisely the silent re-lock the
+    predecessor refused.
+
+    ⚑ REVERSIBLE (page-legal §11-D3) — a delegated ruling, carried to the owner at the re-look.
     """
     await _clear_acceptance(app_client)
     await app_client.post("/api/v1/legal/acceptance", json={"action": "accepted"})
+    assert (await app_client.get(DATA_ENDPOINT)).status_code == 200, "precondition: accepted"
     assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "013579"})).status_code == 200
     assert (await app_client.post("/api/v1/system/reset-data",
                                   json={"pin": "013579"})).status_code == 200
 
-    assert (await app_client.get("/api/v1/legal/acceptance")).json()["status"] == "accepted", (
-        "a data reset withdrew the user's consent. If that is the intended behaviour it must be "
-        "stated in the reset control's copy — silently re-locking the app is not it."
+    # FIRST-RUN POSTURE, and specifically "none" rather than "stale": the document did not change,
+    # the RECORD went away. A "stale" here would mean the erase left an event behind and the user
+    # would be greeted as a returning acceptor — the previous user's identity, which is the whole
+    # defect this ruling closes.
+    assert (await app_client.get("/api/v1/legal/acceptance")).json()["status"] == "none", (
+        "a data reset must return the install to first-run posture. A surviving acceptance would "
+        "be the PREVIOUS user's, and the next person would never be asked."
     )
-    assert (await app_client.get(DATA_ENDPOINT)).status_code == 200
+    assert (await app_client.get(DATA_ENDPOINT)).status_code == 451, (
+        "the gate must RE-FIRE after a reset — an erased consent record that did not re-lock "
+        "would be the worst of both: no record, and no gate."
+    )

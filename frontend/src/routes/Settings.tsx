@@ -1033,16 +1033,30 @@ function ResetDataControl({ pinSet, onDone }: { pinSet: boolean; onDone: () => v
         label="Reset data"
         help={
           pinSet
-            ? "Erase all portfolio and market data and start clean. This cannot be undone — it asks for your PIN."
+            ? "Erase all portfolio and market data and start clean, as if the app were newly installed. This cannot be undone — it asks for your PIN."
             : "Erase all portfolio and market data. Set a PIN first — an irreversible wipe is refused on an install with no PIN."
         }
       >
         <Button variant="danger" icon={Trash2} disabled={!pinSet} onClick={() => setOpen(true)}>Reset data…</Button>
       </Field>
+      {/*
+        THE SECOND SENTENCE IS A CONDITION OF A RULING, NOT A FLOURISH (page-legal §11-D3).
+        A reset erases this install's acceptance of the Legal terms and re-locks the app behind the
+        acceptance gate. That is deliberate — a reset returns first-run posture, and the usual
+        reason to press this is to hand the install on, so the next person must be asked for
+        themselves rather than inheriting someone else's agreement.
+
+        It is spelled out HERE, before the wipe, because an unannounced version of it is exactly
+        the silent re-lock the earlier decision refused: the user would be told their settings and
+        PIN are kept and then find themselves locked out by something the dialog never mentioned.
+        Deleting this sentence turns a ruled behaviour back into that defect, so it is guarded from
+        the backend — `test_the_reset_confirmation_copy_STATES_the_erasure` in
+        tests/integration/test_reset_data.py reads this file. Reword it freely; do not drop it.
+      */}
       <ConfirmDialog
         open={open}
         title="Reset all data?"
-        message="This permanently erases all portfolio and market data (transactions, holdings, prices, snapshots, news). Your settings, PIN, and provider config are kept. This cannot be undone."
+        message="This permanently erases all portfolio and market data (transactions, holdings, prices, snapshots, news). Your settings, PIN, and provider config are kept. Because this returns the app to a freshly-installed state, it also clears the record that you accepted the Legal terms — the app will lock and ask you to accept them again before it reopens. This cannot be undone."
         confirmLabel="Reset data"
         destructive
         requirePin

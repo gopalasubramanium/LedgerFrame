@@ -573,8 +573,16 @@ HELP: list[dict] = [
                   "- Some controls are shown but disabled when the optional root helper is not "
                   "installed: the product would rather show you what exists and why it cannot run "
                   "than hide it.\n"
+                  # HELP CURRENCY (page-legal §11-D3, 2026-07-20): reset now also erases this
+                  # install's acceptance of the Legal terms and re-locks the app. Help is live
+                  # documentation, so the sentence that describes the control describes what it
+                  # does — a user who reads only Help and then presses the button must not be
+                  # surprised by the lock screen.
                   "- Resetting data erases your records and keeps your settings, and it asks for "
-                  "your PIN — an install with no PIN refuses the wipe outright."},
+                  "your PIN — an install with no PIN refuses the wipe outright. It returns the "
+                  "app to a freshly-installed state, so it also clears the record that you "
+                  "accepted the Legal terms: the app locks afterwards and asks you to accept "
+                  "them again."},
     {"id": "page-help", "category": "Pages", "title": "Help",
      "body": "This page, in three sections. Orientation says what the platform is for and how the "
              "pages work together. Pages describes each page — what you fill in, what you can "

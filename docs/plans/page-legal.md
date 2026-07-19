@@ -849,3 +849,76 @@ heading, a named enforcement record), `DESIGN-SYSTEM.md` 4, `PRODUCT-SPEC.md` 3,
 **What this ruling closes:** the §9-7 guard's stated scope gap — *"it does not read `docs/specs/`"*
 — is **no longer an open question about whether to widen it**. The specs are deliberately outside
 the bar, so a guard over them would be a guard over history. The scope stays as §11-E3 states it.
+
+---
+
+### 11-H. CORRECTION TO THE §11-B RECORD — the claim exceeded the change (2026-07-20)
+
+**Owner-ordered, non-negotiable. Appended, not edited in place: a correction that overwrites the
+thing it corrects is not a correction.**
+
+**THE CLAIM.** §11-B's commit message (`fc506c5`) reported the rename as *"GLOSSARY.md leads …
+**then the served strings, then the corpora**"*, and its grep table — reproduced in §11-B above —
+carried the row:
+
+| Where | Hits | Disposition |
+|---|---|---|
+| `docs/specs/` — PRODUCT-SPEC · IA · **SECURITY-BASELINE** · README headings/prose | 8 | **renamed** (living specs) |
+
+**THE CHANGE.** `git show fc506c5 --numstat` on those files:
+
+| File | Lines changed |
+|---|---|
+| `docs/specs/SECURITY-BASELINE.md` | **2** |
+| `docs/specs/PRODUCT-SPEC.md` | 3 |
+| `docs/specs/INFORMATION-ARCHITECTURE.md` | 2 |
+| `README.md` | 1 |
+
+**THE GAP, stated exactly.** The number *8* was arithmetically true — eight lines were changed.
+**The word "renamed" was not.** At `fc506c5^` there were **35** instances of "Guarantee" across
+`docs/specs/*.md`; the delta changed eight of them and **27 survived**, including — in the file the
+row names — the section heading `## Guarantee 5 — the OUTBOUND-CALL INVENTORY`. Two further specs
+carrying the term, `DESIGN-SYSTEM.md` (4) and `API-CONTRACT.md` (3), **were not in the table at
+all**, so the row also understated its own denominator. A reader of that record would conclude the
+specs had been swept. **They had not been, and the record is hereby corrected.**
+
+**What is NOT being corrected:** the survivors were never a defect. §11-G has since ruled that they
+**stay**, deliberately, as historical vocabulary. **The error was in the reporting, not in the
+code** — which is precisely why it needed catching by something other than a passing suite. Every
+test was green; nothing a guard measures was wrong. The only thing wrong was **the sentence
+describing what had been done**, and the only reader positioned to catch it was the owner, reading
+the diff against the claim.
+
+**Why this is filed as a correction and not a footnote.** §11-B's record is **the record** — the
+next reader of this milestone learns what happened from it, and it said the specs were renamed.
+Leaving that standing while adding the true state elsewhere would produce a plan file that
+contradicts itself and a reader who believes whichever section they read first.
+
+---
+
+## 15. LESSONS — carried to the close
+
+*Seeded here at the re-look so the close inherits them rather than re-deriving them. The close
+ritual arrives as its own instruction; this list is its input.*
+
+1. **COMMIT MESSAGES ARE RECORDS, AND THEY MEET THE SAME TRUTH BAR AS SERVED COPY.** (Owner,
+   2026-07-20, from §11-H.) A commit message is read by every future maintainer, cannot be
+   corrected in place, and is the only account of intent a diff does not carry. §11-B's said the
+   specs were *renamed* when 8 of 35 instances had changed — no test could have caught it, because
+   nothing about the **code** was wrong. **The bar is: describe what the diff does, not what the
+   task was called.** A summary word like *"renamed"*, *"swept"*, or *"all"* is a **claim of
+   completeness** and must be checked against the numbers before it ships — the same discipline
+   already applied to gate counts and fail-first evidence, which are never asserted without being
+   measured.
+2. **A CONVENTION THAT LIVES ONLY IN A PLAN FILE IS ENFORCED BY NOBODY.** (§11-E3.) §9-7 ruled the
+   spelling split in as many words and shipped with no guard; the very next surface built under it
+   served the wrong spelling in its most prominent line, and review did not catch it. A ruling that
+   is not mechanised is a ruling with an expiry date.
+3. **SCANNING A FILE AND READING ITS COPY ARE DIFFERENT CLAIMS.** (§11-E3a.) The guard reported
+   coverage of files whose `<p>`-rendered prose its extractor could not see. Only the second claim
+   is worth a green, and the way to know which one you have is to **test the extractor**, not the
+   rule.
+4. **DRIVE THE BROWSER; A GREEN SUITE IS NOT AN ENTRY.** (§11-E2.) 1713 tests and a review both
+   missed that a PIN-protected install showed the PIN prompt instead of the consent panel, because
+   every test in the gate's module ran on a PIN-less install. The defect was on the installs most
+   likely to have a real user behind them.

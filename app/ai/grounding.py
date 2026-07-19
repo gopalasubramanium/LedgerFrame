@@ -24,6 +24,21 @@ from app.core.disclaimer import DISCLAIMER
 from app.providers.ai import get_ai_provider
 from app.schemas.ai import AIRequest, GroundingFact
 
+# D-070's ruled, user-visible fallback signal — normative in `SECURITY-BASELINE.md` §5 and
+# `DECISIONS.md` D-070, and until now it existed NOWHERE in the codebase (AI-surfaces §0-G:
+# grep across app/, frontend/src/ and tests/ returned zero hits). The validator correctly
+# discarded unsafe model text and emitted the deterministic template — silently. The reason
+# travelled only as `done` event metadata, which no frontend read because no frontend existed.
+#
+# It is SERVED, not composed client-side: a legal-adjacent string assembled in the browser
+# would be a second source of truth for the sentence, which is the §0-C mistake repeated in
+# the milestone that fixes it.
+#
+# Kept string-equal to the spec by `tests/unit/test_d070_fallback_signal.py` (the AC-L3
+# spec<->code parity pattern). Edit the spec and the guard carries the change here; edit this
+# alone and the guard goes red.
+FALLBACK_SIGNAL = "AI answer didn't pass grounding checks — showing facts directly."
+
 _request_times: list[float] = []
 
 
@@ -114,10 +129,14 @@ async def answer_stream(
 
     ok, reason = validate_grounded_answer(answer, facts, question)
     if not ok:
-        # Unsafe/ungrounded — the model text is discarded, never shown.
+        # Unsafe/ungrounded — the model text is discarded, never shown. D-070: the user is TOLD
+        # this happened. Silently swapping a model answer for a template is the product being
+        # quietly less than it appeared, which is the opposite of the honesty the fallback exists
+        # to protect. The signal leads, so it frames what follows rather than trailing it.
+        yield {"type": "delta", "delta": f"_{FALLBACK_SIGNAL}_\n\n"}
         yield {"type": "delta", "delta": _template_answer(question, facts)}
         yield {"type": "done", "grounded": True, "provider": "fallback", "validation": reason,
-               "disclaimer": DISCLAIMER}
+               "fallback_signal": FALLBACK_SIGNAL, "disclaimer": DISCLAIMER}
         return
 
     # Validated → now safe to emit, chunked by sentence for a mild streaming feel.

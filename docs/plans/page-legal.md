@@ -304,3 +304,96 @@ authoritative wording and for the two places the ruling went beyond the proposal
 **§9 CLOSED 2026-07-19 (owner in chat).** §3b, §4, §7 and §8 above are completed from the rulings.
 No ruling was typed in this CLI. **Phase 0 is open**; the build stops at the **0a specimen** for the
 owner's ratification — including **every prose string on this page**, which ships **PROPOSED**.
+
+---
+
+## 10. PHASE 0 + PHASE 1 BUILT — **0a SPECIMEN, STOPPED FOR THE OWNER'S RATIFICATION** (2026-07-19)
+
+*Isolated instance only (spare-port frontend → spare-port backend, temp `LEDGERFRAME_DATA_DIR`,
+demo seed). `smoke-target.mjs` fail-closed; `SMOKE_ALLOW_LIVE` never set. The owner's live stack
+was not touched. **Every prose string on this page is PROPOSED** and is ratified by the owner
+looking at it — §9-8 bars this CLI from drafting legal text, and nothing here is a ruling.*
+
+### 10-A. What shipped
+
+| Delta | Commit | What |
+|---|---|---|
+| §9 record | `b5f0039` | §9 CLOSED; IA §5 Legal section; **D-106** minted; CLAUDE.md standing rule |
+| NetWorth regularization | `b0ac8e3` | the Help close's `--radius-2` fix gets its delta note + pre-pass re-run |
+| Phase 0.1 | `2dfa831` | GLOSSARY rows: **Legal · Disclaimer · Licence** |
+| Phase 0.2 | `d46f9b3` | `app/services/legal.py` + `GET /api/v1/legal`; contract **138 → 139** |
+| Phase 0.3 | `6be57a1` | **AC-L6** scoped-caveat registry · **AC-L7** accuracy corpus |
+| Phase 0.4 | `8092969` | Reports Pack product-level footer (**AC-L8**) |
+| Phase 1a | `2a7eec7` | the `/legal` page + route |
+| Phase 1b **ATOMIC** | `b14a15e` | Legal's Help entry **+** `nav.ts` `built: true`, one commit |
+
+### 10-B. AC status
+
+| # | Verdict | Evidence |
+|---|---|---|
+| **AC-L1** | ✅ | `/legal` renders 6 cards; `NotBuilt` unreachable; 0 console errors |
+| **AC-L2** | ✅ | nav `built: true`; sidebar renders the link (walked); `chrome.test.tsx` **inverted**, `AppShell.test.tsx` **repointed** |
+| **AC-L3** | ✅ | 7 guarantees, string equality vs `PRODUCT-SPEC.md` §3, parsed at test time; verified again in the browser |
+| **AC-L4** | ✅ | `test_every_built_page_has_a_help_entry` green with a real entry |
+| **AC-L5** | ✅ | 4 NEVER bites, each driven **RED on the shipped corpus** then green |
+| **AC-L6** | ✅ | discovered registry, floor 25; driven **RED** by deleting Confidence's caveat |
+| **AC-L7** | ✅ | authored copy meets the full Help bar; one **named, reasoned** exemption (10-D) |
+| **AC-L8** | ✅ | Pack footer matches the served string byte-for-byte; driven **RED** on one character |
+
+### 10-C. The 0a walk (isolated, 2026-07-19)
+
+- **H1** `Legal`; **six cards** in served order — Disclaimer · The limits on each figure · Licence ·
+  No jurisdiction tax logic · **Product Guarantees** · Where to find the full record. The four
+  IA-owned contents are all present, and the fifth and sixth cards are not new *contents*: "The
+  limits on each figure" is D-106 stated to the reader, and "Where to find the full record" is
+  §9-5's pointer list.
+- **Guarantees:** 7, numbered, **verbatim** — the rendered text equals the served array exactly.
+- **Pointers:** `0` anchors in the pointer list (§9-5 — a local-first page must work offline).
+- **Containment:** doc overflow **0** and section overflow **0** at **320 / 375 / 768 / 1366 ×
+  light and dark**. **0 console errors, 0 page errors.**
+- **Nav:** the Legal link renders; **every nav item now carries `built: true`** — the
+  dead-affordance backlog is empty for the first time.
+- **Help:** the `page-legal` entry is live; the deep link `#/help?topic=page-legal` opens it
+  expanded, with all three Section-2 blocks rendering.
+- **Reports Pack:** footer present on a generated artifact and byte-identical to the served
+  string; the `Reporting only, not advice.` fallback caption unchanged; **0 of 7 Guarantees**
+  reached the artifact.
+
+### 10-D. ⚑ OPEN FOR THE OWNER AT THE 0a — four items, none decided here
+
+1. **Decision IDs are visible to users on this page.** Guarantees 4–7 render `(D-077)`, `(D-004)`,
+   `(D-016)`, `(D-071)`. This is a **genuine collision between two live rules** — AC-L3/§9-8 rule
+   the Guarantees VERBATIM; page-chrome §11-8 bars decision IDs from served prose — and no edit
+   available to the build satisfies both, because the only one that would is an edit to the
+   ratified source. Held by a **named, scoped, self-measuring exemption**. *Amend `PRODUCT-SPEC.md`
+   §3 (the AC-L3 guard then carries the change here automatically and the exemption is deleted),
+   or accept.*
+2. **Backticks render literally.** `` `long_term_days` `` shows its backticks — the served markup
+   subset has no code-span construct. It appears **twice**: in verbatim Guarantee 4, and in this
+   build's **authored** no-jurisdiction section, which was written to match. *Fixing only the
+   authored one would make two cards disagree, so both are left for one decision.*
+3. **A dangling cross-reference.** Guarantee 7 ends *"the contract (below, §8)"* — a
+   PRODUCT-SPEC-internal pointer that points at nothing on the Legal page.
+4. **Prose rhythm.** A paragraph following a list, and consecutive paragraphs, sit **tight** —
+   visible in the Disclaimer and Licence cards. The spacing comes from `HelpProse`, which is
+   **shared with the accepted Help page**, so tightening it on Legal alone would make two prose
+   surfaces disagree, and changing it globally is a delta on Help under the new standing rule.
+   *Left for the owner precisely because it is not Legal's decision alone.*
+
+### 10-E. Honest notes
+
+- **The §0-D survey undercounted.** It found **10** scoped caveats; discovery found **25**. AC-L6's
+  registry is generated from the tree for that reason.
+- **Tier-3 counter moved 71 → 72 marked, 58 → 59 unserved.** Only `Legal` carries `[Help]`; its
+  entry is a **Pages** entry, not a Glossary-category one, so it lands in the unserved bound the
+  same way `Home` and `Heatmap` already do. Not new drift.
+- **No code-store GLOSSARY rows were added** (a deviation from the brief's "then the stores",
+  flagged at the time): the parity guard is directional, and popover entries with no UI to invoke
+  them would be dead data.
+- **The Pack's per-reader disclaimer count on this dataset is 1**, so the artifact demonstrates the
+  footer and the fallback caption strongly and the *preservation* of per-reader disclaimers only
+  weakly. The stronger evidence for preservation is the seeded unit fixture, where that assertion
+  is a test.
+
+**STOPPED. Awaiting the owner's ratification of every prose string on this page, and of the four
+items in 10-D.**

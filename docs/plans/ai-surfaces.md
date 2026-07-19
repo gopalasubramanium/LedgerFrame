@@ -429,9 +429,15 @@ Standard template phases. Two milestone-specific notes:
 
 ---
 
-## 9. NEEDS DECISION — PROPOSED, for the owner's one-pass
+## 9. NEEDS DECISION — **CLOSED 2026-07-20** (owner one-pass, in chat)
 
-**⚑ = owner call. Nothing below is decided. No build starts on an open row.**
+**STATUS: EVERY ROW RULED. Build is authorized.** The table below is the **PROPOSED** state as it
+went into the one-pass and is **left standing unedited** — it is what the owner was asked, and a
+plan that rewrites its own questions to match the answers cannot be audited (the `IA:396-410`
+convention). **The rulings are in §9-CLOSED, immediately after the table, and they govern.** Where
+a ruling differs from the proposal, §9-CLOSED says so explicitly.
+
+**⚑ = owner call. Nothing in the TABLE is decided — read §9-CLOSED for what was.**
 
 | # | Item | Evidence | PROPOSED resolution |
 |---|---|---|---|
@@ -450,4 +456,74 @@ Standard template phases. Two milestone-specific notes:
 
 ---
 
-**STOP — §9 ENDS THE PLAN. The one-pass happens in chat; build starts only after it.**
+## 9-CLOSED. THE RULINGS — owner one-pass, 2026-07-20
+
+*Attribution is marked per row: **(owner)** = the owner ruled it; **(architect)** = an architectural
+call taken under the owner's authorization, within a scope the owner set. **No ruling was typed into
+this file from the CLI's own judgement** — where this file records something neither the owner nor
+the architect said, it is marked **⚠ VERIFY-FIRST CORRECTION** and states what it corrects and why.*
+
+| # | RULING | Attribution | Delta vs PROPOSED |
+|---|---|---|---|
+| **(a)** | **ACCEPTED as proposed.** No grounding cache exists, so nothing is regenerated; the exposure is the **ranker**. Guard pins **what the AI actually retrieves** for a fixed question set, extending `test_help.py:147`. Corpus pinned to the **POST-RENAME** Help + Legal content. | owner | none |
+| **(b)** | **Ask panel IN. Instrument explainer IN. D-068 "richer narration" DEFERRED to R-45** — recorded on the R-45 row, which now owns it (`ROADMAP.md:57`). Deferred work leaves **NO affordance**. | owner | Narration deferral is the owner's line; the plan had left it ⚑ open. |
+| **(c)** | **One served `DISCLAIMER` constant + closure guard** — all 13 sites reference it; no other literal of the sentence in `app/`; every terminal `done` event carries it. **AI text does NOT enter the Reports Pack this milestone** — so the two-disclaimer interaction is **moot by scope**, and the D-106 question is **deliberately left unasked** rather than answered cheaply. The scoped caveats (D-106 kind (a)) are **not touched**. | architect (constant+guard) · owner (Pack scope) | none |
+| **(d-i)** | **Commitment 7 gets a mechanism:** the validation contract's **clause count AND clause identity** are pinned to `SECURITY-BASELINE.md:140-168`. Deleting or loosening a clause reds. This is the **AC-L3 spec↔code parity pattern** applied to the contract. | architect | none |
+| **(d-ii)** | **D-070's visible fallback signal SHIPS, SERVED, with the ruled wording** — *"AI answer didn't pass grounding checks — showing facts directly."* Served, not client-composed: a client-composed legal-adjacent string would be §0-C's mistake repeated in the milestone that fixes it. | owner | none |
+| **(e)** | **ACCEPTED as proposed.** Test asserts `ai_conversations` / `ai_messages` **ABSENT at head**; the migration **downgrade** that re-creates them is **FIXED** (`f9e1a2b3c4d5:113-131`), alembic on the legacy chain per ADR-0001. `briefing.py:184` is explicitly permitted — stored derived **output**, not a stored conversation. | owner | none |
+| **(f)** | **`hailo_ollama.py:141-145` mirrors the typed `EgressBlocked` re-raise**; the egress guard is extended to assert **both** providers propagate it **un-retried**. **POSTURE COPY approach (owner): mode-and-consequence, unapologetic — a refusal renders as the product's posture WORKING, never as an error.** Strings stay **PROPOSED until 0a**. | architect (typed re-raise + guard) · owner (copy approach) | none |
+| **(g)** | **ACCEPTED as proposed.** A guard row, not a build row: 451 tested **at the AI paths themselves**, so a future widening of the exempt set reds. | owner | none |
+| **(h-i)** | **HELP CURRENCY LAW applies in full:** every shipped surface's Help entry and every shown term's GLOSSARY entry land **in-milestone, same-commit, spec-first**. No Tier-2-style deviation is taken. | owner | none |
+| **(h-ii)** | **The retired term is FIXED NOW**, as its **own delta**, per the R-52 precedent — and the **deprecated-term guard's corpus is extended to AI fact labels**, which is the real gap either way. | owner | The plan proposed *surfacing it to an open R-52 ruling*. **R-52 was already RESOLVED** — see the correction below. |
+| **(i)** | **AskPanel is COMPOSITION-FIRST from ratified primitives.** A DESIGN-SYSTEM amendment is brought **only for what composition cannot express**, PROPOSED at 0a, built at `/kitchen-sink`. `check:primitives` governs regardless. | owner | none |
+| **(j)** | **Both spec inconsistencies CORRECTED here**, as authorized record hygiene. | owner | The plan **recommended filing both** so this milestone would not edit documents it does not own. **The owner overruled that and authorized the fix.** Executed in commit `92383ee`. |
+
+### ⚠ VERIFY-FIRST CORRECTIONS — found while recording the closure, 2026-07-20
+
+*Recorded rather than silently absorbed (§11-H). Both concern (h-ii), and both were verified at
+`92383ee` with the cites below. **Neither is a ruling** — each reports that a premise the ruling
+rested on had already moved.*
+
+**1. R-52 is RESOLVED, not open — and the plan's §0-H/§9(h-ii) premise is stale.**
+`page-help.md:745-750` filed R-52 as *"owner ruling owed"*, and this plan quoted it that way. But
+`ROADMAP.md:64` records R-52 **✅ RESOLVED pre-release**, owner ruling **2026-07-19**, commit
+`cc2daab` — the day **before** this plan was written. The concern in §9(h-ii) that fixing the term
+here would *"resolve half of an open owner question"* therefore **does not apply**: there is no open
+question, only a settled ruling and its precedent. **This strengthens the (h-ii) ruling rather than
+altering it** — the fix now follows a decided precedent instead of pre-empting a pending one.
+
+**2. The replacement term at `tools.py:33` is "Net worth", NOT "Gross assets" — and there is ONE
+production call site, not two.**
+
+R-52's own commit message reads: *"Both are holdings BEFORE liabilities, so the term is **Gross
+assets**."* **That reasoning does not transfer to this site, and applying the R-52 string
+mechanically would ship a WRONG label into the model's grounded facts.**
+
+- `tools.py:33` renders `val.total_value` from `value_portfolio` (`app/services/portfolio.py:627`).
+- That function sums `hv.market_value_base` over **every** holding row with **no liability filter**
+  (`portfolio.py:662-683`).
+- Liabilities are **stored negative** (`GLOSSARY.md:67`).
+- ∴ `value_portfolio.total_value` is **liabilities-inclusive** — which `GLOSSARY.md:65` states
+  outright: *"**Net worth** … In code this equals `value_portfolio.total_value` because liabilities
+  are already stored negative."*
+
+`GLOSSARY.md:350` retires *Total value* → *"Net worth (with liabilities) / Gross assets (positive
+holdings), **per context**"*. **This context is with-liabilities. The term is `Net worth`.** No term
+is invented: the mapping is read from the deprecated-terms table and the Net-worth definition.
+
+**Call-site count.** The app-wide grep (`"Portfolio total value"`, the page-chrome §11-4 rule) finds
+**exactly one production site — `app/ai/tools.py:33`.** The other hits are **five test sites**
+(`test_ai_engine.py:22`, `test_ai_facts_routing.py:42`, `test_ai_fallback.py:42, 66, 73`,
+`test_ai_safety.py:80`) and this plan's own prose. `app/ai/intent.py:51` matches `total value` in a
+**user-input regex** and is **deliberately NOT changed** — it matches what a *user types*, and users
+will keep typing the retired phrase; narrowing it would break intent routing to serve a copy rule.
+
+**Consequence for the build:** §9-2 item 6 executes as **`"Portfolio total value"` → `"Net worth"`
+at `tools.py:33`**, with `test_ai_facts_routing.py:42` fixed fail-first (it **pins** the defect —
+the **third** such test this programme has found; noted for §15), and the deprecated-term guard's
+corpus extended to AI fact labels so the class cannot recur.
+
+---
+
+**§9 IS CLOSED. BUILD IS AUTHORIZED. The build stops at the Phase-0a specimen and waits for the
+owner** — 0a is ratified by looking, not by report.

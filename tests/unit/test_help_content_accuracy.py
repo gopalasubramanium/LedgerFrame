@@ -506,3 +506,88 @@ def test_the_served_reading_order_is_sections_then_basics_to_expert():
     assert levels == sorted(levels, key=["Basics", "Core", "Advanced"].index), (
         f"glossary levels are not in basics > expert order: {levels}"
     )
+
+
+# --- The deprecated-term guard, extended to AI FACT LABELS ------------------------------------- #
+# AI-surfaces §0-H. `test_no_help_copy_uses_a_deprecated_term` above reads HELP entries, and
+# `_shipped_text()` reads frontend + backend source as one undifferentiated blob for EXISTENCE
+# checks. Neither looks at what the AI calls a number.
+#
+# That gap shipped a defect: `app/ai/tools.py` served `GroundingFact(label="Portfolio total
+# value")` — "Total value" is D-021-retired, and the row was already in _DEPRECATED_CHECKS. The
+# guard did not fire because its corpus was Help content, not fact labels.
+#
+# A fact label is not ordinary source text, and this is why it gets its own guard rather than a
+# wider grep:
+#   * it is SHOWN TO THE USER, before the answer (D-067's fact-pack-first trust UX);
+#   * it is FED TO THE MODEL as grounded fact, so a retired term enters the AI's own vocabulary
+#     and comes back out in prose no copy review ever reads.
+#
+# WHAT THIS CAN AND CANNOT PROVE: it reads LITERAL label= arguments via the AST. A label built at
+# runtime (an f-string, a variable, a master-data lookup) is invisible to it and is stated here
+# rather than papered over — the same honesty `_shipped_text()`'s docstring applies to itself.
+
+import ast  # noqa: E402 — appended section; kept beside the code that uses it
+
+
+def _ai_fact_labels() -> list[tuple[str, str]]:
+    """Every literal `GroundingFact(label="…")` in `app/`, as (file:line, label)."""
+    found: list[tuple[str, str]] = []
+    for path in sorted((REPO / "app").rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError:  # pragma: no cover — a broken file is another suite's problem
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            name = getattr(node.func, "id", None) or getattr(node.func, "attr", None)
+            if name != "GroundingFact":
+                continue
+            for kw in node.keywords:
+                if kw.arg == "label" and isinstance(kw.value, ast.Constant) \
+                        and isinstance(kw.value.value, str):
+                    rel = path.relative_to(REPO).as_posix()
+                    found.append((f"{rel}:{node.lineno}", kw.value.value))
+    return found
+
+
+_AI_FACT_LABELS = _ai_fact_labels()
+
+
+def test_the_ai_fact_label_corpus_is_not_empty():
+    """Pinned against going blind: an AST walk that matched nothing would bless anything."""
+    # The threshold is deliberately LOW and the reason is the honest one: most fact labels are
+    # built at runtime (f-strings over instruments, master-data lookups), so the LITERAL corpus is
+    # small — 7 at the time of writing. A high threshold here would be a number that looked
+    # rigorous and broke on the next legitimate refactor. This asserts the walk still matches
+    # something, which is the only claim it can honestly make.
+    assert len(_AI_FACT_LABELS) >= 5, (
+        f"only {len(_AI_FACT_LABELS)} literal AI fact labels found — the AST walk stopped "
+        "matching GroundingFact constructions, so the guard below is checking an empty corpus "
+        "and would stay green through any retired term."
+    )
+
+
+@pytest.mark.parametrize(
+    "site,label", _AI_FACT_LABELS, ids=[f"{s} {label}" for s, label in _AI_FACT_LABELS],
+)
+def test_no_ai_fact_label_uses_a_deprecated_term(site: str, label: str):
+    """Seen RED on `app/ai/tools.py:33` — `label="Portfolio total value"` (D-021).
+
+    The replacement is read from GLOSSARY.md's deprecated table, which retires "Total value" in
+    favour of *"Net worth (with liabilities) / Gross assets (positive holdings), **per context**"*.
+    The context is the discriminator, and it is settled per site by what the code actually sums —
+    not by copying whatever the last fix used.
+    """
+    low = label.lower()
+    for row, pattern in _DEPRECATED_CHECKS.items():
+        if pattern and re.search(pattern, low):
+            pytest.fail(
+                f'{site} serves the AI a fact labelled "{label}", which matches retired wording '
+                f'{pattern!r} (deprecated: "{row}").\n'
+                "This label is shown to the user BEFORE the answer and fed to the model as "
+                "grounded fact, so a retired term here enters the AI's own vocabulary. "
+                "GLOSSARY.md's deprecated-terms table gives the replacement — several are "
+                '"per context", so resolve it from what the code sums, not from precedent.'
+            )

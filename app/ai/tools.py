@@ -30,7 +30,7 @@ async def portfolio_facts(session: AsyncSession) -> list[GroundingFact]:
     val = await value_portfolio(session, base)
     now = datetime.now(UTC)
     facts = [
-        GroundingFact(label="Portfolio total value", value=_fmt(val.total_value, base), timestamp=now),
+        GroundingFact(label="Net worth", value=_fmt(val.total_value, base), timestamp=now),
         GroundingFact(label="Total unrealised P/L", value=_fmt(val.unrealised_pl, base), timestamp=now),
         GroundingFact(label="Today's change", value=_fmt(val.day_change, base), timestamp=now,
                       is_stale=val.has_stale),

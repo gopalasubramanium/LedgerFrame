@@ -38,5 +38,22 @@ async def test_performance_question_pulls_risk_metrics(app_client):
 
 
 async def test_general_question_anchors_with_portfolio(app_client):
+    """A question with no specific intent still anchors on the headline figure.
+
+    ⚠ This assertion PINNED A DEFECT. It read `"Portfolio total value"` — a D-021-retired
+    term that `app/ai/tools.py:33` served to the user and fed to the model as grounded fact
+    (AI-surfaces §0-H). The test was green for months **because it agreed with the defect**,
+    and a copy pass that trusted the suite would have found nothing wrong.
+
+    The term is now **Net worth**, resolved per context rather than by precedent: the value is
+    `value_portfolio(...).total_value`, which sums every holding with no liability filter, and
+    liabilities are stored negative — so it is liabilities-inclusive, which `GLOSSARY.md:65`
+    defines as Net worth. (`networth_facts` had labelled the identical value correctly all
+    along, one function away.)
+
+    *Third test this programme has found pinning stale content* — page-help §9-5 found three at
+    once, R-52 found one in `test_performance.py`. A test that asserts a wrong string is not
+    coverage; it is the defect with a second signature.
+    """
     labels = await _fact_labels(app_client, "Give me an overview")
-    assert any("Portfolio total value" in label for label in labels)
+    assert any("Net worth" in label for label in labels)

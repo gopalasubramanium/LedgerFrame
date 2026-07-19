@@ -39,7 +39,7 @@ class _FakeProvider:
 @pytest.fixture(autouse=True)
 def _patch(monkeypatch):
     async def fake_facts(session, question):
-        return [GroundingFact(label="Portfolio total value", value="100 SGD")]
+        return [GroundingFact(label="Net worth", value="100 SGD")]
 
     monkeypatch.setattr(grounding, "gather_facts", fake_facts)
     grounding._request_times.clear()
@@ -72,14 +72,14 @@ async def _collect(monkeypatch, mode):
 async def test_model_error_falls_back_with_reason(monkeypatch):
     text, done = await _collect(monkeypatch, "error")
     assert "didn't return an answer" in text
-    assert "Portfolio total value" in text  # data fallback shown
+    assert "Net worth" in text  # data fallback shown
     assert done["provider"] == "fallback"
     assert done["error"]
 
 
 async def test_reasoning_only_falls_back_to_data(monkeypatch):
     text, done = await _collect(monkeypatch, "think")
-    assert "Portfolio total value" in text  # only-reasoning → data shown
+    assert "Net worth" in text  # only-reasoning → data shown
     assert done["provider"] == "fallback"
 
 

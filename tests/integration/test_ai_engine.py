@@ -19,7 +19,7 @@ def test_prompt_builder_includes_policy_intent_and_facts():
     from app.ai.prompt_builder import build_messages
     from app.schemas.ai import GroundingFact
 
-    facts = [GroundingFact(label="Portfolio total value", value="100,000 SGD")]
+    facts = [GroundingFact(label="Net worth", value="100,000 SGD")]
     msgs = build_messages("What changed today?", Intent.PORTFOLIO_MOVEMENT, facts)
     roles = [m.role for m in msgs]
     assert roles == ["system", "system", "user"]

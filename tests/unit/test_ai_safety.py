@@ -77,7 +77,7 @@ def test_intent_unknown_is_safe_default():
 def _facts():
     from app.schemas.ai import GroundingFact
     return [
-        GroundingFact(label="Portfolio total value", value="796,543.93 SGD"),
+        GroundingFact(label="Net worth", value="796,543.93 SGD"),
         GroundingFact(label="NVDA price", value="1,234.50 USD (+2.1% today)"),
         GroundingFact(label="Headline · Reuters", value="Reliance shares rise after results"),
     ]

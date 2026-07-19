@@ -691,3 +691,28 @@ codes over ambiguous symbols in movers (§12b4-3); D-082 bucket label wording "U
   P/L · Cost basis) and the **Costs** figures (recorded fees · ongoing cost) now carry the served
   `base_currency` (`/portfolio/summary`, `/portfolio/cost-of-ownership`) as the muted `.lf-stat__unit`
   affix; %/metric tiles carry none. Portfolio.test.tsx (12) + `portfolio-smoke` green.
+
+---
+
+## DELTA NOTE — 2026-07-19 (R-52, page-help Phase 0 · served key-stat label)
+
+**Portfolio is CLOSED/accepted; dated delta note on a touched accepted surface, recorded — not a
+re-opening.**
+
+`app/services/analytics.py` (Portfolio's `key_stats` reader) served a metric whose user-facing
+`label` was **`"Total value"`**, a term **D-021 retired** (`GLOSSARY.md:327`) in favour of
+**Gross assets** / **Net worth** per context. This row is holdings **before** liabilities →
+**Gross assets**. The label and its `term_id` (`term-total-value` → `term-gross-assets`) were
+corrected; the figure, its computation and every other metric are untouched.
+
+**⚠ The rendered page did NOT change, and the record must say so.** `key_stats().metrics` reaches
+exactly one consumer in the frontend — `Portfolio.tsx:318`, filtering to
+`term_id === "term-concentration"` — so **"Total value" never rendered on Portfolio**. R-52 was
+filed and ruled on the premise that it did; the scripted pre-pass disproved that premise (see the
+correction recorded in `reports-pack.md`, where the live defect actually was). This note exists
+because the **served string** changed, which is a change to Portfolio's reader whether or not a
+pixel moved.
+
+**Verification:** isolated live instance (spare ports, temp data dir, `.env` restored) —
+`/api/v1/portfolio/stats` serves `Gross assets` and no longer serves `Total value`; Portfolio driven
+at 1366×768 with **0 console errors**, stat rail and Concentration section unchanged.

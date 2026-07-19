@@ -45,7 +45,9 @@ async def test_key_stats_endpoint(app_client):
     r = await app_client.get("/api/v1/portfolio/stats")
     assert r.status_code == 200
     metrics = {m["label"]: m for m in r.json()["metrics"]}
-    assert "Total value" in metrics and "1Y volatility" in metrics
+    # "Gross assets", not "Total value" — D-021 retired the latter; this assertion had
+    # pinned the retired term in live UI copy (ROADMAP R-52).
+    assert "Gross assets" in metrics and "1Y volatility" in metrics
     # Concentration uses gross assets, so it must never exceed 100%.
     assert metrics["Top 5 concentration"]["value"] <= 100.01
     assert metrics["Largest position"]["value"] <= 100.01

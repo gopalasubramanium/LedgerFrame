@@ -875,3 +875,42 @@ Reports-page close baseline); a claim is not a change:**
 | **Specs** | `docs/specs/DESIGN-SYSTEM.md` (§5.1a print artifact + §12pk-2 convention), `docs/specs/GLOSSARY.md` (Consolidated · Per-entity), `docs/specs/SECURITY-BASELINE.md` (Pack read posture) |
 | **Plans / records** | `docs/plans/reports-pack.md` (this plan), `docs/plans/page-reports.md` (§16 entry-point delta + §14pk-1 addendum + Amendment-I flip mirror), `docs/plans/CURRENT.md` (DONE + ledger retire), `docs/plans/TEMPLATE-page-build.md` (§7 artifact-guard line), `docs/plans/RATIFICATION.md` (§6 close row) |
 | **Capture assets (15)** | `docs/plans/assets/pack-specimen-*` — Phase-0a specimen + §12pk fixed set + §14 batch-1 superseding set (originals kept, gate record cites them) |
+
+---
+
+## DELTA NOTE — 2026-07-19 (R-52, page-help Phase 0 · D-021 retired term in the Pack)
+
+**The Reports Pack is CLOSED/accepted; this is a dated delta note on a touched accepted surface,
+recorded per the platform-batch convention — not a re-opening.**
+
+**What changed.** `app/services/reports_pack.py:248` rendered the per-entity Net-worth card's first
+row as `<td>Total value</td>`. **"Total value" is a RETIRED term** — `GLOSSARY.md:327` retires it
+under **D-021** ("use *Net worth* (with liabilities) / *Gross assets* (positive holdings), per
+context") and the deprecated table states outright: *"These must not appear in UI copy."* The row is
+the sum of holdings **before** liabilities, so the correct term is **Gross assets**. Retitled.
+
+**Why it surfaced here.** Found by the **page-help** content pass: the help catalogue carried the
+same retired term, and the app-wide-label rule (page-chrome §11-4) required grepping every instance
+rather than fixing only the one found. That grep is what turned up this one — **the help entry was
+the lead, the Pack was the live defect.**
+
+> **⚠ PREMISE CORRECTION (recorded, not quietly fixed).** R-52 was filed — and ruled — describing
+> this as *"a retired term shipping as a **Portfolio** stat label"*. **That was wrong, and the
+> pre-pass is what proved it.** `app/services/analytics.py` does serve a metric with that label, but
+> `key_stats().metrics` is consumed by the frontend at exactly one place — `Portfolio.tsx:318`,
+> which filters to `term_id === "term-concentration"`. **Portfolio never rendered "Total value" at
+> all.** The genuinely user-visible instance was **this artifact**. The served analytics label was
+> corrected too (it is served copy, and the AI can cite it), but the delta note belongs *here*.
+> *The pre-pass exists to check the claim, not to confirm it.*
+
+**Verification (scripted pre-pass, isolated instance — spare ports 8399/5199, temp data dir, `.env`
+snapshotted and restored; the owner's stack untouched):**
+- `GET /reports/pack` renders **`<td>Gross assets</td>`** (×2 — consolidated + per-entity); the
+  string `Total value` is **absent** from the rendered artifact.
+- Browser drive at 1100×900: **0 console errors**; the per-entity **Net worth** card reads
+  *Gross assets · Cost basis · Unrealised P/L · Today's change*, screenshot walked.
+- `tests/integration/test_performance.py` had **asserted the retired term** (`"Total value" in
+  metrics`) — corrected in the same commit, with the reason at the assertion.
+
+**Scope guard:** figures, layout and every other string are unchanged — this is a one-term
+correction, not a Pack revision.

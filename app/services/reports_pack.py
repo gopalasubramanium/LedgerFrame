@@ -245,7 +245,7 @@ async def _entity_net_worth(session: AsyncSession, base: str, entity_id: int) ->
     stale = ' <span class="pack-stale">Some inputs are stale.</span>' if val.has_stale else ""
     inner = (
         '<table><tbody>'
-        f'<tr><td>Total value</td><td>{_money(val.total_value)}</td></tr>'
+        f'<tr><td>Gross assets</td><td>{_money(val.total_value)}</td></tr>'
         f'<tr><td>Cost basis</td><td>{_money(val.cost_basis)}</td></tr>'
         f'<tr><td>Unrealised P/L</td><td class="{unreal_cls}">{unreal}</td></tr>'
         f'<tr><td>Today\'s change</td><td class="{day_cls}">{day}</td></tr>'

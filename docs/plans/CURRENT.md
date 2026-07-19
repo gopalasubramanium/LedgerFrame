@@ -51,7 +51,16 @@ The remaining v2.0.0 set, in sequence (**Help** is the active NEXT above):
 
 1. ~~**Help**~~ — the active NEXT above.
 2. **Legal.**
-3. **AI-surfaces** — D-067 / D-068. **Intake (added 2026-07-19, R-43 §18-F7d):**
+3. **AI-surfaces** — D-067 / D-068. **⚠ INTAKE CROSS-NOTE (added 2026-07-19, page-help §9-9 ruling —
+   READ BEFORE THE GROUNDING REVIEW):** the **help knowledge base was REWRITTEN in the Help
+   milestone**. `app/services/help.py` is not just the Help page's content — `app/ai/tools.py:145`
+   pulls it into the **grounded fact pack**, so it is what the AI cites as fact. The v1-era entries
+   it used to serve were **factually wrong** (they described "Snapshot", "Planning", "Investment
+   policy", a removed Simple/Expert toggle, four Settings tabs where six ship, and wording D-021 /
+   D-026 had retired). **AI-surfaces' grounding review must read the NEW content — never the
+   pre-Help entries**, and must not treat any pre-2026-07-19 review of AI help-grounding as still
+   valid. Accuracy is now mechanised by `tests/unit/test_help_content_accuracy.py`. **Intake (added
+   2026-07-19, R-43 §18-F7d):**
    `test_performance_question_pulls_risk_metrics` streams `/ai/chat` and asserts the risk
    facts arrive; it is **contention-fragile** — it fails only when the suite shares the
    machine with other pytest processes, and passes solo (controlled comparison in

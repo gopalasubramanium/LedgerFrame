@@ -653,6 +653,116 @@ every product term spelled exactly as GLOSSARY spells it.
 
 ---
 
+## 12. PHASE 0 RECORD — backend-first, one delta per commit (2026-07-19)
+
+*Three deltas, each fail-first, each seen RED before the fix. **Phase 0 is backend-only** — no page
+exists yet; the 0a specimen is the next step and the HARD STOP.*
+
+### Delta 1 — pin the `/help` contract shape (§9-12) · `8653be3`
+
+**Fail-first:** 3 tests RED before the fix (`test_help_endpoint_all_and_query`,
+`test_help_wire_response_keeps_the_conditional_glossary_triad`,
+`test_help_search_wire_response_omits_the_triad`).
+
+**⚠ FINDING the plan did not predict — the route serves TWO shapes.** A naive single
+`response_model` raised `ResponseValidationError: Field required: categories` against the **search**
+response. The untyped `-> dict` had been hiding that `GET /help` returns the full catalogue
+(`categories` + entries) while `GET /help?q=` returns a search result (`query` + compact entries).
+It is a **union**, and the contract now says so. *A single loose model would have re-hidden exactly
+what typing was supposed to expose.*
+
+**The conditional triad trap held as predicted** (TEMPLATE §3b, `HoldingView.price_display`):
+`what`/`why`/`improves` are `Optional` **and** the route sets `response_model_exclude_unset=True`,
+so non-Terms entries serve the fields **absent, not `null`** — a null triad would render an empty
+section on the page. The pre-existing projection test calls the **service**, so it could not have
+seen either loss; the new guards assert the **wire**.
+
+**Contract regen (same commit):** path keys **138 → 138** (a reshape, not an addition); component
+schemas **58 → 62** (`HelpEntry`, `HelpResponse`, `HelpSearchEntry`, `HelpSearchResponse`); the 200
+moves from an untyped object to `anyOf[$ref, $ref]`. `make api-contract-check`: current.
+
+### Delta 2 — GLOSSARY.md becomes the enforced parent of the third store (§9-2c/d/e) · `cd62755`
+
+**Fail-first:** `test_the_two_code_stores_use_ONE_id_per_concept` RED on two aliases —
+`"Data confidence"` (popover `term-data-confidence` vs served `term-confidence`) and
+`"Cash runway"` (`term-cash-runway` vs `term-runway`). Both reconciled to the popover spelling; no
+other reference existed.
+
+**§9-2(e) as ruled**, with **two corrections to the plan's own proposal**: of the 17 titles the plan
+proposed exempting as "entry headings", **two were not headings** — `"Realised gains & tax lots"`
+(D-026) and `"Total value"` (D-021) are **deprecated terms** the glossary says must not appear in UI
+copy. Exempting them would have **laundered the defect under a rule invented to excuse it**. They
+were flagged with their deciding IDs and their exemptions **expired in delta 3**, as written.
+
+**Recorded blind spot:** the alias check joins the stores **by title**, so it cannot see an alias
+whose title also drifted — which is the case for the third one (`term-realised-gains`). That is
+written next to the guard, and the deprecated-wording guard (delta 3) is what covers the class.
+
+### Delta 3 — the KB content pass + the accuracy guards (§9-5 Tier 1+2, §9-7)
+
+**Content.** `Pages` entries **11 → 17**. Every stale claim the survey found was corrected, not only
+the ones §0 had listed — the audit found more than the plan did: `page-settings` described **four**
+tabs where **six** ship, `page-markets` named region tabs that are not the served ones
+(**Americas · Europe · Asia-Pacific · Commodities · Crypto**), `page-holdings` named controls
+(`"Add asset"`, `"Edit / import"`) that do not exist, and `page-home` listed **dropped** widgets
+(top holdings, watchlist & FX). Seven new entries: **Accounts · Heatmap · Review · Insurance ·
+Estate · Scenarios · Cash flow**.
+
+**⚠ DEVIATION FROM THE §9-5 TIER 2 RULING — Legal's entry is NOT authored, and the owner should
+rule on it.** Tier 2 named 8 pages; **7 shipped**. Legal is in the nav model but **`built: false`**
+with no route, so an entry for it would send a reader to a page that renders *"isn't built yet"* —
+a **dead end, in the milestone whose entire point is retiring dead ends**, and against Gate C3. It
+is authored in the Legal milestone, **which is the very next one**. This is mechanised rather than
+left to intent: `test_help_never_documents_a_page_the_user_cannot_open` fails if an entry names an
+unbuilt page, and `test_every_built_page_has_a_help_entry` fails the moment Legal ships without
+one. *Recorded as a deviation because it is one — the ruling said eight.*
+
+**Guards (§9-7), each seen RED on real content:**
+
+| Guard | What it caught when first run |
+|---|---|
+| every `Pages` title is a nav label, spelled identically | `Snapshot`, `Planning`, `Investment policy`, `Pricing health` |
+| no entry documents an **unbuilt** page | (the rule that keeps Legal out) |
+| every **built** page has an entry | the 7 that had none |
+| no copy points at a redirect-only path | `/snapshot`, `/planning`, `/global` |
+| **every deprecated row is triaged** | 5 rows the plan had never seen (`Review Centre`, `What needs attention`, `Planning (as page label)`, `Household`, `Needs a look`) |
+| no copy uses a **deprecated term** | `Realised gains` ×3 entries, `Total value` ×2, plus the two titles |
+| advice-free **across all categories** (was Terms-only) | **my own new Review copy** — *"not something you must act on"* |
+| no decision ID / implementation note in served copy | clean |
+
+**The deprecated guard honours the spec's own carve-outs rather than overriding them.** GLOSSARY
+permits "paper gain" explicitly — *"colloquialism may be explained, not shown"* — and the
+ongoing-cost entry names "total cost of ownership" only to say the two figures are **never** added
+into one. Both are exempted **by (entry, row) with a written reason**, never by relaxing the match.
+
+**⚠ FINDING — a retired term still ships as a Portfolio label, and was deliberately NOT fixed
+here.** `app/services/analytics.py:189` serves a key-stat whose user-facing `label` is
+**`"Total value"`** (D-021-retired). The help entry behind it was corrected and its `term_id`
+repointed, but **Portfolio is a closed, accepted page**: changing its rendered copy needs a dated
+delta note + a re-run pre-pass, which does not belong in a help-content commit. **Filed as
+`ROADMAP.md` R-52, owner ruling owed** on pre- vs post-release.
+
+**⚠ FINDING — three tests were PINNING the stale content.** `test_search_ranks_relevant_entries`
+asserted the title `"Investment policy"`; `test_help_endpoint_all_and_query` asserted
+`"Pricing health"`; `test_metric_glossary_terms_present` asserted `term-total-value`. They were
+green for months **because they agreed with the defect**. Corrected in the same commit as the
+content, with the reason written at the assertion. *A test that pins a wrong string is not
+protection — it is the defect with a second vote.*
+
+**Lesson — a keyword must DISCRIMINATE (new, from this pass).** The new Scenarios entry carried
+`"what if"` in its keywords. The search tokenizer splits on non-alphanumerics, so that indexed the
+bare token **`what`** at keyword weight — and `"what is xirr"` then ranked **Scenarios above
+XIRR & TWR**. Caught by an existing ranking test. *An English question word in a keyword list
+matches every question and distinguishes nothing; keywords are for discriminating terms only.*
+
+**Tier 3 filed:** `ROADMAP.md` **R-51** — the ≈44 `[Help]`-marked terms with no catalogue entry,
+POST-RELEASE per §9-5, with the verbatim principle recorded on the row.
+
+**Gates:** full backend suite run **SOLO** at delta 1 (**1244 passed, exit 0**) and again at delta 3.
+`ruff` clean. `make api-contract-check` current.
+
+---
+
 ## SCOPE-NOTES *(preserved verbatim — owner rulings recorded ahead of the draft; inputs to §9)*
 
 ### SN-1 — `[Help]` retrofit to the pre-affordance pages *(owner, 2026-07-14)*

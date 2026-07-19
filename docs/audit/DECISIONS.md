@@ -356,7 +356,7 @@ AI-fallback signal (D-070); the normative validation contract (D-071).
 | D-066 | Global chrome | KEEP (reshaped) | Detail toggle leaves top bar; ~~rotation toggle stays~~ *(**rotation toggle HIDDEN 2026-07-18** — owner-ruled at the Settings Phase-0a gate, page-settings §12 (d); dead-affordance principle. **Restored by R-37** with its engine.)*; sidebar per D-043; StaleBanner kept; **UpdateBanner respects no-egress: no-egress enabled = zero outbound calls, version check and banner included**; DemoBadge, theme cycle, clock kept. |
 | D-067 | Ask panel | KEEP | SSE streaming; fact-pack shown before answer (trust UX); validated-before-display; ephemeral (D-016); privacy-mode label always visible; P-6. |
 | D-068 | Briefing + instrument explainers | KEEP | Deterministic template + optional validated narration (model may add no numbers); stored + worker-refreshed; canonical on News. Instrument explainer rides P-6. |
-| D-069 | Settings | KEEP (reshaped) | ~~4 tabs.~~ ~~*(FIVE tabs — General · Appearance · Privacy · Data feeds · System — owner-ruled 2026-07-18 at the Settings Phase-3b walk, page-settings §14st-1)*~~ *(**SIX tabs — General · Appearance · Privacy · Data feeds · AI · System — owner-ruled 2026-07-18 (amendment #2, page-settings §14st-2)**; see the two D-069 AMENDMENTs below. A **Data feeds** tab holds feed/provider config — market data provider, provider API key (write-only), stale-after posture, ND-6 news feeds — because that config is its own nature; an **AI** tab holds the read-only served AI-config line (model management deferred to AI-surfaces, D-067/D-068). Auto-lock + Allow LAN are **access controls, not feeds**, and stay in System. **The "AI never persists" statement STAYS in Privacy** — its canonical home.)* Adds: **Privacy section** (no-egress toggle, "AI never persists" statement, privacy-mode indicator, **current egress state shown as a plain statement — "This device makes no network calls" when enabled — state shown, not merely offered**); **API-token management card** (create/name/revoke, token shown once, [S]-gated; passes P-7). Appearance gains density, loses persona. Nav-customization dies (D-043). System tab degrades gracefully sans sudo helper (D-003). |
+| D-069 | Settings | KEEP (reshaped) | ~~4 tabs.~~ ~~*(FIVE tabs — General · Appearance · Privacy · Data feeds · System — owner-ruled 2026-07-18 at the Settings Phase-3b walk, page-settings §14st-1)*~~ *(**SIX tabs — General · Appearance · Privacy · Data feeds · AI · System — owner-ruled 2026-07-18 (amendment #2, page-settings §14st-2)**; see the two D-069 AMENDMENTs below. A **Data feeds** tab holds feed/provider config — market data provider, provider API key (write-only), stale-after posture, ND-6 news feeds — because that config is its own nature; an **AI** tab holds the read-only served AI-config line (model management deferred to AI-surfaces, D-067/D-068). Auto-lock + Allow LAN are **access controls, not feeds**, and stay in System. **The "AI never persists" statement STAYS in Privacy** — its canonical home.)* Adds: **Privacy section** (no-egress toggle, "AI never persists" statement, privacy-mode indicator, **current egress state shown as a plain statement — "This device makes no network calls" when enabled — state shown, not merely offered**); **API-token management card** (create/name/revoke, token shown once, [S]-gated; passes P-7). Appearance gains density, loses persona. Nav-customization dies (D-043). System tab degrades gracefully sans sudo helper (D-003). **⊕ AMENDMENT #3 — SEVEN tabs (owner, 2026-07-19; page-help §9-bis-11(c); recorded here 2026-07-20 under the AI-surfaces §9(j) record-hygiene authorization).** A dedicated **About** tab is added: **General · Appearance · Privacy · Data feeds · AI · System · About**. The text above this note is left standing and unedited — it was written before amendment #3 and its *"SIX tabs"* and *"the two D-069 AMENDMENTs below"* are **superseded by this note**, which now numbers **three**. `INFORMATION-ARCHITECTURE.md:84` / `:375-379` and `frontend/src/pages/Settings.tsx:83-84` already carry seven; this row was the stale one (AI-surfaces plan §0-K item 1). |
 
 ## 8. AI, providers & routing
 
@@ -768,6 +768,23 @@ clarifying notes recorded in the guide.
     R-32). **No new component** (the `Segmented` strip gains segments); tab state
     stays URL-addressable (`?tab=data-feeds`, `?tab=ai`; Amendment C).
     (page-settings §14st-2.)
+  - **AMENDMENT #3 (seven tabs) — an "About" tab** (owner, 2026-07-19,
+    page-help §9-bis-11(c); **recorded here 2026-07-20** under the AI-surfaces
+    §9(j) record-hygiene authorization — the ruling is not new, only its entry
+    in this record is). Supersedes amendment #2's six-tab set: **About** —
+    platform description · author · credits · links — becomes a **dedicated 7th
+    tab**, Settings being its canonical home. It reverses the same day's
+    §9-bis-6 ruling that About would be a *card inside System*; the reversal is
+    recorded, not erased (`INFORMATION-ARCHITECTURE.md:396-410`). It moved to
+    Settings because Help was restructured into a three-section user journey
+    (Orientation · Pages · Glossary) with no room for a concern that was never
+    help content. **Credits are reconciled against `docs/audit/LICENSES.md`** —
+    a credits list disagreeing with the licence record is the page describing
+    itself falsely, which is a release bar. Tab set: **General · Appearance ·
+    Privacy · Data feeds · AI · System · About.**
+    **This bullet supersedes the "grows to SIX" in this block's heading above**,
+    which was written before the amendment existed and is left unedited so the
+    record reads forward rather than being rewritten.
 
 - **D-104 — Tag normalisation vs verbatim rendering** (owner, 2026-07-12;
   page-portfolio §12b4-2). Two layers, deliberately different:

@@ -9,7 +9,16 @@ full what/why/improves entry in the in-app Help catalogue.
 
 ---
 
-## Product Commitments (verbatim from DECISIONS.md)
+## Product Commitments (canonical in `PRODUCT-SPEC.md` §3 — this block is a pointer)
+
+**SUBTITLE CORRECTED 2026-07-20** (AI-surfaces §9(j) record-hygiene authorization; plan §0-K item
+2). This heading read *"(verbatim from DECISIONS.md)"* — a relationship `PRODUCT-SPEC.md:67-74`
+records as **no longer holding**, and one this block's own body (below) already contradicted. The
+heading now states the relationship that actually holds: **`PRODUCT-SPEC.md` §3 is the rendering
+source** — guarded by `tests/unit/test_legal_content.py` (AC-L3) and served verbatim to the Legal
+page — and **`DECISIONS.md` is the ratifying record**, history that is not rewritten. This block
+copies neither. *(Same correction the Legal milestone made to the §3 subtitle itself, page-legal
+§11-2; a stale subtitle is a claim, and a claim gets checked.)*
 
 **RENAMED 2026-07-20 (owner, page-legal §11-1): "Product Guarantees" → "Product Commitments".**
 *Why:* **"guarantee" is warranty-family vocabulary**, and the product's warranty position — stated

@@ -313,6 +313,16 @@
   align-items: baseline;
   gap: var(--space-2);
   flex-wrap: wrap;
+  /* `min-width: 0` lets the row shrink below its content, and `anywhere` lets a bare URL break
+     mid-token. Without BOTH, "github.com/gopalasubramanium/ledgerframe" is one unbreakable word
+     that pushed the System tab 30px past a 320px viewport — caught by the Settings pre-pass
+     re-run that §9-bis-6 requires, not by review. A URL is the one string a reader cannot be
+     asked to scroll sideways for. */
+  min-width: 0;
+}
+.set__aboutlinks a {
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .set__aboutnote {
   color: var(--text-muted);

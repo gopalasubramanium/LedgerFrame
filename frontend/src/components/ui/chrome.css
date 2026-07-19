@@ -345,3 +345,79 @@
   display: flex;
   gap: var(--space-3);
 }
+
+/* THE ACCEPTANCE GATE (page-legal §11-5) — the consent panel that covers the app before entry.
+   It REUSES `.lf-lock`'s scrim, panel and typography rather than introducing a second full-screen
+   overlay: the two are the same kind of thing (an entry barrier over the whole shell), and a
+   parallel implementation would be one more surface to keep in step with the blur fallback, the
+   z-index and the panel geometry. Only what genuinely differs is added below — the panel is wider
+   because it carries a sentence of legal prose rather than six digits, and the prompt sits beside
+   a checkbox, which the PIN panel has no equivalent of.
+
+   ⚑ DS PROPOSED at the re-look, with the formal-typography items: this is the first checkbox-with-
+   prose construct in the chrome layer, and whether it becomes a design-system primitive is the
+   owner's call, not a decision to make silently here. */
+.lf-gate__panel {
+  width: 32rem;
+}
+.lf-gate__row {
+  display: flex;
+  gap: var(--space-3);
+}
+/* The checkbox and the prompt it governs, on one line-height so the sentence reads as the label of
+   the box rather than as body copy that happens to sit near it. */
+.lf-gate__check {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+.lf-gate__prompt {
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-primary);
+}
+/* The re-ask note. Deliberately NOT styled as an error — a returning user whose document changed
+   has done nothing wrong, and colouring this like a failure would say otherwise. */
+.lf-gate__stale {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.lf-gate__declined {
+  margin: 0;
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}
+.lf-gate__actions {
+  margin-top: var(--space-2);
+}
+/* The reading bar — shown only while the Legal page is open FROM the gate. It is deliberately not
+   a scrim: the whole point of this state is that the document is fully readable, so nothing may
+   dim or cover it. */
+.lf-gate__readingbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border-top: var(--border-width) solid var(--border-strong);
+  font-size: var(--font-size-13);
+  line-height: var(--line-13);
+  color: var(--text-secondary);
+}

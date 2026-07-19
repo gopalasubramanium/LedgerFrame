@@ -113,3 +113,5 @@ export type { FileInputProps } from "./FileInput";
 export { ToastProvider } from "./ToastProvider";
 export { useToast } from "./toast-context";
 export type { ToastSpec, ToastAction, ToastState } from "./toast-context";
+export { AcceptanceGate } from "./AcceptanceGate";
+export type { AcceptanceGateProps } from "./AcceptanceGate";

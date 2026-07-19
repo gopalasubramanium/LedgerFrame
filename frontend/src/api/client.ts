@@ -34,6 +34,15 @@ async function request<T>(
   try {
     const res = await fetch(`${BASE}${path}`, init);
     if (!res.ok) {
+      // 451 = the acceptance gate refused (page-legal §11-5). Announced globally rather than
+      // handled by the caller, because EVERY caller would otherwise need to know about consent.
+      //
+      // THE SERVER IS THE AUTHORITY AND THIS IS THE FRONTEND OBEYING IT. The shell asks once at
+      // mount, but consent can lapse mid-session in ways the shell has no way to predict: the
+      // Legal text changes and the hash moves, or a data reset erases the record (§11-D3). Both
+      // surface here first, as a 451 on an ordinary read. Reacting to the refusal — instead of
+      // trying to anticipate the causes — means the gate re-fires for a reason nobody enumerated.
+      if (res.status === 451) window.dispatchEvent(new Event("lf:consent-required"));
       let detail = `HTTP ${res.status}`;
       try {
         const body = await res.json();

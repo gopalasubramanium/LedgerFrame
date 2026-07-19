@@ -1,4 +1,4 @@
-import { apiGet } from "./client";
+import { apiGet, apiSend } from "./client";
 
 // Legal reader — page-legal §3a/§3b. The page's copy is SERVED (§9-3, owner 2026-07-19).
 //
@@ -75,4 +75,50 @@ export interface LegalResponse {
 /** The whole Legal page. One read, no parameters — the copy is static and never personalised. */
 export function legalContent() {
   return apiGet<LegalResponse>("/legal");
+}
+
+// --------------------------------------------------------------------------------------------- #
+// THE ACCEPTANCE GATE (page-legal §11-5, owner 2026-07-20)
+// --------------------------------------------------------------------------------------------- #
+
+/** Where this install stands.
+ *
+ *  THREE-VALUED, AND THE THIRD VALUE IS THE POINT. `stale` means an acceptance exists but of an
+ *  EARLIER text — the person is a returning user being re-asked because the document changed, not
+ *  a stranger, and the gate greets them differently. Collapsing `stale` into `none` would lose
+ *  exactly the distinction the event log was built to keep. */
+export type AcceptanceState = "none" | "stale" | "accepted";
+
+export interface LegalAcceptanceStatus {
+  status: AcceptanceState;
+  /** sha256 of the served document this status was computed against. */
+  content_sha256: string;
+  accepted_at: string | null;
+}
+
+/** The gate's own strings — SERVED, never authored here.
+ *
+ *  This is the most consequential copy in the product: it is what the user is RECORDED as having
+ *  agreed to. It is served for the same reason Legal's prose is (§9-3) — so the accuracy guards
+ *  can reach it — and because a consent record whose wording lives in a frontend constant cannot
+ *  be bound to the text the server hashed. ⚑ The wording is PROPOSED until the owner's look (§9-8). */
+export interface LegalGateCopy {
+  prompt: string;
+  explainer: string;
+  stale_note: string;
+  declined_note: string;
+}
+
+export function fetchAcceptance() {
+  return apiGet<LegalAcceptanceStatus>("/legal/acceptance");
+}
+
+export function fetchGateCopy() {
+  return apiGet<LegalGateCopy>("/legal/gate-copy");
+}
+
+/** Record an answer. The hash is taken SERVER-SIDE and is deliberately not a parameter — a
+ *  client-supplied hash would let a caller record acceptance of a document never served. */
+export function recordAcceptance(action: "accepted" | "declined") {
+  return apiSend<LegalAcceptanceStatus>("/legal/acceptance", "POST", { action });
 }

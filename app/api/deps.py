@@ -58,8 +58,28 @@ async def _api_token_or_none(request: Request, session: AsyncSession, authorizat
 
 def _read_stays_open(path: str) -> bool:
     """Endpoints that must remain reachable even when locked, so the lock screen can
-    check state and unlock. All auth endpoints; everything else under /api/v1 is gated."""
-    return path.startswith("/api/v1/auth/")
+    check state and unlock. All auth endpoints; everything else under /api/v1 is gated.
+
+    `/api/v1/legal` JOINED THIS LIST 2026-07-20 (page-legal §11-E2), and the reason is a defect
+    found by driving a browser rather than by reading the code. The acceptance gate exempts the
+    legal endpoints from the CONSENT check — but they were still behind the PIN check, which runs
+    immediately after. On a PIN-protected install with no acceptance, the shell therefore could not
+    read the consent state or fetch the gate's copy, and rendered THE PIN PROMPT INSTEAD OF THE
+    CONSENT PANEL: the server refusing data for want of consent while the UI asked for a PIN, and
+    `/legal` unreadable before accepting on exactly the installs most likely to have a real user
+    behind them. Every test in the gate's own module runs on a PIN-less install, so nothing caught
+    it.
+
+    WHAT THIS OPENS, stated exactly rather than waved at, because widening a lock deserves it:
+      * `/legal`            — the document. It ships in the source tree; the PIN was never what
+                              kept it private, and a gate that hides the text it demands consent
+                              to is the failure the exemption exists to prevent.
+      * `/legal/gate-copy`  — the gate's own strings. Same category.
+      * `/legal/acceptance` — a three-valued status string, a content hash, and a timestamp.
+    NO holding, NO figure, NO personal record, and nothing an attacker on the loopback interface
+    could not already read out of the repository. The PIN still guards every byte of user data.
+    """
+    return path.startswith("/api/v1/auth/") or path.startswith("/api/v1/legal")
 
 
 # --- The acceptance gate's exempt set (page-legal §11-5, owner 2026-07-20) --------------------- #

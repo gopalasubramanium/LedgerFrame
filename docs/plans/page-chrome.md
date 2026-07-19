@@ -617,3 +617,46 @@ silent edit — per the accepted-page-touch discipline.**
   (RED before — index rows carried `stale: true`).
 - **CHROME pre-pass re-run:** the ticker/reader reconciliation was driven live on the isolated
   instance (stated in the report).
+
+---
+
+## DELTA NOTE — 2026-07-20 (R-LEGAL §11-5, the acceptance gate)
+
+**A new full-screen entry barrier joins the shell, in front of the lock.** Per the standing rule
+that a change to an accepted surface takes a dated note in its own plan file **and** that page's
+pre-pass re-run in the same delta.
+
+**What changed in `AppShell`:**
+- **A new overlay, `AcceptanceGate`,** rendered **before** `LockScreen`. It reuses `.lf-lock`'s
+  scrim, panel and blur fallback rather than introducing a second full-screen treatment — they are
+  the same kind of thing, and a parallel implementation would be one more surface to keep in step.
+- **The entry sequence is now: consent → PIN → first-run.** `LockScreen` and `FirstRunChecklist`
+  both gained `!gateOpen` conditions. This mirrors the server, where the acceptance check runs
+  before the PIN check.
+- **A `451` listener.** `client.ts` announces every 451 and the shell re-reads the acceptance
+  status, so the gate re-fires when consent lapses mid-session.
+- **The page subtree is keyed on an entry epoch** and remounts when the gate clears — see below.
+
+**PRE-PASS RE-RUN — isolated stack, 2026-07-20.** Backend `:8399` (temp data dir), Vite dev `:5199`.
+**Owner's `:8321` / `:5173` / `~/.ledgerframe-data` untouched**; `.env` snapshotted and restored.
+
+| Check | Result |
+|---|---|
+| Unaccepted entry → gate, shell blurred behind | ✅ light + dark |
+| PIN-set + unaccepted → **consent panel, not the PIN prompt** | ✅ *(after the fix below)* |
+| Accept → PIN prompt → unlock → Home | ✅ full sequence in order |
+| PIN-less → accepting alone is entry | ✅ no lock screen after |
+| Sidebar · TopBar · clock · ticker · stale banner | ✅ unchanged |
+| Console errors after entry (non-451) | ✅ **0** |
+
+⚠ **The 451s themselves ARE logged by the browser while the gate is up** — 29 of them on a cold
+unaccepted load. They are the gate working, not a defect, and they are filtered from the count the
+same way the documented `kite→400` honest-rejection entry is. Stated rather than quietly excluded.
+
+**TWO DEFECTS THIS PRE-PASS FOUND, both invisible to review:**
+1. **The gate could not render itself on a PIN-protected install** — the legal endpoints were exempt
+   from the acceptance check but still behind the PIN check, so the user was shown a PIN prompt for
+   an app whose terms they had never been offered. Fixed in `deps.py`; see page-legal §11-E2.
+2. **Home was full of "Couldn't load this summary" after accepting** — pages fetch once on mount,
+   and every read behind the gate had been refused. Fixed by the entry-epoch remount. **0**
+   occurrences after.

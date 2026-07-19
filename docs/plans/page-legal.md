@@ -719,3 +719,59 @@ block-comment state tracked across lines so lineage notes are still spared, and 
 rather than leaving it assumed. Proven live: `License` injected into `PricingHealth.tsx`'s served
 `<p>` → **RED at `PricingHealth.tsx:254`**. *Scanning a file and reading its copy are different
 claims, and only the second one is worth a green.*
+
+---
+
+### 11-E2. THE ACCEPTANCE GATE, FRONT END — shipped (2026-07-20)
+
+**This component is not the lock, and the distinction is the design.** The server refuses every
+`/api/v1` read with **451** until this install has accepted (§11-E1). `AcceptanceGate.tsx` is the
+only way a person can *answer* that refusal. **If the whole frontend gate were deleted, the data
+would still be refused** — which is exactly the difference between a gate and a picture of one.
+
+**THE ORDER MIRRORS THE SERVER: consent, then authentication, then setup.** The acceptance panel
+renders in front of `LockScreen`, because the server's check runs before the PIN check. Any other
+order asks a person to unlock an app whose terms they have never been shown.
+
+| Requirement | How it is met |
+|---|---|
+| Checkbox + served copy naming exactly what is accepted | `ACCEPTANCE_PROMPT` rendered **verbatim** as the checkbox label; **Accept is disabled until it is ticked** |
+| `/legal` readable **without** accepting | *Read the Legal page* hides the panel, opens the document, and shows a **return bar** — a state that is not a trap |
+| PIN-less acceptance-only entry | Accepting **is** entry. No PIN is invented to stand in for consent — it is a **consent** boundary, never an authentication one |
+| Decline recorded, stays locked | `Decline` POSTs `declined`, renders the served `declined_note`, and **the panel stays up** |
+| Re-lock on hash change | Status `stale` renders the served `stale_note` — a returning user is told **why**, not greeted as a stranger |
+| Reset erasure (§11-D3) | Handled by the same path as everything else — see the 451 listener below |
+
+**THE CLIENT NEVER DECIDES WHETHER CONSENT STILL APPLIES.** `client.ts` announces **every 451** on
+a window event and the shell re-reads the status. Consent can lapse for reasons the shell cannot
+predict — a changed document, a data reset — and reacting to the server's refusal covers the causes
+nobody enumerated as well as the two that were.
+
+**A DEFECT FOUND BY DRIVING A BROWSER, WHICH REVIEW AND 1713 TESTS HAD BOTH MISSED.** On a
+**PIN-protected, unaccepted** install the user was shown **the PIN prompt, not the consent panel**.
+§11-E1 exempted the legal endpoints from the *acceptance* check and stopped there — they were still
+behind the **PIN** check, which runs immediately after. So the shell could not read the consent
+state or fetch the gate's copy, and `/legal` was **unreadable before accepting** on exactly the
+installs most likely to have a real user behind them. **Every test in the gate's own module runs on
+a PIN-less install**, which is why nothing caught it. Fixed by widening `_read_stays_open` to
+`/api/v1/legal`, pinned fail-first by
+`test_the_gate_can_RENDER_ITSELF_on_a_PIN_PROTECTED_install`. What that widening exposes, stated
+exactly: **the Legal document** (public text that ships in the source tree), **the gate copy**
+(likewise), and **the acceptance status** — a three-valued string, a hash and a timestamp. **No
+holding, no figure, no personal record.** The PIN still guards every byte of user data.
+
+**A SECOND DEFECT FROM THE SAME WALK.** After accepting, Home was **full of "Couldn't load this
+summary"**. Pages fetch once in a mount `useEffect` and there is no shared query cache: a page
+mounted *behind* the gate had every read refused, cached the honest error, and had no reason to ask
+again. Each card's **Retry** worked — but making a user click six of them to undo a refusal the
+product itself created **is not an honest empty, it is a mess wearing one**. The page subtree is
+now keyed on an entry epoch and remounts when the gate clears. Verified: **0 occurrences** after.
+
+**Fail-first, measured:** the nine gate tests were run against a build with `gateOpen` forced to
+`false` — **all nine RED**, then green. A gate test that cannot fail when the gate is gone is
+decoration.
+
+**⚑ PROPOSED, carried to the re-look:** the **gate copy** (§9-8 — this CLI does not draft legal
+text, and the acceptance sentence is the most consequential string in the product); the **reset
+confirmation copy**; and a **DS item** — the checkbox-with-prose construct is the first of its kind
+in the chrome layer, and whether it becomes a design-system primitive is the owner's call.

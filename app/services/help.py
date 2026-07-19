@@ -657,7 +657,28 @@ HELP: list[dict] = [
                   "- The limit on a particular figure stays **with that figure**. This page states "
                   "the product's position; it does not replace the note you see beside a number, "
                   "and removing one of those notes would take honesty away rather than tidy "
-                  "anything up."},
+                  "anything up.\n"
+                  # HELP CURRENCY (page-legal §11-E2, 2026-07-20): the acceptance gate is now a
+                  # thing the user MEETS, before anything else in the product. Help is live
+                  # documentation, so it explains the gate here — including the two behaviours a
+                  # user would otherwise experience as the app breaking: a re-ask after the text
+                  # changes, and the lock that follows a data reset.
+                  "\n"
+                  "**Accepting the terms.** Before the app opens, you are asked to accept the "
+                  "licence terms and the product's position. You can read this whole page first — "
+                  "it opens without accepting anything. Declining is a real answer: it is "
+                  "recorded, and the app stays locked until you accept.\n"
+                  "\n"
+                  "- If this page **changes**, you are asked again the next time you open the app, "
+                  "and told that is why. Your earlier answer is not lost — but it was an answer "
+                  "about a different text, so it is not treated as an answer about this one.\n"
+                  "- **Resetting your data also clears your acceptance**, and the app asks again. "
+                  "A reset returns the app to a freshly-installed state, and the commonest reason "
+                  "to do it is to hand the install to someone else — who should be asked for "
+                  "themselves rather than inheriting your answer.\n"
+                  "- Accepting is about the **terms**, not about security. It is not a password "
+                  "and it protects nothing: an app with no PIN is exactly as open after you accept "
+                  "as it was before."},
     # --- Glossary ----------------------------------------------------------- #
     # Section 3 (9-bis-1/9-bis-2): Tier-1+2 terms only, ordered basics > expert, each with a
     # STATIC worked example clearly marked as an illustrative sample (9-bis-3).

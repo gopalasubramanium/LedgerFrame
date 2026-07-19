@@ -193,6 +193,47 @@ async def test_an_invalid_action_is_refused_rather_than_recorded(app_client):
 
 
 @pytest.mark.anyio
+async def test_the_gate_can_RENDER_ITSELF_on_a_PIN_PROTECTED_install(app_client):
+    """FOUND IN THE BROWSER, NOT IN REVIEW (page-legal §11-E2).
+
+    The ruling exempts *"the legal-content, acceptance, and auth endpoints needed to render the
+    gate itself"*. §11-E1 exempted them from the ACCEPTANCE check — and stopped there. They were
+    still behind the PIN check, which runs immediately after. On a PIN-protected install with no
+    acceptance the result was that the shell could not read the consent state or fetch the gate's
+    copy, so it rendered **the PIN prompt instead of the consent panel**.
+
+    Three things were wrong with that at once:
+      * it INVERTS the ruled order — the server refuses data for want of consent, while the UI
+        asks for a PIN, so the user is asked to unlock an app whose terms they have not seen;
+      * `/legal` was NOT readable before accepting on exactly the installs most likely to have a
+        real user behind them, against the one exemption that is a matter of principle;
+      * the exemption looked correct in the code and in the tests, because every test in this
+        module runs on an install with no PIN.
+
+    THE FIX WIDENS WHAT IS READABLE WHILE LOCKED, so it is worth being exact about what that
+    exposes: the Legal document (public text that ships in the source tree), the gate's own copy
+    (likewise), and the acceptance status — a three-valued string, a content hash and a timestamp.
+    No holding, no figure, no personal record. Nothing here is protected by the PIN today in any
+    meaningful sense: the document is in the repository.
+    """
+    await _clear_acceptance(app_client)
+    assert (await app_client.post("/api/v1/auth/set-pin", json={"pin": "086420"})).status_code == 200
+    # Lock: drop the session the set-pin call established, exactly as a browser would on reload.
+    app_client.cookies.clear()
+
+    for path in ("/api/v1/legal", "/api/v1/legal/acceptance", "/api/v1/legal/gate-copy"):
+        r = await app_client.get(path)
+        assert r.status_code == 200, (
+            f"{path} is unreachable on a locked, unaccepted install ({r.status_code}). The gate "
+            "cannot render itself, so the user is shown a PIN prompt for an app whose terms they "
+            "have never been offered."
+        )
+
+    # And the data is still refused — the widening must not have opened anything that matters.
+    assert (await app_client.get(DATA_ENDPOINT)).status_code in (401, 451)
+
+
+@pytest.mark.anyio
 async def test_a_data_reset_ERASES_acceptance_and_the_gate_RE_FIRES(app_client):
     """**RESET ERASES ACCEPTANCE — the SPECIFIED behaviour** (page-legal §11-D3, architect under
     delegation, 2026-07-20). This test is the inversion of an earlier one that pinned the opposite.

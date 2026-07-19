@@ -19,6 +19,8 @@ interface FetchOpts {
   ticker?: boolean;
   /** When true, the first-run checklist is NOT yet complete (overlay should show). */
   firstRun?: boolean;
+  /** Legal acceptance state (page-legal §11-5). Defaults to accepted — see the stub below. */
+  acceptance?: "none" | "stale" | "accepted";
 }
 
 function stubFetch(opts: FetchOpts = {}) {
@@ -31,6 +33,14 @@ function stubFetch(opts: FetchOpts = {}) {
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+      // The acceptance gate (page-legal §11-5) sits in FRONT of the PIN, so every shell test now
+      // passes through it. These stubs put the install in the ACCEPTED state, because the tests in
+      // this file are about the lock, the ticker and first-run — not about consent. The gate's own
+      // behaviour is driven explicitly in AcceptanceGate.test.tsx and in the e2e walk.
+      if (url.includes("/legal/gate-copy"))
+        return json({ prompt: "P", explainer: "E", stale_note: "S", declined_note: "D" });
+      if (url.includes("/legal/acceptance"))
+        return json({ status: opts.acceptance ?? "accepted", content_sha256: "x", accepted_at: null });
       if (url.includes("/auth/state")) return json({ pin_set: opts.pinSet ?? false });
       if (url.includes("/auth/unlock")) return json({ ok: true });
       if (url.includes("/auth/set-pin")) return json({ ok: true });
@@ -212,6 +222,11 @@ test("first-run provider list re-fetches after unlock: empty while locked → po
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+      // Acceptance gate stubs (§11-5) — accepted, so this test exercises what it is named for.
+      if (url.includes("/legal/gate-copy"))
+        return json({ prompt: "P", explainer: "E", stale_note: "S", declined_note: "D" });
+      if (url.includes("/legal/acceptance"))
+        return json({ status: "accepted", content_sha256: "x", accepted_at: null });
       if (url.includes("/auth/state")) return json({ pin_set: true });
       if (url.includes("/auth/unlock")) {
         unlocked = true;
@@ -278,6 +293,11 @@ function stubFirstRunSettings() {
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+      // Acceptance gate stubs (§11-5) — accepted, so this test exercises what it is named for.
+      if (url.includes("/legal/gate-copy"))
+        return json({ prompt: "P", explainer: "E", stale_note: "S", declined_note: "D" });
+      if (url.includes("/legal/acceptance"))
+        return json({ status: "accepted", content_sha256: "x", accepted_at: null });
       if (url.includes("/auth/state")) return json({ pin_set: false });
       if (url.includes("/system/data-source"))
         return json({ provider: "mock", has_api_key: false, base_currency: "SGD", providers: ["mock", "csv", "yahoo"], admin_available: true });

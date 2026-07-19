@@ -469,3 +469,30 @@ failure now degrades to the **honest ECB reference rate**, never a fabricated nu
   suite (and the first-run/PIN tests) run against temp dirs and leave the real dev DB untouched.
   No isolation fix needed. If future walks want a one-command "reset + relaunch", that is a small
   dev-ergonomics add (not built) — flag only.
+
+---
+
+## DELTA NOTE — 2026-07-20 (R-LEGAL §11-5, the acceptance gate)
+
+**The checklist now mounts third, not second.** The entry sequence is **consent → PIN →
+first-run**: `FirstRunChecklist` gained a `!gateOpen` condition alongside its existing `!locked`
+one. The F-7 principle is unchanged and simply extended — the overlay mounts **after** every entry
+barrier, never beside one.
+
+**Why this matters here specifically.** The checklist's steps write to `/settings` and read the
+served provider list, and **every one of those calls is refused with 451 while the gate is up**. An
+overlay rendered behind the gate would have shown an empty data-provider dropdown and silently
+failed its writes — the same class of defect as the post-close §11-4 regression, which was an empty
+provider list caused by a fetch that ran while the app was still locked. Acceptance therefore
+triggers the **same refetch** that unlocking already did.
+
+**PRE-PASS RE-RUN — isolated stack, 2026-07-20** (backend `:8399`, Vite `:5199`; owner's stack
+untouched, `.env` snapshotted and restored):
+
+| Check | Result |
+|---|---|
+| Unaccepted, first-run incomplete → **gate shows, checklist does not** | ✅ |
+| After a **PIN-less** acceptance → checklist appears | ✅ |
+| Base currency · Timezone · **Data provider** populated after acceptance | ✅ *(the refetch — provider read `alphavantage`, not empty)* |
+| Five steps, "0 of 5 confirmed", Skip / More options / Done | ✅ unchanged |
+| Console errors (non-451) | ✅ **0** |

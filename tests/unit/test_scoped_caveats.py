@@ -88,8 +88,9 @@ CAVEAT_FLOOR: dict[str, int] = {
 
 # Caveats that are NOT a `"disclaimer":` mapping key and so cannot be discovered by the scan.
 # Listed individually BECAUSE the scan cannot see them — the one honest reason to hand-list.
+# ⊕ AMENDED 2026-07-20 (AI-surfaces Phase 0.1; page-legal §14-E). `app/schemas/ai.py` MOVED OUT of
+# this tuple and into its own test below. It is not retired — it is checked HARDER. See §14-E.
 _UNDISCOVERABLE: tuple[tuple[str, str], ...] = (
-    ("app/schemas/ai.py", "Information only, not financial advice."),
     ("frontend/src/routes/Estate.tsx", "A record and reminders, never legal advice."),
     ("app/services/tax.py", "Open lots by FIFO. Organisation only — not tax advice."),
     ("app/services/confidence.py",
@@ -142,16 +143,57 @@ def test_the_named_caveats_are_still_worded_as_they_ship(path: str, text: str):
 
     The count guard above cannot tell a caveat that was rewritten into meaninglessness from one
     left alone — a `"disclaimer"` key whose value became "See the Legal page." still counts as one.
-    These four are the load-bearing specimens: the AI's fixed information-only line (Guarantee 2
-    names it explicitly), the Estate subtitle (rendered client-side, so no backend scan reaches
-    it), the FIFO tax-lot caveat that exports carry into the file, and Confidence's — the one this
-    guard's RED specimen deletes.
+    The load-bearing specimens: the Estate subtitle (rendered client-side, so no backend scan
+    reaches it), the FIFO tax-lot caveat that exports carry into the file, and Confidence's — the
+    one this guard's RED specimen deletes.
+
+    *(The AI's fixed information-only line was a fourth entry here until 2026-07-20; it now has a
+    stronger test of its own, immediately below.)*
     """
     src = (REPO / path).read_text(encoding="utf-8")
     assert text in src, (
         f"{path} no longer carries its scoped caveat verbatim:\n  {text!r}\n"
         f"See page-legal §9-2 / D-106 — this is an honesty regression unless a ruling says "
         f"otherwise."
+    )
+
+
+def test_the_ai_fixed_disclaimer_still_SHIPS_its_exact_wording():
+    """The AI's fixed information-only line — guarded by its SHIPPED VALUE, not its spelling.
+
+    ⊕ AMENDED 2026-07-20 (AI-surfaces Phase 0.1, page-legal §14-E). This was an `_UNDISCOVERABLE`
+    entry asserting the literal appeared in `app/schemas/ai.py`'s source. Phase 0.1 turned the
+    thirteen scattered literals of this sentence into ONE constant (`app/core/disclaimer.py`),
+    because Commitment 2 promises the disclaimer is **FIXED** — a claim about identity across
+    paths that thirteen independent literals could only satisfy by coincidence.
+
+    That made the old assertion red on a file whose SERVED VALUE had not changed by a byte. The
+    honest fix is not to delete the guard and not to reinstate the duplicate: it is to check the
+    thing that was always meant — **what ships** — instead of the spelling of the line that
+    produces it. A source-literal check could never have caught `disclaimer: str = "See Legal."`
+    being introduced *elsewhere*; this resolves the actual default the schema carries.
+
+    Strictly stronger than what it replaces, on the registry's own terms: the old test would pass
+    if the literal sat in a comment, and would fail on a rename that changed nothing the user
+    reads. This one does neither.
+
+    ⚠ Commitment 2's line is the PRODUCT-LEVEL position (D-106 kind (b)) and is the one thing this
+    module's consolidation warning does NOT cover — §9(c) authorised centralising it, and only it.
+    The scoped caveats (kind (a)) above are untouched and must stay that way.
+    """
+    from app.core.disclaimer import DISCLAIMER
+    from app.schemas.ai import AIAnswer
+
+    text = "Information only, not financial advice."
+    assert text == DISCLAIMER, (
+        f"the fixed information-only disclaimer has been reworded: {DISCLAIMER!r}. Commitment 2 "
+        "names it; rewording it is a change to what the product promises, not a copy edit."
+    )
+    assert AIAnswer.model_fields["disclaimer"].default == text, (
+        "app/schemas/ai.py no longer SHIPS the fixed information-only disclaimer as its default: "
+        f"{AIAnswer.model_fields['disclaimer'].default!r}\n"
+        "See page-legal §9-2 / D-106 — this is an honesty regression unless a ruling says "
+        "otherwise."
     )
 
 

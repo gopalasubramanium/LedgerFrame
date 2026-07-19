@@ -1506,3 +1506,52 @@ is a judgement on the record rather than a step skipped.
 ran, and **the enumeration is itself a claim of completeness** (§11-H). `make lint` is a standing
 gate in the `Makefile` and was absent from the list. The AI-surfaces close reports `make lint`
 explicitly for this reason.
+
+---
+
+### 14-E. ⊕ DATED DELTA — AC-L6's registry amended by AI-surfaces Phase 0.1 (2026-07-20)
+
+**What changed and why it had to.** `tests/unit/test_scoped_caveats.py` listed
+`app/schemas/ai.py` under `_UNDISCOVERABLE` — four caveats *"guarded by their WORDS, not their
+presence"* — asserting the literal *"Information only, not financial advice."* appears in that
+file's source.
+
+AI-surfaces Phase 0.1 (`621ea85`) consolidated **thirteen scattered literals** of that sentence
+into one constant (`app/core/disclaimer.py`), because **Commitment 2 promises the disclaimer is
+FIXED** — a claim about *identity across paths* that thirteen independent literals could satisfy
+only by coincidence. §0-C found the coincidence was real and unasserted: `briefing.py`'s
+idempotence check tested a *different substring*, and `app/schemas/ai.py`'s default — the site that
+most looked canonical — governs **nothing the streaming path emits**.
+
+That turned this registry RED on a file whose **served value had not changed by a byte**.
+
+**Resolution: the guard is kept and made stronger, not deleted and not worked around.**
+`app/schemas/ai.py` moves out of `_UNDISCOVERABLE` into
+`test_the_ai_fixed_disclaimer_still_SHIPS_its_exact_wording`, which resolves
+`AIAnswer.model_fields["disclaimer"].default` and asserts the **shipped value**, plus that
+`DISCLAIMER` itself still carries the ruled wording.
+
+**Strictly stronger on AC-L6's own terms:** the old assertion would have passed with the literal
+sitting in a *comment*, and failed on a rename that changed nothing the user reads. The new one
+does neither — it checks what ships.
+
+**Scope held.** Only the **product-level position** (D-106 kind (b)) was centralised — the one
+thing §9(c) authorised. The **scoped caveats** (kind (a)) are untouched, their floor is unchanged
+(the `"disclaimer":` count scan still passes at every path), and Phase 0.1's own guard
+(`test_disclaimer_closure.py`) carries an explicit test asserting the Reports Pack caption still
+exists, so a reader who finds the closure scan cannot "tidy" a kind-(a) caveat into a regression.
+
+**Gates.** `test_scoped_caveats.py` **23 passed**. Full backend suite **1884 / 15 skipped**, solo.
+
+**No pre-pass re-run, stated as a judgement rather than a step skipped.** The rule's trigger is an
+accepted page whose *behaviour* changed. Nothing rendered moved: the served disclaimer is
+byte-identical (asserted by the new test), the Legal page renders `legal.py`'s commitments block
+which was not touched, and the change is a Python-level indirection behind an unchanged value.
+
+**Lesson for §15 — a guard can encode the mechanism instead of the property.** AC-L6's intent is
+*"this figure must not lose the limit it was published under"*. Three of its four named specimens
+guard that by source literal, which is the mechanism, not the property — and the mechanism broke
+the first time a legitimate refactor touched it. Where a served value is reachable from a test,
+**assert the value**. Filed as a lesson rather than a sweep: the other three specimens are
+client-rendered or export-embedded strings with no server-side value to resolve, so the literal
+check is the honest one *there*.

@@ -22,8 +22,8 @@
 }
 .lf-card__lead {
   margin: 0 0 var(--space-3);
-  color: var(--text-muted);
-  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
   max-width: 78ch;
 }
 
@@ -84,7 +84,7 @@
   background: none;
   border: 0;
   font: inherit;
-  color: var(--text);
+  color: var(--text-primary);
   text-align: left;
   cursor: pointer;
   border-radius: var(--radius-md);
@@ -93,12 +93,12 @@
   background: var(--surface-hover, transparent);
 }
 .help__entrytoggle:focus-visible {
-  outline: var(--focus-width) solid var(--focus);
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: calc(var(--focus-offset) * -1);
 }
 
 .help__entrytitle {
-  font-size: var(--text-md);
+  font-size: var(--font-size-16);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -112,7 +112,7 @@
   border-left: 0.375rem solid currentColor;
   border-top: 0.3125rem solid transparent;
   border-bottom: 0.3125rem solid transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   transition: transform 120ms ease;
 }
 .help__entry.is-open .help__chevron {
@@ -127,8 +127,8 @@
 .help__level {
   flex: none;
   margin-left: auto;
-  font-size: var(--text-xs);
-  color: var(--text-muted);
+  font-size: var(--font-size-12);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -148,8 +148,8 @@
   background: none;
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-size-12);
   cursor: pointer;
   transition: opacity 120ms ease;
 }
@@ -159,7 +159,7 @@
   opacity: 1;
 }
 .help__topiclink:focus-visible {
-  outline: var(--focus-width) solid var(--focus);
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -195,7 +195,7 @@
 .help__prose,
 .help__triad dd,
 .help__list {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin: 0;
 }
@@ -212,7 +212,7 @@
 }
 .help__prosehead {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--font-size-13);
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.01em;
@@ -242,9 +242,9 @@
 }
 .help__blocktitle {
   margin: 0 0 var(--space-1);
-  font-size: var(--text-sm);
+  font-size: var(--font-size-13);
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-primary);
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
@@ -271,12 +271,12 @@
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-pill);
   color: var(--accent);
-  font-size: var(--text-sm);
+  font-size: var(--font-size-13);
   cursor: pointer;
 }
 .help__jump:hover { border-color: var(--accent); }
 .help__jump:focus-visible {
-  outline: var(--focus-width) solid var(--focus);
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
 
@@ -288,11 +288,11 @@
   padding-left: var(--space-3);
 }
 .help__samplechip {
-  font-size: var(--text-xs);
+  font-size: var(--font-size-12);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-pill);
   padding: 0 var(--space-2);
@@ -306,9 +306,9 @@
   align-items: baseline;
 }
 .help__triad dt {
-  font-size: var(--text-sm);
+  font-size: var(--font-size-13);
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-primary);
   white-space: nowrap;
 }
 @media (max-width: 640px) {
@@ -326,8 +326,8 @@
 /* --- PROPOSED DS PATTERN: type-ahead results list --------------------------------------------- */
 .help__resultcount {
   margin: 0 0 var(--space-3);
-  color: var(--text-muted);
-  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-size: var(--font-size-13);
 }
 
 /* A deep-linked topic is marked so the reader can SEE which entry the link meant — landing

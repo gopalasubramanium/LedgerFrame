@@ -157,8 +157,17 @@ test.describe("help markup + about + policy — 3a pre-pass", () => {
     await expect(strip.getByRole("button")).toHaveCount(7);
     await expect(strip.getByRole("button", { name: "About" })).toBeVisible();
 
-    await expect(page.getByText("What it stands for")).toBeVisible();
-    await expect(page.getByText("Who built it")).toBeVisible();
+    // ⚠ UPDATED FOR THE FOUR-BEAT REBUILD (§9-bis-13). This asserted "What it stands for" — a card
+    // heading the rebuild REMOVED. The unit tests were updated in that delta and this pre-pass was
+    // not, so the guard went stale: it kept passing until the rebuild actually shipped, then failed
+    // naming a heading nobody had deleted by mistake. A guard pinned to superseded copy is worse
+    // than no guard, because its red reads as a regression in the code rather than in itself.
+    for (const beat of ["The Story & Mission", "The Conflict", "The Resolution", "The Sequel"]) {
+      await expect(page.getByRole("heading", { level: 2, name: beat })).toBeVisible();
+    }
+    await expect(page.getByRole("heading", { level: 2, name: "Who built it" })).toBeVisible();
+    // The pull-quote, with no terminal full stop (the ratified punctuation rule).
+    await expect(page.locator(".set__pullquote")).toHaveText("One honest picture of everything you own and owe");
 
     // The photo RENDERS — decoded with real pixels, not a broken-image box.
     const photo = page.getByAltText("Gopala Subramanium");
@@ -182,6 +191,10 @@ test.describe("help markup + about + policy — 3a pre-pass", () => {
       await expect(a, `About is missing ${href}`).toHaveCount(1);
       expect(await a.getAttribute("rel")).toContain("noopener");
       expect(await a.getAttribute("rel")).toContain("noreferrer");
+      // Icon-only since the rebuild: without an accessible name these announce as a bare URL or as
+      // nothing at all, and the glyphs are semantic stand-ins (lucide has no brand marks), so the
+      // name is where the destination's meaning actually lives.
+      expect(await a.getAttribute("aria-label"), `${href} has no accessible name`).toBeTruthy();
     }
 
     expect(external, `the page reached OFF-MACHINE: ${external.join(" | ")}`).toHaveLength(0);
@@ -201,6 +214,61 @@ test.describe("help markup + about + policy — 3a pre-pass", () => {
     expect(ov.doc, "doc overflow about/320px").toBeLessThanOrEqual(1);
     expect(ov.content, "content overflow about/320px").toBeLessThanOrEqual(1);
     await page.screenshot({ path: `${OUT}/settings-about-320.png`, fullPage: true });
+  });
+
+  // ⚑ THE COMPUTED-STYLE ASSERTION — the guard gap that let 23 undefined tokens ship
+  // (page-help §9-bis-14 delta 2).
+  //
+  // Help.css referenced `--text-muted`, `--text-sm`, `--text`, `--focus`, `--text-md` and
+  // `--text-xs`, NONE of which exist. Each such declaration is invalid at computed-value time and is
+  // DROPPED, so the property inherits — silently. No suite noticed, because no suite had ever
+  // asserted a COMPUTED STYLE: the unit tests assert text and structure (and jsdom does not even
+  // load these stylesheets), while the pre-passes assert containment and console errors. A dropped
+  // declaration overflows nothing and logs nothing.
+  //
+  // Its source-level counterpart is `src/theme/tokens.test.ts`, which proves no undefined token
+  // exists ANYWHERE. This one proves the tokens actually RESOLVE in a real browser on the real page
+  // — the two fail in different ways and neither replaces the other.
+  test("Help's tokens actually RESOLVE — computed styles, not just source text", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.goto(`${BASE}/#/help`);
+    await dismissFirstRun(page);
+    const toggle = page.locator(".help__entrytoggle").first();
+    await expect(toggle).toBeVisible({ timeout: 15_000 });
+
+    // 1. MUTED PROSE IS ACTUALLY MUTED. `--text-muted` did not exist, so `color` inherited and the
+    //    text rendered at full primary contrast. Assert the level chip differs from body text —
+    //    comparing against the SIBLING rather than a hardcoded rgb keeps this theme-agnostic.
+    const colours = await page.evaluate(() => {
+      const level = document.querySelector(".help__level");
+      const title = document.querySelector(".help__entrytitle");
+      return {
+        level: level ? getComputedStyle(level).color : null,
+        title: title ? getComputedStyle(title).color : null,
+        levelSize: level ? parseFloat(getComputedStyle(level).fontSize) : null,
+        titleSize: title ? parseFloat(getComputedStyle(title).fontSize) : null,
+      };
+    });
+    expect(colours.level, "no .help__level rendered — the assertion measured nothing").toBeTruthy();
+    expect(colours.level, "muted level text computes to the SAME colour as the title — a dropped `color` declaration").not.toBe(colours.title);
+    // 2. THE SIZE TOKENS RESOLVED. `--text-xs` (the level chip) must land smaller than the title's
+    //    `--font-size-16`; when both were undefined they inherited the same size.
+    expect(colours.levelSize!, "the level chip is not smaller than the entry title — a dropped `font-size`").toBeLessThan(colours.titleSize!);
+
+    // 3. ⚠ THE FOCUS RING EXISTS. This is the one that made the class non-cosmetic:
+    //    `outline: var(--focus-width) solid var(--focus)` — with `--focus` undefined the WHOLE
+    //    shorthand was invalid, so Help's accordion toggle, topic link and jump link had NO visible
+    //    keyboard focus ring at all. Drive it with a real keyboard focus, not a class.
+    await toggle.focus();
+    const ring = await toggle.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { style: cs.outlineStyle, width: parseFloat(cs.outlineWidth), colour: cs.outlineColor };
+    });
+    expect(ring.style, "the focused accordion toggle has NO outline style — the :focus-visible shorthand was dropped").toBe("solid");
+    expect(ring.width, "the focused accordion toggle's outline has no width").toBeGreaterThan(0);
+    expect(ring.colour, "the focused accordion toggle's outline has no colour").toBeTruthy();
+
+    await page.screenshot({ path: `${OUT}/help-tokens-resolved.png`, fullPage: true });
   });
 
   test("Policy renders ONE band + concentration pair", async ({ page }) => {

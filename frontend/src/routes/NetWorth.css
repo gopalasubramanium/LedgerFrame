@@ -216,7 +216,11 @@
   margin: 0 var(--space-5) var(--space-4);
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-2);
+  /* `--radius-2` DOES NOT EXIST (page-help §9-bis-14 delta 2, caught by the new undefined-token
+     guard). The declaration was invalid at computed-value time and dropped, so this honest-heads-up
+     box has been rendering with SQUARE corners inside a rounded-card layout since it shipped.
+     `--radius-md` is the card/inset radius in tokens.css. */
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 .nw__coverage-label {

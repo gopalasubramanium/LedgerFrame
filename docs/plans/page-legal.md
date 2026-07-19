@@ -1002,7 +1002,69 @@ changed here; for the owner.
 
 **HELP CURRENCY:** **no Help impact** — corroborated. No served string, no route, no user-visible
 copy and no user-facing behaviour changed in this delta; the gate renders the same served prompt,
-verbatim, through a different control. The HELP CURRENCY SUITE runs in the gates refresh below.
+verbatim, through a different control. HELP CURRENCY SUITE green below, and it can **see** this
+surface: the accuracy corpus binds Help's Legal entry to the gate's live served strings, which are
+unchanged and therefore still matched — a claim of no-change that the corpus would have broken had
+the copy moved.
+
+#### The isolated re-render (2026-07-20) — `8f087c4`
+
+Driven on the isolated stack (**5199 → 8399 → temp data dir**; the owner's `5173`/`8321` untouched,
+`.env` snapshotted and verified byte-identical after, both servers killed by PID). Two screenshots,
+**resting** state (unticked, unfocused — the state a person actually arrives at):
+`docs/plans/assets/relook-5-checkbox-gate-pinless.png` and `…-pin-protected.png`.
+
+**The two files are BYTE-IDENTICAL, and that is the result, not a mistake.** The gate sits in front
+of the PIN, so a PIN-protected unaccepted install must show the **same consent panel** as a PIN-less
+one. That equality is the §11-E2 fix holding — **driven, not assumed**, which is §15 lesson 5.
+
+**Measured on the live render — both themes × both gate states:**
+
+| Behaviour | Light | Dark |
+|---|---|---|
+| Label association (`label[for]` == `input[id]`, no `aria-label`) | ✓ | ✓ |
+| Space toggles **and** untoggles | ✓ | ✓ |
+| Ticked box — background / tick | `#24476f` / `#ffffff` | `#6f9fd4` / `#0f172a` |
+| Focus ring (`--focus-ring`) | `2px solid #24476f` | `2px solid #6f9fd4` |
+
+**Console: 116 errors, every one of them the expected `451`** an unaccepted install answers each
+`/api/v1` read with — i.e. the server-side gate (§11-E1) working. **Zero others.**
+
+**A defect in the PROBE, found and fixed while driving it — not a product defect.** The first read
+reported the ticked box as still `--surface`, which looked exactly like a broken `:checked` rule.
+It is not: `background` and `border-color` are **transitioned** on that element, and
+`getComputedStyle` **mid-transition returns the interpolated value**. `color` is not in the
+transition list, which is why it alone appeared to apply — the asymmetry that gave it away. A 400ms
+settle was added. Recorded because *"the guard is wrong"* and *"the code is wrong"* look identical
+for exactly as long as it takes to check which, and this is the third time in this milestone
+(§11-D's `AGPL-3.0-or-later` match, §11-J's line-number defect) that it was the instrument.
+
+**One accident, corrected in the open (`fe0d68b`).** The throwaway `vite.prepass.config.ts` was
+swept into `8f087c4` by a `git add -A` while it still existed on disk. It is **deleted in a
+follow-up rather than amended away**, so the record of what `8f087c4` contained stays true (§15
+lesson 1). It names `5199`/`8399` and never the owner's live ports, so it was not a
+smoke-isolation violation — it is removed because **a committed dev driver is a topology the next
+reader copies**.
+
+#### GATES — refreshed for what this delta touched (solo, 2026-07-20)
+
+| Gate | Result |
+|---|---|
+| `npm run check` (frontend, full chain) | **exit 0** |
+| ├ lint · typecheck | clean |
+| ├ `check:tokens` | ✓ no raw hex/px outside the token layer; **89** referenced tokens all defined |
+| ├ `check:copy` · `check:smoke-isolation` | ✓ |
+| ├ **`check:primitives`** *(new)* | ✓ no raw checkbox in **137** source files |
+| ├ vitest | **40 files / 379 passed** (was 374 — +5 Checkbox) |
+| └ Playwright | **361 passed** |
+| HELP CURRENCY SUITE (`test_help_content_accuracy.py` + `test_glossary_parity.py`) | **313 passed, 15 skipped** |
+| `scripts/check_api_contract.py` | **exit 0** — contract current |
+
+**Backend not re-run: nothing in this delta touches it.** No Python file, no served string, no
+route, no schema changed — the diff is one primitive, one guard script, one consuming component,
+one stylesheet, a specimen, and documents. Re-running 1704 backend tests to assert that a CSS file
+did not move an HTTP contract would be theatre; the contract check above is the gate that actually
+answers that question, and it is green.
 
 ---
 

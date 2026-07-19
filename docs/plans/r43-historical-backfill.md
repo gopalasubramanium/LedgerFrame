@@ -1589,3 +1589,69 @@ shape (*guards fail per-unit, not per-loop*), in the one branch R12 did not cove
 makes it rarer, not impossible. Filed here rather than folded into a tuning commit, per the
 standing file-the-finding-first order. **Ruling owed** — the natural fix is to widen the per-window
 `except` and add the timeout to the honest partial note.
+
+---
+
+## 22. MILESTONE ACCEPTANCE + WALK-FINDINGS LEDGER → CLOSED (2026-07-19)
+
+### 22-1 — PHASE 3b / WALK: **ACCEPTED** (owner, in chat, 2026-07-19)
+
+**Acceptance basis — the owner's own instance, not a mock and not a self-certification:**
+
+- The Net-worth trend renders a **real multi-year series (2019→today)** at **6/6 coverage**,
+  **ending at the live headline** — the F-1 square pulse is gone, and the two valuation bases that
+  disagreed in F-2 now agree because both are covered.
+- **Crypto is priced via CoinGecko** with the honest **365-day carried note** visible where the
+  holding predates the public-API window (F-8a) — a short series is never read as the whole story.
+- **Per-instrument acquisition outcomes are named** (`instrument_acquisitions`) — every instrument's
+  last acquisition carries ok/rows/source/reason, so "it failed but nothing anywhere says so" is
+  unreachable (F-8).
+- **Refresh reporting is honest under live AV rate limiting** — attempted/succeeded/skipped/stale
+  counted truthfully rather than counting cache reads as refreshes (F-7b).
+- **F-9 verified live:** failures were named (`ReadTimeout`), the **run survived**, and the
+  **backfill completed** — the per-window degradation held.
+
+**The 0a specimen and the 3b walk were MERGED INTO THE FINDINGS CYCLE.** This milestone did not run
+a separate specimen ritual and a separate walk with their own ledgers: the 0a pixel specimen
+(§10, driven green live) and the owner's 3b drive both fed the **single** findings ledger
+**F-1..F-9**. Recorded explicitly because it departs from the per-milestone shape used at R-38/R-42,
+and the departure was the right call — the walk *was* the specimen here, since the defect class was
+data honesty on real data, which a specimen cannot exhibit.
+
+### 22-2 — WALK-FINDINGS LEDGER → **CLOSED**
+
+**Count, stated honestly: EIGHT numbered findings — F-1..F-4 and F-6..F-9. There is no F-5**
+(the number was never assigned; the ledger jumps §14→§16). Counting the lettered sub-findings the
+cycle resolved **fourteen** distinct defects. Every one was cause-verified before any fix.
+
+| # | Cause (one line) | Fix | Commit |
+|---|------------------|-----|--------|
+| **F-1** | Backfill valued 2739 days against an **empty `ecb_fx_history`** + sparse/garbage `price_history`, so every non-SGD holding FX-zeroed and BTC's *cost* was carried as *value* — a square pulse. | Real acquisition (step 6) + a **coverage preflight** on Build history. | `01170b8` `c926063` `8d633b2` `a4ba76c` · preflight `52efa7d` |
+| **F-2** | ONE card mixed **two valuation bases** — Total return from live quotes (+131.13%) beside TWR/1Y from the zero-coverage backfill series (−99.93%). | **Refuse-until-coverage** + explicit **basis labels**. | `a08d32e` |
+| **F-3** | Foreign lots needed a trade-date rate from the empty history store → the lot was **excluded and the exclusion was serialized nowhere**; TSLA/SBICARD cost read 0.00 as fact. | Exclusions made **LOUD**; trade-date cost-basis FX; cost-currency inference at cause; edit-path re-capture. | `be06484` · `47065d7` · `6f6d8aa` · `0dce8fb` |
+| **F-4** | **Provenance is not integrity** — ECB's own edge served a **stale-corrupt** legacy CSV (last-modified 2020, a nonsense 2010 row atop 2009 data) while the `.zip` was current and genuine. | Ingest the **ZIP**; a freshness + sanity **ingest guard** that writes nothing on refusal; hard timeouts + served error + resumable; AV `entitlement=delayed`. | `eb3e8cd` |
+| **F-6** | Crypto history was never acquired: the orchestrator routed BTC/XRP by the **quotes lane**, and the served no-history reason named the symptom, not the blocker. | CoinGecko **id disambiguation by top market cap**; `acquire_prices` **auto-resolves** the crypto id; coverage names the **BLOCKER**. | `e4778c8` · `961005c` · `a15d169` · log `ee81cfb` |
+| **F-7a** | A **route change did not invalidate the cached quote** — the new route's first read served the old provider's price. | The route change invalidates the cache. | `07ee502` |
+| **F-7b** | "Refreshed 26 of 26" **counted cache reads** as refreshes. (The "phantom providers" premise was **refuted** by dumps — no defect; that ruling was voided.) | Refresh reports are **per-instrument honest** (attempted/succeeded/skipped/stale). | `5f90b0d` |
+| **F-7c** | An **FX-stage failure cancelled price acquisition** — one stage's failure took the other stage's work with it. | The stages fail independently. | `8e805c6` · close-out `b07b01e` |
+| **F-8a** | **A limit written in a comment is not a limit** — CoinGecko's 365-day public window lived in prose, so the request reached past it and the *whole* request failed, returning nothing. | The window is **enforced in code**; the request and the note describe the **same** clamped value. | `e714b0f` |
+| **F-8b** | No freshness check before the download — work was re-spent. | **Check, then skip** on a threshold that can only skip. | `e714b0f` |
+| **F-8c** | **The logger died silently** — alembic's `fileConfig` ran with `disable_existing_loggers` default, so `acquire_prices`' honest warnings went nowhere. That is why F-8a ran silently for weeks. | A migration may never disable the app's logging; the dev runner is pinned. | `e714b0f` |
+| **F-9** | AMFI intermittently answers **HTTP 200 `text/plain` with its XHTML portal page**; its `;`-bearing markup satisfied the F-4 guard's precondition, parsed to zero rows, and was diagnosed **"malformed"** — an alarming, wrong diagnosis of a transient hiccup. The exception then escaped the chunk loop, so the first bad window **discarded every remaining window**. | **Classify before parsing** (`looks_like_nav_report`, retried, then a named `AmfiReportUnavailable`); **a window is not the fund** (per-window degradation + honest partial note); **windows start at the instrument's own** first transaction. The F-4 integrity gate is **unchanged** — it was correct. | `1089cea` |
+| **F-9c** | The AMFI wall was sized for a small payload (~70 MB real → `ReadTimeout`); and `"degrading honestly:"` printed an **empty** reason because a bare `TimeoutError` stringifies to `""`. | AMFI-specific timeout, actually passed, with the wall covering the retry budget; one served reason used in **both** log and row. | `6c17ab5` |
+| **F-7d** | *(filed, not fixed here)* `test_performance_question_pulls_risk_metrics` is **contention-fragile** — it fails only when the suite shares the machine, passes solo. | Folded into **AI-surfaces**, the natural owner of the AI streaming surface. | `7e11bbc` |
+
+**Open at close (ruling owed, recorded not fixed):** **§21-3** — a `TimeoutError` still escapes the
+AMFI chunk loop, so a fund loses every window after the first timeout (§15 lesson 8's shape in the
+one branch R12 did not cover). Filed rather than folded into a tuning commit.
+
+### 22-3 — §20-R13 → ROADMAP (POST-RELEASE) and §20-P → pre-release walk
+
+Both verified at close and **written where they belong** (neither existed outside this plan file):
+
+- **§20-R13** — the whole-market-download-per-window cost → a **ROADMAP row (R-50), POST-RELEASE**.
+  *Architect ruling under the owner's standing delegation:* the per-instrument window start already
+  cut the waste **~6×**, and a backfill is a **rare appliance event** — the remaining cost does not
+  earn a pre-release milestone.
+- **§20-P** — the weak `LEDGERFRAME_SECRET_KEY` boot warning → a **Gate-C blocker-before-exposure**
+  item on `pre-release-walk.md`.

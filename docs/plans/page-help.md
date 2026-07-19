@@ -1273,6 +1273,73 @@ and a Policy scripted pre-pass re-run on the isolated instance.
 - Any **new visual pattern** the About tab needs (avatar, brand block) is **PROPOSED DS**, listed
   for the look — the same standard the five patterns above just cleared.
 
+### §9-bis-12 — Phase 2/3a walked on an isolated instance (2026-07-19). **AWAITING THE 3b LOOK.**
+
+Backend `:8399` on a temp data dir, Vite dev `:5199` proxied to it, both **torn down**; owner's
+`5173`/`8321` never touched and **still listening**; repo-root `.env` **sha256 identical before and
+after** (`460a2da0…`), never printed. Throwaway config deleted, temp data dirs removed.
+
+**Three suites, all green, 0 console errors:**
+
+| Suite | Result |
+|---|---|
+| `help-markup-prepass` (NEW) | **6/6** — formatted entries (three, incl. the long `page-policy`), full-width bodies, 320/375/768/1366 both themes, About complete with the photo, Policy single-render, type-ahead + deep links |
+| `policy-smoke` (re-run, §9-bis-11(e)) | **1/1** — incl. the new ONE-band / ONE-limit assertions |
+| `settings-smoke` (re-run, §9-bis-11(c)) | **7/7** — **seven** tabs × both themes × breakpoints |
+
+Screenshots for the 3b look in `frontend/e2e/smoke/artifacts/`: `help-formatted-entry.png` ·
+`help-glossary-entry.png` · `settings-about.png` · `settings-about-320.png` · `policy-header.png`.
+
+#### ⚠ (1) THE PRE-PASS CAUGHT A DEFECT EVERY UNIT TEST WAS GREEN ON
+
+The 54 emphasised affordance labels rendered **as literal `**Quote source**`** on the page.
+`inputs`/`options`/`outputs` still rendered raw strings — the renderer was wired to the **prose
+fields only**.
+
+**Every markup test passed, and none of them was wrong.** They tested the *renderer*, and the
+renderer was correct; what was wrong was **which fields it was wired to**. *A correct component
+wired to half its fields is a class of defect component tests cannot see* — so the new guard reads
+the **page** and asserts every served field passes through a renderer.
+
+#### ⚠⚠ (2) THE ISOLATION PROTOCOL IS NOT ENFORCED — a near-miss on the owner's live data
+
+**`SMOKE_BASE` redirects only the BROWSER.** Every `page.request.*` call goes to the API
+**directly**, and **20 smoke specs hardcode `const API = "http://127.0.0.1:8321/api/v1"` — the
+owner's backend.**
+
+So the Policy re-run issued **`PUT /policy/targets`, `PUT /policy`, `PUT /settings` against the
+owner's live database** while the browser drove `:5199`.
+
+> **NOTHING WAS WRITTEN, AND THE REASON IS LUCK.** His instance is **PIN-locked** and answered
+> **401** to everything (verified read-only afterwards). **Had it been unlocked — its normal state
+> while he is using it — the pre-pass would have wiped his policy targets and rewritten his
+> concentration limit, silently, as a side effect of a run claiming to be isolated.**
+>
+> It surfaced only because the spec **FAILED** on the 401. **Nothing checks isolation**, and a
+> pre-pass has no way to notice it is talking to the wrong machine.
+
+**Fixed:** the 2 specs this milestone re-runs, using the `SMOKE_API` pattern
+**`reports-smoke.spec.ts:12` already had** — a *propagation* failure, not an unknown.
+**Filed OPEN** (`08-TECH-DEBT.md`): the other **18**, plus the deeper fix — the env var is
+**opt-in**, so *forgetting it silently re-targets the owner's machine*; the harness should **fail
+closed**.
+
+#### Four harness defects fixed, each of which produced a misleading failure
+
+* **`dismissFirstRun` could no-op without saying so** — the checklist mounts *after* its fetch, so
+  `if (await count()) click()` returned happy and every later click was swallowed by the scrim.
+  *The same silent-success shape as a guard that never looked.*
+* **A 4s wait per iteration timed the overflow test out** (8 × 4s > 30s) and reported
+  *"Target page … has been closed"* — which reads exactly like a layout crash and was the harness
+  timing itself out. *A pre-pass that fails for its own reasons trains you to distrust the ones
+  that matter.*
+* **A HashRouter `goto` does not remount**, so the previous step's search text survived and the
+  deep-link assertion failed as *"deep links are broken"*.
+* **A screenshot taken mid-dialog-transition** — every assertion passed and the image handed to the
+  owner showed a half-transparent dialog printing through the page.
+
+**NOT closed. NOT pushed.** The owner's **short 3b look** is the gate.
+
 ---
 
 ## SCOPE-NOTES *(preserved verbatim — owner rulings recorded ahead of the draft; inputs to §9)*

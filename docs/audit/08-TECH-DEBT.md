@@ -328,6 +328,18 @@ both honest reports of the same code. Until this is closed, *no single full-suit
 proof*; a failure in these two files must be re-checked in isolation and against the baseline before
 it is attributed to a change.
 
+> **NEW DATA POINT — 2026-07-19, page-help §9-bis-12 (Step F gates).** The same pair, same order,
+> on the completed Help tree: **19 passed / 0 failed** (89.7s). The solo full suite the same hour:
+> **1603 passed / 15 skipped / 0 failed** (10m45s).
+>
+> **This is NOT a claim that the defect is fixed, and it must not be read as one.** Nothing in this
+> milestone touched `test_reports_pack.py`, `test_performance.py`, or their fixtures. Three
+> recorded runs of the identical command now read **9 failed**, **7 failed**, and **0 failed** —
+> which is precisely the symptom, not its resolution: *a suite whose verdict depends on execution
+> order gives a green that does not mean what it says.* A green pair is exactly as weak a signal as
+> a red one until the shared state is isolated. Recorded because the numbers are owed, not because
+> they settle anything.
+
 **Scope of the fix (its own task, not this milestone's):** give these modules per-test DB isolation
 (the fixtures currently share seeded state and mutate it), or make the mutating purges idempotent /
 scoped. Reproducing ref: `pytest tests/unit/test_reports_pack.py tests/integration/test_performance.py`

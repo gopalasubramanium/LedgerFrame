@@ -69,7 +69,7 @@ def _served_terms() -> list[tuple[str, str]]:
     """(id, title) for every `category: "Terms"` entry in the served help catalogue."""
     from app.services.help import HELP
 
-    return [(e["id"], e["title"]) for e in HELP if e["category"] == "Terms"]
+    return [(e["id"], e["title"]) for e in HELP if e["category"] == "Glossary"]
 
 
 # §9-2(e) — ENTRY HEADINGS, NOT TERMS. A help entry may cover several glossary terms under one

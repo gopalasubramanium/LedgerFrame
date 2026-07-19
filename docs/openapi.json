@@ -714,7 +714,7 @@
         "type": "object"
       },
       "HelpEntry": {
-        "description": "A catalogue entry. The glossary triad rides Terms entries ONLY (`all_help()` omits it\nelsewhere), so the three fields are optional AND excluded-when-unset \u2014 declared-but-unset\nwould serve `\"what\": null` and render an empty section on the page.",
+        "description": "A catalogue entry across all three sections (page-help 9-bis-1).\n\nEVERY optional field is excluded-when-unset, not declared-null. That is the lesson the\nwhat/why/improves triad already taught: a declared-but-unset field serves `\"what\": null` and\nrenders an empty section on the page. The field set is now section-shaped \u2014\n\n* Orientation: `links` (pointers into Section 2).\n* Pages: `inputs` / `options` / `outputs` / `interpret` \u2014 what the user fills, what they may\n  choose, what they SEE (names only), and how to read it.\n* Glossary: `what` / `why` / `improves` / `example` / `level`. `example` is STATIC and\n  sample-marked (9-bis-3); personalised derivation traces are R-53, post-release.\n\n`keywords` is served for the page's CLIENT-SIDE type-ahead (9-bis-4), which cannot rank on a\nfield it never receives.",
         "properties": {
           "body": {
             "title": "Body",
@@ -723,6 +723,17 @@
           "category": {
             "title": "Category",
             "type": "string"
+          },
+          "example": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example"
           },
           "id": {
             "title": "Id",
@@ -738,6 +749,95 @@
               }
             ],
             "title": "Improves"
+          },
+          "inputs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputs"
+          },
+          "interpret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interpret"
+          },
+          "keywords": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keywords"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/HelpTopicLink"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "outputs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outputs"
           },
           "title": {
             "title": "Title",
@@ -849,6 +949,25 @@
           "entries"
         ],
         "title": "HelpSearchResponse",
+        "type": "object"
+      },
+      "HelpTopicLink": {
+        "description": "A pointer from Section-1 Orientation prose into a Section-2 page entry. `topic` is the\ntarget entry's id \u2014 the page turns it into a `?topic=` deep link (one canonical anchor per\ntopic). It is a POINTER, never a figure: the IA law that Help never becomes a second home\nfor a number is enforced by there being nowhere here to put one.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "topic": {
+            "title": "Topic",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "label"
+        ],
+        "title": "HelpTopicLink",
         "type": "object"
       },
       "HoldingTagsIn": {

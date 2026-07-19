@@ -10,6 +10,61 @@ never advice.
 from __future__ import annotations
 
 HELP: list[dict] = [
+    # --- Orientation -------------------------------------------------------- #
+    # Section 1 of the three-section journey (page-help 9-bis-1): why the platform exists, what
+    # problem it solves, how it solves it, and the mental model for using the pages TOGETHER.
+    # `links` carry the reader from this narrative into a Section-2 page entry — pointers only.
+    # IA law binds here hardest: orientation names where a figure LIVES, and never states one.
+    {"id": "orientation-what", "category": "Orientation", "title": "What LedgerFrame is",
+     "body": "A private, local-first record of everything you own and owe, in one place. Wealth "
+             "usually ends up scattered across brokers, banks, funds, insurers and currencies, and "
+             "no single one of them can show you the whole picture — so the whole picture either "
+             "gets rebuilt by hand in a spreadsheet or it does not exist. LedgerFrame is that whole "
+             "picture, kept on your own machine: your holdings, accounts, entities and currencies "
+             "consolidated into one honest set of figures you can look at without sending your "
+             "financial life to anyone else. It reports; it does not act.",
+     "keywords": "what is ledgerframe purpose problem why exists local private consolidate overview",
+     "links": [{"topic": "page-home", "label": "Home"},
+               {"topic": "page-net-worth", "label": "Net worth"}]},
+    {"id": "orientation-how", "category": "Orientation", "title": "How it works",
+     "body": "You tell it what you hold; it values, consolidates and explains. Positions and "
+             "transactions are recorded on Holdings, and the accounts and entities that own them on "
+             "Accounts. From that one record every figure in the product is derived — once, in one "
+             "place, by the calculation engine — so a number means the same thing on every page "
+             "that shows it. Prices are retrieved from the sources you configure, never invented: "
+             "where a value cannot be established, the product shows a dash and a reason rather "
+             "than a guess. Everything stays on your machine, and there is no telemetry.",
+     "keywords": "how it works derive engine one place prices sources local machine no telemetry",
+     "links": [{"topic": "page-holdings", "label": "Holdings"},
+               {"topic": "page-accounts", "label": "Accounts"},
+               {"topic": "page-pricing-health", "label": "Pricing Health"}]},
+    {"id": "orientation-pages", "category": "Orientation", "title": "How the pages fit together",
+     "body": "The pages are layers over one record, and they read in an order. You RECORD on "
+             "Holdings and Accounts. You SEE the result on Home, which summarises everything and "
+             "links to whichever page owns each figure, on Net worth for the headline and your "
+             "liquidity, and on Portfolio for investment analytics. You WATCH the market on "
+             "Markets, Heatmap and News. You PLAN against your own intentions on Policy, Cash flow, "
+             "Scenarios, Insurance and Estate, and Review gathers what needs a look across all of "
+             "them. You EXPORT on Reports, and check how well-sourced your figures are on Pricing "
+             "Health. Each figure has exactly one page that owns it; every other page that shows it "
+             "is summarising and links you back to the owner.",
+     "keywords": "pages together mental model journey record see watch plan export owner links flow",
+     "links": [{"topic": "page-holdings", "label": "Holdings"},
+               {"topic": "page-home", "label": "Home"},
+               {"topic": "page-net-worth", "label": "Net worth"},
+               {"topic": "page-portfolio", "label": "Portfolio"},
+               {"topic": "page-review", "label": "Review"},
+               {"topic": "page-reports", "label": "Reports"}]},
+    # The guarantee entry (was `category: "About"`). About LEAVES Help for Settings > System
+    # (9-bis-6) — but the guarantee is not About-the-project: it is what the product WILL NEVER DO,
+    # which is orientation of the first order. It stays in Help, in Section 1, and is one of the
+    # three ratified voice specimens.
+    {"id": "guarantee", "category": "Orientation", "title": "What LedgerFrame will never do",
+     "body": "It never places trades, gives buy/sell/hold or tax/financial advice, or "
+             "fabricates a price, headline or figure. Unavailable data shows '—' with a "
+             "reason. The AI explains verified facts; it never invents a number. Your data is "
+             "local-first with no telemetry.",
+     "keywords": "guarantee no advice no trading honest local private telemetry"},
     # --- Pages -------------------------------------------------------------- #
     # Titles ARE the nav labels, exactly (nav label = H1 = route). Casing traps: "Net worth",
     # "Cash flow", "Pricing Health". Every body describes what the page IS and what it is FOR;
@@ -147,8 +202,10 @@ HELP: list[dict] = [
              "results are ranked on the server. The [Help] markers elsewhere in the app open a "
              "short definition where you are standing, and the full entry lives here.",
      "keywords": "help search topics glossary terms guide catalogue"},
-    # --- Concepts / terms --------------------------------------------------- #
-    {"id": "term-valuation-method", "category": "Terms", "title": "Valuation method",
+    # --- Glossary ----------------------------------------------------------- #
+    # Section 3 (9-bis-1/9-bis-2): Tier-1+2 terms only, ordered basics > expert, each with a
+    # STATIC worked example clearly marked as an illustrative sample (9-bis-3).
+    {"id": "term-valuation-method", "category": "Glossary", "title": "Valuation method",
      "body": "How a value was established: market quote (a delayed/EOD price), official NAV "
              "(a mutual-fund NAV), calculated accrual (deposit/bond principal + interest), "
              "manual valuation (a value you maintain), or estimated (cost used because no "
@@ -164,7 +221,7 @@ HELP: list[dict] = [
      "improves": "Mapping a holding to a live price source (a ticker, an AMFI scheme, or a "
                  "CoinGecko id) moves it from manual or estimated onto a quote or NAV. Deposits and "
                  "bonds use accrual by design and need no mapping."},
-    {"id": "term-entitlement-stale", "category": "Terms", "title": "Entitlement & stale",
+    {"id": "term-entitlement-stale", "category": "Glossary", "title": "Entitlement & stale",
      "body": "Entitlement is the best data grade a source claims (delayed / end-of-day / "
              "unavailable). 'Stale' means the cached quote is older than the staleness "
              "threshold — the value is shown but flagged, never hidden or faked.",
@@ -178,7 +235,7 @@ HELP: list[dict] = [
      "improves": "Refreshing the holding fetches a newer quote and clears a stale flag when the "
                  "source responds. An 'unavailable' entitlement is a limit of the source itself, "
                  "not something a refresh can change."},
-    {"id": "term-data-confidence", "category": "Terms", "title": "Data confidence",
+    {"id": "term-data-confidence", "category": "Glossary", "title": "Data confidence",
      "body": "A 0–100 score of how well-sourced a holding's value is: a base by valuation "
              "method minus penalties (stale, needs-mapping, unavailable). Every deduction is "
              "listed. It's a data-quality signal, not a view on the holding.",
@@ -192,7 +249,7 @@ HELP: list[dict] = [
      "improves": "Resolving the listed deductions raises the score: refresh a stale quote, supply "
                  "a missing identifier mapping, or configure the provider an unavailable source "
                  "needs. The Pricing Health page lists each holding's deductions."},
-    {"id": "term-xirr-twr", "category": "Terms", "title": "XIRR & TWR",
+    {"id": "term-xirr-twr", "category": "Glossary", "title": "XIRR & TWR",
      "body": "XIRR is a money-weighted return (accounts for the size and timing of your "
              "cash flows). TWR is time-weighted (removes the effect of deposits/withdrawals, "
              "for comparing to a benchmark). Both are shown only where the cash-flow/price "
@@ -207,7 +264,7 @@ HELP: list[dict] = [
      "improves": "Both need enough dated cash-flow and price history to compute, and show 'not "
                  "applicable' where history is insufficient. Recording accurate transaction dates "
                  "and keeping prices current is what lets them be calculated."},
-    {"id": "term-drift", "category": "Terms", "title": "Drift & bands",
+    {"id": "term-drift", "category": "Glossary", "title": "Drift & bands",
      "body": "Drift is the gap between a bucket's actual share and its policy target. If it "
              "exceeds the tolerance band it's 'over' or 'under'. This is neutral reporting of "
              "distance from your own target — not a recommendation to trade.",
@@ -221,7 +278,7 @@ HELP: list[dict] = [
      "improves": "Drift is a measurement, so nothing in the data needs fixing. It narrows when the "
                  "actual allocation moves back toward target, or when you revise the target or band "
                  "on the Investment policy page. LedgerFrame never tells you to trade."},
-    {"id": "term-liquidity", "category": "Terms", "title": "Liquidity ladder",
+    {"id": "term-liquidity", "category": "Glossary", "title": "Liquidity ladder",
      "body": "Groups assets by how quickly they turn to cash: Immediate (cash & listed), "
              "Short (funds & bonds), Locked (deposits & retirement), Illiquid (property & "
              "private). Indicative — not a guarantee of sale price or timing.",
@@ -235,7 +292,7 @@ HELP: list[dict] = [
      "improves": "The ladder reflects the asset classes you hold, so it shifts as your holdings "
                  "change. Keeping each holding's asset-class classification accurate is what keeps "
                  "the grouping correct; there is no other action to take."},
-    {"id": "term-cash-runway", "category": "Terms", "title": "Cash runway",
+    {"id": "term-cash-runway", "category": "Glossary", "title": "Cash runway",
      "body": "Liquid assets ÷ your recorded recurring net burn (recurring expenses − income "
              "from Planning). 'Positive' means income covers expenses; 'no data' means add "
              "recurring obligations. Not a forecast of income.",
@@ -250,7 +307,7 @@ HELP: list[dict] = [
      "improves": "The figure is only as complete as its inputs: adding recurring obligations "
                  "(expenses and income) in Planning replaces 'no data' with a computed runway, and "
                  "keeping them current keeps it accurate. It reflects only what you record."},
-    {"id": "term-realised-pl", "category": "Terms", "title": "Realised P/L",
+    {"id": "term-realised-pl", "category": "Glossary", "title": "Realised P/L",
      "body": "What a sale actually made or lost: proceeds minus the cost of the parcels sold, "
              "matched first-in, first-out. Reported in the currency of the trade, which is exact; "
              "any base-currency figure uses today's exchange rates and is not for filing. Not tax "
@@ -265,7 +322,7 @@ HELP: list[dict] = [
      "improves": "Accuracy depends on complete buy and sell history with correct dates and costs, "
                  "since FIFO matching walks the recorded lots. For filing, use native-currency "
                  "figures and your own records; the base-currency total is indicative only."},
-    {"id": "term-provenance", "category": "Terms", "title": "Provenance",
+    {"id": "term-provenance", "category": "Glossary", "title": "Provenance",
      "body": "Provenance is the record of where a value came from and how it was derived — its "
              "source (a provider or your own entry), the valuation method applied, any identifier "
              "mapping used, and how fresh it is. Every displayed figure can be traced back to this "
@@ -280,7 +337,7 @@ HELP: list[dict] = [
      "improves": "Provenance strengthens as a holding is mapped to a live source and refreshed, "
                  "which replaces manual or estimated values with quoted or NAV-based ones. The "
                  "Pricing Health page shows each holding's source, routing, and freshness."},
-    {"id": "term-fifo", "category": "Terms", "title": "FIFO (first-in, first-out)",
+    {"id": "term-fifo", "category": "Glossary", "title": "FIFO (first-in, first-out)",
      "body": "FIFO is the lot-matching rule used for cost basis: when you sell, the "
              "earliest-acquired parcels are treated as sold first. It determines which acquisition "
              "costs are matched against sale proceeds to compute Realised P/L, and which lots "
@@ -295,7 +352,7 @@ HELP: list[dict] = [
      "improves": "FIFO is applied deterministically from your recorded transactions, so correct "
                  "buy and sell dates and costs are what make the matching accurate. It is a fixed "
                  "method, not a setting to tune."},
-    {"id": "term-gross-assets", "category": "Terms", "title": "Gross assets",
+    {"id": "term-gross-assets", "category": "Glossary", "title": "Gross assets",
      "body": "What everything you hold is worth right now, summed in your base currency at today's "
              "exchange rates. Liabilities are not subtracted — that figure is Net worth. It moves "
              "with prices and exchange rates, and reflects how each holding was valued.",
@@ -309,7 +366,7 @@ HELP: list[dict] = [
      "improves": "The figure is only as sound as its inputs: mapping holdings to live prices and "
                  "keeping FX current makes it track the market more closely. It measures what you "
                  "hold, not a number to steer."},
-    {"id": "term-unrealised-pl", "category": "Terms", "title": "Unrealised P/L",
+    {"id": "term-unrealised-pl", "category": "Glossary", "title": "Unrealised P/L",
      "body": "Unrealised profit or loss is the paper gain or loss on positions you still hold: "
              "current market value minus cost basis. It becomes 'realised' only when you sell. Shown "
              "in base currency at today's rates.",
@@ -323,7 +380,7 @@ HELP: list[dict] = [
      "improves": "Accuracy depends on complete purchase history (dates and costs) and live pricing, "
                  "so unmapped or manually valued holdings can distort it. It measures a position's "
                  "standing, not a result to engineer."},
-    {"id": "term-income", "category": "Terms", "title": "Income (dividends & interest)",
+    {"id": "term-income", "category": "Glossary", "title": "Income (dividends & interest)",
      "body": "Income is the dividends and interest recorded in your transaction ledger, summed in "
              "base currency at today's rates. It counts cash actually received and entered, not "
              "accrued or projected income.",
@@ -335,7 +392,7 @@ HELP: list[dict] = [
             "different kind of return that some portfolios are built around.",
      "improves": "It is only as complete as the dividend and interest transactions you record; "
                  "missing entries understate it. It measures cash received, not a stream to steer."},
-    {"id": "term-income-yield", "category": "Terms", "title": "Income yield",
+    {"id": "term-income-yield", "category": "Glossary", "title": "Income yield",
      "body": "Income yield is recorded income divided by current gross assets, as a percent. It is "
              "trailing and backward-looking — income already received against today's value — not a "
              "forward or annualised yield.",
@@ -348,7 +405,7 @@ HELP: list[dict] = [
      "improves": "Because it divides recorded income by current value, complete income entries and "
                  "accurate pricing keep it meaningful. It is a backward-looking measurement, not a "
                  "rate to target."},
-    {"id": "term-total-return", "category": "Terms", "title": "Total return",
+    {"id": "term-total-return", "category": "Glossary", "title": "Total return",
      "body": "Total return is the overall percentage gain or loss on the portfolio relative to its "
              "cost basis, measured to date rather than over a fixed window. It is a cumulative figure "
              "across all holdings.",
@@ -362,7 +419,7 @@ HELP: list[dict] = [
      "improves": "This reflects how your holdings performed relative to what you paid; it is a "
                  "measurement, not a target. Complete cost history keeps it accurate. LedgerFrame "
                  "reports it and never suggests changing your holdings."},
-    {"id": "term-period-return", "category": "Terms", "title": "1-year return",
+    {"id": "term-period-return", "category": "Glossary", "title": "1-year return",
      "body": "The portfolio's return over the trailing one year, computed from the invested "
              "performance series. It is best-effort: when provider price history is unavailable it "
              "shows 0.0, so a zero can mean 'no data' rather than a flat year.",
@@ -376,7 +433,7 @@ HELP: list[dict] = [
      "improves": "This reflects how your holdings behaved over the past year; it is a measurement, "
                  "not a target. Keeping price history available lets it compute rather than fall back "
                  "to 0.0. LedgerFrame reports it and never suggests changing your holdings."},
-    {"id": "term-volatility", "category": "Terms", "title": "1-year volatility",
+    {"id": "term-volatility", "category": "Glossary", "title": "1-year volatility",
      "body": "Volatility is how much the portfolio's value fluctuated over the trailing year — the "
              "annualised standard deviation of its returns. It is best-effort; when history is "
              "unavailable it shows 0.0, which can mean 'no data' rather than no movement.",
@@ -392,7 +449,7 @@ HELP: list[dict] = [
                  "characteristic being measured, not a target. Available price history lets it "
                  "compute rather than show 0.0. LedgerFrame reports it and never suggests changing "
                  "your holdings."},
-    {"id": "term-return-volatility", "category": "Terms", "title": "Return / volatility",
+    {"id": "term-return-volatility", "category": "Glossary", "title": "Return / volatility",
      "body": "The return-to-volatility ratio divides the one-year return by the one-year volatility. "
              "It is deliberately NOT a Sharpe ratio: no risk-free rate is subtracted, so it is not "
              "risk-adjusted in the Sharpe sense — just return per unit of variability.",
@@ -407,7 +464,7 @@ HELP: list[dict] = [
      "improves": "This combines two measured characteristics of the past year; it is a ratio being "
                  "reported, not a target. Both inputs are best-effort and blank out when history is "
                  "unavailable. LedgerFrame reports it and never suggests changing your holdings."},
-    {"id": "term-max-drawdown", "category": "Terms", "title": "Maximum drawdown (1-year)",
+    {"id": "term-max-drawdown", "category": "Glossary", "title": "Maximum drawdown (1-year)",
      "body": "Maximum drawdown is the largest peak-to-trough fall in the portfolio's value over the "
              "trailing year, as a percent. It describes the worst decline endured in that window. "
              "Best-effort; when history is unavailable it shows 0.0.",
@@ -421,7 +478,7 @@ HELP: list[dict] = [
                  "measurement of what happened, not a target. Available price history lets it compute "
                  "rather than show 0.0. LedgerFrame reports it and never suggests changing your "
                  "holdings."},
-    {"id": "term-allocation-weight", "category": "Terms", "title": "Allocation weights",
+    {"id": "term-allocation-weight", "category": "Glossary", "title": "Allocation weights",
      "body": "Allocation weights show each asset group's share of your gross assets — cash & "
              "deposits, equities & ETFs, crypto, and alternatives. Gross assets exclude liabilities, "
              "so a large loan can't push a group above 100%.",
@@ -434,7 +491,7 @@ HELP: list[dict] = [
      "improves": "Accurate weights depend on every holding being classified into the right asset "
                  "class and priced; misclassified or unpriced holdings skew the mix. This describes "
                  "how your assets are currently spread — a measurement, not a prescription."},
-    {"id": "term-concentration", "category": "Terms", "title": "Concentration",
+    {"id": "term-concentration", "category": "Glossary", "title": "Concentration",
      "body": "Concentration measures how much of your gross assets sit in the biggest positions — "
              "the single largest holding and the top five combined, each as a percent of gross. "
              "Higher means more of your wealth rides on fewer names.",
@@ -450,7 +507,7 @@ HELP: list[dict] = [
                  "measurement LedgerFrame reports; it never tells you to trim or add to a "
                  "position."},
     # --- §4.5 attribution & risk metrics ------------------------------------ #
-    {"id": "term-attribution", "category": "Terms", "title": "Return attribution",
+    {"id": "term-attribution", "category": "Glossary", "title": "Return attribution",
      "body": "Return attribution splits the portfolio's return into per-holding contributions — a "
              "holding's contribution is its weight × its return — rolled up to asset class and "
              "sector. The residual is the part current holdings can't explain (income, Realised "
@@ -470,7 +527,7 @@ HELP: list[dict] = [
                  "method is not applied — and a decomposition being reported, not a target. It "
                  "relies on current holdings and available price history. LedgerFrame reports it "
                  "and never suggests changing your holdings."},
-    {"id": "term-beta", "category": "Terms", "title": "Beta",
+    {"id": "term-beta", "category": "Glossary", "title": "Beta",
      "body": "Beta is how sensitively the portfolio's returns move with the benchmark's — the "
              "covariance of the two divided by the benchmark's variance. 1 moves one-for-one, "
              "above 1 amplifies, below 1 dampens, negative moves the opposite way. A measurement "
@@ -487,7 +544,7 @@ HELP: list[dict] = [
                  "fabricated value. It is a measured characteristic of co-movement, not a quality "
                  "judgment or a target. LedgerFrame reports it and never suggests changing your "
                  "holdings."},
-    {"id": "term-correlation", "category": "Terms", "title": "Correlation",
+    {"id": "term-correlation", "category": "Glossary", "title": "Correlation",
      "body": "Correlation measures how closely the portfolio's and the benchmark's returns move "
              "together, from −1 (opposite) through 0 (unrelated) to +1 (in lockstep). Unlike beta "
              "it says nothing about magnitude — only the tightness of the co-movement.",
@@ -500,7 +557,7 @@ HELP: list[dict] = [
      "improves": "It needs a benchmark series; without one it shows unavailable, not a fabricated "
                  "number. It is a measurement of association, not a judgment or a target. "
                  "LedgerFrame reports it and never suggests changing your holdings."},
-    {"id": "term-downside-deviation", "category": "Terms", "title": "Downside deviation",
+    {"id": "term-downside-deviation", "category": "Glossary", "title": "Downside deviation",
      "body": "Downside deviation is the dispersion of only the portfolio's negative returns — a "
              "downside-risk measure that ignores upside swings. It is deliberately NOT Sortino: no "
              "risk-free rate and no target-return excess are used, so it must not be read as a "
@@ -517,7 +574,7 @@ HELP: list[dict] = [
                  "risk-free-rate assumption, so it is not Sortino. It is best-effort and blanks out "
                  "when history is unavailable. LedgerFrame reports it and never suggests changing "
                  "your holdings."},
-    {"id": "term-information-ratio", "category": "Terms", "title": "Information ratio",
+    {"id": "term-information-ratio", "category": "Glossary", "title": "Information ratio",
      "body": "The information ratio divides the portfolio's benchmark-relative excess return by its "
              "tracking error (the standard deviation of the active return). Its reference is the "
              "BENCHMARK, not a risk-free rate — so it is not a Sharpe or Sortino ratio and carries "
@@ -534,7 +591,7 @@ HELP: list[dict] = [
      "improves": "It needs a benchmark series; without one it shows unavailable, not a fabricated "
                  "value. It is a reported ratio built on the benchmark, with no risk-free rate, not "
                  "a target. LedgerFrame reports it and never suggests changing your holdings."},
-    {"id": "term-tracking-error", "category": "Terms", "title": "Tracking error",
+    {"id": "term-tracking-error", "category": "Glossary", "title": "Tracking error",
      "body": "Tracking error is the standard deviation of the portfolio's active return — its return "
              "minus the benchmark's, day by day. It is the denominator of the information ratio: a "
              "higher tracking error means the portfolio diverged from the benchmark more.",
@@ -550,7 +607,7 @@ HELP: list[dict] = [
      "improves": "It needs a benchmark series; without one it shows unavailable rather than a "
                  "fabricated number. It is a measured characteristic of divergence, not a target. "
                  "LedgerFrame reports it and never suggests changing your holdings."},
-    {"id": "term-hhi", "category": "Terms", "title": "HHI (concentration)",
+    {"id": "term-hhi", "category": "Glossary", "title": "HHI (concentration)",
      "body": "The Herfindahl-Hirschman Index sums the squared weights of your holdings — 1/N for N "
              "equally sized positions, up to 1 for a single holding. Higher means more "
              "concentrated. It describes concentration; it is not a recommendation to diversify.",
@@ -564,7 +621,7 @@ HELP: list[dict] = [
                  "how concentrated your holdings currently are — a measurement LedgerFrame reports; "
                  "it never tells you to diversify, trim, or add to a position."},
     # --- §4.6 cost of ownership --------------------------------------------- #
-    {"id": "term-ongoing-cost", "category": "Terms", "title": "Estimated ongoing cost",
+    {"id": "term-ongoing-cost", "category": "Glossary", "title": "Estimated ongoing cost",
      "body": "The estimated ongoing cost is NOT a fee you paid; it is a forward estimate from the "
              "fund's expense ratio (annual_cost_bps) applied to today's value. It is kept separate "
              "from the recorded fees (a real currency fact) and never blended with them.",
@@ -582,42 +639,75 @@ HELP: list[dict] = [
                  "fabricate a fact), and the coverage ('covers N of M holdings') is stated. It is an "
                  "estimate LedgerFrame reports, not advice — set each fund's rate to make it "
                  "compute rather than stay unavailable."},
-    # --- Guarantees --------------------------------------------------------- #
-    {"id": "guarantee", "category": "About", "title": "What LedgerFrame will never do",
-     "body": "It never places trades, gives buy/sell/hold or tax/financial advice, or "
-             "fabricates a price, headline or figure. Unavailable data shows '—' with a "
-             "reason. The AI explains verified facts; it never invents a number. Your data is "
-             "local-first with no telemetry.",
-     "keywords": "guarantee no advice no trading honest local private telemetry"},
 ]
 
-_CATEGORIES = ["Pages", "Terms", "About"]
+# The three sections of the Help journey (9-bis-1), in the order the reader meets them:
+# Orientation (why + how + the mental model) > Pages (what each page does) > Glossary (what the
+# words mean). NOTHING outside these three. "About" is gone from Help entirely — it is a card in
+# Settings > System now (9-bis-6); the guarantee that used to sit under it moved to Orientation.
+_CATEGORIES = ["Orientation", "Pages", "Glossary"]
+
+
+# Optional per-entry fields, served ONLY where authored. They are omitted when absent rather than
+# served as null: a declared-but-unset field renders an empty section on the page (the lesson the
+# what/why/improves triad already taught). `keywords` is now served too — the page's type-ahead
+# ranks CLIENT-SIDE over this bundle (9-bis-4), and it cannot rank on a field it never receives.
+_OPTIONAL = ("keywords", "what", "why", "improves", "example", "level",
+             "inputs", "options", "outputs", "interpret", "links")
 
 
 def all_help() -> dict:
     def _project(e: dict) -> dict:
         out = {k: e[k] for k in ("id", "category", "title", "body")}
-        # Glossary popover fields — present only on Terms entries; omit where absent.
-        out.update({k: e[k] for k in ("what", "why", "improves") if k in e})
+        out.update({k: e[k] for k in _OPTIONAL if k in e})
         return out
 
     return {"categories": _CATEGORIES, "entries": [_project(e) for e in HELP]}
 
 
+# The query language here is a PLAIN QUESTION ("what is XIRR", "how do I set a target
+# allocation") — the placeholder invites one. So the question scaffolding must not score: it is
+# present in almost every query and says nothing about which entry answers it.
+#
+# This was not a theoretical risk. Adding the Section-1 entry titled "What LedgerFrame is" made
+# `search_help("what is xirr")` return IT first, ahead of the XIRR entry — "what" hit the new
+# title, and a title hit outweighed the body hit "xirr" scored. The AI cites the top hits as
+# grounding fact, so the regression reached further than the page. Dropping the scaffolding is
+# the fix that generalises; re-weighting the tiers alone leaves the tie in place.
+_STOPWORDS = frozenset(
+    "what whats how why when where which who does did the this that these those and but for "
+    "with from into about are was were you your yours can could should would there here have "
+    "has had its it's not all any more most some such than then they them their".split()
+)
+
+
 def search_help(query: str, limit: int = 4) -> list[dict]:
-    """Rank help entries by keyword/title/body overlap with a natural-language query."""
+    """Rank help entries by title/keyword/body overlap with a natural-language query."""
     q = (query or "").lower()
-    terms = {t for t in _re_words(q) if len(t) > 2}
+    terms = {t for t in _re_words(q) if len(t) > 2 and t not in _STOPWORDS}
     if not terms:
         return []
     scored = []
     for e in HELP:
-        hay = f"{e['title']} {e['keywords']} {e['body']}".lower()
-        score = sum(1 for t in terms if t in hay)
-        # Title/keyword hits weigh more.
-        score += sum(2 for t in terms if t in f"{e['title']} {e['keywords']}".lower())
-        if score:
-            scored.append((score, e))
+        title = e["title"].lower()
+        keys = e.get("keywords", "").lower()
+        body = e["body"].lower()
+        hay = f"{title} {keys} {body}"
+        # COVERAGE FIRST, then tier. How many of the asked-about terms does this entry address at
+        # all? An entry answering the whole question beats one answering a fragment of it, however
+        # prominently that fragment sits. "how do I set a target allocation" is the case in hand:
+        # Policy carries set + target + allocation; the "Allocation weights" glossary entry carries
+        # two of the three but in its TITLE, so tier-weight alone floats a definition above the
+        # page that actually does the thing. Coverage is the honest reading of a question.
+        covered = sum(1 for t in terms if t in hay)
+        if not covered:
+            continue
+        # Within equal coverage: a term in the TITLE names the entry, in the keywords it labels
+        # it, in the body it is merely mentioned. Ties keep the authored order.
+        tier = (sum(3 for t in terms if t in title)
+                + sum(2 for t in terms if t in keys)
+                + sum(1 for t in terms if t in body))
+        scored.append(((covered, tier), e))
     scored.sort(key=lambda x: x[0], reverse=True)
     return [{k: e[k] for k in ("id", "category", "title", "body")} for _s, e in scored[:limit]]
 

@@ -747,17 +747,45 @@ async def run_admin(payload: AdminAction) -> dict:
 # shape was frozen NOT AT ALL. Typing it surfaced something the untyped dict had hidden — the
 # route serves TWO shapes, the full catalogue and a search result, so it is a UNION, not one
 # model. Saying so in the contract is the point; a single loose model would have re-hidden it.
+class HelpTopicLink(BaseModel):
+    """A pointer from Section-1 Orientation prose into a Section-2 page entry. `topic` is the
+    target entry's id — the page turns it into a `?topic=` deep link (one canonical anchor per
+    topic). It is a POINTER, never a figure: the IA law that Help never becomes a second home
+    for a number is enforced by there being nowhere here to put one."""
+    topic: str
+    label: str
+
+
 class HelpEntry(BaseModel):
-    """A catalogue entry. The glossary triad rides Terms entries ONLY (`all_help()` omits it
-    elsewhere), so the three fields are optional AND excluded-when-unset — declared-but-unset
-    would serve `"what": null` and render an empty section on the page."""
+    """A catalogue entry across all three sections (page-help 9-bis-1).
+
+    EVERY optional field is excluded-when-unset, not declared-null. That is the lesson the
+    what/why/improves triad already taught: a declared-but-unset field serves `"what": null` and
+    renders an empty section on the page. The field set is now section-shaped —
+
+    * Orientation: `links` (pointers into Section 2).
+    * Pages: `inputs` / `options` / `outputs` / `interpret` — what the user fills, what they may
+      choose, what they SEE (names only), and how to read it.
+    * Glossary: `what` / `why` / `improves` / `example` / `level`. `example` is STATIC and
+      sample-marked (9-bis-3); personalised derivation traces are R-53, post-release.
+
+    `keywords` is served for the page's CLIENT-SIDE type-ahead (9-bis-4), which cannot rank on a
+    field it never receives."""
     id: str
     category: str
     title: str
     body: str
+    keywords: str | None = None
     what: str | None = None
     why: str | None = None
     improves: str | None = None
+    example: str | None = None
+    level: str | None = None
+    inputs: list[str] | None = None
+    options: list[str] | None = None
+    outputs: list[str] | None = None
+    interpret: str | None = None
+    links: list[HelpTopicLink] | None = None
 
 
 class HelpSearchEntry(BaseModel):

@@ -14,7 +14,7 @@ def test_help_ids_are_unique():
 
 
 def test_terms_entries_have_glossary_fields():
-    terms = [e for e in HELP if e["category"] == "Terms"]
+    terms = [e for e in HELP if e["category"] == "Glossary"]
     assert terms
     for e in terms:
         for k in _GLOSSARY_FIELDS:
@@ -32,7 +32,7 @@ def test_metric_glossary_terms_present():
     assert expected <= set(by_id), expected - set(by_id)
     for tid in expected:
         e = by_id[tid]
-        assert e["category"] == "Terms"
+        assert e["category"] == "Glossary"
         for k in _GLOSSARY_FIELDS:
             assert e.get(k, "").strip(), f"{tid} missing/empty {k}"
 
@@ -47,7 +47,7 @@ def test_attribution_and_risk_glossary_terms_present():
     assert expected <= set(by_id), expected - set(by_id)
     for tid in expected:
         e = by_id[tid]
-        assert e["category"] == "Terms"
+        assert e["category"] == "Glossary"
         for k in _GLOSSARY_FIELDS:
             assert e.get(k, "").strip(), f"{tid} missing/empty {k}"
 
@@ -63,7 +63,7 @@ def test_risk_ratios_carry_no_risk_free_rate_honesty():
             f"{tid} must state it is not a Sharpe/Sortino ratio"
     # And no term prescribes action — advice-free ("you should" / "aim for" / "a good value").
     for e in HELP:
-        if e["category"] != "Terms":
+        if e["category"] != "Glossary":
             continue
         blob = " ".join(e.get(k, "") for k in _GLOSSARY_FIELDS).lower()
         for banned in ("you should", "aim for", "a good value", "we recommend"):
@@ -75,7 +75,7 @@ def test_all_help_surfaces_glossary_for_terms_only():
     # Terms entries surface the three fields...
     for e in HELP:
         projected = by_id[e["id"]]
-        if e["category"] == "Terms":
+        if e["category"] == "Glossary":
             for k in _GLOSSARY_FIELDS:
                 assert projected[k] == e[k]
         else:
@@ -118,7 +118,7 @@ async def test_help_wire_response_keeps_the_conditional_glossary_triad(app_clien
     Both are silent losses a service-level test cannot see.
     """
     body = (await app_client.get("/api/v1/help")).json()
-    assert body["categories"] == ["Pages", "Terms", "About"]
+    assert body["categories"] == ["Orientation", "Pages", "Glossary"]
 
     by_id = {e["id"]: e for e in body["entries"]}
     assert len(by_id) == len(HELP), "the wire dropped entries"
@@ -126,7 +126,7 @@ async def test_help_wire_response_keeps_the_conditional_glossary_triad(app_clien
     for e in HELP:
         served = by_id[e["id"]]
         assert set(served) >= {"id", "category", "title", "body"}
-        if e["category"] == "Terms":
+        if e["category"] == "Glossary":
             for k in _GLOSSARY_FIELDS:
                 assert served.get(k), f"{e['id']} lost {k} on the wire"
         else:

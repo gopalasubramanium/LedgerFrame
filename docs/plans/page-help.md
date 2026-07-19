@@ -864,6 +864,105 @@ chrome. Options: **(a)** keep as-is; **(b)** keep but reveal on hover/focus only
 that link here (Phase 4) rather than by the page. **Not resolved unilaterally — this is the kind of
 judgment 0a exists for.**
 
+> **Answered at §9-bis-7** — the owner took option **(b)**, re-scoped into the new layout.
+
+---
+
+## §9-bis — 0a REJECTED; redesign rulings (owner in chat, 2026-07-19)
+
+**Status: the §13 specimen above is SUPERSEDED.** It was walked, it was green on every guard it
+had, and it was **rejected by looking**. That sequence is the point: a specimen can pass every
+mechanical check and still be the wrong shape, and the only instrument that catches it is the
+owner's eye on the rendered page. The gates were not wrong; they were not sufficient.
+
+### §9-bis-0 (owner) — the rejection, and its reason
+
+The first 0a specimen — **three-tab `Pages · Terms · About`, capped reading column,
+submit-button search** — is **REJECTED**.
+
+The capped prose measure was **DS-conformant and still wrong for this surface**. The Help landing
+is a **catalogue surface, not a reading column**: the user arrives to *find* a topic, not to read
+a document top-to-bottom, and a narrow measure makes a catalogue longer to scan for no benefit.
+
+**Reading measure is not repealed — it is relocated.** It still applies **inside an expanded
+entry**, where the user genuinely is reading prose. The distinction is *scanning vs reading*, and
+the layout must serve whichever the user is actually doing at that moment.
+
+### §9-bis-1 (owner) — the three-section user journey
+
+Help is restructured into a **three-section user journey**, and **only these three sections**:
+
+| # | Section | What it carries |
+|---|---|---|
+| 1 | **Orientation** | What problem the platform solves · why it exists · how it solves it · the **logical mental model for leveraging the pages together**. Links from this narrative into each page's Section-2 entry. |
+| 2 | **Pages** | Per-page **expandable entries (accordion)**: expected user **inputs**, the **options**, the **outputs** the user sees, and **how to use / fill / interpret** them. **Pointers** for figures only. |
+| 3 | **Glossary** | Terms ordered **basics → expert**, each with an explanation and a **worked example**. |
+
+**IA law is binding on Section 2:** Help carries **pointers**, never figures. Help never becomes a
+second home for any number — the canonical page owns it, Help says where to look and how to read
+it. A figure rendered in Help would be a second derivation site and is forbidden on both counts.
+
+### §9-bis-2 (owner, ⚑A) — R-51 tiering STANDS
+
+Section 3 ships **now** with every **Tier-1 + Tier-2** term. **Tier 3** (~44 marked-but-unserved)
+stays **post-release**, unchanged from the R-51 ruling. The governing principle, verbatim:
+
+> **"Describing itself falsely is a release bar; describing itself partially is not."**
+
+The **parity guard keeps reporting the marked-but-unserved count** as a non-blocking number, so
+the gap stays visible instead of going quiet.
+
+### §9-bis-3 (owner, ⚑B) — worked examples are STATIC, and R-53 is filed
+
+Worked examples in Section 3 are **static and clearly marked as illustrative samples**.
+
+Showing the **user's own** figures with step-by-step derivation would require the calculation
+engine to **serve derivation traces** — new endpoints, a contract change. **Frontend
+re-derivation is forbidden** (the one-derivation law); a Help page that recomputed a number to
+explain it would become a second derivation site, which is exactly the failure the law exists to
+prevent. Filed as **ROADMAP R-53, POST-RELEASE**.
+
+### §9-bis-4 (owner, ⚑C) — search is TYPE-AHEAD
+
+Search results appear **as the user types**, and are **pinned strictly to Help content** across
+all three sections. The submit-button search of the rejected specimen is gone.
+**Platform-wide search is out of scope and is NOT filed** — it was not deferred, it was declined.
+
+### §9-bis-5 (owner, ⚑D) — Section-2 depth is accepted, with its cost
+
+Section-2 depth is **accepted with its schedule cost acknowledged**. Recorded reason:
+
+> **Comprehensive, accuracy-guarded documentation is a core trust mechanism for this product, not
+> polish.**
+
+This is the ruling that authorises the largest single content burden in the milestone. It is
+recorded with its cost stated so that it is never later mistaken for scope creep.
+
+### §9-bis-6 (owner) — About LEAVES Help, and moves to Settings
+
+The **About tab is REMOVED from Help** and becomes a **card inside the existing Settings → System
+tab**. **No 7th Settings tab.**
+
+Content: brief platform description, author, credits, links —
+
+- Platform · https://ledgerframe.org · https://github.com/gopalasubramanium/ledgerframe
+- Author · https://me.sgopala.com/ · https://github.com/gopalasubramanium ·
+  https://www.linkedin.com/in/gopalasubramanium/ · https://paypal.me/sgopala
+
+**Copy is PROPOSED until the 0a look.** This is an **accepted-page touch on Settings** → a dated
+delta note in `docs/plans/page-settings.md` **and** a Settings pre-pass re-run are required.
+**Credits must be reconciled with `LICENSES.md`** — a credits list that disagrees with the
+licence record is the page describing itself falsely.
+
+### §9-bis-7 (architect, under delegation) — "Link to this topic", re-proposed
+
+The ⚑ judgment above is answered: **option (b)**. "Link to this topic" is re-proposed inside the
+new layout as a **reveal-on-hover/focus affordance or a per-entry icon** — **not** a persistent
+button on every entry. **The owner rules at 0a by looking.**
+
+Unchanged: deep links remain **`?topic=`** (HashRouter — a second `#` fragment is not
+addressable), and there is **one canonical anchor per topic**.
+
 ---
 
 ## SCOPE-NOTES *(preserved verbatim — owner rulings recorded ahead of the draft; inputs to §9)*

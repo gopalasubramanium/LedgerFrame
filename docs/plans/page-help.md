@@ -1027,6 +1027,24 @@ Phase 0-bis** — a non-blocking reported count, fail-first like everything else
 that was never written is indistinguishable from a guard that silently stopped working, which is
 why this is being fixed now rather than filed.*
 
+> **BUILT (2026-07-19), and its first reading corrects R-51's estimate.** The counter reports
+> **71 `[Help]`-marked terms · 29 served · 58 marked-but-unserved (upper bound)** — R-51 assumed
+> **≈44**. The gap between 58 and 44 is **not 14 more missing entries**; it is mostly a
+> **name-shape artifact**, and the counter says so rather than presenting 58 as owed work: one
+> GLOSSARY row can carry several terms in a single bolded cell
+> (`**Beta / Correlation / Downside deviation / Information ratio / Tracking error**` is *one*
+> row, five terms), while `help.py` serves those as *separate* entries — so a title-join scores
+> all five as unserved when they are served. Add the still-unratified **PROPOSED** `[Help]` marks
+> (which were never a promise) and the true owed count is lower again. **R-51's instruction —
+> *"must be counted, not assumed"* — is exactly right, and the counter's job is to keep the
+> number in view, not to adjudicate it.** The bound is reported as a bound, in those words.
+>
+> **Fail-first RED, on the real cause:** the marker regex was broken to simulate a restyled
+> `[Help]` mark. The **reporting test stayed GREEN and reported a closed gap** — the silent-success
+> mode in the flesh — and `test_the_tier3_counter_can_still_see_both_sides` is what went red.
+> *That is why the health check asserts both sides are non-empty and the report itself never
+> fails: a non-blocking counter's only real failure mode is reading zero for the wrong reason.*
+
 ---
 
 ## SCOPE-NOTES *(preserved verbatim — owner rulings recorded ahead of the draft; inputs to §9)*

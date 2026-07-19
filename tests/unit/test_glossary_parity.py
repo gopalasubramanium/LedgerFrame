@@ -165,3 +165,70 @@ def test_popover_term_exists_in_the_spec_with_identical_spelling(term: str):
         f"with that exact spelling. Add it to the SPEC (the canonical store) — never to the frontend "
         f"data alone (page-heatmap §13-1)."
     )
+
+
+# ---------------------------------------------------------------------------
+# §9-bis-8(c) — THE TIER-3 VISIBILITY COUNTER (page-help, 2026-07-19)
+#
+# R-51 defers the ~44 `[Help]`-marked-but-unserved terms to POST-RELEASE, and §9-bis-2 upholds
+# that deferral. Both rest on ONE stated mechanism: *"the parity guard reports the
+# marked-but-unserved count as a non-blocking number"*, so the gap stays visible instead of going
+# quiet. **That counter was never written.** The deferral has therefore been resting on a
+# mechanism that did not exist. Written here.
+#
+# It is NON-BLOCKING BY DESIGN: the gap is ruled acceptable, so a gap must never fail the suite.
+# What it DOES assert is that the counter itself still works — because the only thing worse than
+# no counter is a broken one reading 0, which looks exactly like a closed gap.
+# ---------------------------------------------------------------------------
+
+_HELP_MARKED_ROW = re.compile(r"^\|\s*\*\*([^*|]+)\*\*\s*\|.*\*\*\[Help\]\*\*", re.MULTILINE)
+
+
+def _help_marked_terms() -> list[str]:
+    """Terms whose GLOSSARY.md row carries the **[Help]** promise of a catalogue entry."""
+    spec = SPEC.read_text(encoding="utf-8")
+    body = spec.split("## Deprecated terms")[0]  # a retired term promises nothing
+    return [t.strip() for t in _HELP_MARKED_ROW.findall(body)]
+
+
+def test_the_tier3_counter_can_still_see_both_sides():
+    """The counter's OWN health check — this is the part that is allowed to fail.
+
+    A parser that drifts (GLOSSARY's row format changes, the marker is restyled, help.py's
+    category string is renamed) reports **zero unserved terms**, which is indistinguishable from
+    "R-51 is complete". That silent-success mode is the whole risk of a non-blocking counter, so
+    both sides are asserted non-empty here and nowhere else.
+    """
+    marked = _help_marked_terms()
+    served = _served_terms()
+    assert marked, (
+        "parsed ZERO [Help]-marked terms from GLOSSARY.md — the marker or row format has drifted. "
+        "The Tier-3 counter is now blind and would silently report the gap as closed."
+    )
+    assert served, "parsed ZERO served Terms entries from app/services/help.py — parser drifted."
+
+
+def test_REPORT_the_tier3_marked_but_unserved_count():
+    """NON-BLOCKING. Prints the R-51 / §9-bis-2 gap. This test does not fail on the gap.
+
+    Run with ``-s`` (or read the captured output of a failing run) to see the number.
+
+    **The number is an UPPER BOUND, and saying so is part of reporting it honestly.** Two reasons
+    it overstates: (1) one catalogue entry may legitimately cover several marked terms under one
+    heading (``XIRR & TWR``) — those are declared in ``_HEADING_NOT_A_TERM``; (2) some ``[Help]``
+    marks are **PROPOSED, not RATIFIED**, so the platform never actually promised them. R-51 says
+    the genuinely-owed count *"must be counted, not assumed"* — this reports the bound, it does
+    not adjudicate it.
+    """
+    marked = _help_marked_terms()
+    served_titles = {title for _id, title in _served_terms()}
+    unserved = sorted(t for t in marked if t not in served_titles)
+
+    print(
+        f"\n[R-51 / §9-bis-2 Tier-3 visibility counter — NON-BLOCKING]\n"
+        f"  [Help]-marked terms in GLOSSARY.md : {len(marked)}\n"
+        f"  served as catalogue Terms entries  : {len(served_titles)}\n"
+        f"  marked but UNSERVED (upper bound)  : {len(unserved)}\n"
+        f"  post-release per ROADMAP R-51; deferral ruled acceptable BECAUSE this stays visible.\n"
+        + "".join(f"    - {t}\n" for t in unserved)
+    )

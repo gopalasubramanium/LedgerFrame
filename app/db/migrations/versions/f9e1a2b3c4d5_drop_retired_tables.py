@@ -13,6 +13,27 @@ v1 database upgrades in place.
 rows — it raises loudly rather than silently destroying data. Clear/export the
 rows first, then re-run.
 
+**ASYMMETRIC BY DESIGN — the downgrade does NOT restore the two AI tables.**
+`downgrade()` re-creates `provider_configs`, `notes`, `dashboard_configs` and
+`dashboard_rotation_items`, so an operator can back this migration out. It
+deliberately does **not** re-create `ai_conversations` / `ai_messages`.
+
+Reversibility exists so an operator can undo a *schema change*. These two tables
+are not a schema preference that was changed — they are a **promise the product
+makes to the person using it**: Commitment 6, served on the Legal page, *"AI
+questions and answers are never persisted"* (D-016). A promise that holds at head
+and dissolves one `alembic downgrade` later is not a promise; it is a default.
+Nothing in the codebase writes these tables, so restoring them would create a
+place to persist conversations that only a future mistake could fill.
+
+The narrowness is enforced rather than trusted:
+`tests/integration/test_commitment_6_no_stored_conversations.py` drives a
+downgrade → upgrade cycle and fails if either AI table returns **or** if the cycle
+loses any other table.
+
+*(The `upgrade()` path still drops both — a real v1 database has them, and
+dropping them is the entire point of this revision.)*
+
 Revision ID: f9e1a2b3c4d5
 Revises: d1e7a4c02f95
 """
@@ -109,24 +130,14 @@ def downgrade() -> None:
         ["config_id"],
         unique=False,
     )
-    op.create_table(
-        "ai_conversations",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("title", sa.String(length=160), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_table(
-        "ai_messages",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("conversation_id", sa.Integer(), nullable=False),
-        sa.Column("role", sa.String(length=16), nullable=False),
-        sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("facts_json", sa.Text(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(["conversation_id"], ["ai_conversations.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_ai_messages_conversation_id"), "ai_messages", ["conversation_id"], unique=False
-    )
+    # ⚠ ai_conversations / ai_messages are DELIBERATELY NOT RE-CREATED — see the
+    # "asymmetric by design" note in this module's docstring. Commitment 6 promises the
+    # user that AI questions and answers are never persisted; restoring a place to
+    # persist them, in any reachable schema state, would make that promise conditional
+    # on nobody running `alembic downgrade`.
+    #
+    # This asymmetry is guarded, not merely intended:
+    # tests/integration/test_commitment_6_no_stored_conversations.py drives a full
+    # downgrade → upgrade cycle and fails if either table comes back — and, in the same
+    # test, fails if the cycle loses any OTHER table, so the exception stays exactly
+    # this narrow.

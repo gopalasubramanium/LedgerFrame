@@ -32,6 +32,52 @@ GLOSSARY = REPO / "docs" / "specs" / "GLOSSARY.md"
 _PAGES = [e for e in HELP if e["category"] == "Pages"]
 
 
+# --- Which fields the prose guards read -------------------------------------------------------- #
+# DERIVED, never hardcoded. Every guard below used to carry its own literal tuple
+# ("title", "body", "keywords", "what", "why", "improves"). That was a silent-success trap of the
+# purest kind: the 9-bis-1 redesign added `inputs`, `options`, `outputs`, `interpret` and `example`,
+# and every one of those guards would have kept passing while saying NOTHING about the new prose —
+# green because it never looked, which is indistinguishable from green because it is clean.
+#
+# So the field set is read off the entries themselves. A field added tomorrow is guarded today.
+# `id` and `category` are machine keys, not prose, and `links` is checked separately (its labels are
+# nav labels; its topics must resolve).
+_NOT_PROSE = {"id", "category", "links"}
+
+
+def _prose_fields(entry: dict) -> list[str]:
+    return [k for k in entry if k not in _NOT_PROSE]
+
+
+def _prose(entry: dict, fields: list[str] | None = None) -> str:
+    """Every authored string in an entry, flattened — list-valued fields included."""
+    out: list[str] = []
+    for k in fields if fields is not None else _prose_fields(entry):
+        v = entry.get(k)
+        if isinstance(v, str):
+            out.append(v)
+        elif isinstance(v, list):
+            out.extend(x for x in v if isinstance(x, str))
+    return " ".join(out)
+
+
+def test_the_prose_field_set_is_derived_and_covers_the_new_redesign_fields():
+    """The guard that guards the guards: prove the derived set actually sees 9-bis-1's fields.
+
+    If someone re-hardcodes a field tuple, or a redesign field silently stops being authored,
+    this is what goes red — not a content test that quietly checks less than it claims.
+    """
+    covered = {f for e in HELP for f in _prose_fields(e)}
+    # `example` joins this list with the Glossary content in the next delta — it is deliberately
+    # absent here rather than asserted-and-vacuous.
+    for field in ("body", "keywords", "what", "why", "improves",
+                  "inputs", "options", "outputs", "interpret"):
+        assert field in covered, (
+            f"{field!r} is authored nowhere in HELP, so every prose guard below is vacuous for it. "
+            f"Either the content regressed or the field was renamed without the guards following."
+        )
+
+
 def _nav_items() -> list[tuple[str, str, bool]]:
     """(label, path, built) for every entry in the canonical nav model."""
     src = NAV.read_text(encoding="utf-8")
@@ -118,11 +164,13 @@ def test_page_names_in_PROSE_use_the_canonical_casing(entry: dict):
     match the nav exactly.
     """
     multiword = [label for label, _p, _b in _nav_items() if " " in label]
-    fields = ("body", "what", "why", "improves")
     for label in multiword:
-        for field in fields:
-            for m in re.finditer(re.escape(label), entry.get(field, ""), re.I):
-                got = entry[field][m.start():m.end()]
+        for field in _prose_fields(entry):
+            if field == "title":
+                continue  # the title guard above owns that case
+            text = _prose(entry, [field])
+            for m in re.finditer(re.escape(label), text, re.I):
+                got = text[m.start():m.end()]
                 if got in (label, label.lower()):
                     continue
                 pytest.fail(
@@ -196,9 +244,7 @@ def test_every_deprecated_row_is_triaged_here():
 def test_no_help_copy_uses_a_deprecated_term(entry: dict):
     """Seen RED before the content pass on: 'Simple/Expert' (page-home), 'Total value' and
     'Realised gains' (Terms titles + bodies)."""
-    blob = " ".join(
-        str(entry.get(k, "")) for k in ("title", "body", "keywords", "what", "why", "improves")
-    ).lower()
+    blob = _prose(entry).lower()
     for row, pattern in _DEPRECATED_CHECKS.items():
         if (entry["id"], row) in _DEPRECATED_EXEMPT:
             continue
@@ -217,8 +263,7 @@ def test_no_help_copy_advises_or_leaks_an_implementation_note(entry: dict):
     (page-chrome §11-8) — this catalogue is the surface most likely to leak one, because it is the
     only place the product explains itself.
     """
-    fields = ("title", "body", "keywords", "what", "why", "improves")
-    blob = " ".join(str(entry.get(k, "")) for k in fields)
+    blob = _prose(entry)
     low = blob.lower()
 
     for banned in ("you should", "we recommend", "aim for", "a good value", "you must",
@@ -230,3 +275,131 @@ def test_no_help_copy_advises_or_leaks_an_implementation_note(entry: dict):
     for leak in ("response_model", "privacy_mode", "/api/", "endpoint", "localstorage",
                  "refdata", "asset_class", "server-side"):
         assert leak not in low, f'{entry["id"]} leaks an implementation note: {leak!r}'
+
+
+# --- The dead-affordance guard (9-bis-1 inputs/options) ---------------------------------------- #
+# Section 2 now tells the user WHAT THEY CAN DO on a page. That is the highest-risk prose in the
+# product: a body that describes a page vaguely ages slowly, but a named control that does not
+# exist sends the user hunting for it and finding nothing. This catalogue has already shipped
+# exactly that — the Settings entry described a staleness threshold on Data feeds that
+# Settings.tsx:70 records as "not yet built — served only", and it survived a full content pass
+# because nothing compared an affordance claim to the product.
+#
+# WHAT THIS CAN AND CANNOT PROVE, stated honestly: it proves a named affordance EXISTS somewhere in
+# the shipped product. It cannot prove it exists on the page the entry claims, nor that the
+# surrounding sentence is true. It kills the invented control and the retired one — the two failure
+# modes that actually happened — and no more than that. A guard that overclaims its reach is the
+# same silent-success bug in a different coat.
+_UI = REPO / "frontend" / "src"
+_SERVICES = REPO / "app"
+
+# Words that carry the sentence but are not the affordance. `inputs`/`options` are authored as
+# "Label — what it does", so only the part BEFORE the dash is a claim about a control's name.
+_LABEL_SPLIT = re.compile(r"\s+[—:]\s+")
+
+
+# Comments are NOT shipped text, and this is not a nicety — it is the whole guard.
+# Proven by its own RED specimen: re-injecting the historical false claim ("Stale-after threshold —
+# how long a price may go without refreshing") did NOT go red, because Settings.tsx:70 carries the
+# words in a comment that says, in as many words, "not yet built". A guard that reads comments
+# would have blessed the exact defect it was written to catch — and the comment saying a thing
+# does not exist is the LAST place a claim that it exists should find corroboration.
+_LINE_COMMENT = re.compile(r"//[^\n]*|#[^\n]*")
+_BLOCK_COMMENT = re.compile(r"/\*.*?\*/|\{/\*.*?\*/\}", re.S)
+
+
+def _shipped_text() -> str:
+    """Every string the product could RENDER, lowercased: the frontend, plus the backend services
+    that SERVE display labels (master-data vocabularies are titleized at runtime, so the source
+    carries `expense` where the user sees `Expense` — hence the case-insensitive compare).
+
+    Two exclusions, both load-bearing:
+
+    * COMMENTS — see above.
+    * ``app/services/help.py`` ITSELF. The catalogue cannot be its own evidence. Including it made
+      every claim trivially findable in the very string that made the claim, which is not a weak
+      guard but a circular one: it would have returned green for any invented control whatsoever.
+      Caught by the RED specimen, not by review.
+    """
+    parts = []
+    for root, globs in ((_UI, ("*.tsx", "*.ts")), (_SERVICES, ("*.py",))):
+        for g in globs:
+            for p in root.rglob(g):
+                if p.name == "help.py" and p.parent.name == "services":
+                    continue
+                src = p.read_text(encoding="utf-8", errors="ignore")
+                parts.append(_LINE_COMMENT.sub(" ", _BLOCK_COMMENT.sub(" ", src)))
+    return " ".join(parts).lower()
+
+
+_SHIPPED = _shipped_text()
+
+# Affordance phrases that are deliberately NOT literal UI strings, each with its reason. An entry
+# may describe a control in the user's words rather than the button's — but it must be listed here,
+# so the exception is a decision on the record and not an accident.
+_AFFORDANCE_EXEMPT: dict[str, str] = {
+    "Nothing to fill in": "Scenarios has no inputs at all; saying so IS the honest answer, and "
+                          "an absent control cannot appear in the source.",
+    "Sort the table by any column": "Sorting is a DataTable capability, not a labelled control.",
+    "A target weight and an optional band per bucket": "Describes the per-row editor pair in the "
+                                                       "user's words; the labels themselves "
+                                                       "(Target, Minimum, Maximum) are separate.",
+    "Any entry title": "The Help accordion's entry titles are content, not a fixed label.",
+}
+
+
+@pytest.mark.parametrize("entry", [e for e in HELP if "inputs" in e], ids=lambda e: e["id"])
+def test_every_named_affordance_exists_in_the_shipped_product(entry: dict):
+    """A control Help names must be findable in the product. Seen RED on the Settings entry's
+    staleness threshold — described for a whole release, never built."""
+    dead = []
+    for claim in entry["inputs"]:
+        label = _LABEL_SPLIT.split(claim, 1)[0].strip()
+        if label in _AFFORDANCE_EXEMPT:
+            continue
+        # A claim may name several controls ("Edit, Rename, Merge… and Delete on a row").
+        for part in re.split(r",|;|/| and (?=[A-Z])", label):
+            part = part.strip().strip(".…")
+            if len(part) < 3 or part in _AFFORDANCE_EXEMPT:
+                continue
+            if part.lower() not in _SHIPPED:
+                dead.append(part)
+    assert not dead, (
+        f'{entry["id"]}.inputs names controls that exist NOWHERE in the shipped product: {dead}\n'
+        f"Either the affordance was never built (delete the claim — a dead affordance sends the "
+        f"user hunting), or it is named differently in the UI (use the shipped label), or it is a "
+        f"deliberate paraphrase (add it to _AFFORDANCE_EXEMPT with the reason)."
+    )
+
+
+# An `options` item enumerating real choices is authored as "Control: A · B · C". Items without
+# that shape are prose ABOUT the choices ("the shock set is fixed") and carry no enumeration to
+# check — they are skipped, not silently passed off as verified.
+_ENUM = re.compile(r"^[^:]+:\s*(?P<values>.+·.+)$")
+
+
+@pytest.mark.parametrize("entry", [e for e in HELP if "options" in e], ids=lambda e: e["id"])
+def test_every_enumerated_option_value_exists_in_the_shipped_product(entry: dict):
+    """CLAUDE.md: every categorical field references MASTER-DATA — no free-text enums. Help is
+    where that rule is easiest to break, because an option list is prose here and a vocabulary
+    everywhere else. An invented value ("Theme: System · Light · Dark · Sepia") reads exactly like
+    a real one and sends the user looking for a setting that does not exist.
+
+    Master-data labels are titleized from their stored values at render time, so the compare is
+    case-insensitive: the source carries `expense` where the user is shown `Expense`."""
+    invented = []
+    for item in entry["options"]:
+        m = _ENUM.match(item)
+        if not m:
+            continue
+        for value in m.group("values").split("·"):
+            value = value.strip()
+            if len(value) < 2:
+                continue
+            if value.lower() not in _SHIPPED:
+                invented.append(value)
+    assert not invented, (
+        f'{entry["id"]}.options lists choices that exist NOWHERE in the shipped product: '
+        f"{invented}\nAn option the user cannot actually pick is a fabricated fact about the "
+        f"product. Use the served vocabulary's own labels."
+    )

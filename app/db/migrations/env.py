@@ -14,7 +14,14 @@ from app.db.base import Base
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # F-8c: `disable_existing_loggers` defaults to True, which SILENCES every logger that
+    # already exists and is not named in alembic.ini — including the app's own "ledgerframe"
+    # logger. The app runs migrations IN-PROCESS at startup (app/db/migrate.py), so the default
+    # killed all application logging for the rest of the process: the log file stopped dead at
+    # "[db] applying migrations" on every boot, and honest per-instrument acquisition warnings
+    # (the F-8a CoinGecko refusals) reached neither the file nor stdout. A migration runner must
+    # never be able to turn off the application's voice.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.sync_db_url)

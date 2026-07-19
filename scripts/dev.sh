@@ -78,8 +78,18 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
+# F-8c: backend logs must actually reach the terminal.
+#   1. Python block-buffers stdout when it is a PIPE (which it is — we prefix through awk), so
+#      output arrived in 4-8KB bursts or, on a killed process, never. PYTHONUNBUFFERED fixes that.
+#   2. Print where the rotating log file lives. When the terminal is piped through `tee`, that file
+#      is the authoritative record — the owner's F-8 investigation lost hours because nothing said
+#      so. (The reason it was EMPTY past startup was the Alembic logging clobber, fixed separately
+#      in app/db/migrations/env.py + app/db/migrate.py.)
+LOG_FILE="$(.venv/bin/python -c 'from app.core.config import get_settings; print(get_settings().logs_dir / "ledgerframe.log")' 2>/dev/null || echo '?')"
 echo "[dev] backend  → http://127.0.0.1:8321   (uvicorn --reload)"
-( .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8321 --reload 2>&1 \
+echo "[dev] backend log file → $LOG_FILE"
+echo "[dev]   follow it:  tail -f $LOG_FILE"
+( PYTHONUNBUFFERED=1 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8321 --reload 2>&1 \
     | awk '{ print "[backend]  " $0; fflush() }' ) &
 PIDS+=($!)
 

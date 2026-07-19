@@ -55,7 +55,15 @@ async def _no_price_blocker(session: AsyncSession, instr, ac: str) -> str:
         return (f"No AMFI scheme mapped for {instr.symbol} — map it to a scheme, then Build history")
     if not any(can_fetch_history(capabilities_for(name), ac) for name in CAPABILITIES):
         return f"No price provider supplies {ac or 'this asset'} history"
-    # Mappable + a provider can serve the class — genuinely not-yet-acquired: the honest CTA.
+    # F-8: mappable and serveable, yet still empty — so acquisition was ATTEMPTED and failed. Its
+    # recorded reason is the truth here; the build CTA would tell the user to redo what they just
+    # did. This is the branch whose absence served BTC/XRP the generic CTA through every rebuild.
+    from app.models import InstrumentAcquisition
+
+    outcome = await session.get(InstrumentAcquisition, instr.id)
+    if outcome is not None and not outcome.ok and outcome.reason:
+        return outcome.reason
+    # Genuinely not-yet-acquired (no attempt on record): the honest CTA.
     return "No price history yet — run Build history to acquire it"
 
 
@@ -124,6 +132,15 @@ async def coverage_summary(session: AsyncSession, base_currency: str | None = No
             summary = f"Prices {p_earliest}→{p_latest}; {pricing_ccy} FX {fx_earliest}→{fx_latest}"
         else:
             summary = f"Prices {p_earliest}→{p_latest}"
+        if has_price:
+            # F-8a: a SUCCESSFUL acquisition can still be short of the holding period (CoinGecko's
+            # public API serves a bounded window). The span above is honest but does not say WHY it
+            # starts where it does — the recorded note does, so the user is not left inferring.
+            from app.models import InstrumentAcquisition
+
+            note = await session.get(InstrumentAcquisition, instr.id)
+            if note is not None and note.ok and note.reason:
+                summary = f"{summary} — {note.reason}"
 
         out.append({
             "instrument_id": instr.id, "symbol": instr.symbol,

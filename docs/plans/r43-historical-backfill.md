@@ -1355,3 +1355,114 @@ chat. **Open for a chat ruling:** (a) the served priority chain does not disting
   every ingest** — the newest date must be recent and the parse non-truncated — and a failing
   check REFUSES the data with a served error, never a silent bad write. Generalised across every
   history/FX parser (ECB, AMFI, CoinGecko, AV).
+
+## 19. F-8 CLUSTER (2026-07-19) — THREE STACKED DEFECTS, ALL VERIFIED
+
+Owner evidence: post-`8e805c6`, verified restart, Build history run — coverage **still 4/6**, banner
+still the generic CTA. `price_history` per symbol: 102000=1846, 145834=2279, SBICARD.BSE=1562,
+TSLA=2669, AAPL/SPY=250, indices=19, **BTC/XRP = 0 rows, ever**, while both were correctly mapped
+(`coingecko_id` = bitcoin / ripple, `is_primary=1`, since 2026-07-18 21:00).
+
+### 19-1 — THE LOOKUP IS CORRECT (the drift hypothesis is REFUTED)
+
+The owner asked whether this was the `recognise_amfi` anti-drift lesson again — a divergent read.
+**It is not.** `acquire.py::_identifier` and `coverage.py::_identifier` both query
+`instrument_identifiers` on `(instrument_id, id_type='coingecko_id')`, which is exactly where the
+ids are, and exactly the `id_type` the linker writes (`market.py:134`, `set_identifier(...,
+"coingecko_id", ...)`). The acquirer found the ids every run. Nothing was repaired here.
+
+*(Latent, noted not fixed: those two `_identifier` helpers are byte-identical private copies in two
+modules. They agree today, which is why this was not the cause; they are still the shape the
+anti-drift lesson warns about. Left as a cleanup candidate, deliberately out of an evidence batch.)*
+
+### 19-2 — F-8a: THE CAUSE — A LIMIT WRITTEN IN A COMMENT IS NOT A LIMIT
+
+`CRYPTO_HISTORY_FREE_TIER_DAYS = 365` was **declared in the adapter and referenced nowhere**. The
+acquirer requests from the earliest transaction; BTC/XRP were bought **731 days ago** (verified in
+a read-only scratch copy of the owner's DB). CoinGecko's public API refuses a request reaching past
+its window **wholesale** — it returns nothing rather than less.
+
+**Verified live, two keyless probes:**
+
+    731d range → HTTP 401  error_code 10012  "Your request exceeds the allowed time range.
+                                              Public API users are limited to ... the past 365 days."
+    300d range → HTTP 200  prices=300
+
+**Fix:** `clamp_to_free_tier()` applies the constant that was always documented. The acquirer passes
+the **clamped** start to the fetcher, so the window requested and the window described are the same
+value and cannot drift; the fetcher clamps again defensively for other callers. Confirmed live
+after the fix: **HTTP 200, 364 daily candles, 2025-07-21 → 2026-07-19.** The pre-window era stays
+honestly missing (carried, never fabricated) and says so.
+
+### 19-3 — F-8c: WHY THERE WAS NO EVIDENCE ANYWHERE
+
+The owner's `dev.sh | tee` captured nothing but the banner, and `logs/ledgerframe.log` **stopped
+dead at `[db] applying migrations` on every boot** — no request lines, no acquisition warnings.
+
+**Cause: `app/db/migrations/env.py` called `fileConfig(config.config_file_name)`, whose
+`disable_existing_loggers` defaults to `True`.** The app runs migrations **in-process** at startup,
+so Alembic **disabled the `ledgerframe` logger** for the life of the process. Verified directly:
+
+    root handlers before: [StreamHandler] | ledgerframe.disabled = False
+    fileConfig("alembic.ini")
+    root handlers after : [StreamHandler] | ledgerframe.disabled = True   ← app logging is dead
+
+That is why F-8a could run silently for weeks: `acquire_prices` **did** log its honest warning, into
+a logger that had been switched off. **Fix:** `disable_existing_loggers=False`, **plus**
+re-asserting `setup_logging()` after migrations (fileConfig also rebuilds the ROOT handler list from
+`alembic.ini`, dropping the rotating-file handler). `dev.sh` additionally sets `PYTHONUNBUFFERED=1`
+(stdout is a pipe through `awk`, so it was block-buffered) and **prints the log-file path**.
+
+### 19-4 — WHY THE BANNER STAYED GENERIC (item 3)
+
+`_no_price_blocker` named the blocker only for *unmapped* instruments. BTC/XRP **were** mapped and
+crypto **is** serveable, so it fell through to `"No price history yet — run Build history"` — told
+to a user who had just run Build history. The reason pipeline had **no input from acquisition
+outcomes**, because outcomes were never recorded anywhere.
+
+**Fix:** a new `instrument_acquisitions` table (one row per instrument, migration `a3f7c9d21b40`)
+records the **last** attempt: `ok`, `rows`, `source`, and a **served** `reason` (D-105). The loop
+writes an outcome on **every** path — success, mapping failure, provider refusal, and the
+**zero-rows-without-an-exception** case, which is now recorded as a failure with a reason rather
+than a quiet success. `_no_price_blocker` returns that reason ahead of the CTA, and a *successful
+but clamped* acquisition appends its note to the coverage summary so a short series never reads as
+the whole story. **A silent zero-row outcome is no longer reachable.**
+
+### 19-5 — F-8b: CHECK, THEN SKIP
+
+The FX stage downloaded the whole ECB archive and only then asked whether it had anything to learn.
+The freshness test now **precedes** the fetch, and the served message says `skipped` rather than
+implying a download.
+
+**⚠ THRESHOLD SPLIT, SURFACED.** The obvious implementation — reuse `_stored_fx_is_usable`
+(`FX_MAX_STALENESS_DAYS` = 7) as the skip condition — is **wrong**, and I wrote it that way first.
+It would have skipped the download for up to a **week**, starving the most recent days of rates.
+"Can the build value from what we have" and "is there nothing left to learn" are different
+questions, so they no longer share a threshold: `_stored_fx_is_current` skips **only** when the
+store already holds **today's** date. Re-downloading on a weekend (ECB published nothing new) is
+harmless; missing a publication is not.
+
+### 19-6 — AN UNEXPLAINED FAILURE, REPORTED NOT PAPERED OVER
+
+The owner reported the build "ran and completed". His `logs/backfill.status` at the time of
+investigation read:
+
+    {"running": false, "ok": false, "failed": true, ..., "message": "Backfill failed — see logs."}
+
+That is the `except Exception` in `run_backfill_background` — the run **crashed**, it did not
+complete. With the logger disabled (19-3) there is **no record of what raised**, so the cause is
+genuinely unknown and is **not** claimed to be fixed by this batch. F-8c is the precondition for
+diagnosing it: the next failure will leave a real log line and a per-instrument outcome row. If the
+next run still ends `failed: true`, that log line is the first thing to read.
+
+### 19-R — RULINGS APPLIED
+
+- **R7 (F-8a).** The documented public-API window is ENFORCED in code, not prose; the request and
+  its description derive from one clamp.
+- **R8 (F-8).** Every acquisition attempt records a per-instrument outcome; a zero-row result is a
+  failure with a named reason, never a quiet success; the served coverage reason prefers the
+  recorded blocker over the build CTA.
+- **R9 (F-8c).** A migration may never disable the application's logging, and the dev runner must
+  say where backend logs are.
+- **R10 (F-8b).** Freshness is checked before the download, on a threshold that can only skip
+  provably redundant work.

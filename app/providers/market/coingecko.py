@@ -15,7 +15,7 @@ Source: CoinGecko's public API (no key on the free tier). This module is the par
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from app.core.egress import egress_client
@@ -124,11 +124,32 @@ def parse_market_chart_range(data: dict) -> list[Candle]:
     return out
 
 
+def clamp_to_free_tier(start: datetime, end: datetime,
+                       max_days: int = CRYPTO_HISTORY_FREE_TIER_DAYS) -> tuple[datetime, bool]:
+    """F-8a: clamp ``start`` into CoinGecko's public-API historical window.
+
+    ``CRYPTO_HISTORY_FREE_TIER_DAYS`` was DOCUMENTED above and then never applied — the acquirer
+    asked for the whole holding period, so a crypto bought more than a year ago produced a request
+    the public API rejects outright (HTTP 401, ``error_code 10012``: "Your request exceeds the
+    allowed time range"). The refusal was swallowed per-instrument, so BTC/XRP acquired **zero rows,
+    every build, forever** — a limit written in a comment is not a limit.
+
+    A margin day is subtracted because the cap is enforced against request time, not our clock.
+    Returns ``(start, clamped)``; ``clamped`` is True when history older than the window was
+    dropped, so the caller can say so HONESTLY instead of implying full depth."""
+    floor = end - timedelta(days=max_days - 1)
+    return (floor, True) if start < floor else (start, False)
+
+
 async def fetch_market_chart_range(coin_id: str, vs_currency: str, start: datetime, end: datetime,
                                    timeout: float = 30.0) -> dict:
     """One CoinGecko ``market_chart/range`` fetch = the daily reference-price series for ``coin_id``
     over ``[start, end]`` in ``vs_currency``. Routed through the egress choke point (no-egress →
-    EgressBlocked). Request a >90-day window so the returned granularity is DAILY (00:00 UTC)."""
+    EgressBlocked). Request a >90-day window so the returned granularity is DAILY (00:00 UTC).
+
+    The range is clamped to the public-API window (F-8a) — beyond it the API refuses the whole
+    request, so an unclamped call returns NOTHING rather than less."""
+    start, _clamped = clamp_to_free_tier(start, end)
     params = {"vs_currency": (vs_currency or "usd").lower(),
               "from": str(int(start.timestamp())), "to": str(int(end.timestamp()))}
     async with await egress_client(

@@ -29,7 +29,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.egress import egress_allowed
 from app.providers.market.amfi import chunk_date_ranges, fetch_nav_history
-from app.providers.market.coingecko import fetch_market_chart_range
+from app.providers.market.coingecko import (
+    CRYPTO_HISTORY_FREE_TIER_DAYS,
+    clamp_to_free_tier,
+    fetch_market_chart_range,
+)
 from app.providers.market.ecb import fetch_ecb_hist
 from app.services.fx_history import ingest_hist
 from app.services.ingest_guard import IngestIntegrityError
@@ -87,15 +91,26 @@ async def acquire_history(session: AsyncSession, base_currency: str | None = Non
     # acquisition are independent inputs; one refusing must never cancel the other.
     fx: dict = {"dates": 0, "rows": 0}
     fx_error: str | None = None
-    try:
-        csv_text = await asyncio.wait_for(fetch_ecb_hist(), timeout=ECB_FETCH_TIMEOUT_S)
-        fx = await ingest_hist(session, csv_text, max_staleness_days=FX_MAX_STALENESS_DAYS)
-        await session.commit()
-    except TimeoutError:  # asyncio.TimeoutError is TimeoutError on 3.11+
-        fx_error = "Exchange-rate download timed out."
-    except IngestIntegrityError as exc:
-        await session.rollback()
-        fx_error = (f"Exchange-rate data failed the freshness check — {exc.reason}. Not ingested.")
+    fx_skipped = False
+    # F-8b — CHECK, THEN SKIP (not download-then-check). The freshness test now PRECEDES the fetch:
+    # if this device's stored FX already satisfies the same staleness rule, the download is not
+    # needed at all, so it is not made. Previously the stage downloaded the whole ECB archive and
+    # only then discovered it had nothing to learn — which also meant an upstream problem with a
+    # file we did not need could still produce an alarming error. The stage message says which
+    # happened, so "skipped" is never confused with "succeeded".
+    if await _stored_fx_is_current(session):
+        fx_skipped = True
+        log.info("acquire_history: stored FX already fresh — skipping the ECB download (F-8b)")
+    else:
+        try:
+            csv_text = await asyncio.wait_for(fetch_ecb_hist(), timeout=ECB_FETCH_TIMEOUT_S)
+            fx = await ingest_hist(session, csv_text, max_staleness_days=FX_MAX_STALENESS_DAYS)
+            await session.commit()
+        except TimeoutError:  # asyncio.TimeoutError is TimeoutError on 3.11+
+            fx_error = "Exchange-rate download timed out."
+        except IngestIntegrityError as exc:
+            await session.rollback()
+            fx_error = (f"Exchange-rate data failed the freshness check — {exc.reason}. Not ingested.")
 
     # Per-instrument price history — each class routed to the provider that can serve it (§12-R3).
     # Runs on EVERY build, so per-instrument coverage is re-evaluated regardless of FX freshness.
@@ -122,9 +137,35 @@ async def acquire_history(session: AsyncSession, base_currency: str | None = Non
                 "message": f"{fx_error} Built from the exchange-rate history already on this "
                            "device; prices were still refreshed."}
 
-    return {"ok": True, "acquired": True, "fx": fx, "fx_error": None,
+    if fx_skipped:
+        # F-8b: the stage message reflects what actually happened — a skip, not a download.
+        return {"ok": True, "acquired": True, "fx": fx, "fx_error": None, "fx_skipped": True,
+                "purged": purge.get("purged", 0), "prices": prices,
+                "message": "Exchange-rate history already current — download skipped; "
+                           "prices were refreshed."}
+
+    return {"ok": True, "acquired": True, "fx": fx, "fx_error": None, "fx_skipped": False,
             "purged": purge.get("purged", 0), "prices": prices,
             "message": f"Exchange-rate history downloaded — {fx.get('dates', 0)} publication days."}
+
+
+async def _stored_fx_is_current(session: AsyncSession) -> bool:
+    """F-8b: do we ALREADY hold today's rates, making the download pure redundant work?
+
+    Deliberately stricter than :func:`_stored_fx_is_usable`. That function answers "can the build
+    value from what we have" and tolerates ``FX_MAX_STALENESS_DAYS`` (7) — reusing it as the SKIP
+    condition would have skipped the download for up to a week and starved the most recent days of
+    rates. The two questions are not the same question, so they do not share a threshold: we skip
+    only when there is provably nothing to learn (we hold today's date already). Re-downloading on
+    a weekend, when ECB has published nothing new, is harmless; missing a publication is not.
+    """
+    from app.services import fx_history
+
+    latest = (await fx_history.status(session)).get("latest")
+    if not latest:
+        return False
+    latest_date = latest if isinstance(latest, str) else str(latest)
+    return latest_date[:10] == datetime.now(UTC).date().isoformat()
 
 
 async def _stored_fx_is_usable(session: AsyncSession) -> tuple[bool, str]:
@@ -198,12 +239,19 @@ async def acquire_prices(session: AsyncSession, base_currency: str | None = None
 
     for instr in await _held_instruments(session):
         ac = instr.asset_class.value if hasattr(instr.asset_class, "value") else str(instr.asset_class or "")
+        # F-8: EVERY instrument leaves a recorded outcome. A zero-row acquisition can no longer be
+        # silent — whatever happens below, the loop ends by writing ok/rows/reason for this id.
+        rows = 0
+        source: str | None = None
+        reason: str | None = None
         try:
             if ac in ("equity", "etf"):
                 # AV outputsize=full is auto-selected for a >100-day range → 1 call/instrument.
                 await get_history_cached(session, instr.symbol, "1d", start, end)
                 counts["equity"] += 1
+                rows, source = await _price_rows(session, instr.id), "active provider"
             elif ac == "crypto":
+                source = "coingecko"
                 cid = await _identifier(session, instr.id, "coingecko_id")
                 if not cid:
                     # §17-R1/R2 (F-6): history acquisition routes by CLASS to CoinGecko — the
@@ -216,25 +264,111 @@ async def acquire_prices(session: AsyncSession, base_currency: str | None = None
                     if link_err:
                         counts["skipped"] += 1
                         log.info("acquire_prices: %s crypto unmapped — %s", instr.symbol, link_err)
+                        await _record_outcome(session, instr.id, ok=False, rows=0, source=source,
+                                              reason=link_err)
                         continue
                     cid = await _identifier(session, instr.id, "coingecko_id")
+                # F-8a: the request is clamped to CoinGecko's public-API window inside the fetcher;
+                # say so when the holding predates it, so a short series is never read as the whole
+                # story (the pre-window era stays honestly missing, never fabricated).
+                clamped_start, clamped = clamp_to_free_tier(start, end)
+                # Pass the CLAMPED start, so the window we request and the window we describe are
+                # the same value — they cannot drift into disagreeing. (The fetcher clamps again
+                # defensively for any other caller; for this one that is a no-op.)
                 chart = await asyncio.wait_for(
-                    fetch_market_chart_range(cid, "usd", start, end), timeout=PRICE_FETCH_TIMEOUT_S)
-                counts["crypto"] += await ingest_crypto_history(session, instr.id, chart, verify=True)
+                    fetch_market_chart_range(cid, "usd", clamped_start, end),
+                    timeout=PRICE_FETCH_TIMEOUT_S)
+                rows = await ingest_crypto_history(session, instr.id, chart, verify=True)
+                counts["crypto"] += rows
+                if clamped:
+                    reason = (
+                        f"History starts {clamped_start.date().isoformat()} — CoinGecko's public API "
+                        f"serves only the past {CRYPTO_HISTORY_FREE_TIER_DAYS} days, so earlier "
+                        "holding value is carried, not priced")
             elif ac == "mutual_fund":
+                source = "amfi_nav"
                 code = await _identifier(session, instr.id, "amfi_code") or (
                     instr.symbol if (instr.symbol or "").isdigit() else None)
                 if not code:
                     counts["skipped"] += 1
                     log.info("acquire_prices: %s fund has no amfi_code — skipped (honest)", instr.symbol)
+                    await _record_outcome(
+                        session, instr.id, ok=False, rows=0, source=source,
+                        reason=f"No AMFI scheme mapped for {instr.symbol} — map it, then Build history")
                     continue
                 for a, b in chunk_date_ranges(start.date(), end.date()):
                     text = await asyncio.wait_for(fetch_nav_history(a, b), timeout=PRICE_FETCH_TIMEOUT_S)
-                    counts["mutual_fund"] += await ingest_nav_history(session, instr.id, str(code), text, verify=True)
+                    rows += await ingest_nav_history(session, instr.id, str(code), text, verify=True)
+                counts["mutual_fund"] += rows
             else:
                 counts["skipped"] += 1
+                await _record_outcome(
+                    session, instr.id, ok=False, rows=0, source=None,
+                    reason=f"No price provider supplies {ac or 'this asset'} history")
+                continue
         except Exception as exc:  # noqa: BLE001 — one instrument's failure never aborts the build
             counts["skipped"] += 1
             log.warning("acquire_prices: %s (%s) history unavailable — degrading honestly: %s",
                         instr.symbol, ac, exc)
+            await _record_outcome(session, instr.id, ok=False, rows=0, source=source,
+                                  reason=_served_failure(instr.symbol, source, exc))
+            continue
+
+        # A run that fetched nothing is a FAILURE with a reason, never a quiet success (F-8).
+        if rows == 0 and ac in ("crypto", "mutual_fund"):
+            reason = reason or (
+                f"{source or 'The price provider'} returned no history for {instr.symbol} — "
+                "nothing was written; retry Build history")
+            await _record_outcome(session, instr.id, ok=False, rows=0, source=source, reason=reason)
+        else:
+            await _record_outcome(session, instr.id, ok=True, rows=rows, source=source, reason=reason)
     return counts
+
+
+async def _price_rows(session: AsyncSession, instrument_id: int) -> int:
+    """Daily candles currently stored for an instrument — used to report a real row count for the
+    cached/equity path, which writes through ``get_history_cached`` rather than returning a count."""
+    from app.models import PriceHistory
+
+    return int((await session.execute(
+        select(func.count()).select_from(PriceHistory)
+        .where(PriceHistory.instrument_id == instrument_id, PriceHistory.interval == "1d")
+    )).scalar() or 0)
+
+
+def _served_failure(symbol: str | None, source: str | None, exc: Exception) -> str:
+    """Turn a provider exception into a SERVED reason (D-105) that names what actually happened.
+
+    The F-8a case is called out by name because its cause is a provider policy, not a fault: the
+    public CoinGecko API refuses a request that reaches past its historical window, and the whole
+    request fails (returning nothing rather than less). Anything else is reported honestly as
+    unavailable-with-detail rather than dressed up.
+    """
+    detail = str(exc).strip() or exc.__class__.__name__
+    if "10012" in detail or "exceeds the allowed time range" in detail.lower():
+        return (f"{source or 'The provider'} refused the requested history window for {symbol} "
+                f"(public API limit: {CRYPTO_HISTORY_FREE_TIER_DAYS} days)")
+    if isinstance(exc, TimeoutError):
+        return f"History fetch for {symbol} timed out — retry Build history"
+    return f"History for {symbol} unavailable from {source or 'the provider'} — {detail[:200]}"
+
+
+async def _record_outcome(session: AsyncSession, instrument_id: int, *, ok: bool, rows: int,
+                          source: str | None, reason: str | None) -> None:
+    """Upsert this instrument's LAST acquisition outcome (F-8).
+
+    The point is that it is unconditional: the coverage reason and any future diagnostic read
+    from here, so "it failed but nothing anywhere says so" stops being reachable."""
+    from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+    from app.models import InstrumentAcquisition
+
+    values = {"instrument_id": instrument_id, "ts": datetime.now(UTC), "ok": ok, "rows": rows,
+              "source": source, "reason": reason}
+    stmt = sqlite_insert(InstrumentAcquisition).values(**values)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[InstrumentAcquisition.instrument_id],
+        set_={k: v for k, v in values.items() if k != "instrument_id"},
+    )
+    await session.execute(stmt)
+    await session.flush()

@@ -114,5 +114,17 @@ def run_migrations(log=print) -> str:
             command.stamp(cfg, "head")
             status = "reconciled"
 
+    # F-8c: Alembic's `fileConfig` (env.py) rebuilds the ROOT handler list from alembic.ini, which
+    # drops the app's stream + rotating-file handlers even with `disable_existing_loggers=False`.
+    # Re-assert the application's own logging configuration so everything after startup migrations
+    # keeps reaching the log file. Without this the file stopped at "[db] applying migrations" and
+    # every later line — including honest acquisition failures — was lost.
+    try:
+        from app.core.logging import setup_logging
+
+        setup_logging()
+    except Exception as exc:  # noqa: BLE001 — logging must never break the migration path
+        log(f"[db] could not re-assert application logging after migrations: {exc}")
+
     log("[db] schema up to date")
     return status

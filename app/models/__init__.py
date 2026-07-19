@@ -341,6 +341,28 @@ class Quote(Base):
     received_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class InstrumentAcquisition(Base):
+    """F-8: the outcome of the LAST history-acquisition attempt for one instrument.
+
+    Acquisition failures used to exist only as a ``log.warning`` inside a blanket
+    ``except`` — and F-8c had silenced the logger, so a crypto that fetched zero rows on
+    every build for weeks produced NO evidence anywhere and the page served the generic
+    "run Build history" CTA to a user who had just run it. An outcome that only exists in
+    a log is an outcome the product cannot be honest about, so it is recorded here and
+    read by the served coverage reason (§17-R3).
+    """
+
+    __tablename__ = "instrument_acquisitions"
+    instrument_id: Mapped[int] = mapped_column(
+        ForeignKey("instruments.id"), primary_key=True)
+    ts: Mapped[datetime] = mapped_column(UTCDateTime)
+    ok: Mapped[bool] = mapped_column(Boolean, default=False)
+    rows: Mapped[int] = mapped_column(Integer, default=0)
+    source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # The SERVED reason (D-105), rendered verbatim. NULL only on success.
+    reason: Mapped[str | None] = mapped_column(String(400), nullable=True)
+
+
 class PriceHistory(Base):
     __tablename__ = "price_history"
     id: Mapped[int] = mapped_column(primary_key=True)

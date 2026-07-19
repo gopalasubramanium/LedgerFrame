@@ -36,12 +36,19 @@ _STALE_CORRUPT = (
 
 
 def _fresh_csv() -> str:
-    """An ECB-hist-shaped CSV whose newest date is today — what the store already holds."""
+    """An ECB-hist-shaped CSV whose newest date is a FEW DAYS old — what the store already holds.
+
+    Deliberately not today's date. F-8b skips the download outright when the store already holds
+    today's rates, so a today-dated store would take the skip path and never exercise what this
+    module pins (a download that IS attempted, fails, and must not cancel price acquisition).
+    Three days old is still well inside ``FX_MAX_STALENESS_DAYS`` (7), so the series stays usable —
+    which is exactly the distinction between "usable to build from" and "nothing left to learn".
+    """
     today = datetime.now(UTC).date()
     return (
         "Date, USD, INR, SGD, \n"
-        f"{today.isoformat()}, 1.1435, 110.1020, 1.4765, \n"
-        f"{(today - timedelta(days=1)).isoformat()}, 1.1600, 111.0000, 1.4800, \n"
+        f"{(today - timedelta(days=3)).isoformat()}, 1.1435, 110.1020, 1.4765, \n"
+        f"{(today - timedelta(days=4)).isoformat()}, 1.1600, 111.0000, 1.4800, \n"
     )
 
 

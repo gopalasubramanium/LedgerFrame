@@ -78,7 +78,8 @@
 10. **Milestones append their own walk items here at close.** Still to ship: Help · Legal ·
     AI-surfaces (D-067/D-068) · R-45 (per-instrument + default news) · R-46 (Home summary
     cards) · chrome-sidebar-refresh (R-39). Each milestone's close ritual **adds its walk
-    rows to this file** so the pre-release capstone stays complete.
+    rows to this file** so the pre-release capstone stays complete. *(R-42 and R-43 have
+    been consumed — see below.)*
 
     **✅ intraday-series (R-42) — CONSUMED at close (2026-07-18).** Its walk rows are folded
     into item 1 (the dr-25 regression) plus the three checks below:
@@ -100,6 +101,43 @@
     recorded cost in SGD while NAV is INR, distorting unrealised P/L — a data-entry
     currency question folded into R-43 (trade-date cost-basis FX, with R-8 historical FX).
     *Verified in the R-43 walk*, not this one: confirm it is resolved when R-43 ships.
+    **→ RESOLVED in the R-43 walk (closed 2026-07-19)** — trade-date cost-basis FX shipped
+    and the exclusions are loud (F-3). Kept here as a **regression** check only.
+
+    **✅ historical-backfill (R-43) — CONSUMED at close (2026-07-19).** Its walk rows:
+
+    10d. **Mixed-provider backfill spot-check.** Re-run **Build history** on the real
+    instance and read the **per-instrument** outcomes (`instrument_acquisitions`), not just
+    the headline: **funds top up (`ok=1`)** — or fail with an **honestly named transient**
+    (`AmfiReportUnavailable` / a timed-out fetch **named in the log AND the row**, F-9c),
+    never a silent zero and never "malformed"; **crypto respects the 12h skip** (F-8b) and
+    does not re-spend a fresh window. *Verified:* every held instrument has a row whose
+    `ok`/`rows`/`source`/`reason` match what the log says happened; a re-run inside 12h
+    skips crypto rather than refetching it.
+
+    10e. **The trend renders at full coverage with its honest note.** The Net-worth trend
+    shows **6/6 coverage** and **ends at the live headline** (the two valuation bases agree
+    — F-1/F-2), and the **CoinGecko 365-day carried note is VISIBLE** where a crypto
+    holding predates the public-API window. *Verified:* the trend's last point equals the
+    headline; the carried note renders as served text (never invented copy); no square
+    pulse, no flat plateau standing in for a cost.
+
+    10f. **§20-P — `LEDGERFRAME_SECRET_KEY`. GATE-C BLOCKER BEFORE EXPOSURE.**
+    `ledgerframe.log` carries on **every boot**: *"SECURITY: weak LEDGERFRAME_SECRET_KEY
+    (placeholder/short) — tolerated on a loopback-only bind, but set a strong one before
+    any LAN/remote exposure."* The tolerance is **correct** for the current loopback-only
+    dev bind and the warning is doing its job — but a strong key **must** be set before
+    **ANY** LAN or remote exposure (`python -c "import secrets;
+    print(secrets.token_urlsafe(48))"`). *Verified:* a strong key is set and the boot
+    warning is **absent** from the log before any non-loopback bind. **This one is a
+    blocker, not a check** — it does not wait for owner judgment to be worth doing.
+
+    10g. **TWR / 1Y compute once the coverage windows fill.** The performance card is
+    **coverage-gated by design** (F-2 refuse-until-coverage): until a metric's window is
+    covered it must **refuse with its served reason and basis label** — which is the
+    honest state, not a defect. *Verified:* with coverage present, TWR/1Y/max-drawdown
+    compute and carry their basis labels; where a window is still short, the card names
+    what is missing rather than printing a −99.9% artifact of empty FX history.
 
 ---
 

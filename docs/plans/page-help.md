@@ -888,6 +888,31 @@ a document top-to-bottom, and a narrow measure makes a catalogue longer to scan 
 entry**, where the user genuinely is reading prose. The distinction is *scanning vs reading*, and
 the layout must serve whichever the user is actually doing at that moment.
 
+> **⚠ VERIFY-FIRST NOTE on the mechanism named above (architect, 2026-07-19).** The ruling calls
+> the rejected specimen **"three-tab"** and **"capped reading column"**. **The shipped code is
+> neither**, and the record must say so before anyone builds against the description instead of
+> the code:
+>
+> - **There are no tabs.** `Help.tsx:139` renders a **`Segmented` category filter** (`role="group"`
+>   + `aria-pressed`, not `role="tablist"`); all three categories render **stacked simultaneously**
+>   and the filter *narrows* the stack. `Help.test.tsx:55` asserts all three `h2`s present at once
+>   — a tabbed layout could not pass it.
+> - **There is no page-level column cap.** `Help.css:35-44` caps `.help__body` at **`78ch`** —
+>   component-local prose only, which is exactly what DS §3.1 sanctions. The page root is
+>   uncapped, as the 1728px shell-inset guard requires.
+>
+> **This changes nothing about the ruling.** The owner rejected **what they saw rendered**, and
+> what they saw — three stacked category sections, prose in a narrow measure, a search that only
+> answers on submit — is real. The rejection stands on the look, which is the only instrument that
+> was ever going to catch it. The correction is recorded because §9-bis-0 otherwise leaves a false
+> statement about the codebase in the plan file, and the next reader would inherit it. *Same
+> discipline as the R-52 premise correction: the finding is right, the stated mechanism was not.*
+>
+> **Consequence for the rebuild:** "remove the tabs" is not a task — there are none. The real work
+> is replacing a **filtered flat stack** with a **three-section journey**, and replacing a
+> **submit-button** search with type-ahead (§9-bis-4). The `78ch` cap does not need removing
+> either; per §9-bis-0 it **moves** to the expanded-entry body, where it is now correct.
+
 ### §9-bis-1 (owner) — the three-section user journey
 
 Help is restructured into a **three-section user journey**, and **only these three sections**:
@@ -962,6 +987,45 @@ button on every entry. **The owner rules at 0a by looking.**
 
 Unchanged: deep links remain **`?topic=`** (HashRouter — a second `#` fragment is not
 addressable), and there is **one canonical anchor per topic**.
+
+### §9-bis-8 (architect, verify-first) — what the rebuild actually costs, found by reading the code
+
+Three findings the rulings did not know about. Each is verified, not assumed.
+
+**(a) EVERY pattern §9-bis-1 asks for is a NEW DS pattern.** `src/components/ui/index.ts` was
+inventoried in full: there is **no Accordion, no Tabs, no CardGrid, and no generic
+type-ahead-with-results-list** primitive. What exists: `Segmented` (the ratified tab substitute),
+`Combobox` (a real type-ahead, but scoped and barred from MASTER-DATA categoricals by DS §5.1),
+`DataTable`, and `.lf-card`. Card grids today are **page-local CSS** (`repeat(auto-fit, …)`) in six
+routes with **no shared class**. So the topic-card grid, the accordion entry, and the type-ahead
+results list are **three PROPOSED DS amendments**, built from ratified primitives where possible
+and listed for owner ratification at 0a. *This is the schedule cost §9-bis-5 accepted, made
+explicit.*
+
+**(b) ⚠ An accordion runs into a RECORDED DECLINATION, and must not be built over it silently.**
+`frontend/src/theme/tokens.css:186-191` records: *"accordion/collapsible groups were **DECLINED**
+(hiding destinations costs a click + orientation)"*. There are **zero** `<details>`/`<summary>`
+elements in the entire frontend — the declination held.
+
+That declination is **scoped to the sidebar nav**, and its stated reason is about **destinations**:
+collapsing the nav hides places the user can go. A Help entry is **content, not a destination** —
+the entry's title stays visible when collapsed, so nothing is hidden except prose the user has not
+asked for yet, and the catalogue-vs-reading distinction of §9-bis-0 is precisely the argument *for*
+collapsing it. **The distinction is defensible and I am proceeding on it** — but it is recorded
+here, and flagged in the 0a report, because building an accordion against a written DECLINED
+without naming it would be exactly the kind of quiet precedent-breaking this plan file exists to
+prevent. **Owner may overrule at 0a by looking.**
+
+**(c) ⚠ The parity guard does NOT report the unserved count — the mechanism §9-bis-2 relies on
+does not exist.** R-51 promises a *"visibility mechanism so this does not go quiet: the parity
+guard reports the marked-but-unserved count as a non-blocking number"*, and §9-bis-2 restates it.
+**`tests/unit/test_glossary_parity.py` contains no such counter** — verified by grep; the only
+Tier-3 references are prose reasons inside `_HEADING_NOT_A_TERM`. The Tier-3 deferral was ruled
+acceptable **because** the gap would stay visible; the thing making it visible was never built, so
+the deferral currently rests on a mechanism that does not exist. **Building it is in scope for
+Phase 0-bis** — a non-blocking reported count, fail-first like everything else. *A promised guard
+that was never written is indistinguishable from a guard that silently stopped working, which is
+why this is being fixed now rather than filed.*
 
 ---
 

@@ -81,8 +81,8 @@ and order are fixed and match §3.
 | **Estate** | `/estate` | Planning | Will/executor, contacts, document-readiness register; isolated, no FKs. |
 | **Reports** | `/reports` | Reports | Statements, Realised P/L report, tax lots; server-side exports. |
 | **Pricing Health** | `/pricing-health` | Reports | Canonical home for provenance, confidence, and routing diagnostics. |
-| **Settings** | `/settings` | System | Configuration across ~~4~~ ~~5~~ **6** tabs *(General · Appearance · Privacy · **Data feeds** · **AI** · System — D-069 amended 2026-07-18, §14st-1 Data feeds + §14st-2 AI)*, incl. Privacy and API-token cards. |
-| **Help** | `/help` | System | Searchable knowledge base (pages + terms + guarantees). |
+| **Settings** | `/settings` | System | Configuration across ~~4~~ ~~5~~ **6** tabs *(General · Appearance · Privacy · **Data feeds** · **AI** · System — D-069 amended 2026-07-18, §14st-1 Data feeds + §14st-2 AI)*, incl. Privacy and API-token cards. **Also the canonical home of the About card** (platform description · author · credits · links), inside the **System** tab — **no 7th tab** *(2026-07-19, page-help §9-bis-6: About moved off Help)*. |
+| **Help** | `/help` | System | **Three-section help: Orientation · Pages (per-page usage detail) · Glossary; type-ahead search over help content.** *(Rewritten 2026-07-19, page-help §9-bis-1 — supersedes "pages + terms + guarantees".)* **About lives in Settings → System** (§9-bis-6). Help carries **pointers, never figures** — it is never a second home for any number. |
 | **Legal** | `/legal` | System | License, disclaimer, Product Guarantees, no-jurisdiction-tax stance. |
 
 **Not in the sidebar (reachable by link only):**
@@ -392,6 +392,17 @@ summary reuses the canonical page's reader, never a second code path.
   P-7). Appearance gains density, loses persona. Nav-customization dies (D-043).
   The System tab **degrades gracefully without the sudo helper** (D-003/D-069).
 - Setting persistence split per D-078 (per-device localStorage vs server rows).
+- **⊕ 2026-07-19 (page-help §9-bis-6) — the System tab gains an About card.**
+  Settings becomes the **canonical home** for the platform's self-description:
+  brief description, author, credits, and links. It arrives as a **card inside
+  the existing System tab — NOT a 7th tab**; the six-tab count above is
+  unchanged. It moved here because Help was restructured into a three-section
+  user journey (Orientation · Pages · Glossary) with no room for a fourth
+  concern that was never help content in the first place. **Credits are
+  reconciled against `docs/audit/LICENSES.md`** — a credits list that disagrees
+  with the licence record is the page describing itself falsely, which is a
+  release bar. Accepted-page touch: dated delta note in `page-settings.md` +
+  a Settings pre-pass re-run.
 
 ### Instrument Detail (`/instrument/:symbol`) — D-037, D-068 (scoped view, P-3)
 

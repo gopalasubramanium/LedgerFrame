@@ -1064,3 +1064,52 @@ Stated in `data-feed-routing.md §13`/the report: the key-save path exercised
 end-to-end (a keyed save SUCCEEDS + key-state SET; a rejected save shows the served
 reason verbatim), both new tables at all widths, 0 console errors, suites + contract
 + frontend exit 0.
+
+---
+
+## DELTA NOTE — 2026-07-19 (page-help §9-bis-6 · the About card moves in)
+
+**Settings is CLOSED/accepted; this is a dated delta note on a touched accepted surface,
+recorded per convention — not a re-opening.**
+
+**What changes.** The **System** tab gains an **About card**: a brief platform description, the
+author, credits, and links. Settings becomes the **canonical home** for the platform's
+self-description.
+
+**It is a CARD, not a tab.** The tab count stays **six** (General · Appearance · Privacy · Data
+feeds · AI · System). D-069's six-tab shape as amended 2026-07-18 (§14st-1, §14st-2) is
+**unchanged** — this note must not be read as amendment #3.
+
+**Why it landed here.** Help was restructured into a three-section user journey — **Orientation ·
+Pages · Glossary** (page-help §9-bis-1) — and the old Help **About** tab did not belong to any of
+the three. It was never help content: a user opening Help wants to understand the product's
+*pages and terms*, not its authorship. Settings→System already carries
+platform-level-not-portfolio-level concerns, so About joins them rather than inventing a home.
+
+**Links (owner-specified, §9-bis-6):**
+
+- Platform — https://ledgerframe.org · https://github.com/gopalasubramanium/ledgerframe
+- Author — https://me.sgopala.com/ · https://github.com/gopalasubramanium ·
+  https://www.linkedin.com/in/gopalasubramanium/ · https://paypal.me/sgopala
+
+**Copy is PROPOSED until the 0a look** — like all user-facing copy, the owner ratifies it by
+looking, not by reading it here.
+
+**Accuracy obligations that bind this card specifically:**
+
+- **Credits reconcile to `docs/audit/LICENSES.md`.** That file is generated and reports 381
+  packages with 0 unadjudicated findings; the card must not claim a credit the licence record
+  contradicts, and must not imply an endorsement no dependency gave. Where the honest answer is
+  "too many to list", the card **points** at the licence record rather than enumerating a subset
+  that would read as complete. A credits list that disagrees with the licence record is the page
+  describing itself falsely — a release bar, not a polish item.
+- The project licence is **AGPL-3.0-or-later** (`LICENSE`, `NOTICE`); any licence statement on the
+  card says that or says nothing.
+- `https://paypal.me/sgopala` is a **donation** link and is labelled as one — never as a purchase,
+  a subscription, or anything the platform gates a feature behind.
+- **Dead-affordance rule applies:** every one of the six links is verified to render as a real,
+  working external link in the 0a walk, or it does not ship.
+
+**Required by the accepted-page convention:** this dated note **+ a Settings pre-pass re-run** on
+an isolated instance (spare ports, temp data dir, owner `.env` untouched). Both are owed at the
+0a report; neither is satisfied by this note alone.

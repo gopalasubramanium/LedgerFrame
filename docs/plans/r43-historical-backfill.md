@@ -1292,6 +1292,49 @@ test file); `ruff` **All checks passed**; contract **current** (`priority_chain_
 new key inside an existing response object — no new path, no path-key change); frontend
 `npm run check` **exit 0 from `frontend/`** (337).
 
+### 18-R6 — F-7c CONFIRMED LIVE: AN FX-STAGE FAILURE SKIPPED THE WHOLE ACQUISITION (2026-07-19)
+
+**The prediction held.** §18-F7c named the ECB-FX early return (`acquire.py:82-93`) as the first
+thing to read if coverage stayed 4/6. The owner re-ran Build history after the F-7a/F-7b fixes:
+**coverage stayed 4/6, BTC/XRP still "No price history yet"** — exactly that path.
+
+**Cause (a stage-scoping error, not an FX bug).** `acquire_history` ran the ECB stage and then
+`acquire_prices`. Both ECB failure paths — the fetch **timeout** and the F-4 **integrity/freshness
+refusal** — `return`ed, so a failure in the FX stage **silently cancelled the per-instrument price
+acquisition** underneath it. FX ingest and price acquisition are **independent inputs**; neither is
+a precondition of the other (§18-F7c already established acquisition never reads `quotes.source`).
+
+**Why it was invisible and permanent on the owner's stack.** His `ecb_fx_history` was **already
+fresh** — the download was not even needed — while ECB's edge served the stale/corrupt file the F-4
+gate (correctly) refuses. So every rebuild refused at a stage whose output he already had, acquired
+nothing, and left the crypto era cost-carried. Retrying could never help.
+
+**Fix (§18-R6).** The FX stage now skips **only itself**: a timeout or an integrity refusal records
+a served `fx_error`, writes nothing, and execution **continues to `acquire_prices`** — so every
+build re-evaluates per-instrument coverage regardless of FX freshness. Whether the *series* can
+then be built depends on what the device already holds: `_stored_fx_is_usable()` applies the **same**
+`assert_fresh` rule to the stored series (one implementation — "fresh enough to ingest" and "fresh
+enough to build from" cannot drift). Usable → build proceeds, message states the FX download was
+skipped. Not usable → the series is **refused honestly** (never fabricated) — but the prices were
+still acquired, so the next build once ECB recovers is complete instead of starting from nothing.
+
+**Unchanged:** F-4 still refuses to ingest a stale/truncated series (nothing written), and
+no-egress still refuses the whole build, fetching neither FX nor prices (Guarantee 5).
+
+**Fail-first** — `tests/integration/test_f7c_fx_failure_does_not_block_prices.py`, RED on the real
+cause first (4 failed / 2 passed: the two that passed were the F-4 no-write and no-egress guards,
+which must never have been red). Pins: prices acquired despite an FX refusal; no FX rows written;
+coverage re-evaluated per instrument every run; idempotent re-run; empty-FX store still acquires
+prices then refuses the valuation; no-egress refuses everything.
+
+**⚠ ONE PIN NARROWED, SURFACED NOT SILENTLY RESOLVED.** The instruction said *"idempotent (covered
+holdings re-fetch nothing)"*. Implemented as **"re-running writes no duplicate rows and changes no
+coverage number"** (the upsert), **not** as suppressing the fetch for a covered instrument —
+because a covered instrument still needs the days **since** the last build, so a coverage-gated
+skip would freeze history at whatever the first build captured. If the intent was a rate/budget
+guard, the honest form is a **time-based freshness marker** (as the equity path already has: 12h),
+not a coverage gate — **flagged for a ruling, not implemented**.
+
 #### STOP — OWNER ON-STACK RE-RUN
 
 Both F-7 fixes are pinned in tests, but the **live** CoinGecko refetch runs against the

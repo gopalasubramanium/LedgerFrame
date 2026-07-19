@@ -78,29 +78,75 @@ async def acquire_history(session: AsyncSession, base_currency: str | None = Non
 
     # ECB per-date FX — one fetch of the MAINTAINED zip (F-4). Hard timeout so no stage can spin
     # indefinitely (the F-4 hang); a stale/corrupt or truncated file is REFUSED (integrity gate),
-    # not ingested — both degrade to a served error the caller shows, and the build is retriable.
+    # not ingested.
+    #
+    # §18-R6 (F-7c, confirmed live): this stage's failure skips ONLY ITSELF. It used to `return`
+    # here, which silently cancelled the per-instrument price acquisition below — so on a store
+    # whose FX was ALREADY FRESH (i.e. the download was not even needed), a refused ECB file left
+    # the owner's crypto at "No price history yet" through every rebuild. FX ingest and price
+    # acquisition are independent inputs; one refusing must never cancel the other.
+    fx: dict = {"dates": 0, "rows": 0}
+    fx_error: str | None = None
     try:
         csv_text = await asyncio.wait_for(fetch_ecb_hist(), timeout=ECB_FETCH_TIMEOUT_S)
-    except TimeoutError:  # asyncio.TimeoutError is TimeoutError on 3.11+
-        return {"ok": False, "acquired": False,
-                "message": "Exchange-rate download timed out — retry Build history."}
-    try:
         fx = await ingest_hist(session, csv_text, max_staleness_days=FX_MAX_STALENESS_DAYS)
+        await session.commit()
+    except TimeoutError:  # asyncio.TimeoutError is TimeoutError on 3.11+
+        fx_error = "Exchange-rate download timed out."
     except IngestIntegrityError as exc:
         await session.rollback()
-        return {"ok": False, "acquired": False,
-                "message": f"Exchange-rate data failed the freshness check — {exc.reason}. "
-                           "Not ingested; retry Build history."}
-    await session.commit()
+        fx_error = (f"Exchange-rate data failed the freshness check — {exc.reason}. Not ingested.")
+
     # Per-instrument price history — each class routed to the provider that can serve it (§12-R3).
+    # Runs on EVERY build, so per-instrument coverage is re-evaluated regardless of FX freshness.
     prices = await acquire_prices(session, base)
     await session.commit()
 
-    log.info("acquire_history: ECB FX %s dates; purged %s garbage candle(s); prices %s (base %s)",
-             fx.get("dates"), purge.get("purged"), prices, base)
-    return {"ok": True, "acquired": True, "fx": fx, "purged": purge.get("purged", 0),
-            "prices": prices,
+    log.info("acquire_history: ECB FX %s dates (error: %s); purged %s garbage candle(s); "
+             "prices %s (base %s)", fx.get("dates"), fx_error, purge.get("purged"), prices, base)
+
+    if fx_error:
+        # The download failed, so whether the build can proceed depends on what the store ALREADY
+        # holds — the same freshness rule, one implementation (`assert_fresh`), applied to the
+        # stored series instead of the parsed one.
+        usable, why = await _stored_fx_is_usable(session)
+        if not usable:
+            # No honest way to value in base. Refuse the SERIES (never fabricate one) — but the
+            # prices above were still acquired, so the next build, once ECB recovers, is complete
+            # instead of starting from nothing.
+            return {"ok": False, "acquired": False, "fx_error": fx_error, "prices": prices,
+                    "purged": purge.get("purged", 0),
+                    "message": f"{fx_error} {why} Retry Build history."}
+        return {"ok": True, "acquired": True, "fx": fx, "fx_error": fx_error,
+                "purged": purge.get("purged", 0), "prices": prices,
+                "message": f"{fx_error} Built from the exchange-rate history already on this "
+                           "device; prices were still refreshed."}
+
+    return {"ok": True, "acquired": True, "fx": fx, "fx_error": None,
+            "purged": purge.get("purged", 0), "prices": prices,
             "message": f"Exchange-rate history downloaded — {fx.get('dates', 0)} publication days."}
+
+
+async def _stored_fx_is_usable(session: AsyncSession) -> tuple[bool, str]:
+    """§18-R6: can the build value from the FX history ALREADY on this device?
+
+    Applies the SAME staleness rule as the ingest gate (``assert_fresh``, one implementation) to
+    the stored series' newest date, so "fresh enough to ingest" and "fresh enough to build from"
+    can never drift apart. Returns ``(usable, served_reason)`` — the reason is shown verbatim
+    (D-105) when it is not.
+    """
+    from app.services import fx_history
+    from app.services.ingest_guard import assert_fresh
+
+    stored = await fx_history.status(session)
+    if not stored.get("rows"):
+        return False, "This device holds no exchange-rate history to build from."
+    try:
+        assert_fresh(stored.get("latest"), now=datetime.now(UTC),
+                     max_age_days=FX_MAX_STALENESS_DAYS, source="stored exchange-rate history")
+    except IngestIntegrityError as exc:
+        return False, f"The exchange-rate history on this device is unusable — {exc.reason}."
+    return True, ""
 
 
 async def _held_instruments(session: AsyncSession) -> list:

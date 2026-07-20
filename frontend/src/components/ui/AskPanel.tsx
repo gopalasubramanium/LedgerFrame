@@ -248,16 +248,36 @@ export function AskPanel({ label = "Ask", seedQuestion }: AskPanelProps = {}) {
 
       <Dialog open={open} onClose={close} title={label} size="lg">
         <div className="lf-ask">
-          {/* ALWAYS VISIBLE (D-067), and SERVED — the posture is the backend's statement about
-              what the device is doing, not a label this component infers. */}
-          {status ? (
+          {/* SERVED — the posture is the backend's statement about what the device is doing, not
+              a label this component infers.
+
+              §17-1 (owner ruling, 2026-07-20) — IT RENDERS PRE-ANSWER ONLY, and this is a HANDOVER
+              rather than a removal. D-067's "privacy-mode label always visible" is a promise to the
+              READER that a locality statement is on screen at every moment; it is not a promise
+              about this particular paragraph. Two of them at once — the posture line above, the
+              provenance legend below — is what the owner found at the 3b walk, and two true
+              statements of the same fact read as two claims the reader must reconcile.
+
+              So: BEFORE an answer the posture line carries it, because a user must know where a
+              question goes before they send it, and nothing else on screen can tell them.
+              ONCE THE LEGEND RENDERS it carries it instead, and carries it BETTER — the posture
+              line describes what is CONFIGURED, while the legend reports what ACTUALLY happened
+              (§15-4, the lie that guard caught). Where they differ, the legend is the true one.
+
+              Never both, and never neither. `provenance` is the condition rather than `phase`
+              because the legend's presence is exactly what makes this line redundant — tying it to
+              anything else would let a state exist with two statements or none. Both arms are
+              guarded, and the "never neither" arm is counted (`AskPanel.test.tsx` §17-1). */}
+          {status && !provenance ? (
             <p
               className={`lf-ask__posture${status.no_egress ? " lf-ask__posture--closed" : ""}`}
               data-testid="ask-privacy-label"
             >
               {status.privacy_label}
             </p>
-          ) : (
+          ) : provenance ? null : (
+            // The posture has not arrived YET. A skeleton, not nothing — an empty gap here would
+            // be the pre-ask state briefly making no locality statement at all.
             <Skeleton lines={1} aria-label="Loading privacy mode" />
           )}
 

@@ -483,3 +483,96 @@ test("§14-4: the legend is shown on EVERY answer, so its absence is never the s
   await user.click(screen.getAllByRole("button", { name: "Ask" })[1]);
   expect((await screen.findByTestId("ask-provenance")).textContent).toBe(PROV_BUILT_IN);
 });
+
+// --- §17-1: ONE LOCALITY STATEMENT ON SCREEN AT EVERY MOMENT (owner ruling, 2026-07-20) -------- //
+//
+// The owner found the panel stating where the answer goes TWICE at once: the posture line
+// ("On-device … stays on this device") above, the provenance legend ("nothing left this device")
+// below. Both true, both served, and together they read as two different claims rather than one
+// claim said twice — the reader is left checking whether they agree.
+//
+// The ruling is a HANDOVER, not a deletion. D-067's "privacy-mode label always visible" is about
+// the READER never being without a locality statement, and both halves of that survive:
+//
+//   pre-answer   the posture line — a user must know where a question goes BEFORE sending it
+//   post-answer  the legend — which says where it ACTUALLY went, which is strictly more than the
+//                posture line could promise
+//
+// Never both, and never neither. The "never neither" half is the one worth guarding hardest: the
+// obvious implementation of this ruling — dropping the posture line — would leave the pre-ask
+// state with no locality statement at all, which is the D-067 breach the ruling is careful not to
+// commit.
+
+test("§17-1: BEFORE an answer, the posture line carries the locality statement", async () => {
+  mockStream(GROUNDED_RUN);
+  const user = await openPanel();
+  await waitFor(() =>
+    expect(screen.getByTestId("ask-privacy-label")).toHaveTextContent(STATUS.privacy_label),
+  );
+  // Still there while the question is being typed, and while it is in flight — the whole point is
+  // that it is on screen at the moment the user decides to press Ask.
+  await user.type(screen.getByLabelText("Your question"), "how is my portfolio?");
+  expect(screen.getByTestId("ask-privacy-label")).toBeInTheDocument();
+  expect(screen.queryByTestId("ask-provenance")).toBeNull();
+});
+
+test("§17-1: ONCE the legend renders, the posture line collapses — never both", async () => {
+  mockStream(GROUNDED_RUN);
+  const user = await openPanel();
+  await waitFor(() => expect(screen.getByTestId("ask-privacy-label")).toBeInTheDocument());
+
+  await user.type(screen.getByLabelText("Your question"), "how is my portfolio?");
+  await user.click(screen.getAllByRole("button", { name: "Ask" })[1]);
+
+  // The legend IS the privacy label now, and it is the better one: it reports what happened
+  // rather than what was configured (§15-4).
+  expect((await screen.findByTestId("ask-provenance")).textContent).toBe(PROV_ON_DEVICE);
+  expect(screen.queryByTestId("ask-privacy-label")).toBeNull();
+});
+
+test("§17-1: the fallback answer hands over too — legend in, posture line out", async () => {
+  // Asserted separately because the fallback legend is the SHORTEST of the three and says nothing
+  // about egress in so many words ("Built-in intelligence only — no model was used."). It is
+  // still a complete locality statement — no model ran, so nothing was sent anywhere — and the
+  // handover must not be quietly conditional on the narrated path.
+  mockStream([
+    { type: "facts", facts: [{ label: "Net worth", value: "1.00 SGD" }] },
+    { type: "provenance", kind: "built_in", narrated: false, provenance: PROV_BUILT_IN },
+    { type: "delta", delta: DISCLAIMER },
+    {
+      type: "done", grounded: true, provider: "fallback",
+      fallback_signal: FALLBACK_SIGNAL, disclaimer: DISCLAIMER,
+    },
+  ]);
+  const user = await openPanel();
+  await user.type(screen.getByLabelText("Your question"), "how is my portfolio?");
+  await user.click(screen.getAllByRole("button", { name: "Ask" })[1]);
+
+  expect((await screen.findByTestId("ask-provenance")).textContent).toBe(PROV_BUILT_IN);
+  expect(screen.queryByTestId("ask-privacy-label")).toBeNull();
+});
+
+test("§17-1: NEVER NEITHER — every state carries exactly one locality statement", async () => {
+  // The anti-blind arm. Both of the above would stay green on a build that rendered NOTHING in
+  // either place; this one counts. It also re-checks after the panel is closed and reopened,
+  // because `reset()` clears the legend and the posture line has to come back with it.
+  mockStream(GROUNDED_RUN);
+  const user = await openPanel();
+
+  const localityStatements = () =>
+    (screen.queryByTestId("ask-privacy-label") ? 1 : 0) +
+    (screen.queryByTestId("ask-provenance") ? 1 : 0);
+
+  await waitFor(() => expect(localityStatements()).toBe(1));
+
+  await user.type(screen.getByLabelText("Your question"), "how is my portfolio?");
+  await user.click(screen.getAllByRole("button", { name: "Ask" })[1]);
+  await screen.findByTestId("ask-provenance");
+  expect(localityStatements()).toBe(1);
+
+  // Closed and reopened: back to the pre-ask state, and back to the posture line.
+  await user.click(screen.getByRole("button", { name: /close/i }));
+  await user.click(screen.getByRole("button", { name: "Ask" }));
+  await waitFor(() => expect(screen.getByTestId("ask-privacy-label")).toBeInTheDocument());
+  expect(localityStatements()).toBe(1);
+});

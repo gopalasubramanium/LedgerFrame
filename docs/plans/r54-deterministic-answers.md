@@ -532,10 +532,12 @@ that can turn red when tier-1 changes what the panel is handed. *A contract chec
 shape is not a guard for that shape, and reporting 141/71 unchanged would otherwise read as "nothing
 moved" when something did.*
 
-**Not filed as a ROADMAP row.** Typing the AI responses properly (`response_model` + contract
-regeneration) is a larger question touching every AI surface and is **out of R-54's scope**; it is
-recorded here so the next milestone on this surface inherits the knowledge rather than the
-assumption. **§9 did not rule on it and this plan does not invent a ruling.**
+**⊕ FILED AS `ROADMAP.md` R-61 — POST-RELEASE** (owner ruling, 2026-07-20, at the §9 conveyance:
+*the finding was too good to live only in a plan file*). Typing the AI responses properly
+(`response_model` + contract regeneration) touches **every** AI surface and would move the contract
+counts, so it is **larger than R-54** and was deliberately not folded in. **The release-relevant
+coverage is R-54's own Phase 0-6 served-shape test**, not R-61. *R-54 recorded the knowledge rather
+than inventing a ruling; the owner then ruled.*
 
 ## §4. COMPONENTS
 

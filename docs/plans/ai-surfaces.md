@@ -1868,3 +1868,214 @@ byte-identical** — `460a2da0…` at both ends, checked **from the repo root** 
 `SMOKE_ALLOW_LIVE` **never set**. Throwaway driver, vite config and stub **deleted before staging**;
 `git status` showed only the six screenshots. **Teardown verified by PROBING all three ports**, not
 by trusting `kill`.
+
+---
+
+## 18. THE CLOSE — §-LEDGER CLOSED (2026-07-20)
+
+**AI-surfaces (D-067 / D-068) is CLOSED.** Owner-accepted at the 3b walk, in chat, by looking —
+every PROPOSED string ratified, two walk fixes ruled and shipped, F8/F9 ruled and shipped, F10
+recorded with a dated disposition.
+
+### 18-A. THE FINDINGS LEDGER — F1–F10 plus the two walk fixes, every disposition
+
+| # | Finding | Disposition | Where |
+|---|---|---|---|
+| **F1** | The fact pack is unreadable — help entries render in full and push the answer off screen | **FIXED** — display projection (title + first line, expandable); the model keeps the full text. *Nothing hidden; the reader chooses.* | §11-A |
+| **F2** | A refusal is described as a connectivity failure, in a served field | **FIXED** — a refusal reports **as a refusal**; the no-egress posture reads as the product working, not erroring | §11-B |
+| **F3** | D-070's fallback signal rendered twice | **FIXED** at the re-drive | §11-C |
+| **F4** | The disclaimer also renders twice | **FIXED** by the owner's synthesis — the answer TEXT always ends with the served constant, the PANEL projects the body without it and renders the footer once. Both readers kept. | §12-2 |
+| **F5** | The pack ships the same figure twice, one copy unformatted money | **FIXED** — `_dedupe` by label AND figure, relabelled to the GLOSSARY spelling; the money branch renders through `_fmt`. `FIGURE_IDENTITY` is declared, never inferred from value. | §15-1 |
+| **F6** | The Settings AI tab can name a provider that is not the one answering | **FIXED** — ONE resolver (`app/ai/vocabulary.py`); the sentence SERVED, not composed in the browser | §15-3 |
+| **F7** | A zero-valued fact can never be narrated (`_sig3("0.00") → ""`) | **FILED — R-56, POST-RELEASE.** Errs safe; the repair is a judgement that must not widen what the validator accepts (Commitment 7 / D-071). | §15-2 |
+| **F8** | `Income (div/int)` is a shown label with no GLOSSARY row | **RULED + FIXED (§17-3)** — sanctioned GLOSSARY-first on the canonical **Income** row, parity guarded both ways, **no app-wide rename** | §17-3 |
+| **F9** | A `PUT` writing `.env` has no effect while an OS-env override is in force, and nothing says so | **RULED + FIXED (§17-4)** — a conditional SERVED sentence, rendered only when true, detected by **divergence** not presence | §17-4 |
+| **F10** | Fresh-DB `get_history_cached` race — `UNIQUE constraint failed: settings.key` | **RECORDED, NOT FIXED — its own standalone delta immediately after this close, BEFORE R-54. Release-train blocking.** | §17-5 |
+| **W-1** | Header/legend redundancy — two locality statements at once | **RULED + FIXED (§17-1)** — a handover; D-067 gains a dated reading note | §17-1 |
+| **W-2** | Phantom timestamps — the stub cites UI that does not render | **RULED + FIXED (§17-2)** — corrected, guarded, specimen pinned | §17-2 |
+
+**Open and carried, stated rather than buried:** **R-54** and **R-55** (RD-9 Amendment 7, v2.0.0
+scope, neither started) · **R-56** (F7, post-release) · **§0-K item 1** — `DECISIONS.md` D-069 still
+reads *"SIX tabs"* in its pre-amendment prose while the amendment note beneath it says seven; left
+standing deliberately (the note supersedes, and rewriting history is not this milestone's business).
+
+### 18-B. GATES AT THE CLOSE — the final tree, honestly
+
+| Gate | Result |
+|---|---|
+| Backend FULL, **solo**, ordered (`-p no:randomly`) | **1963 passed, 15 skipped** (11:10) |
+| Backend FULL, **solo**, randomized | **1963 passed, 15 skipped** (12:04) |
+| **`ruff check .`** — ⊕ *the row the §16-E table never ran* | **All checks passed** |
+| Frontend `npm run check` (the gate, not the parts) | **PASS end-to-end** — lint · typecheck · tokens (89) · internal-copy · smoke-isolation · primitives · **408 vitest / 41 files** · **361 Playwright** |
+| Help/GLOSSARY currency suite | **569 passed, 15 skipped** |
+| API contract | **141 paths / 71 schemas** — declared and unchanged |
+| §17 isolated re-drive | **40/40**, both themes, 0 unexplained console errors |
+
+**THE COUNTS RECONCILE, and saying so is part of reporting them.** §16-E read **1951**; this close
+reads **1963**, and the difference is **exactly the 12 backend test functions this close added**
+(`git diff --numstat`). Frontend vitest moved **401 → 408**, exactly the **7** tests added. *A test
+count that moves by an unexplained amount is a suite that gained or lost something nobody chose;
+the reconciliation is cheap and the alternative is trusting a number.*
+
+**⚠ THE FIRST 1963-PASS RUN WAS DISCARDED, NOT REPORTED.** An ordered solo run completed at
+`1963 passed` — and the **Help-currency delta landed afterwards**, changing `app/services/help.py`.
+That run had tested a tree that no longer existed, so **both** backend runs were re-driven on the
+final tree rather than reporting the earlier number and the later change side by side. *A gate
+result describes the tree it ran against, and no other.*
+
+---
+
+## 19. §15 STRIKE-CHECK — the lessons, MECHANISED
+
+*A lesson without a mechanism is a lesson the next milestone gets to learn again.* Each row states
+**what turns red**, per the CLAUDE.md hard rule this project escalated at the Legal close.
+
+### 19-A. THE TWO INVENTED CITATIONS — a claim of authority is checked before it ships
+
+| | |
+|---|---|
+| **What happened** | Twice this milestone, a **citation named a thing that did not exist**. (1) The ruling cited *"RD-9 Amendment 7"* as the authority for pulling R-54/R-55 pre-release — **Amendment 6 was the latest**; filing the rows alone would have left two release-blocking items citing an amendment absent from the file. (2) The kickoff named Commitments *"5.2 / 5.3 / 5.5 / 5.6 / 5.7"* — **that numbering does not exist**; `PRODUCT-SPEC.md` §3 numbers them **1–7**, and `## 5.` is *Review signal thresholds*, unrelated. |
+| **Why it matters more here than anywhere** | Under **Amendment 3 the release gate is FULL COMPLETION of an enumerated set**, so a row that moves the finish line is real **only if the finish line says so**. A citation is load-bearing in this project in a way prose is not. |
+| **The lesson** | **A CITATION IS A CLAIM, AND CLAIMS ARE VERIFIED, NOT REPEATED.** Both were caught by opening the cited file rather than trusting the reference — including when the reference came from the owner. |
+| **What turns red** | Amendment 7 was **WRITTEN**, not merely cited, and the status line updated to name it. The numbering was **corrected in the plan and recorded rather than silently fixed** (§0-J). Standing mechanism: the **KB-SYNC block** is *derived* (`git diff --name-only`), never recalled — the same defect class, mechanised at the report layer. |
+
+### 19-B. THE LEGEND LIE — provenance reports what HAPPENED, never what is CONFIGURED
+
+| | |
+|---|---|
+| **What happened** | The provenance legend took its kind from `resolve_posture()` — from **configuration**. Driving a real narrated stream produced `narrated: True` alongside `kind: 'built_in'`: **a model-narrated answer labelled "no model was used"** — the exact lie §14-4 exists to prevent, reached by the exact route the guard's own docstring had warned about, **in the same hour it was written**. |
+| **The lesson** | **NAMING A FAILURE MODE IS NOT THE SAME AS AVOIDING IT.** Configuration describes what was *set up*; only the object that emitted the tokens knows **who wrote them**. |
+| **What turns red** | The kind now comes from `kind_of_provider` — the provider that actually produced text. `test_ai_provenance.py` drives a **real fallback with a model configured** (must read built-in) and a **real narrated answer** (must never read built-in), against a live stream. Removing `resolve_posture()` from the stream made the legend **truer and the stream lighter at once** — usually the sign a value should not have been there. |
+
+### 19-C. THREE SCAFFOLDING-GREENS IN ONE MILESTONE — the test's own rig, not the product
+
+| | |
+|---|---|
+| **What happened** | Three times, a test was green **because of its own scaffolding**: (1) §12-2's **circular fixture**; (2) §15-4's narrated guard, whose real assertions sat inside `if prov["narrated"]:` with a built-in `else` arm — it passed **through the else**, because the stub matched the wrong message and fell back every time; (3) the §15-1 money guard, which would have passed on an **empty fact list**. |
+| **The lesson** | **A GUARD WHOSE HAPPY PATH IS OPTIONAL IS NOT A GUARD.** A test that can reach green without exercising the thing it names is measuring its own rig. |
+| **What turns red** | Each now **asserts its precondition first** (`assert narrated is True` before anything else), and each carries an **anti-blind pin** — §15-1's money guard confirms it can see **9 rows** rather than passing on nothing. This milestone added the pattern to two more guards on principle: `STUB_FIXED_SENTENCES` and `SANCTIONED_SHORT_FORMS` both **fail loudly when emptied**, because an emptied parametrize **vanishes** rather than failing. |
+
+### 19-D. CAMERA OVER GREEN — **three** times now, not two
+
+| | |
+|---|---|
+| **What happened** | A perfect assertion count produced bad evidence **three separate times**. (1) §16-F: the **first-run checklist sat behind the Ask panel** in the one image the phase exists to produce. (2) §16-F: **every phase wrote the same AI-tab filename**, so the committed image was whichever ran last — the on-device sentence the ruling is mostly about, **silently overwritten**. (3) **§17-6, this close: every "dark" screenshot came out light** — the driver wrote `lf-theme`, the key is `lf.theme`, and `ThemeProvider` re-stamped the attribute on mount. |
+| **Why it kept happening** | **ASSERTIONS READ THE DOM, NOT THE PICTURE.** All three ran green because nothing in the file asserted the property that was wrong. The third is the sharpest: it happened **in the drive written to demonstrate that the first two had been learned**. |
+| **The lesson** | **AT A WALK, THE RECORD IS THE DELIVERABLE** — *a green suite certifies the product, not the record of it.* And knowing a failure mode by name is not having a guard for it (19-B's lesson, at the evidence layer). |
+| **What turns red** | Geometry, not presence (`boundingBox` inside the viewport). Filenames carry the **phase**. `dismissFirstRun` does `waitFor({state:"visible"})` then a **retry loop**. The theme is asserted at the **root attribute AND a rendered background colour**, plus a **CROSS-THEME PIN** — the two themes must render *differently*, because each asserting its own attribute stays green when both render identically. *Two themes that produce the same background are one theme photographed twice.* Fail-first proven on every arm. |
+
+### 19-E. A TARGETED RE-RUN TESTS THE CODE YOU WERE THINKING ABOUT
+
+| | |
+|---|---|
+| **What happened** | §15-3 moved `_is_local_url` into `app/ai/vocabulary.py`. The assertion for it lives in `test_ai_safety.py` — **a file whose name matches none of the surfaces that changed** — so every targeted re-run of the AI, Settings, posture and glossary suites was **green**, and the **solo full suite** came back `1951 passed, 1 failed`. |
+| **The lesson** | ***A targeted re-run tests the code you were thinking about; the full suite tests the code you were not.*** |
+| **What turns red** | The full suite runs **solo, ordered AND randomized**, at every close. Reinforced at this close by a second instance in a different dimension: **`make lint` was RED on HEAD** — an `I001` shipped by §15-3 — and the §16-E gate table had run the backend suite both ways, `npm run check`, the currency suite and the contract **while never running the linter**. *A gate table is only as honest as its most-forgotten row.* Repo-wide `ruff check .` is now stated in the gate table. |
+
+### 19-F. THE STUB CLAIMS AN UNSHOWN REFERENT — our fixed sentences meet the served-copy bar
+
+| | |
+|---|---|
+| **What happened** | The stub narrator's closing line said the figures were shown *"as of the timestamps listed there"*. **No timestamps are listed there** — the as-of is a `StalenessChip` that renders **only when a fact is stale**, and the photographed facts were fresh. |
+| **The lesson** | **A FIXED SENTENCE MEETS THE SAME TRUTH BAR AS SERVED COPY.** The validator polices what the **model** says; nothing policed what **we** hardcode into a model's mouth — and a fixed sentence is the **more dangerous** carrier, because it ships in every narration and every screenshot unexamined, on the strength of having been written once. It is the same defect class as a figure that traces to no fact: an unsupported claim, with the claim being about the interface instead of about money. |
+| **What turns red** | `test_stub_narration_sentences.py` — the fixed sentences live in **one committed home** and may not cite a referent the panel does not render. **The rejected specimen is kept verbatim and checked by the same function as the rule** (a specimen checked by a kinder second copy proves nothing). Pinned both ways against going blind. |
+
+### 19-G. THE CLAUSE-6 ESCALATION, DONE RIGHT — the shape to copy
+
+| | |
+|---|---|
+| **What happened** | `test_validation_contract_pinned` asserted a reading of **clause 6** that the shipped fallback did not satisfy. The temptation was to adjust the test. Instead the question — *does the served fact pack satisfy "a deterministic fact-only answer is SHOWN"?* — was **escalated as a reading of a normative clause**, ruled, and the ruling recorded: the fact list **IS** the showing clause 6 demands. |
+| **The lesson** | **A NORMATIVE CLAUSE IS RE-READ IN THE OPEN OR NOT AT ALL.** The failure mode is silent reinterpretation by whoever is fixing a red test at the time. Compare §15-3, where an existing guard went red on a refactor and was **re-expressed rather than relaxed**: *a guard that reds on a refactor is usually right about the property and wrong about the mechanism; the temptation is to fix the verdict.* |
+| **What turns red** | Clause 6's **three actual promises are asserted separately**, and the disclaimer's presence is now guarded **for the first time** — previously a model omitting it broke clause 6 and **nothing went red**. The empty fallback body is the *ratified* shape. Clause 6 was **flagged as re-read, not changed** (§12-1). |
+
+### 19-H. NEW AT THIS CLOSE — the detector that caught its own harness
+
+| | |
+|---|---|
+| **What happened** | F9's env-override check went red on its own *mirrors-the-file* test, and **the product was right**: `tests/conftest.py:16` `setdefault`s `LEDGERFRAME_AI_ENABLED` — an external setter holding a key the fixture's `.env` did not contain, which is exactly what the check exists to notice. The **fixture** was claiming to build a mirror while leaving a key diverging. |
+| **The lesson** | Third instance of a family this milestone keeps meeting — §16-B(4) (R-56 bit the harness), §16-D (the `.env` check broken while the invariant held), and now this. ***When a new guard reds, suspect the harness before disbelieving the product*** — and note that in all three the guard was **correct** and the *checking apparatus* was wrong. |
+| **What turns red** | The fixture clears the AI keys explicitly, so *"mirrors the file"* means what it says. And the detection is a **divergence, not a presence check** — under systemd the `.env` file IS the `EnvironmentFile`, so a presence check would warn on **every correctly-configured install** that its saves do nothing. Both directions guarded: *the failure mode of a conditional warning is never "it did not render", it is "it rendered when it was not true".* |
+
+### 19-I. NEW AT THIS CLOSE — the tooling fix from last milestone did its job
+
+**§16-B(2)** recorded a patch script that reported *"patched"* on a `str.replace` matching nothing,
+costing a whole re-drive. The fix was `assert OLD in s` **before** the write. At this close a
+fail-first setup ran with a wrong interpreter path — and **errored instead of reporting success**,
+so the drive that followed was correctly identified as *the fixed key passing*, not as a
+fail-first. *The one lesson in this list with a second data point on the positive side: the
+mechanism held under exactly the conditions that produced the original defect.*
+
+### 19-J. NEW AT THIS CLOSE — a sanctioned term that nothing could find
+
+| | |
+|---|---|
+| **What happened** | §17-3 made `Income (div/int)` **sanctioned, shown vocabulary**. The Help entry it belongs to is titled **"Income (dividends & interest)"**, and its `keywords` did not contain the short form. A reader who saw the abbreviation in an Ask answer and searched Help for it **would have found nothing** — the term was sanctioned and unfindable at the same moment. |
+| **How it was caught** | **Not by a guard.** By asking what the GLOSSARY change *implied* for Help, under the HELP CURRENCY LAW. The parity guard shipped in the same delta checks that the short form is **recorded in the spec** and **still served by the code** — neither of which is the same as **reachable by a reader**. |
+| **The lesson** | **"RECORDED" AND "FINDABLE" ARE DIFFERENT PROPERTIES, and only the second one is what a glossary is *for*.** A vocabulary guard that measures spec↔code parity is measuring the two stores against each other, not either against the person who has to look the word up. |
+| **What turns red** | Today: nothing — and that is stated rather than glossed. The Help delta shipped (body + keywords, `444 passed, 15 skipped`), but **no guard asserts that a sanctioned short form is searchable in the Help catalogue.** ⚑ **Carried to the pre-release backlog as a named gap**, in the shape §19-E's lesson recommends: written down where the next reader will meet it, not remembered. |
+
+---
+
+## 20. HELP CURRENCY — the delta that shipped
+
+**THE HELP CURRENCY LAW IS SATISFIED BY A DELTA, NOT BY A "NO IMPACT" CLAIM.**
+
+| Change | Help consequence |
+|---|---|
+| §17-3 sanctioned `Income (div/int)` as shown vocabulary | **`app/services/help.py` `term-income` UPDATED** — the body names the short form and states it is *the same figure under a shorter label*; `keywords` gains `div/int div int short` so search reaches it |
+| §17-1 posture line → legend handover | **No Help delta.** The `ask` entry already documents the provenance line as an output and the three kinds in `interpret` (§15-4); *which paragraph carries the locality statement* is not a fact the Help text asserts. **Guard-corroborated:** `test_help_content_accuracy.py` green, and no Help entry references the posture line's placement. |
+| §17-2 corrected stub sentence | **No Help delta** — a test double's copy is not served content. |
+| §17-4 F9 override note | **No Help delta.** ⚑ **Flagged as a judgement, not a certainty:** the note describes a deployment condition (an OS-env override) that Help's Settings coverage does not discuss at all. Adding it would be new Help scope rather than currency, and it is **carried to the pre-release backlog** rather than decided here. |
+
+**Suite:** Help/GLOSSARY currency **569 passed, 15 skipped**; Help accuracy + markup + parity
+**444 passed, 15 skipped**.
+
+---
+
+## 21. CHANGED FILES — from the ACTUAL diff (`git diff --stat 55038ef..HEAD`)
+
+**Derived, not recalled.**
+
+| File | ± | What changed |
+|---|---|---|
+| `frontend/src/components/ui/AskPanel.tsx` | +28/−6 | §17-1 — the posture line renders **pre-answer only**; the handover reasoned in place |
+| `frontend/src/components/ui/AskPanel.test.tsx` | +93 | §17-1 — four tests incl. the **locality-statement counter** (reds at 0 and at 2) |
+| `frontend/src/components/ui/ask.css` | +2/−1 | model-text treatment marked **RATIFIED** |
+| `frontend/src/routes/Settings.tsx` | +20 | §17-4 — the conditional override note, keyed on the **served sentence** |
+| `frontend/src/routes/Settings.test.tsx` | +66 | §17-4 — three tests: renders when true · absent on an ordinary install · **composes nothing** |
+| `frontend/src/routes/Settings.css` | +12 | `.set__aiconfig-override`, on the established `--attention` honesty colour |
+| `frontend/src/api/systemConfig.ts` | +16 | `env_override` / `env_override_note` on the `AiConfig` contract |
+| `app/api/v1/routes/system.py` | +76/−2 | §17-4 — `AI_ENV_OVERRIDE_NOTE`, `_ai_env_override_in_force()` (**divergence, not presence**), served fields; `AI_TAB_COPY` **RATIFIED** |
+| `app/ai/vocabulary.py` | +3/−1 | the three provenance legends **RATIFIED** |
+| `app/services/help.py` | +3/−2 | **HELP CURRENCY** — `term-income` findable by the sanctioned short form |
+| `tests/stub_narration.py` | **+90 (new)** | §17-2 — the ONE home for the stub's fixed sentences, the specimen, the phantom-referent table |
+| `tests/unit/test_stub_narration_sentences.py` | **+90 (new)** | §17-2 — the rule, the specimen pin, the two blind-pins |
+| `tests/unit/test_glossary_parity.py` | +79 | §17-3 — sanctioned short forms, **both arms** + register pin |
+| `tests/integration/test_ai_config_effective.py` | +175/−2 | §17-4 — five tests both directions, incl. the **mirrors-the-file** case that caught the harness; the §15-3 `I001` fixed |
+| `tests/integration/test_ai_provenance.py` | +6/−2 | the stub's closing sentence now comes from the registered home |
+| `docs/specs/GLOSSARY.md` | +6/−2 | §17-3 short form on the **Income** row; three-kinds section **RATIFIED**, dated |
+| `docs/specs/DESIGN-SYSTEM.md` | +9/−3 | §5 model-text amendment **RATIFIED 2026-07-20**, resting on a **measurement** |
+| `docs/audit/DECISIONS.md` | +1/−1 | **D-067 dated reading note** — *"always visible"* = one locality statement at every moment |
+| `docs/plans/ai-surfaces.md` | +~640 | §17 (the 3b walk) · §17-6 (the re-drive) · §18 (ledger + gates) · §19 (strike-check) · §20 (Help) · §21 · §22 |
+| `docs/plans/assets/ai-17-*.png` | 6 new | empty · narrated · AI-tab override — **both themes, genuinely distinct** |
+| `docs/plans/CURRENT.md` | — | NEXT → **F10 delta**, then **R-54 kickoff** |
+| `docs/plans/RATIFICATION.md` | — | §6 row appended |
+
+---
+
+## 22. WHAT THIS MILESTONE WAS ACTUALLY ABOUT
+
+The survey (§0) predicted it: *the backend pipeline is built and tested; the frontend AI surface is
+zero* — **a frontend + honesty-guard milestone, not a pipeline one.** That held. Almost nothing
+here changed what the AI can *do*; nearly all of it changed **what the product says about what it
+did**.
+
+The through-line, in one sentence: **the product had learned to be careful about the numbers and
+had never been asked to be careful about the claims it makes concerning itself.** The disclaimer
+was thirteen literals with no shared constant. The Settings tab composed a sentence about the
+user's data locality in the browser. The legend's first implementation credited a model that wrote
+nothing. The stub cited timestamps that were never on screen. **Every one of those is a true
+system telling a small untruth about its own behaviour** — and none of them is the kind of defect a
+correctness gate can see, because in every case *the feature worked*.
+
+That is why the mechanisms in §19 are the deliverable as much as the panel is.

@@ -56,77 +56,70 @@ The product shell + every built page + the platform milestones, owner-accepted:
   **`check:primitives`** added, and **"a hard rule without a guard is a request" escalated into
   CLAUDE.md**. `RATIFICATION.md §6` row appended. Contract **141 paths / 71 schemas**.
 
+- **AI-surfaces (D-067 / D-068)** — **closed 2026-07-20**, `ai-surfaces.md` §17 (the 3b walk) ·
+  §18 **§-LEDGER CLOSED (F1–F10 + two walk fixes, every disposition)** · §19 strike-check
+  (**10 lessons, each with what turns red**) · §20 Help currency · §21 changed files · §22.
+  **THE ASK PANEL SHIPPED** — the first prose in this product written by a **model**, and with it
+  the first distinction the product had to draw **visually** rather than in copy. **The provenance
+  legend** (§15-4) — every answer says **who wrote the sentence**, served, in three states, with
+  model text in **italic** (DS §5 amendment **RATIFIED**, on a `getComputedStyle` measurement).
+  **The three kinds of intelligence** ratified in GLOSSARY. **One resolver** (`app/ai/vocabulary.py`)
+  after the Settings tab was caught naming a provider that was not answering. **The acceptance gate
+  covers AI**, tested at those paths. **§17-1** one locality statement at every moment (D-067
+  reading note); **§17-2** a fixed sentence may not cite UI that does not render; **§17-3**
+  `Income (div/int)` sanctioned GLOSSARY-first; **§17-4** the tab says when writing to it would do
+  nothing. Backend **1963 solo, ordered AND randomized**; `npm run check` PASS (**408 vitest / 361
+  Playwright**); currency **569/15**; contract **141 paths / 71 schemas**. `RATIFICATION.md §6` row
+  appended. **⚑ Open:** **F10** (the NEXT delta, release-blocking) · **R-54 / R-55** (Amendment 7) ·
+  **R-56** (F7, post-release) · the §19-J gap — **no guard asserts a sanctioned short form is
+  searchable in Help**, carried to the pre-release backlog.
+
 ---
 
-## NEXT — AI-surfaces (D-067 / D-068)
+## NEXT — F10: the fresh-DB `get_history_cached` race (⚡ RELEASE-TRAIN BLOCKING)
 
-**⊕ 2026-07-20 — PHASE 0a RE-DRIVEN, AWAITING THE OWNER'S LOOK. 78/78, both themes, 0 console
-errors.** The owner walked the 0a screenshots in chat; that walk produced two roadmap filings
-(R-54, R-55 — RD-9 Amendment 7) and five deltas, all shipped: the fallback **echo** removed
-(§12-1), the disclaimer bound to the **artifact** while the panel projects it once (§12-2), the
-**shipped** no-egress posture string ratified over the drafted one and **pinned** (§12-3), the
-**passing narration** state photographed for the first time (§12-4), and the long-owed
-**page-settings §15st-1 pre-pass** run and discharged (§12-5, `page-settings.md` §15st-2).
+**⊕ 2026-07-20 — AI-surfaces CLOSED (see DONE). This is the very next delta, BEFORE any R-54
+work, by owner ruling (`ai-surfaces.md` §17-5).**
 
-**⚑ THREE FINDINGS ARE RECORDED AND NOT FIXED — they need the owner, not a commit.**
-(a) the fact pack ships the **same figure twice**, one copy **unformatted** money (§13-B);
-(b) the Settings AI tab can name a **provider that is not the one answering** (§13-C);
-(c) a **zero-valued fact can never be narrated** — it traces to nothing under `_sig3` (§12-4).
-Plus one flag: **clause 6 was RE-READ** against SECURITY-BASELINE §5, not changed (§12-1).
+```
+GET /api/v1/portfolio/performance?days=365&benchmark=SPY&include_manual=false → 500
+  app/services/analytics.py:244  performance_series → get_history_cached(...)
+  app/services/market.py:980     get_history_cached → await session.flush()
+  sqlite3.IntegrityError: UNIQUE constraint failed: settings.key
+```
 
-**The milestone does NOT close on these gates.** 0a closes when the owner ratifies by looking.
+**The mechanism, re-verified at the close rather than recalled.** `get_history_cached` opens with
+**three** one-time repair blocks — `hist_demo_residue_repaired_v1` (`market.py:976`),
+`hist_extended_hours_purged_v1` (`:986`), and the §12-R3 wrong-instrument purge — each shaped
+**`SELECT` marker → if absent, `session.add(Setting(...))` → `flush()`**. Two concurrent first-load
+requests both read absent and both insert; the second hits the `UNIQUE` constraint on
+`settings.key`. **A check-then-insert race, three times over, on the fresh-DB path every new
+install takes.**
 
+**How it must be done:**
 
-**⚠ INTAKE CROSS-NOTE — READ BEFORE THE GROUNDING REVIEW** (page-help §9-9 ruling, 2026-07-19):
-the **help knowledge base was REWRITTEN in the Help milestone**. `app/services/help.py` is not just
-the Help page's content — **`app/ai/tools.py:145` pulls it into the grounded fact pack**, so it is
-what the AI cites as fact. The v1-era entries it used to serve were **factually wrong** (they
-described "Snapshot", "Planning", "Investment policy", a removed Simple/Expert toggle, and four
-Settings tabs where six ship). **The grounding review must read the NEW content**, and **no
-pre-2026-07-19 review of AI help-grounding is still valid.** Accuracy is now mechanised by
-`tests/unit/test_help_content_accuracy.py`.
+1. **Fail-first on the REPRODUCED race** — concurrent first-load, not a unit call. *A race that is
+   only reasoned about is a race that gets "fixed" by a change nobody watched work.*
+2. **Upsert-shaped fix** (get-or-create that tolerates the loser), applied to **all three** blocks —
+   fixing one leaves the same defect at two other sites in the same function.
+3. **The pricing path reviewed in isolation**, which is the whole reason this was not swept into the
+   AI milestone: an unreviewed change to pricing inside an AI-copy delta is a change where no
+   reviewer is looking for it.
+4. **RELEASE-TRAIN BLOCKING** — a first-run defect, and the first run is the one impression an
+   install gets to make.
 
-**And it moved again since that note was written:** the **Legal milestone** added Legal's own Help
-entry and rewrote the gate/lock/reset truth in the affected entries (2026-07-20, §14-B). The
-grounding corpus the AI cites therefore includes **the acceptance gate's behaviour and the
-Commitments rename** — an AI that still says *"Product Guarantees"*, or that describes entry
-without the consent gate, is citing retired fact.
+## THEN — R-54 kickoff (deterministic answer intelligence, the two-tier Ask panel)
 
-**Intake (R-43 §18-F7d):** `test_performance_question_pulls_risk_metrics` streams `/ai/chat` and
-asserts the risk facts arrive; it is **contention-fragile** — it fails only when the suite shares
-the machine with other pytest processes, and passes solo (controlled comparison in
-`r43-historical-backfill.md` §18-F7d). **The robustness fix belongs to this milestone** as the
-natural owner of the AI streaming surface, NOT to R-43.
-
-**PLAN ONLY first — verify-first, STOP at §9** (the R-35/R-38/R-42/R-43/Help/Legal plan-file-first
-precedent). No code before the owner's §9 one-pass.
-
-**⊕ 2026-07-20 — `docs/plans/ai-surfaces.md` EXISTS, written to §9, BUILD NOT STARTED.** The survey
-(§0) is done and cited. Headline findings: the **backend pipeline is built and tested** (43 test
-functions; §0-A) while the **frontend AI surface is zero** (§0-B) — so this is a frontend +
-honesty-guard milestone, not a pipeline one. Three Commitments are **promised without a guard**:
-the "fixed" disclaimer is **13 literals with no shared constant** (§0-C, Commitment 2), *no stored
-AI conversations* has **no test at all** (§0-D, Commitment 6), and *never weakens* is mechanised by
-nothing (§9(d), Commitment 7). **D-070's ruled fallback signal has never shipped** (§0-G). The 451
-gate already covers AI **by inheritance**, untested at those paths (§0-F). **Seven ⚑ owner-call
-rows await the one-pass** — scope (b), the Pack (c), D-070 (d-ii), no-egress posture copy (f),
-the retired `"Portfolio total value"` label vs ROADMAP R-52 (h-ii), the missing AskPanel
-DS amendment (i), and two spec inconsistencies found en route (j).
-
-**Binding on this milestone:**
-
-- **THE HELP CURRENCY LAW applies from the first commit** — and with unusual force here, because
-  Help content *is* this milestone's input: a change to the knowledge base changes what the AI
-  asserts as fact. The **HELP CURRENCY SUITE** runs at the close.
-- **A NEW GUARD THAT REDS AN ACCEPTED SURFACE IS A DELTA ON THAT SURFACE** (CLAUDE.md standing
-  rule) — a dated delta note in that page's plan file **and** that page's pre-pass re-run, in the
-  same delta.
-- **A HARD RULE WITHOUT A GUARD IS A REQUEST** (CLAUDE.md, added at the Legal close): ask of every
-  constraint this milestone states, *what turns red?*
+RD-9 Amendment 7 scope. **Not started.** Carries the plan-file gate standard: own plan file,
+survey-first, §9 one-pass, full loop. **Its tier-1 SEED already shipped** — the no-egress
+deterministic answering built at AI-surfaces 0a (`ai-surfaces.md` §12-3 records the string as its
+first artifact), and **R-54 owns the posture-copy amendment** when tier-1 formally lands. Stated
+here because it is the cross-reference easiest to lose between milestones.
 
 ## THEN — the road to v2.0.0 (RD-9 Amendment 4 + 5 + 6 + **7**)
 
-The remaining v2.0.0 set, in sequence (**AI-surfaces** is the active NEXT above).
+The remaining v2.0.0 set, in sequence (**AI-surfaces is CLOSED** — see DONE; the active NEXT
+above is the **F10 delta**, then **R-54**).
 **⊕ RD-9 SCOPE AMENDMENT 7 (owner, 2026-07-20) — the set GREW by two**, both raised by the owner
 **using the shipped Ask panel** at the 0a walk: **R-54** (deterministic answer intelligence — the
 two-tier Ask panel) and **R-55** (Help content: asset classes & corporate actions). Neither is
@@ -135,8 +128,7 @@ loop). See `release-readiness.md` Amendment 7 and `ROADMAP.md` R-54/R-55.
 
 1. ~~**Help**~~ — **CLOSED 2026-07-19** (DONE above).
 2. ~~**Legal**~~ — **CLOSED 2026-07-20** (DONE above).
-3. ~~**AI-surfaces**~~ — the active NEXT above (D-067 / D-068; the Help-grounding
-   cross-note and the contention-fragile streaming test are carried there in full).
+3. ~~**AI-surfaces**~~ — **CLOSED 2026-07-20** (DONE above).
 4. **R-45** — per-instrument + default news coverage (pulled into v2.0.0, RD-9
    Amendment 5; egress ruling required, take together with R-44). **Verification item
    (observed 2026-07-18):** the **Home holdings-scoped headlines vs per-ticker feed

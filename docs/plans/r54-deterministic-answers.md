@@ -34,7 +34,7 @@ row lacks a disposition.** This plan is the rule's first user.*
 
 | **F-2** | Finding | **Allocation weights omit three shipped asset classes** — `key_stats`' four buckets are `weight(...)` over hardcoded names (`analytics.py:94-97`); **`bond`, `other` and `retirement` are in NO bucket**, so the weights do not sum to 100% | Found at Phase 0-2b (`fa7b656`) from ruling ②'s *principle* — its stated precondition (a *dynamic* `key_stats` path) **does not exist**; the metrics are static literals | **⚑ OPEN — OWNER RULING OWED.** **Proven live on the SHIPPED DEMO DATA: 6.2 + 4.4 + 1.0 + 80.5 = 92.1, a 7.9-POINT SHORTFALL** on an accepted surface (D-048), caught by nothing. **Not fixed:** the repair changes **what the Portfolio page displays** — a product-content decision, not a refactor — and would break 0-2b's byte-identity proof for a reason unrelated to the derivation. **⊕ SCHEDULED 2026-07-20/21 (owner): its OWN delta in the Phase-1 window, no silent drop.** **Survey the ratified stats spec FIRST** — four-bucket vs per-class. **Governing principle either way:** every class in a **labelled** bucket · weights **sum to 100** · the census **derived from the `AssetClass` enum** (D-082 generalised). If the four-bucket grouping is ratified, **explicit assignments for `bond` / `other` / `retirement` come back to chat**. **Fail-first on the 92.1% sum with REAL-SHAPED data**; **page-portfolio pre-pass re-run + dated note**; any new labels **GLOSSARY-first** |
 
-| **F-3** | Finding | **The fact pack has its OWN money formatter, and it destroys sub-cent prices.** `_fmt` (`tools.py:25`) is `f"{value:,.2f} {ccy}"`; the D-105 formatters (`money.py:25,38,47`) are the product's. Three differences, one of them live | Found at Phase 0-4 by the ruled survey (1a), **before** any unification — which is what the survey-first ordering was for | **⚑ OPEN — CHAT RULING OWED (ruling 1c: STOP, change nothing).** **(i) LIVE — sub-cent destruction:** a crypto quote of `0.00004567` renders **`0.00 USD`** through `_fmt`, while `format_price_display(…, "crypto")` gives `0.00004567`. `money.py:19-20` states the D-105 intent **verbatim**: *"crypto → up to 6 significant digits (so sub-cent tokens aren't truncated to `0.00`)"* — **the pack does exactly what D-105 exists to prevent.** Compounds with **R-56**: `_sig3("0.00") → ""` is discarded, so such a fact **cannot be narrated either** — fact list shows `0.00`, model falls back. Invisible on the demo set (BTC is high-priced): a **real-shaped-data** case. **(ii) LATENT — rounding mode:** `_fmt` uses Python's default (**banker's/HALF_EVEN** — `2.005 → 2.00`), D-105 uses **HALF_UP** (`→ 2.01`). **Not reachable on headline money today**, because `portfolio.py:577` cent-quantizes each holding first — latent, not live. **(iii) LATENT — `None`:** `_fmt(None)` **raises `TypeError`**; the D-105 formatters pass `None` through (Guarantee 3, never a fabricated 0). **⚠ NOT a pure refactor either way:** D-105's crypto path also drops thousands grouping and trims trailing zeros (`68000.50 → 68000.5`), so unification **changes ratified fact-list rendering** (ratified at AI-surfaces 0a) and needs a ruling + dated note. The R-54 0a specimens will put it in front of the owner regardless |
+| **F-3** | Finding | **The fact pack has its OWN money formatter, and it destroys sub-cent prices.** `_fmt` (`tools.py:25`) is `f"{value:,.2f} {ccy}"`; the D-105 formatters (`money.py:25,38,47`) are the product's. Three differences, one of them live | Found at Phase 0-4 by the ruled survey (1a), **before** any unification — which is what the survey-first ordering was for | ✅ **RULED + FIXED 2026-07-21** (`33f57bf`) — `_fmt` deleted, `money.py` owns all rendering, `format_fact_display` is the named pack variant. **Pending the 0a look** (specimen obligation below). Original finding, for the record: **⚑ (ruling 1c: STOP, change nothing).** **(i) LIVE — sub-cent destruction:** a crypto quote of `0.00004567` renders **`0.00 USD`** through `_fmt`, while `format_price_display(…, "crypto")` gives `0.00004567`. `money.py:19-20` states the D-105 intent **verbatim**: *"crypto → up to 6 significant digits (so sub-cent tokens aren't truncated to `0.00`)"* — **the pack does exactly what D-105 exists to prevent.** Compounds with **R-56**: `_sig3("0.00") → ""` is discarded, so such a fact **cannot be narrated either** — fact list shows `0.00`, model falls back. Invisible on the demo set (BTC is high-priced): a **real-shaped-data** case. **(ii) LATENT — rounding mode:** `_fmt` uses Python's default (**banker's/HALF_EVEN** — `2.005 → 2.00`), D-105 uses **HALF_UP** (`→ 2.01`). **Not reachable on headline money today**, because `portfolio.py:577` cent-quantizes each holding first — latent, not live. **(iii) LATENT — `None`:** `_fmt(None)` **raises `TypeError`**; the D-105 formatters pass `None` through (Guarantee 3, never a fabricated 0). **⚠ NOT a pure refactor either way:** D-105's crypto path also drops thousands grouping and trims trailing zeros (`68000.50 → 68000.5`), so unification **changes ratified fact-list rendering** (ratified at AI-surfaces 0a) and needs a ruling + dated note. The R-54 0a specimens will put it in front of the owner regardless |
 
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
@@ -1170,6 +1170,108 @@ milestone's Help delta remains owed at close (§9-I).
 
 ---
 
+### Phase 0-4 (part 1) — F-3 FIXED: one home for rendering (`33f57bf`) — DONE
+
+**Owner ruling 2026-07-21, seven items.** `_fmt` is **deleted**; `money.py` owns all rendering; the
+pack's ratified conventions become a **named variant** sharing the D-105 core.
+
+#### ① The live defect — FAIL-FIRST at the served pack, real-shaped data
+
+```
+'SHIBX' rendered '0.00 USD' — a sub-cent price shown as 0.00 is a
+fabricated-looking number (money.py:19-20, D-105).
+```
+
+**Getting a RED that measured the real thing took three fixture attempts, and each failure is a
+property of the system worth keeping:**
+
+1. Asking about the token **directly** routes through `_one_instrument_facts` → **`refresh_quote`**
+   (`tools.py:476`), a **live fetch**. The deterministic mock provider **overwrote the seeded
+   `0.00004567` with `100.74`**, so the assertion was measuring a price the fixture invented.
+   *A fixture that silently replaces the number under test proves nothing.*
+2. A **new** watchlist is never read — `watchlist_quote_facts` takes `.first()`.
+3. **`Watchlist.items` declares no `order_by`** (`models/__init__.py:492`), so it returns in **id
+   order** and `tools.py:125` slices `items[:8]`; the appended row was sliced off.
+
+The test now seeds into the first watchlist **and makes room explicitly**, with each of the three
+traps written into the fixture so the next reader does not re-discover them.
+
+**⊕ NOTED IN PASSING, not chased (out of this delta's scope):** because that slice runs over an
+**unordered** relationship, **the AI's watchlist facts follow INSERTION order and ignore the user's
+`sort_order` entirely.**
+
+#### ②③ The architecture — no rendering logic outside `money.py`
+
+`format_fact_display(value, currency)` — grouped thousands + currency suffix (the pack's **ratified**
+conventions), on the D-105 **core**: `ROUND_HALF_UP`, `None` passthrough, sub-cent precision.
+**16 call sites rewritten; `_fmt` genuinely deleted, not aliased** — pinned by
+`test_fmt_no_longer_exists_in_the_pack`.
+
+**The sub-cent escalation is VALUE-driven, not class-driven, and ruling ③ forces that.**
+`format_price_display` keys on `asset_class == crypto` and would render **every** crypto figure at
+6 significant digits — restyling `68,000.50` and breaching *"ratified rendering moves ONLY where the
+defect was."* Escalating only when 2dp would print a **non-zero** value as `0.00` fixes exactly the
+defect, and protects a sub-cent price of **any** class rather than only the one that exposed it. A
+true zero still renders `0.00` — a legitimate zero is not sub-cent.
+
+**(iii) closed by construction:** `None` passes through, so an unpriced fact stays honestly empty
+(Guarantee 3) instead of raising `TypeError`. **(ii) unified while still latent** —
+`portfolio.py:577` cent-quantizes holdings before the pack sees them, so no shipped figure was
+reaching the half-cent boundary. *Fixing it now costs nothing; fixing it after a caller started
+passing unquantized values would have been a silent change to a figure on screen.*
+
+#### ⑤ BLAST RADIUS — PROVEN, NOT ASSUMED
+
+**13 of 21 corpus values byte-identical**, across negatives, zero, grouping, and large magnitudes.
+Every value that moved is in one of the **two ruled classes**, enumerated by name in a permanent
+pin:
+
+| Class | Values |
+|---|---|
+| **(i) sub-cent escalation** | `0.004 → 0.004` · `0.00004567 → 0.00004567` · `0.000012` · `0.0031` (all were `0.00`) |
+| **(ii) half-cent HALF_UP** | `1.005 → 1.01` · `2.005 → 2.01` · `0.125 → 0.13` · `0.005 → 0.01` |
+
+Nothing outside those two classes changed. The pin keeps `_legacy_fmt` as the comparison baseline,
+so the claim stays checkable rather than historical.
+
+#### ⚠ A CORRECTION TO THIS MILESTONE'S OWN SURVEY
+
+The F-3 survey reported that D-105's crypto path *"drops thousands grouping and trims trailing
+zeros"*. **The grouping half was WRONG** — `format(_SIG6.create_decimal(p), ",f")` keeps the
+separator, so the compact style is `68,000.5`, not `68000.5`. The trailing-zero difference is real
+and is the whole of what ruling ③ protects. *Recorded rather than silently corrected: the survey is
+the evidence the ruling was made on, so an error in it belongs on the record.*
+
+#### ⑥ CROSS-REF — R-56
+
+F-3's fix removes **rendering-artifact zeros** from `_sig3`'s input: a sub-cent price no longer
+arrives as `"0.00"`, so it no longer reduces to `""` and is no longer discarded from the traceable
+set. **R-56 remains open for TRUE zero-valued facts** (a genuine `0.00` change, true and useful) —
+its blast radius is now **smaller**, not closed.
+
+#### ④ OWED AT 0a — carried into the §8 specimen list
+
+**The 0a specimens MUST include a sub-cent token fact and an unpriced fact.** The owner ratifies the
+corrected renderings **by looking**, and the fact-pack rendering pin carries the change with a dated
+note: *"the 2026-07 ratification exhibited no sub-cent case."*
+
+#### Gates — solo, uncontended
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** | **2014 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | `**2014 passed, 15 skipped** — exit 0` |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** |
+
+**Suite reconciliation: 2006 → 2014, +8 = this delta's own** (2 served-pack sub-cent + 6
+blast-radius / architecture pins). No other test moved.
+
+**Help currency:** no Help or GLOSSARY entry changed. The **rendered fact values** change in the two
+enumerated classes — user-visible, and therefore ratified at 0a by looking (④), not asserted here.
+
+---
+
 ### Phase 0a — THE SPECIMEN, RATIFIED BY LOOKING *(isolated instance; expect 1–3 revision loops)*
 
 Reset + isolated per the harness convention; **both themes**; zero console errors (excluding expected
@@ -1181,9 +1283,15 @@ Reset + isolated per the harness convention; **both themes**; zero console error
    one locality phrasing, `POSTURE_DISABLED`'s *"fact-only answers"* re-cut now tier-1 has landed.
 2. **Tier-1 answer specimens, one per category** — (a) term + the user's own figure, (b) action +
    Help steps + a deep link, (c) navigation/settings + a deep link.
-3. **Any PROPOSED DS entry** for the link affordance (§4) — *ratified at 0a by looking, never
+3. **⚑ OWED BY F-3 (owner ruling 2026-07-21, item 4) — A SUB-CENT TOKEN FACT AND AN UNPRICED
+   FACT.** The corrected renderings are **user-visible** and are ratified **by looking**, not by
+   the blast-radius pin. The fact-pack rendering pin carries the change with a **dated note**:
+   *"the 2026-07 ratification exhibited no sub-cent case."* **The 2026-07 ratification could not
+   have covered this — the demo set has no sub-cent instrument**, which is precisely why the
+   defect survived a walk.
+4. **Any PROPOSED DS entry** for the link affordance (§4) — *ratified at 0a by looking, never
    assumed*, and on a **free axis**: colour and slant are both taken.
-4. **The honest-miss render.**
+5. **The honest-miss render.**
 
 **Revision loops are expected and are the point** — the ai-surfaces 0a took four. **The owner closes
 this phase; it is never self-certified.**

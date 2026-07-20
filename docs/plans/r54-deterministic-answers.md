@@ -36,6 +36,10 @@ row lacks a disposition.** This plan is the rule's first user.*
 
 | **F-3** | Finding | **The fact pack has its OWN money formatter, and it destroys sub-cent prices.** `_fmt` (`tools.py:25`) is `f"{value:,.2f} {ccy}"`; the D-105 formatters (`money.py:25,38,47`) are the product's. Three differences, one of them live | Found at Phase 0-4 by the ruled survey (1a), **before** any unification — which is what the survey-first ordering was for | ✅ **RULED + FIXED 2026-07-21** (`33f57bf`) — `_fmt` deleted, `money.py` owns all rendering, `format_fact_display` is the named pack variant. **Pending the 0a look** (specimen obligation below). Original finding, for the record: **⚑ (ruling 1c: STOP, change nothing).** **(i) LIVE — sub-cent destruction:** a crypto quote of `0.00004567` renders **`0.00 USD`** through `_fmt`, while `format_price_display(…, "crypto")` gives `0.00004567`. `money.py:19-20` states the D-105 intent **verbatim**: *"crypto → up to 6 significant digits (so sub-cent tokens aren't truncated to `0.00`)"* — **the pack does exactly what D-105 exists to prevent.** Compounds with **R-56**: `_sig3("0.00") → ""` is discarded, so such a fact **cannot be narrated either** — fact list shows `0.00`, model falls back. Invisible on the demo set (BTC is high-priced): a **real-shaped-data** case. **(ii) LATENT — rounding mode:** `_fmt` uses Python's default (**banker's/HALF_EVEN** — `2.005 → 2.00`), D-105 uses **HALF_UP** (`→ 2.01`). **Not reachable on headline money today**, because `portfolio.py:577` cent-quantizes each holding first — latent, not live. **(iii) LATENT — `None`:** `_fmt(None)` **raises `TypeError`**; the D-105 formatters pass `None` through (Guarantee 3, never a fabricated 0). **⚠ NOT a pure refactor either way:** D-105's crypto path also drops thousands grouping and trims trailing zeros (`68000.50 → 68000.5`), so unification **changes ratified fact-list rendering** (ratified at AI-surfaces 0a) and needs a ruling + dated note. The R-54 0a specimens will put it in front of the owner regardless |
 
+| **F-4** | Finding | **Watchlist fact fidelity** — `watchlist_quote_facts` read `wl.items[:8]` over a relationship with **no `order_by`** (`models/__init__.py:492`), so facts followed **insertion order** and could slice away the rows the user put at the top | Found at Phase 0-4 while building the F-3 fixture; **filed by owner ruling 2026-07-21 item 4** | ✅ **FIXED 2026-07-21** (`7ba669f`). **It was the one-line ORDER BY it appeared to be** — and in the **AI path**, not the model: `watchlists.py:34` already sorts explicitly, so the **page was right and only the AI's view of it was wrong**. Fixed in `tools.py` so no shipped surface moves. *Grounding that does not mirror what the user sees is a **fidelity** defect, not a cosmetic one* |
+| **F-5** | Finding | **`pct` / `ratio` / `count` are still rendered INLINE in `tools.py`** (`f"{round(float(v), 2)}%"` and siblings) — F-3's *"no rendering logic outside `money.py`"* was **scoped to `_fmt`** and these three survived it | Found at Phase 0-4, exposed by a **false positive** in the raw-float guard (it fired on `Return / volatility = 11.82`, a legitimately unitless ratio) | **⚑ OPEN — RULING OWED.** The architecture holds for **money** and not yet for the rest. `round(float(v), 2)` is float-based, carrying the **same banker's-rounding class as F-3(ii)**. **Filed not fixed:** it is the same ratified-rendering question F-3 was, on three more value kinds, so it wants a ruling rather than a judgement call inside a delta |
+| **F-6** | Finding | **⛔ A REGRESSION THIS MILESTONE SHIPPED.** Phase 0-1's word-boundary conversion **silently killed the stems** written for the substring matcher (`perform`, `return`, `concentrat`, `diversif`): under `\b(...)\b` the trailing boundary requires the word to END there, so *"performing"*, *"concentration"* and *"diversified"* stopped routing. **6 of 9 probes misrouted** | Found at Phase 0-4 **by accident**, asking whether XIRR reached the pack — **not by any gate**, and not by the delta that introduced it | ✅ **FIXED 2026-07-21** (`7ba669f`) — stems carry `\w*`; **0/16 misrouted**; pinned by `test_intent_stem_probes.py` through **inflected** forms, with a blindness pin that caught `liabilit` unprobed on its first run. **⚑ THE LESSON, and it is new: A TEST THAT CAN REACH ITS ASSERTION BY TWO ROUTES CANNOT TELL YOU THAT ONE OF THEM BROKE** — the 1982-test suite stayed green because the one performance test's question also contains *"risk"*. Phase 0-1's guards were sound about what they measured and **none asked whether the rules still matched real questions**: the property was verified, the capability was not |
+
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
 
@@ -1269,6 +1273,129 @@ blast-radius / architecture pins). No other test moved.
 
 **Help currency:** no Help or GLOSSARY entry changed. The **rendered fact values** change in the two
 enumerated classes — user-visible, and therefore ratified at 0a by looking (④), not asserted here.
+
+---
+
+### Phase 0-4 (proper) — FIGURES THROUGH THE PROJECTION (`7ba669f`) — DONE
+
+**§9-C, on the ruling of 2026-07-21 (five items).** Survey table first, then the wiring.
+
+#### ⛔ F-6 — A REGRESSION THIS MILESTONE SHIPPED AT PHASE 0-1, FOUND HERE
+
+**This is the headline, and it is a self-inflicted one.** Phase 0-1 replaced the substring matcher
+with word-boundary rules. Several alternations in `_RULES` were **stems written for that substring
+matcher** — `perform`, `return`, `concentrat`, `diversif` — and under `\b(...)\b` the **trailing**
+boundary requires the word to END there. The stems stopped matching their own inflections:
+
+```
+"How is my portfolio performing?"  → PORTFOLIO_OVERVIEW   (not PERFORMANCE_ANALYSIS)
+"What is my concentration?"        → UNKNOWN_GENERAL      (not RISK_CONCENTRATION)
+"How diversified am I?"            → UNKNOWN_GENERAL      (not ALLOCATION_ANALYSIS)
+```
+
+**SIX OF NINE probe questions misrouted, and the 1982-test suite was GREEN.** The single performance
+test survived because its question — *"How is my portfolio performing **and what's the risk?**"* —
+also contains "risk" and reached performance facts through `RISK_CONCENTRATION` instead.
+
+> **THE LESSON, AND IT IS NEW: A TEST THAT CAN REACH ITS ASSERTION BY TWO ROUTES CANNOT TELL YOU
+> THAT ONE OF THEM BROKE.** The assertion was about *facts arriving*; it was silent on *which route
+> delivered them*. Phase 0-1's own guards were sound — they proved the substring hazards gone and
+> the table authoritative — and **not one of them asked whether the rules still matched real
+> questions.** I verified the property I had changed and not the capability I had changed it in.
+
+**How it was found:** not by a gate, and not by review. By asking an unrelated question — *does XIRR
+reach the pack?* — and reading the intent that came back. **Recorded as found-by-accident**, because
+"caught by the next phase" would imply a mechanism that does not exist.
+
+**Fixed:** stems carry `\w*` — anchored at the START, open at the end. **0/16 misrouted.**
+**Guarded:** `tests/unit/test_intent_stem_probes.py` pins every stem through an **inflected** form
+(a probe using the bare stem would pass against the broken regex and prove nothing), re-asserts the
+Phase 0-1 substring specimens so the two corrections cannot cancel out, and carries a **blindness
+pin** that scans `_RULES` for `\w*` stems and demands a probe for each — **it immediately caught
+`liabilit` unprobed**, which is the pin working on its first run.
+
+#### ① NARROW-BY-DEMAND — the survey table, and the extensions enumerated
+
+**16 of 22 registry rows were pack-reachable.** The six that were not, with their demand status:
+
+| Row | Demanded via | Disposition |
+|---|---|---|
+| `xirr` · `twr` | **`term-xirr-twr`** — the ROADMAP's own tier-1(a) worked example | **EXTENDED** (added to `performance_facts`' `want`) |
+| `alloc_*` ×4 | `term-allocation-weight` | **DEMANDED but DEFERRED to F-2** |
+| `positions` | not term-linked | **stays unreachable** — served by its canonical page |
+
+**The extension is exactly two rows.** Nothing else was added: the scope is what tier-1 can resolve
+to, not everything the engine computes.
+
+**Why the four buckets were NOT extended, stated rather than assumed.** F-2 is open on those exact
+buckets — `bond`, `other` and `retirement` fall into none of them, so the weights sum to **92.1%**.
+Extending grounding into a census known to be incomplete would hand the model figures that **do not
+add up**; it is worse than not grounding it in them at all. They ship with F-2's delta, which owns
+the census. The model is not blind meanwhile: `allocation_facts` already grounds allocation.
+
+**Pins re-proven with the extension:** largest rendered fact and the ≤4000/≤12000 ceilings unchanged
+(the two added facts are short metric lines); the 20-fact cap is unaffected — a performance pack
+carries well under it.
+
+#### ② THE CENSUS IS DECLARED, NOT AMBIENT
+
+Every row now carries **`pack_reachable`**. Five are `False`, each deliberately. Guarded **both
+ways**: a row claiming `True` must actually be producible (checked against behaviour, not against
+the field), and the field cannot go vacuous.
+
+*The registry is a MAP of where each figure canonically lives — never a promise that the AI serves
+everything.* An unreachable row is served by its **canonical page**, which is a complete answer.
+
+#### ③ THE BOUNDARY GUARD
+
+Tier-1 may never resolve a term to a figure the pack cannot produce — otherwise the panel names a
+number it cannot show, which is the **dead-affordance shape in figures rather than links**.
+
+The F-2 deferral is an **exemption declared by name with a reason**, and it carries a companion test
+that **fails once F-2 lands**, so the exemption is deleted by a red test rather than by someone
+remembering. *A stale exemption is a hole with a reason attached.*
+
+#### ④ F-4 — one line, and in the AI path
+
+`watchlist_quote_facts` read `wl.items[:8]` over a relationship with **no `order_by`**
+(`models/__init__.py:492`), so the fact list followed **insertion order** and could slice away the
+rows the user had put at the top.
+
+**`watchlists.py:34` already sorts explicitly — so the PAGE was right and only the AI's view of it
+was wrong.** Grounding that does not mirror what the user sees is a **fidelity** defect, not a
+cosmetic one. Fixed in `tools.py`, **not** on the relationship: the API already sorts, so a
+model-level change would alter a shipped surface to fix a bug it does not have.
+
+#### ⑤ THE FAIL-FIRSTS — and a false positive corrected
+
+The raw-float guard's first draft rejected any bare decimal and fired on **`Return / volatility` =
+`11.82`** — a **ratio**, legitimately unitless and correctly projected at 2dp. *An assertion that
+reds on something correct is wrong about the product, not the other way round.* Narrowed to what
+actually distinguishes an unprojected value — **precision**, since `to_display` returns the engine's
+full float — plus money figures carrying their currency.
+
+**⚑ F-5, FILED NOT FIXED — the residue that false positive exposed.** `pct`, `ratio` and `count` are
+still rendered **inline in `tools.py`** (`f"{round(float(v), 2)}%"` and siblings). F-3's ruling —
+*"no rendering logic outside `money.py`"* — was **scoped to `_fmt`**, and these three survived it. So
+the architecture holds for **money** and not yet for the rest. `round(float(v), 2)` is float-based,
+carrying the **same banker's-rounding class as F-3(ii)**. Filed for a ruling rather than folded in:
+it is the same ratified-rendering question F-3 was, on three more value kinds.
+
+#### Gates — solo, uncontended
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** | **2041 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | `**2041 passed, 15 skipped** — exit 0` |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** |
+
+**Suite reconciliation: 2014 → 2041, +27 = this delta's own** (9 reachability/projection + 18 stem
+probes). No other test moved.
+
+**Help currency:** no Help or GLOSSARY entry changed. Grounding gains XIRR and TWR — what the model
+is given, not what the user is shown. F-6's fix restores routing that was ratified behaviour before
+Phase 0-1 broke it.
 
 ---
 

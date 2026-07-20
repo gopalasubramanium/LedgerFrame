@@ -139,21 +139,20 @@ owed · **R-40** (Alpha Vantage premium feed expansion) — parked, definition o
 
 ## Needs decision
 
-- **⚑ OPEN 2026-07-20 — what the grounding fact pack CARRIES: `body` only.** *(AI-surfaces
-  Phase 0.7, found writing the ranker guard. **Not build-blocking** — recorded, pinned as-is,
-  not settled.)* `search_help` projects each entry to `(id, category, title, body)`
-  (`help.py:1358-1359`) and `help_facts` hands **`body` alone** to the model
-  (`tools.py:145-148`). So *"a single structured source of truth used by BOTH the Help page and
-  the AI"* (`help.py:4-6`) is true of the **source** and not of the **view**: the page renders
-  the whole entry, the model gets its opening paragraph. **Concrete consequence:** asked *"why
-  do I have to accept terms"*, the AI is handed a paragraph about the Legal document's
-  six-article **structure**, while the corpus holds the ruled answer — declining is a real
-  answer, a changed document re-asks, a reset clears acceptance — one field away in
-  `interpret`, which it never sees. **⚑ Owner/architect call:** widen the projection (which
-  grows pack size **and** the validation contract's verbatim-quoting surface, so it is a
-  scoping decision, not a tweak), or rule body-only correct and record why. **Pinned meanwhile**
-  by `test_the_ai_receives_the_BODY_PROJECTION_ONLY` so widening it is a deliberate, visible
-  change to what the model is fed rather than a side effect of editing a search function.
+- **✅ RESOLVED 2026-07-20 (owner) — the grounding fact pack is WIDENED, SCOPED.** *(AI-surfaces
+  Phase 0.9.)* The pack carried `body` alone, so *"one structured source of truth used by BOTH
+  the Help page and the AI"* was true of the **source** and not the **view**. **Ruled: the
+  structured Help fields join the pack, `interpret` included.** Shipped as **two tiers** —
+  `body` + `interpret` **unconditional** (the entry's meaning), `outputs` + `inputs` under a
+  budget, **whole fields only, never truncated mid-text** (a caveat cut in half reads as
+  complete, which is worse than one never sent). `search_help`'s own return shape is
+  **unchanged** — it is the Help page's search-result contract. **Size pinned** (largest
+  rendered fact ≤ 4000 chars; per-question help portion ≤ 12000). **Quoting surface extended
+  with a RED specimen**: a verbatim quote from the widened pack is accepted, an invented one on
+  the same subject is **still rejected by clause 5** — a bigger haystack is not a lower bar
+  (Commitment 7). **Fail-first proof, as ruled:** *"why do I have to accept terms"* was RED
+  (`['Help · Legal', 'Help · Help']`, not one containing the word "accept") and now retrieves the
+  ruled answer, declining included.
 
 - **✅ RESOLVED 2026-07-20 (owner, option (b)) — R-22 vs the shipped egress gate.** *(AI-surfaces §9-BIS; found at
   Phase 0.5. **Blocks one of three ruled posture states in the Ask panel; does not block the

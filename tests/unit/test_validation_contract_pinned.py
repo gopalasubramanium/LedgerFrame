@@ -230,3 +230,79 @@ def test_the_pin_REJECTS_a_weakened_contract(label, body):
         f"The pin ACCEPTED a weakened contract ({label}). It would not have noticed this "
         "change to SECURITY-BASELINE.md §5, so it is not protecting Commitment 7."
     )
+
+
+# ─── clause 5's surface, after the fact pack was widened (owner ruling 2026-07-20) ──────────────
+#
+# Widening `help_facts` to carry `interpret` (Phase 0.9) enlarged `facts_text`, and clause 5
+# validates quoted 25+ char strings AGAINST that text. So the set of quotes the validator accepts
+# grew — a real change to the contract's effective surface, made deliberately.
+#
+# Commitment 7 forbids WEAKENING the contract. Widening the FACTS is not weakening the CHECK: the
+# rule is unchanged (a long quote must appear verbatim in the facts) and the facts are simply more
+# of what the product actually told the model. But "not a weakening" is a claim, and this file's
+# whole premise is that claims about the contract get a test. These two specimens hold the line
+# from both sides.
+
+
+def _legal_help_facts():
+    from app.ai.tools import help_facts
+
+    facts = help_facts("why do I have to accept terms")
+    assert facts, "no help facts retrieved — the specimens below would prove nothing"
+    return facts
+
+
+def test_a_quote_FROM_the_widened_pack_is_accepted():
+    """The point of widening: the AI may now quote the ruled interpretation verbatim.
+
+    Before Phase 0.9 this exact sentence was in the corpus, invisible to the model, and quoting it
+    would have been rejected as unsupported — the validator correctly refusing text the product
+    had never actually shown it.
+    """
+    facts = _legal_help_facts()
+    # Taken VERBATIM from the corpus, and the first draft of this test proves why that matters:
+    # it quoted the same sentence with a comma where the source has a colon, and the validator
+    # rejected it — correctly. A paraphrase is exactly what clause 5 exists to catch, and the
+    # specimen for the accepting half must therefore be copied, never retyped.
+    quoted = "Declining is a real answer: it is recorded, and the app stays locked until you accept."
+    joined = " ".join(f.value for f in facts)
+    assert quoted.lower() in joined.lower(), (
+        "the specimen quote is no longer in the widened pack — re-derive it from the corpus "
+        "rather than relaxing the test."
+    )
+
+    ok, reason = validate_grounded_answer(
+        f'The Legal page puts it plainly: "{quoted}"', facts, "why do I have to accept terms",
+    )
+    assert ok, (
+        f"a verbatim quote from the widened fact pack was rejected ({reason}). Widening the pack "
+        "is pointless if the validator still treats its contents as unsupported."
+    )
+
+
+def test_a_quote_OUTSIDE_the_widened_pack_is_STILL_REJECTED():
+    """THE RED SPECIMEN the ruling asked for. A bigger haystack is not a lower bar.
+
+    The risk of widening is that "supported" quietly becomes easier to satisfy until it means
+    nothing. This is an invented sentence in the same register as the real ones, on the same
+    subject, in a fact pack that now contains several paragraphs about acceptance — the shape most
+    likely to slip through a validator that had gone slack.
+    """
+    facts = _legal_help_facts()
+    invented = "Acceptance is stored on our servers and reviewed by a compliance team"
+    joined = " ".join(f.value for f in facts).lower()
+    assert invented.lower() not in joined, "the specimen is no longer invented — pick another"
+
+    ok, reason = validate_grounded_answer(
+        f'The page says: "{invented}."', facts, "why do I have to accept terms",
+    )
+    assert not ok, (
+        "an INVENTED quotation passed validation against the widened fact pack. Clause 5 requires "
+        "a quoted 25+ char string to appear VERBATIM in the facts; a larger pack must not become "
+        "a lower bar. This is the weakening Commitment 7 forbids."
+    )
+    assert reason and "quoted" in reason.lower(), (
+        f"rejected, but for the wrong reason ({reason!r}) — clause 5 should be what catches this, "
+        "and a specimen that passes for an unrelated reason is not evidence the clause works."
+    )

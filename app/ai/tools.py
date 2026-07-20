@@ -139,13 +139,80 @@ async def news_facts(session: AsyncSession, limit: int = 6) -> list[GroundingFac
     ]
 
 
+# The grounding projection for help entries — WIDENED, SCOPED (owner ruling, 2026-07-20;
+# AI-surfaces Phase 0.9). It carried `body` alone, so *"a single structured source of truth used
+# by BOTH the Help page and the AI"* (`help.py:4-6`) was true of the SOURCE and not of the VIEW:
+# the page rendered the whole entry, the model got its opening paragraph. Asked *"why do I have to
+# accept terms"* the AI was handed the Legal document's six-article STRUCTURE while the ruled
+# answer — declining is a real answer, a changed document re-asks, a reset clears acceptance — sat
+# one field away in `interpret`, unread.
+#
+# TWO TIERS, and the split is the whole design. `body` and `interpret` are the entry's MEANING —
+# what the thing is, and what it means for you. `outputs` and `inputs` are structural extras.
+#
+# ⚠ FOUND WRITING THIS: a single priority list under one budget DROPPED `interpret` from
+# `page-legal` — the largest one, and the exact entry whose missing interpretation caused the
+# ruling. A budget that discards the most important field first is worse than no budget: it
+# succeeds quietly. So the core tier is unconditional and the budget governs only the tail.
+_HELP_FACT_CORE = ("body", "interpret")
+_HELP_FACT_EXTRA = ("outputs", "inputs")
+
+# Budget for the OPTIONAL tail only. Whole fields — a field is included entire or not at all, and
+# NEVER truncated mid-text. Cutting help prose at a character count would eventually cut a caveat
+# in half, and a caveat that stops mid-sentence is worse than one never sent: it reads as complete.
+# Measured against the corpus (largest body 763, largest interpret 2,192, largest full entry
+# 3,276, mean 717), so the core tier admits every entry whole and this bounds only what follows.
+_HELP_FACT_BUDGET = 3600
+
+
+def _render_help_fact(entry: dict) -> str:
+    """One help entry as grounded text: labelled sections, markup stripped, whole fields only.
+
+    STRIPPED for the same reason the page projection strips (`help.py:1352-1357`): the AI reads
+    strings, never styling, so `**` markers would land in answers the user reads.
+    """
+    from app.services.help import strip_markup
+
+    def rendered(field: str) -> str:
+        raw = entry.get(field)
+        if not raw:
+            return ""
+        text = strip_markup(raw if isinstance(raw, str) else "\n".join(f"- {x}" for x in raw)).strip()
+        if not text:
+            return ""
+        return text if field == "body" else f"{field.capitalize()}: {text}"
+
+    parts = [c for c in (rendered(f) for f in _HELP_FACT_CORE) if c]
+    used = sum(len(c) for c in parts)
+    for field in _HELP_FACT_EXTRA:
+        chunk = rendered(field)
+        if chunk and used + len(chunk) <= _HELP_FACT_BUDGET:
+            parts.append(chunk)
+            used += len(chunk)
+    return "\n\n".join(parts)
+
+
 def help_facts(question: str) -> list[GroundingFact]:
     """Relevant in-app help entries as grounding facts, so the AI can answer 'how do I…' /
-    'what is…' questions from the real product help (no fabrication)."""
-    from app.services.help import search_help
+    'what is…' questions from the real product help (no fabrication).
 
-    return [GroundingFact(label=f"Help · {e['title']}", value=e["body"], source="help",
-                          fact_type="help") for e in search_help(question, limit=3)]
+    Ranks through `search_help` — the page's ranker, deliberately, so the AI and the page agree on
+    WHICH entries are relevant — then reads the FULL entry from the corpus for the projection
+    above. `search_help`'s own return shape is untouched: it is the Help page's search-result
+    contract (`test_help.py` pins its four keys), and widening the AI's view is not a reason to
+    change what the page's type-ahead receives.
+    """
+    from app.services.help import HELP, search_help
+
+    by_id = {e["id"]: e for e in HELP}
+    facts = []
+    for hit in search_help(question, limit=3):
+        full = by_id.get(hit["id"], hit)
+        value = _render_help_fact(full)
+        if value:
+            facts.append(GroundingFact(label=f"Help · {hit['title']}", value=value,
+                                       source="help", fact_type="help"))
+    return facts
 
 
 async def data_quality_facts(session: AsyncSession) -> list[GroundingFact]:

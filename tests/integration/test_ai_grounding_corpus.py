@@ -127,43 +127,107 @@ def test_the_ai_is_never_fed_retired_vocabulary():
                 )
 
 
-def test_the_ai_receives_the_BODY_PROJECTION_ONLY():
-    """The grounding projection is `body` — pinned, because changing it is a grounding change.
+def test_the_ai_receives_the_STRUCTURED_help_projection():
+    """The widened projection (owner ruling 2026-07-20) — pinned, because it IS the grounding.
 
-    ⚠ **FOUND WRITING THIS FILE, and it is not what it looks like.** The first draft asserted
-    that the Legal facts the AI receives mention acceptance. It went RED — and the entry is not
-    stale. `page-legal`'s **`interpret`** field carries a full, ruled *"Accepting the terms"*
-    section (declining is a real answer; a changed document re-asks; a reset clears acceptance).
-    **The AI never sees a word of it.**
+    `help_facts` carried `body` alone. It now carries the entry's MEANING unconditionally
+    (`body` + `interpret`) plus a budgeted structural tail (`outputs`, `inputs`). What the model is
+    handed is the grounding, so this shape is pinned: widening or narrowing it again must be a
+    deliberate, visible change rather than a side effect of editing a projection helper.
 
-    `search_help` projects to `(id, category, title, body)` (`help.py:1358-1359`) and `help_facts`
-    hands `body` alone to the model (`tools.py:145-148`). So *"one source serves both consumers"*
-    (`help.py:4-6`) is true of the SOURCE and not of the VIEW: the Help page renders the whole
-    entry, and the model is given its opening paragraph. Asked *"why do I have to accept terms"*,
-    the AI is handed a paragraph about the document's six-article STRUCTURE while the corpus holds
-    the actual answer one field away.
-
-    **This test does not fix that, and deliberately does not assert a richer projection** — what
-    the fact pack should carry is a scoping decision (pack size, and the validation contract's
-    verbatim-quoting surface both change with it), and it is filed as an open item in
-    `CURRENT.md` rather than settled by whoever happened to be writing a test. What it DOES do is
-    pin the projection as it stands, so widening it becomes a deliberate, visible change to what
-    the model is fed rather than a side effect of editing a search function.
+    `search_help`'s own return shape is deliberately UNCHANGED — it is the Help page's
+    search-result contract (`test_help.py` pins its four keys). Widening the AI's view was never a
+    reason to change what the page's type-ahead receives.
     """
+    from app.ai.tools import _HELP_FACT_CORE, _render_help_fact
+    from app.services.help import HELP, strip_markup
+
+    assert _HELP_FACT_CORE == ("body", "interpret"), (
+        f"the core grounding tier changed to {_HELP_FACT_CORE}. Both fields are unconditional by "
+        "ruling: dropping `interpret` under a budget is what hid the acceptance answer from the "
+        "AI in the first place."
+    )
+
+    legal = next(e for e in HELP if e["id"] == "page-legal")
+    rendered = _render_help_fact(legal)
+    assert strip_markup(legal["body"]).strip() in rendered, "the body is missing from the fact"
+    assert "Interpret:" in rendered, (
+        "the interpret section is missing — this is the field the ruling exists to include."
+    )
+    assert "**" not in rendered, (
+        "markdown markers reached the model (help.py:1352-1357 — the AI reads strings, never "
+        "styling)."
+    )
+
+
+def test_the_widened_pack_stays_within_its_pinned_size():
+    """"Scoped" is a size claim, so the size is asserted rather than trusted.
+
+    The ruling widened the pack DELIBERATELY and BOUNDED. These numbers are measured against the
+    corpus as it stands (largest rendered fact 3,254 chars, on `page-legal`). If a future entry
+    pushes past them, that is a content decision to take knowingly — a prompt is a budget, and an
+    unbounded fact pack crowds out the question it is supposed to answer.
+    """
+    from app.ai.tools import _HELP_FACT_BUDGET, _render_help_fact
     from app.services.help import HELP
 
-    bodies = {e["title"]: e["body"] for e in HELP}
-    facts = help_facts("what is xirr")
-    assert facts, "no help facts retrieved"
-    for fact in facts:
-        title = fact.label.removeprefix("Help · ")
-        assert title in bodies, f"retrieved an entry not in the corpus: {title!r}"
-        assert fact.value.strip(), f"{title!r} was handed to the model as an empty fact"
-        # Markup-stripped body, not the raw one — help.py:1352-1357's reason: the AI reads
-        # strings, never styling, so markers must not reach it.
-        assert "**" not in fact.value, (
-            f"{title!r} reached the model with markdown markers in it — help.py:1352-1357."
+    largest = max((len(_render_help_fact(e)), e["id"]) for e in HELP)
+    assert largest[0] <= 4000, (
+        f"the largest rendered help fact is now {largest[0]} chars ({largest[1]}). The pinned "
+        "ceiling is 4000. Raise it deliberately, or shorten the entry."
+    )
+    assert _HELP_FACT_BUDGET == 3600, (
+        f"the optional-tail budget changed to {_HELP_FACT_BUDGET}; it is pinned at 3600."
+    )
+
+    for question in ("why do I have to accept terms", "how do I set a target allocation",
+                     "what is net worth"):
+        total = sum(len(f.value) for f in help_facts(question))
+        assert total <= 12000, (
+            f"the help portion of the fact pack for {question!r} is {total} chars — past the "
+            "pinned 12000 ceiling for three entries. The pack is crowding out the answer."
         )
+
+
+def test_no_help_fact_is_truncated_mid_text():
+    """Whole fields only: a caveat cut in half is worse than one never sent — it reads complete."""
+    from app.ai.tools import _render_help_fact
+    from app.services.help import HELP
+
+    for entry in HELP:
+        rendered = _render_help_fact(entry)
+        if not rendered:
+            continue
+        assert not rendered.endswith(("…", "...")), (
+            f"{entry['id']}'s help fact ends in an ellipsis — something was truncated. Fields are "
+            "included WHOLE or not at all, precisely so a caveat can never stop mid-sentence."
+        )
+
+
+def test_the_legal_entry_the_ai_gets_KNOWS_ABOUT_THE_ACCEPTANCE_GATE():
+    """THE FAIL-FIRST PROOF for the widened fact pack (owner ruling 2026-07-20).
+
+    Post-LEGAL currency at the point the model sees it. `CURRENT.md:72-76` — an AI that describes
+    entry without the consent gate is citing retired fact. Absence of retired words is not
+    presence of current ones, so this is the positive half.
+
+    Seen RED under the body-only projection: the AI was handed
+    `['Help · Legal', 'Help · Help']` and not one of them contained the word "accept", because
+    `page-legal`'s ruled *"Accepting the terms"* section lives in `interpret` — a field
+    `help_facts` did not carry. The corpus held the answer; the model was handed the document's
+    table of contents.
+    """
+    facts = help_facts("why do I have to accept terms")
+    assert facts, "the AI was handed nothing for a question about acceptance"
+    joined = " ".join(f.value.lower() for f in facts)
+    assert "accept" in joined, (
+        "the help facts the AI receives about entering the product never mention acceptance. "
+        f"It was handed: {[f.label for f in facts]}"
+    )
+    assert "declin" in joined, (
+        "the AI is not told that declining is a real answer — the ruled Legal copy says it is "
+        "recorded and the app stays locked. An AI that omits it describes a different product."
+    )
 
 
 def test_the_retrieval_pins_are_not_vacuous():

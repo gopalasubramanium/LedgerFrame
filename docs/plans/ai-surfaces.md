@@ -1164,6 +1164,9 @@ wiped between runs.
 The owner walked the 0a re-drive screenshots and ruled. **This section is the record**; the rulings
 below are quoted or stated in the owner's terms, and each one names what it obliges.
 
+> **→ THE 3b WALK'S RULINGS ARE IN §17, NOT HERE.** This section is the closed record of the **0a**
+> walk. A second walk's rulings appended to it would make one heading describe two events.
+
 ### 14-0. 0a RENDERS RATIFIED — by looking
 
 The owner ratified, **by looking at them**, the renders this milestone put on camera:
@@ -1616,3 +1619,186 @@ sailed past them.
 
 **Re-driven clean: 100/100 again, 18 screenshots.** *A green suite certifies the product, not the
 record of it — and at a walk the record IS the deliverable.*
+
+---
+
+## 17. THE 3b WALK — OWNER ACCEPTANCE, TWO WALK FIXES, AND THE RULED ITEMS (2026-07-20)
+
+**Owner, in chat 2026-07-20: PHASE 3b ACCEPTED, and ALL PROPOSED STRINGS RATIFIED BY LOOKING.**
+
+| Ratified by the look | Was |
+|---|---|
+| The four `AI_TAB_COPY` sentences (§14-3) | PROPOSED |
+| The amended static note on the AI tab (§9(b) / §14-3) | PROPOSED |
+| The three provenance legends (§15-4) | PROPOSED |
+| Model-text **italic** as the `DESIGN-SYSTEM.md` §5 amendment | PROPOSED → **RATIFIED, dated** |
+| `GLOSSARY.md`'s three-kinds section (§15-0) | PROPOSED |
+
+**Acceptance was conditional on two walk fixes**, both found by the owner in the 3a evidence and
+both ruled in the same pass. They are recorded here as rulings rather than as bugs because each
+settles a question the specs had not answered.
+
+> **⊕ A NOTE ON WHERE THIS LIVES.** The owner's instruction said *"record in §14"*. §14 is **THE 0a
+> WALK RULINGS**, a closed dated record of a different walk; appending a second walk's rulings to it
+> would make that record describe two events under one heading — the same defect as §16-F's
+> screenshots overwriting each other. The 3b rulings are therefore recorded **here, in §17**, and
+> §14 carries a pointer. Flagged to the owner in the close report rather than done silently.
+
+### 17-1. WALK FIX — HEADER/LEGEND REDUNDANCY (owner-found, ruled)
+
+The panel stated where the answer goes **twice at once**: the posture line above
+(*"On-device … data stays on this device"*), the provenance legend below (*"…nothing left this
+device"*). Both served, both true — and together they read as two claims the reader must reconcile
+rather than one claim said once.
+
+**RULED — a handover, not a deletion.** One locality statement on screen **at every moment**:
+
+| Moment | Who carries it | Why it is the right one |
+|---|---|---|
+| **pre-answer** | the posture line | a user must know where a question goes **before** sending it, and nothing else on screen can tell them |
+| **post-answer** | the provenance legend | it says where it **actually** went — strictly more than the posture line could promise, because the line describes what is CONFIGURED and the legend reports what HAPPENED (§15-4) |
+
+**Never both, and never neither.** D-067's *"privacy-mode label always visible"* gains a **dated
+reading note** (`docs/audit/DECISIONS.md:357`): the rule is a promise to the READER that a locality
+statement is on screen at all times, not a promise about one particular paragraph. **The rule is
+not weakened; what is settled is what satisfies it.**
+
+**Fail-first, both ways** — 3 red before the fix, including a **counter** reporting **2** locality
+statements. Four tests (`AskPanel.test.tsx` §17-1), and the *never neither* arm is guarded hardest:
+**the obvious reading of this ruling — "drop the posture line" — leaves the pre-ask state with no
+locality statement at all, which WOULD be a D-067 breach.** The count reds at 0 as well as at 2,
+and re-checks after a close/reopen because `reset()` clears the legend. 26/26.
+
+### 17-2. WALK FIX — PHANTOM TIMESTAMPS (owner-found, ruled)
+
+The narration stub closed every answer with *"These figures come from the facts shown above, **as of
+the timestamps listed there**."* **There are no timestamps listed there.** The fact list renders a
+label and a value; the as-of is a `StalenessChip` that renders **only when the fact is stale**. On
+the photographed answer, whose facts were fresh, the sentence pointed at UI that was **not on
+screen** — in the one image the phase exists to produce.
+
+**RULED — corrected to *"These figures come from the facts shown above."*** and guarded: **a fixed
+sentence may not reference UI elements that do not render**, with **the specimen added**.
+
+**Staleness chips are unchanged** and remain the fact-level as-of display: they render when stale,
+and **fresh facts show nothing — which is the honest display, not a gap.** The defect was the
+sentence claiming otherwise, never the chip.
+
+**⚠ OUR FIXED SENTENCES MEET THE SAME TRUTH BAR AS SERVED COPY.** `app/ai/safety.py` clause 2
+rejects a figure that traces to no fact; nothing rejected a **referent** that traces to no rendered
+element. Same defect — an unsupported claim — and **a fixed sentence is the more dangerous carrier
+of it**, because it ships in every narration and every screenshot unexamined, on the strength of
+having been written once by someone thinking about something else.
+
+**Mechanised:** the sentences now have **one committed home** (`tests/stub_narration.py`) which the
+throwaway drive stub imports — *a stub rebuilt each drive is exactly the artefact that re-invents a
+sentence nobody reviewed.* **Fail-first against the drive's ACTUAL sentence: 2 red.** The specimen
+is kept **verbatim** and checked by **the same function as the rule** (a specimen checked by a
+kinder second copy of the rule proves nothing about the rule that runs). **Pinned against going
+blind both ways:** an emptied sentence list makes the parametrized test **vanish** rather than fail;
+an emptied referent list accepts everything.
+
+### 17-3. F8 — `Income (div/int)` SANCTIONED, GLOSSARY-FIRST, NO APP-WIDE RENAME
+
+**RULED.** The short form is recorded on the existing canonical **Income** row of `GLOSSARY.md`
+(the spec spells the term *Income*; `app/services/analytics.py:192` and `app/ai/tools.py:348` show
+`Income (div/int)`), with parity mechanised and **no app-wide rename** — a rename reaches every page
+that shows income, for a problem that exists only where a row is too narrow to say
+*(dividends & interest)*.
+
+**Why nothing caught it, which is the part worth keeping:** it is **not a retired term** (so the
+deprecated-wording guard cannot see it) and **not an alias collision** (so §15-1's de-duplication
+cannot), and it lives in **neither of the two code stores** the parity guard reads. **A fourth
+thing — an abbreviation, reaching the user by a route nothing was measuring.**
+
+**Parity runs BOTH ways, fail-first on each** (`test_glossary_parity.py` §17-3): arm 1, sanction
+removed from the spec — **red**; arm 2, the **anti-blind** arm, site list pointed away from the
+label — **red**. Without arm 2 the pair degenerates into a permanent spec paragraph about a label
+nobody serves, and the next reader takes it for live vocabulary. Row-scoped on purpose: a sanction
+recorded in some other paragraph would pass a substring check while leaving a reader of the
+**Income** row none the wiser — *which is the entire question the abbreviation raises.*
+
+*One sanctioned short form is a vocabulary; a tolerance for abbreviating is how a vocabulary stops
+being one.*
+
+### 17-4. F9 — THE AI TAB SAYS WHEN WRITING TO IT WOULD DO NOTHING
+
+**RULED — a conditional served sentence, rendered ONLY when true:**
+
+> *"This device's configuration is currently set by its environment — changes written here will not
+> take effect until that override is removed."*
+
+Under §15-3's ruling (a) the tab is always **true**: it reports what the process runs. What it never
+said is that a `PUT` writing `.env` may not **change** that. **A true sentence beside an unexplained
+outcome is its own kind of dishonesty** — the user saves, the line reports something else, and the
+reader concludes the save failed or that they misread the tab. Neither is what happened.
+
+**⚠ THE DETECTION IS A DIVERGENCE, NOT A PRESENCE CHECK, AND GETTING THAT WRONG INVERTS THE
+FEATURE.** Under systemd the `.env` file is loaded **as** the `EnvironmentFile`, so on a perfectly
+ordinary, correctly-working install **every key in the file is also an OS environment variable**. A
+presence check would fire this warning **on every such deployment** and tell it that saving does
+nothing, when saving works exactly as promised. What signals an **external** setter is the
+environment holding a value the **file** does not — a systemd `Environment=`, a container `-e`, or
+the isolated harness. A key in the environment and **absent** from the file counts too: an
+`EnvironmentFile` only sets what the file contains.
+
+**Fail-first both ways — 5 red backend, 1 red frontend.** Both directions guarded, because **the
+failure mode of a conditional warning is never "it did not render", it is "it rendered when it was
+not true"**: a device wrongly told its saves do nothing has been given a reason to stop trusting the
+tab at all, which costs more than the warning was worth.
+
+**The client keys on the SERVED SENTENCE, not the flag.** They come apart in exactly one case and it
+is the one worth designing for — a server reporting an override with no wording for it. Keying on
+the flag would put the browser in the position of **inventing** the sentence: §0-C reintroduced in
+the branch where a helpful fallback string is most tempting. **No sentence, no paragraph**, guarded.
+The note **never names the overriding keys or their values** (§8 — the API key is one of them): a
+warning that listed the configuration causing it would be a channel for reading configuration back
+out.
+
+**⊕ KNOWN LIMIT, recorded rather than papered over.** `apply_env` writes the file **and**
+`os.environ` together, so immediately after a save the two agree and the check reads `False` —
+correctly, for the running process. If the override came from a systemd `Environment=`, it reasserts
+at the next restart and the note returns. **The note is honest about what is detectable NOW and
+self-corrects**, rather than claiming to know *who* set an environment variable, which nothing in
+this process can know.
+
+**⊕ THE DETECTOR CAUGHT THE HARNESS BEFORE IT CAUGHT ANYTHING ELSE.** The *mirrors-the-file* test
+went red on its first run, and **the product was right**: `tests/conftest.py:16` does
+`os.environ.setdefault("LEDGERFRAME_AI_ENABLED", "false")` — an external setter holding a key the
+fixture's `.env` did not contain, which is precisely what the check exists to notice. **The fixture
+was claiming to build a MIRROR while leaving a key diverging.** Same family as §16-B(4), where R-56
+bit the harness rather than the product.
+
+### 17-5. ⚑ F10 — THE FRESH-DB `get_history_cached` RACE: ITS OWN DELTA, IMMEDIATELY AFTER THIS CLOSE
+
+**RULED, and recorded here as the ruling requires.**
+
+```
+GET /api/v1/portfolio/performance?days=365&benchmark=SPY&include_manual=false → 500
+  app/services/analytics.py:244  performance_series → get_history_cached(...)
+  app/services/market.py:980     get_history_cached → await session.flush()
+  sqlite3.IntegrityError: UNIQUE constraint failed: settings.key
+```
+
+**Re-verified at this close, not recalled.** `get_history_cached` opens with **three** one-time
+repair blocks (`hist_demo_residue_repaired_v1`, `hist_extended_hours_purged_v1`, and the §12-R3
+wrong-instrument purge), each shaped **`SELECT` marker → if absent, `session.add(Setting(...))` →
+`flush()`**. Two concurrent first-load requests both read absent and both insert; the second hits
+the `UNIQUE` constraint on `settings.key`. **A check-then-insert race, three times over, on the
+fresh-DB path every new install takes.**
+
+**THE DISPOSITION:**
+
+- **Its OWN standalone delta, immediately after this close, BEFORE any R-54 work.**
+- **Fail-first on the reproduced race** — concurrent first-load, not a unit call. *A race that is
+  only reasoned about is a race that gets "fixed" by a change nobody watched work.*
+- **Upsert-shaped fix**, and the **pricing path reviewed in isolation**.
+- **RELEASE-TRAIN BLOCKING — it is a first-run defect**, and the first run is the one impression an
+  install gets to make.
+
+**Why it was not quietly repaired inside this milestone**, stated plainly because the temptation was
+real and the fix looks small: it is **pre-existing**, it is **nothing to do with the AI surfaces**,
+and repairing it here would put an **unreviewed change to the pricing path inside an AI-copy
+milestone** — where no reviewer of this milestone's diff would be looking for it. *The cost of
+carrying a known defect one delta further is smaller than the cost of a change landing where nobody
+is looking for it.*

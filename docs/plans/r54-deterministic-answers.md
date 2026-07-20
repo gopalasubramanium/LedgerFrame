@@ -30,6 +30,8 @@ row lacks a disposition.** This plan is the rule's first user.*
 | **I-2** | Intake | **Fixture hygiene** — `frontend/src/components/ui/AskPanel.test.tsx:27` mocks `privacy_label` with a **live served string**; make it obviously synthetic | `ROADMAP.md` R-54 (ii) — **⚠ premise corrected, see §0-K** | **OPEN** |
 | **I-3** | §9 | **Posture-descriptor unification** — "OpenAI-compatible endpoint" vs "Ollama-compatible" | `ROADMAP.md` R-54 (iii); decision-shaped, so §9-G not intake | ✅ **DISPOSITIONED 2026-07-20 — UNIFY** (§9-G). One user-facing descriptor, **"Ollama-compatible"**; "Hailo" leaves served copy. **The ruling is closed; the STRINGS ratify at 0a by looking** — the ledger distinguishes the two |
 
+| **F-1** | Finding | **`Total liabilities` is not a GLOSSARY term** — GLOSSARY has **Liability** (`:67`, singular, an asset-class concept) and uses "Liabilities" only inside Net worth's definition prose (`:65`); neither sanctions it as a **figure label**, yet `networth_facts` (`tools.py:330-332`) serves it to users | Found at Phase 0-2a (`0d19a5a`) building the registry — by the first guard ever to measure the **AI's fact labels** against GLOSSARY | **⚑ OPEN — OWNER RULING OWED.** Not renamed: a GLOSSARY spelling is not settled in a Phase-0 delta. Carried as a **declared, reasoned exemption** in `LABELS_NOT_IN_GLOSSARY` (the `_HEADING_NOT_A_TERM` convention) so the guard stays strict and the question stays visible. Its sibling — `Total assets` → **`Gross assets`** — was **APPLIED**, being an existing ratified spelling (D-021, `GLOSSARY.md:66`) |
+
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
 
@@ -806,6 +808,124 @@ allocation facts to that question's pack.
 
 **Help currency:** no user-facing string changed in this delta — internal routing only. Stated here;
 **the milestone's Help delta is owed at close** (§9-I), not at this phase.
+
+---
+
+### Phase 0-2a — THE REGISTRY, AI-SIDE ONLY (`0d19a5a`) — DONE
+
+**Ruled at §9-B, split into 0-2a/0-2b by chat ruling 2026-07-20.** `app/services/figure_registry.py`
+is the one table: **21 rows**, each `figure_id → canonical GLOSSARY label → canonical endpoint +
+field`, carrying `term_id` and aliases. `FIGURE_IDENTITY` is **absorbed** — the table is gone from
+`app/ai/tools.py`, and its two functions keep their exact contracts so `_dedupe` is untouched by the
+move. **`analytics.py` is untouched**, as ruled.
+
+**Why it lives in `app/services`, not `app/ai`.** 0-2b has `analytics.py` derive from it, and
+analytics is a **portfolio** surface. A registry under `app/ai/` would make a non-AI page import the
+AI package to learn its own figures' names — a layering inversion, and the kind that is very hard to
+undo once something depends on it. Nothing in the module imports from `app/ai`.
+
+#### ⚑ F-1 — A LIVE GLOSSARY VIOLATION, INSIDE THE MAP BUILT TO PREVENT IT
+
+`FIGURE_IDENTITY`'s whole job was relabelling figures to their **GLOSSARY spelling** — its own
+comment cites `GLOSSARY.md:157/161` for exactly that. Two of its nine rows carried labels
+**GLOSSARY does not have**:
+
+| Served label | GLOSSARY says |
+|---|---|
+| `Total assets` (`tools.py:60`) | **Gross assets** (`GLOSSARY.md:66`) — "Total value" was already D-021-retired |
+| `Total liabilities` (`tools.py:61`) | **Liability** (`GLOSSARY.md:67`), singular, an asset-class concept |
+
+`networth_facts` (`tools.py:330-332`) has been **serving both to users** in the fact pack the panel
+renders under *"What this is built from"*. CLAUDE.md's hard rule is that every term shown to a user
+exists in GLOSSARY with that exact spelling.
+
+**Nothing could see it.** `test_glossary_parity` measures the **Help store** against the spec —
+GLOSSARY is its enforced parent — and the **AI's fact labels were never in any store it reads**.
+The three-store guard had a fourth store.
+
+**Disposition, split by whether a decision is required:**
+
+* **`Total assets` → `Gross assets` — APPLIED.** Not a new decision: the GLOSSARY term exists and
+  the same row cites D-021. `"total assets"` survives as an **alias**, so old labels still resolve
+  and absorbing the map drops no mapping (`test_gross_assets_carries_the_retired_label_as_an_alias`).
+* **`Total liabilities` — ⚑ OPEN, F-1, for the owner.** GLOSSARY has **Liability** (singular) and
+  uses the word *"Liabilities"* only inside Net worth's definition prose. Neither sanctions it as a
+  **figure label**. **NOT renamed here** — which spelling is right is an owner call, and it is
+  carried as a **declared exemption with a reason** in `LABELS_NOT_IN_GLOSSARY`, the
+  `_HEADING_NOT_A_TERM` convention: *exempt BY NAME WITH A REASON — never by silence, and never by
+  loosening the match*. The guard stays strict; the question stays visible.
+
+**What turns red now:** `test_every_canonical_label_is_a_glossary_term_or_a_declared_exemption` —
+the first guard in this product to measure **the AI's fact labels** against GLOSSARY — plus
+`test_exemptions_are_not_stale`, so an exemption cannot outlive the row it covers.
+
+#### Two more findings from building it
+
+**`term_id` IS ONE-TO-MANY, and the ruling's phrasing (*"term-id → fact identity"*) implies
+one-to-one.** `term-xirr-twr` covers **2** figures, `term-allocation-weight` **4**,
+`term-concentration` **2**. So the table is keyed by **`figure_id`** — which *is* unique — and
+`figures_for_term()` returns a **tuple, not a row**. This is not a workaround: it is the correct
+tier-1(a) behaviour, since *"what is XIRR"* should show the explanation alongside **both** XIRR and
+TWR, and the Help entry is itself a two-term heading `test_glossary_parity` already declares.
+
+**Net worth has NO `term-*` Help entry.** The headline figure and a GLOSSARY term, with nothing in
+the Help glossary to explain it — so `term_id=None` is a **real answer** in the schema, not a gap to
+fill with a guess. Tier-1(a) may show the figure without an explanation and **must not invent one**
+(`test_a_figure_may_have_no_help_entry_and_that_is_a_real_answer`). Likely **R-55** Help-content
+territory; **not filed by this delta**.
+
+#### The ruled fail-firsts — five mutations, each on the right guard
+
+| Mutation | Guard that fired |
+|---|---|
+| `"net worth"` aliased onto `gross_assets` | `test_no_label_resolves_to_two_figures` |
+| Two rows claiming the same `(endpoint, field)` | `test_no_two_rows_claim_the_same_canonical_source` |
+| A `CAGR` row added | `test_no_registry_row_for_a_prohibited_figure` (D-086) |
+| Endpoint typo'd to an unrouted path | `test_every_row_names_an_endpoint_the_app_actually_routes` |
+| An undeclared non-GLOSSARY label | `test_every_canonical_label_is_a_glossary_term_or_…` |
+
+The endpoint guard checks each row against the **frozen contract**, not a plausible-looking string —
+so an aspirational endpoint reds rather than shipping as a dead promise.
+
+⚠ **The collision guard caught my own data first.** Its first RED was a **self**-collision: rows
+listing the canonical label again inside `aliases`. The guard was right and the table was redundant.
+Both were fixed — the aliases cleaned, and the guard made precise (it compares **figures**, not
+names, and separately forbids a row repeating its own canonical label), so a genuine ambiguity can
+never again hide behind a self-collision.
+
+#### The transitional two-sources state, made safe the F6 way
+
+As ruled: `analytics.py` keeps its 18 inline `term_id`s for exactly one delta, so the mapping
+briefly lives in two places — *the* defect this registry exists to end.
+`test_analytics_inline_term_id_equals_the_registry` parametrises over **all 18**, AST-parsed (the
+Phase 0-1 lesson: a guard that reads comments finds claims, not code) with a **blindness pin on the
+parser** so a drifted parser cannot pass over an empty list. Coverage is asserted in both directions.
+**The test documents its own deletion at 0-2b** — if it is still here afterwards, that is the bug.
+
+#### One existing guard repointed, deliberately
+
+`test_the_figure_identity_map_is_not_empty` (`test_ai_fact_pack_canonical.py`) imported
+`FIGURE_IDENTITY`; §9-B moved its **subject**. It is **repointed, not deleted** — deleting a
+blindness pin because its import broke is a guard silently retired, precisely the failure the pin
+exists to prevent — and **strengthened**: it now asserts both that identities are declared *and*
+that the lookup `_dedupe` actually calls still resolves one. An empty registry and a registry the
+resolver cannot reach are both "protecting nothing", and only the first was visible before.
+
+#### Gates — solo, uncontended
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** | **2014 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | `**2014 passed, 15 skipped** — exit 0` |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** — no path, no schema |
+
+1982 → 2014; the +32 are this delta's guards.
+
+**Help currency:** no served string changed. `Total assets` → `Gross assets` moves a **fact-pack
+label**, which *is* user-visible — but it moves it **onto** the ratified GLOSSARY spelling, so the
+Help accuracy corpus binds to a term that now matches the spec rather than diverging from it. The
+milestone's Help delta is owed at close (§9-I).
 
 ---
 

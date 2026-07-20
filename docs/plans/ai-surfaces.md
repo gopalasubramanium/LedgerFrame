@@ -611,3 +611,96 @@ PROPOSED at 0a.
 
 *(Recorded before the ruling: Phase 0 deltas 6–8 were unaffected and continued; the string was left
 unwritten rather than guessed. (b) was ruled, and the state was deleted rather than worded.)*
+
+---
+
+## 10. PHASE 0a — THE SPECIMEN (isolated instance, 2026-07-20)
+
+**Driven on an isolated stack** — backend `:8399` on a temp data dir with the demo seed, Vite dev
+`:5199`, and a local stub model on `:8401`. The owner's `:8321`/`:5173` were **verified still
+listening and untouched**; `.env` was snapshotted and **verified byte-identical afterwards**;
+throwaway drivers deleted. `SMOKE_ALLOW_LIVE` was never set.
+
+*The stub model is the only faked component, and it is the one the specimen cannot ship: it returns
+a deliberately ungrounded answer so the **real** validator, the **real** fallback and D-070's
+**real** served signal are exercised end to end rather than mocked.*
+
+### 10-A. What the driver asserted — 18/18, both themes, zero console errors
+
+Privacy label visible on open · fact pack rendered · `Net worth` label live in a served answer (the
+Phase 0.6 fix) · served disclaimer present · **D-070's signal byte-identical to the ruled wording**
+· reopening discards the exchange · no-egress posture stated · an answer still complete under
+no-egress · explainer opens seeded with its scoped question. Console errors excluding the
+acceptance-gate 451s: **none**.
+
+**451 at the AI paths, on a genuinely unaccepted install** — `/ai/facts`, `/ai/grounding-status`,
+`/ai/status`, `/ai/chat`, `/briefing`, `/system/ai-config` all **451**, and **451 for a
+token-bearing caller** too.
+
+### 10-B. ⛔ FINDING 1 — THE FACT PACK IS UNREADABLE, AND EVERY ASSERTION PASSED THROUGH IT
+
+**This is the specimen's whole justification, and it is a defect I shipped.**
+
+`docs/plans/assets/ai-0a-ask-grounded-light.png` and `…-fallback-signal-dark.png` show the panel
+answering *"what is my net worth?"*. The four real figures render correctly at the top — and then
+**three help entries render their entire bodies plus `Interpret:` sections as walls of prose**,
+consuming the whole panel. In the file named **`fallback-signal`**, **D-070's signal is not visible
+at all.** Neither is the answer. Neither is the disclaimer. All three are below the fold.
+
+**Cause — and it is a seam I created, not a rendering bug.** Phase 0.9 widened the fact pack on the
+owner's ruling, correctly, *for the model*: `body` + `interpret` unconditional so the AI stops
+answering an acceptance question from a table of contents. But the panel renders **the same list to
+the user**, so a change scoped to *what the model reads* silently became a change to *what the
+person sees*. **The pack fed to the model and the pack shown to the reader were never separated,
+because until Phase 1 there was no reader.**
+
+**Why no gate caught it.** Every assertion queried the **DOM**, and every one was true — the signal
+*is* present, the disclaimer *is* present, the facts *do* precede the answer. Nothing asked whether
+any of it was **on screen**. That is page-legal §11-J's lesson recurring inside my own driver: *a
+check that asks whether a thing WORKS cannot see that it is unusable* — and a screenshot assertion
+of DOM presence is exactly that check wearing a camera.
+
+**⚑ OWNER CALL, not fixed here.** The fix is a **display projection**: show each help fact by its
+title and first line, expandable, while the model keeps the full widened text. But *"what the reader
+sees versus what the model gets"* is the same scoping question the owner just ruled on for the
+model side — and this finding **is what guessing at that scope produced the first time**. Options:
+**(a)** display projection as above, pack unchanged; **(b)** separate `display_facts` from
+`model_facts` on the server, which is honest but a contract change; **(c)** rule the walls
+acceptable. **Recommendation: (a)** — smallest, keeps one served list, and the fact pack's job is
+*"you can see what this rests on"*, which a wall of prose defeats rather than serves.
+
+### 10-C. ⚠ FINDING 2 — a refusal is still described as a connectivity failure, in a served field
+
+Under no-egress, `/ai/grounding-status` serves the correct posture **and** this `last_error`:
+
+> *"cannot connect to `http://127.0.0.1:8401/v1` — verify it's reachable from the device running
+> LedgerFrame (try: `curl …`)"*
+
+Nothing failed to connect. **The product refused to call it.** Phase 0.5 fixed exactly this
+confusion in `chat()` via the typed `EgressBlocked` re-raise; `health()` → `list_models()` still
+swallows it into a generic "cannot connect" and `last_error` **serves that to the client**.
+
+**Not user-visible today** — the Ask panel does not render `last_error` — so it is a finding, not a
+regression. But it is a **served string that misdescribes the product's own posture**, which is the
+exact class this milestone exists to close, and it would mislead the first operator to read it.
+Small fix, deliberately **not** taken unilaterally: it is outside the ruled (f) scope.
+
+### 10-D. Gates at the specimen
+
+Backend **1899 / 15 skipped**, solo (`pgrep pytest` = 0), ordered · `npm run check` **exit 0** —
+41 files / **390** vitest / **361** Playwright / lint / typecheck / `check:tokens` /
+`check:copy` / `check:smoke-isolation` / `check:primitives` · `ruff check .` **clean** ·
+`make lint` **clean** (it was RED at `06dbe15` — §14-D) · contract **exit 0, 141 paths / 71
+schemas**, unchanged.
+
+### 10-E. PROPOSED — awaiting the owner's look
+
+Posture copy (both states) · the Ask panel's empty-state and composer copy · the four new GLOSSARY
+entries (Ask panel · Fact pack · Grounding · Validation contract) · the `ask` Help entry · the
+Settings AI-tab note. **No DESIGN-SYSTEM amendment is proposed** — the panel and the explainer are
+composition-only, and `check:primitives` is green.
+
+### 10-F. Owed, and stated as owed
+
+`page-settings.md` §15st-1's **pre-pass re-run** is **still incomplete**: this run drove the AI
+surfaces, not the Settings AI tab whose rendered copy changed. It runs with the fix for Finding 1.

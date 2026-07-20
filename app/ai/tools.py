@@ -15,15 +15,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.money import format_fact_display
 from app.models import Watchlist
 from app.schemas.ai import GroundingFact
 from app.services.figure_registry import canonical_label, figure_for_label
 from app.services.market import get_cached_quote
 from app.services.portfolio import top_movers, value_portfolio
 
-
-def _fmt(value, ccy: str) -> str:
-    return f"{value:,.2f} {ccy}"
+# ⊕ R-54 F-3 — `_fmt` IS GONE. It was `f"{value:,.2f} {ccy}"`, a second home for rendering logic,
+# and it rendered a sub-cent token as `0.00 USD` — precisely what D-105 exists to prevent
+# (`money.py:19-20`, verbatim). All rendering now lives in `money.py`; the pack's ratified
+# conventions are the named variant `format_fact_display`. See its docstring for what did and did
+# not change.
 
 
 # --- FIGURE IDENTITY (AI-surfaces §14-3 / Finding 5, owner-ruled 2026-07-20) -------------------- #
@@ -77,9 +80,9 @@ async def portfolio_facts(session: AsyncSession) -> list[GroundingFact]:
     val = await value_portfolio(session, base)
     now = datetime.now(UTC)
     facts = [
-        GroundingFact(label="Net worth", value=_fmt(val.total_value, base), timestamp=now),
-        GroundingFact(label="Total unrealised P/L", value=_fmt(val.unrealised_pl, base), timestamp=now),
-        GroundingFact(label="Today's change", value=_fmt(val.day_change, base), timestamp=now,
+        GroundingFact(label="Net worth", value=format_fact_display(val.total_value, base), timestamp=now),
+        GroundingFact(label="Total unrealised P/L", value=format_fact_display(val.unrealised_pl, base), timestamp=now),
+        GroundingFact(label="Today's change", value=format_fact_display(val.day_change, base), timestamp=now,
                       is_stale=val.has_stale),
     ]
     if val.total_return_pct is not None:
@@ -94,10 +97,10 @@ async def movers_facts(session: AsyncSession) -> list[GroundingFact]:
     now = datetime.now(UTC)
     facts: list[GroundingFact] = []
     for g in gainers:
-        facts.append(GroundingFact(label=f"Gainer {g.label}", value=_fmt(g.day_change_base, base),
+        facts.append(GroundingFact(label=f"Gainer {g.label}", value=format_fact_display(g.day_change_base, base),
                                    timestamp=now, is_stale=g.is_stale))
     for loser in losers:
-        facts.append(GroundingFact(label=f"Detractor {loser.label}", value=_fmt(loser.day_change_base, base),
+        facts.append(GroundingFact(label=f"Detractor {loser.label}", value=format_fact_display(loser.day_change_base, base),
                                    timestamp=now, is_stale=loser.is_stale))
     return facts
 
@@ -112,7 +115,7 @@ async def allocation_facts(session: AsyncSession, key: str = "asset_class") -> l
     now = datetime.now(UTC)
     return [
         GroundingFact(label=f"Allocation ({key}) — {k}",
-                      value=f"{_fmt(v, base)} ({v / gross * 100:.1f}%)", timestamp=now)
+                      value=f"{format_fact_display(v, base)} ({v / gross * 100:.1f}%)", timestamp=now)
         for k, v in sorted(alloc.items(), key=lambda kv: kv[1], reverse=True)
         if v > 0
     ]
@@ -141,7 +144,7 @@ async def watchlist_quote_facts(session: AsyncSession) -> list[GroundingFact]:
                                        source=q.source, entitlement="unavailable"))
         else:
             facts.append(GroundingFact(
-                label=instr.symbol, value=_fmt(q.price, q.currency), source=q.source,
+                label=instr.symbol, value=format_fact_display(q.price, q.currency), source=q.source,
                 timestamp=q.received_at, entitlement=q.entitlement.value, is_stale=q.is_stale))
     return facts
 
@@ -160,7 +163,7 @@ async def market_facts(session: AsyncSession, limit: int = 14) -> list[Grounding
                 continue
             chg = f" ({q.change_pct:+.2f}%)" if q.change_pct is not None else ""
             facts.append(GroundingFact(
-                label=label, value=f"{_fmt(q.price, q.currency)}{chg}", source=q.source,
+                label=label, value=f"{format_fact_display(q.price, q.currency)}{chg}", source=q.source,
                 timestamp=q.received_at, entitlement=q.entitlement.value, is_stale=q.is_stale))
             if len(facts) >= limit:
                 return facts
@@ -344,9 +347,9 @@ async def networth_facts(session: AsyncSession) -> list[GroundingFact]:
     assets = sum((h.market_value_base for h in val.holdings if h.market_value_base > 0), Decimal(0))
     liabilities = -sum((h.market_value_base for h in val.holdings if h.market_value_base < 0), Decimal(0))
     return [
-        GroundingFact(label="Net worth", value=_fmt(val.total_value, base), timestamp=now),
-        GroundingFact(label="Total assets", value=_fmt(assets, base), timestamp=now),
-        GroundingFact(label="Total liabilities", value=_fmt(liabilities, base), timestamp=now),
+        GroundingFact(label="Net worth", value=format_fact_display(val.total_value, base), timestamp=now),
+        GroundingFact(label="Total assets", value=format_fact_display(assets, base), timestamp=now),
+        GroundingFact(label="Total liabilities", value=format_fact_display(liabilities, base), timestamp=now),
     ]
 
 
@@ -389,7 +392,7 @@ async def performance_facts(session: AsyncSession) -> list[GroundingFact]:
             #
             # The validator is format-insensitive (`_sig3` compares leading significant digits),
             # so this changes what the reader sees without changing what the model may cite.
-            value = _fmt(Decimal(str(v)), base)
+            value = format_fact_display(Decimal(str(v)), base)
         if m.get("note"):
             value += f" ({m['note']})"
         facts.append(GroundingFact(label=m["label"], value=value))
@@ -405,7 +408,7 @@ async def holdings_facts(session: AsyncSession, n: int = 8) -> list[GroundingFac
     return [
         GroundingFact(
             label=(h.name or h.label),
-            value=f"{_fmt(h.market_value_base, base)} ({h.market_value_base / gross * 100:.1f}%)",
+            value=f"{format_fact_display(h.market_value_base, base)} ({h.market_value_base / gross * 100:.1f}%)",
             is_stale=h.is_stale)
         for h in priced if h.market_value_base > 0
     ]
@@ -480,7 +483,7 @@ async def _one_instrument_facts(session: AsyncSession, sym: str) -> list[Groundi
 
     if q.price is not None:
         chg = f" ({q.change_pct:+.2f}% today)" if q.change_pct is not None else ""
-        out.append(GroundingFact(label=f"{label} price", value=f"{_fmt(q.price, q.currency)}{chg}",
+        out.append(GroundingFact(label=f"{label} price", value=f"{format_fact_display(q.price, q.currency)}{chg}",
                                  source=q.source, timestamp=q.received_at,
                                  entitlement=q.entitlement.value, is_stale=q.is_stale))
     else:
@@ -500,7 +503,7 @@ async def _one_instrument_facts(session: AsyncSession, sym: str) -> list[Groundi
             hi = max(float(c.high) for c in candles if c.high is not None)
             lo = min(float(c.low) for c in candles if c.low is not None)
             out.append(GroundingFact(label=f"{label} 6-month range",
-                                     value=f"{_fmt(Decimal(str(lo)), q.currency)} – {_fmt(Decimal(str(hi)), q.currency)}",
+                                     value=f"{format_fact_display(Decimal(str(lo)), q.currency)} – {format_fact_display(Decimal(str(hi)), q.currency)}",
                                      timestamp=end))
     except Exception:  # noqa: BLE001
         pass

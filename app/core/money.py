@@ -35,6 +35,42 @@ def format_price_display(value: Decimal | None, asset_class: object = None) -> s
     return format(p.quantize(CENTS, rounding=ROUND_HALF_UP), ",.2f")
 
 
+def format_fact_display(value: Decimal | None, currency: str) -> str | None:
+    """A served display string for a GROUNDING-FACT amount: grouped thousands + currency suffix.
+
+    THE NAMED PACK VARIANT (R-54 F-3, owner ruling 2026-07-21). The fact pack used to carry its own
+    renderer — ``_fmt = f"{value:,.2f} {ccy}"`` in ``app/ai/tools.py`` — and that second home for
+    rendering logic is what produced the defect: a token priced ``0.00004567`` reached the user as
+    **``0.00 USD``**, on the one surface built to be honest about where numbers come from. The rule
+    stated at the top of this module governs the pack too, so the pack's renderer now lives HERE.
+    *The F6 fix is not "one function"; it is "no rendering logic outside money.py."*
+
+    It shares the D-105 CORE — ``ROUND_HALF_UP``, ``None`` passthrough, sub-cent precision — and
+    keeps the pack's own RATIFIED CONVENTIONS: thousands grouping and a currency suffix. It does
+    **not** adopt the compact price style: ``68000.50`` stays ``68,000.50``, trailing zeros intact.
+    That style remains the tape/price-display convention (``format_price_display``), and ratified
+    rendering moves only where the defect was.
+
+    **The sub-cent escalation is VALUE-driven, not class-driven, and that is deliberate.**
+    ``format_price_display`` keys on ``asset_class == crypto`` and would render *every* crypto
+    figure at 6 significant digits — which would restyle ``68,000.50`` and breach the ruling above.
+    Escalating only when 2dp would print a non-zero value as ``0.00`` fixes exactly the defect and
+    nothing else, and it protects a sub-cent price of any class rather than only the one that
+    happened to expose it. A true zero still renders ``0.00`` — a legitimate zero is not sub-cent.
+
+    ``None`` passes through so an unpriced fact stays honestly empty and never becomes a fabricated
+    ``0`` (Guarantee 3) — closing, by construction, a path where the old renderer raised
+    ``TypeError``.
+    """
+    if value is None:
+        return None
+    d = D(value)
+    cents = d.quantize(CENTS, rounding=ROUND_HALF_UP)
+    subcent = cents == ZERO and d != ZERO
+    rendered = format(_SIG6.create_decimal(d), ",f") if subcent else format(cents, ",.2f")
+    return f"{rendered} {currency}"
+
+
 def format_money_display(value: Decimal | None) -> str | None:
     """A served display string for a MONEY amount: grouped thousands, 2dp (page-heatmap §12hm1-1,
     D-105 posture — the frontend renders it verbatim and formats nothing). None passes through, so

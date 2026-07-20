@@ -26,7 +26,7 @@ row lacks a disposition.** This plan is the rule's first user.*
 
 | # | Kind | Item | Origin | Disposition |
 |---|---|---|---|---|
-| **I-1** | Intake | **Contention-robustness fix** — `tests/integration/test_ai_facts_routing.py:34` (`test_performance_question_pulls_risk_metrics`) fails only under machine contention, passes solo | `r43-historical-backfill.md` §18-F7d → re-assigned post-close, `ai-surfaces.md` §19-K → `ROADMAP.md` R-54 (i) | **OPEN** |
+| **I-1** | Intake | **Contention-robustness fix** — `tests/integration/test_ai_facts_routing.py:34` (`test_performance_question_pulls_risk_metrics`) fails only under machine contention, passes solo | `r43-historical-backfill.md` §18-F7d → re-assigned post-close, `ai-surfaces.md` §19-K → `ROADMAP.md` R-54 (i) | **OPEN — ⊕ root-cause HYPOTHESIS recorded at Phase 0-1 (`88c5ce4`):** the failure is likely a **date-aware coverage / seed-state dependency, NOT machine contention** — `performance_facts` skips `None`-valued metrics (`tools.py:352-353`) and every metric the assertion can be satisfied by is `value if da_computable else None` (`analytics.py:205-210`), so an uncovered window nulls **all** of them at once. Its delta must also account for Phase 0-1 **changing this question's routing** (now `RISK_CONCENTRATION → {perf, alloc}`) against the 20-fact cap |
 | **I-2** | Intake | **Fixture hygiene** — `frontend/src/components/ui/AskPanel.test.tsx:27` mocks `privacy_label` with a **live served string**; make it obviously synthetic | `ROADMAP.md` R-54 (ii) — **⚠ premise corrected, see §0-K** | **OPEN** |
 | **I-3** | §9 | **Posture-descriptor unification** — "OpenAI-compatible endpoint" vs "Ollama-compatible" | `ROADMAP.md` R-54 (iii); decision-shaped, so §9-G not intake | ✅ **DISPOSITIONED 2026-07-20 — UNIFY** (§9-G). One user-facing descriptor, **"Ollama-compatible"**; "Hailo" leaves served copy. **The ruling is closed; the STRINGS ratify at 0a by looking** — the ledger distinguishes the two |
 
@@ -711,6 +711,103 @@ Backend-first because every later phase consumes it. Each delta **fail-first RED
 - **0-6 — The served-shape pins (§3b).** `/ai/facts` and the `facts`/`provenance` SSE events. **The
   contract cannot see these shapes; this is what turns red.** Contract **141/71 restated unchanged,
   no regen.**
+
+### Phase 0-1 — ONE ROUTER (`88c5ce4`) — DONE
+
+**Ruled at §9-A; this is the delta.** `classify_intent`'s closed enum is now the single intent
+authority, `INTENT_FACT_SOURCES` is the one table, and `gather_facts` no longer routes.
+
+**FAIL-FIRST — 5/5 RED on the pre-fix build**, asserted at the **served pack**
+(`tests/integration/test_intent_word_boundary.py`, driving `POST /ai/chat` and reading the `facts`
+event the panel renders). The F5 lesson governed the level: the defect is a **routing bypass**, so a
+matcher-level test passes straight through it. The clearest specimen:
+
+```
+"remove a holding" pulled movers facts via the "mov" substring:
+['Gainer BTC', 'Gainer D05', 'Gainer Emergency cash',
+ 'Detractor VOO', 'Detractor MSFT', 'Detractor NVDA']
+```
+
+**What shipped.**
+
+| Change | File |
+|---|---|
+| `WATCHLIST_QUESTION` added to the enum | `app/ai/intent.py` |
+| Market / portfolio rules gained the vocabulary their flags carried | `app/ai/intent.py` |
+| `INTENT_FACT_SOURCES` — the one table — + `fact_sources()`, which **raises** on an unmapped intent | `app/ai/intent.py` |
+| Eight flags become a projection of the table; the `has(*ws)` substring matcher deleted | `app/ai/tools.py` |
+| The **second `classify_intent` call** removed — it was the visible seam between the two routers | `app/ai/tools.py` |
+| The allocation axis check word-boundary matched (`\bcurrenc(?:y\|ies)\b`) | `app/ai/tools.py` |
+
+**Two things the survey did not predict, handled rather than papered over.**
+
+1. **The enum could not express everything the flags could.** `is_watch` had **no intent**, so a
+   literal consolidation would have **silently dropped watchlist routing** — the capability would
+   have died inside a refactor that reported success. Hence `WATCHLIST_QUESTION`. For the same
+   reason the market rule gained `markets?`/`indices`/the remaining index names and the portfolio
+   rule gained `assets?`/`liabilit\w*`/`cash`/`wealth`/`positions?`: **an authority that cannot name
+   a route cannot own it**, and "one router" must not mean "a narrower product."
+2. **`RISK_CONCENTRATION` legitimately needs two sources.** The old flags reached both **by
+   accident** — the word *"risk"* happened to sit inside `is_perf`'s list — so the table maps it to
+   `{perf, alloc}` **on purpose**. Written down because the accident and the intention are
+   indistinguishable from the behaviour alone.
+
+**Guards, and both RED paths observed** (`tests/unit/test_intent_routing_table.py`, 11 tests):
+
+| Mutation | Result |
+|---|---|
+| A flag regrows a question-text check (`is_market = "market" in q`) | **RED**, as intended |
+| The derivation disappears entirely | **RED via the BLINDNESS PIN**, not a vacuous pass |
+
+Coverage (every `Intent` has a row) · no unknown source declared · `fact_sources()` raises on an
+unregistered intent, **proven** not assumed · the substring specimens pinned at the classifier too ·
+the honest miss returns `UNKNOWN_GENERAL_QUESTION` **and an empty source set**.
+
+**⚠ A GUARD CAUGHT ITSELF, AND IT IS THE LESSON OF THIS DELTA.** The "only one routing authority on
+disk" test was first written as a **substring sweep of the source text** and went **RED on
+`app/ai/tools.py`** — whose only mention of the table is a **comment** explaining where its flags now
+come from. *A guard that reads comments finds claims, not code* — precisely page-help §9-bis-9(d)
+(a guard that read comments found *"the control exists"* corroborated by a comment saying it did
+**not** exist yet), and precisely why `check-ui-primitives.mjs:54-62` strips comments before
+scanning. Rewritten to walk the **AST**, so only a real `Name`/`Attribute` reference counts: it
+cannot be tripped by prose, and cannot be silenced by deleting a comment. **Recorded rather than
+quietly fixed** — the near-miss is worth more than the fix.
+
+**Gates — solo, uncontended.**
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** (`-p no:randomly`) | **1982 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | `**1982 passed, 15 skipped** — exit 0` |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** (no path, no schema — §3b) |
+
+Baseline before the delta was **1966**; the +16 are this delta's own (5 served-pack specimens +
+11 structural guards).
+
+**⊕ I-1 — A ROOT-CAUSE HYPOTHESIS, FROM READING THE CODE THIS DELTA TOUCHED.** `I-1` is
+`test_performance_question_pulls_risk_metrics`, and this delta **changed how its question routes**
+(now `RISK_CONCENTRATION → {perf, alloc}`, previously `is_perf → {perf}`), so "it passed" is not a
+sufficient report. Reading the path it now takes:
+
+`performance_facts` **skips any metric whose value is `None`** (`app/ai/tools.py:352-353`), and every
+metric the test's assertion can be satisfied by — `1Y volatility`, `Return / volatility`,
+`Max drawdown (1Y)` — is served as `value if da_computable else None`
+(`app/services/analytics.py:205-210`). So when the **date-aware window is not covered**,
+`da_computable` is `False`, **all** of those metrics become `None`, all are skipped, and the
+assertion `("volatility" in joined or "drawdown" in joined)` fails.
+
+**That is a coverage/seed-state dependency, not machine contention** — which would explain why it
+"passes solo" (the seeded backfill has settled) without any of the gates ever being able to see it.
+**Not fixed here** — I-1 is its own intake row and its own delta; this is the evidence that delta
+should start from, rather than re-running the test and blaming the machine. **The fix must also
+account for the routing change above**: the pack is capped at 20 (`_dedupe`), and this delta added
+allocation facts to that question's pack.
+
+**Help currency:** no user-facing string changed in this delta — internal routing only. Stated here;
+**the milestone's Help delta is owed at close** (§9-I), not at this phase.
+
+---
 
 ### Phase 0a — THE SPECIMEN, RATIFIED BY LOOKING *(isolated instance; expect 1–3 revision loops)*
 

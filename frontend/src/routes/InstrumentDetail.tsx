@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import "./InstrumentDetail.css";
 import {
+  AskPanel,
   Dialog,
   EmptyState,
   MasterSelect,
@@ -191,6 +192,10 @@ export function InstrumentDetail() {
         }
         actions={
           <>
+            {/* INSTRUMENT EXPLAINER (D-068) — "rides P-6", so it is the Ask panel opened with a
+                scoped question, NOT a second surface and not a second model path. Narration of
+                the Briefing is deferred to R-45 and no affordance for it appears anywhere. */}
+            <AskPanel label="Explain" seedQuestion={`Explain ${sym} — what is it, and how is it doing?`} />
             {/* Expense ratio is fund-only — the action appears only there. */}
             {isFundWrapped && (
               <button type="button" className="lf-btn" onClick={() => setCostOpen(true)}>Ongoing cost</button>

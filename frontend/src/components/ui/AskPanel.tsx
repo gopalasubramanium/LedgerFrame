@@ -39,6 +39,22 @@ import { TextInput } from "./TextInput";
 
 type Phase = "idle" | "loading" | "streaming" | "done" | "error";
 
+export interface AskPanelProps {
+  /** Trigger label. Defaults to the global "Ask". */
+  label?: string;
+  /**
+   * A question the panel opens with, already typed in. This is the INSTRUMENT EXPLAINER (D-068):
+   * *"Instrument explainer rides P-6"* — so it is not a second surface and not a second model
+   * path, it is this panel opened with a scoped question. The user can read it, edit it, or ask
+   * something else entirely; nothing is sent until they press Ask.
+   *
+   * That last point is the design, not a detail. An explainer that fired on mount would spend the
+   * user's device on a question they did not ask, and under a metered remote provider that is
+   * their money. It also keeps ONE code path for every answer, which is what P-6 requires.
+   */
+  seedQuestion?: string;
+}
+
 function FactRow({ fact }: { fact: GroundingFactDTO }) {
   return (
     <li className="lf-ask__fact">
@@ -51,9 +67,9 @@ function FactRow({ fact }: { fact: GroundingFactDTO }) {
   );
 }
 
-export function AskPanel() {
+export function AskPanel({ label = "Ask", seedQuestion }: AskPanelProps = {}) {
   const [open, setOpen] = useState(false);
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(seedQuestion ?? "");
   const [phase, setPhase] = useState<Phase>("idle");
   const [facts, setFacts] = useState<GroundingFactDTO[]>([]);
   const [answer, setAnswer] = useState("");
@@ -82,14 +98,16 @@ export function AskPanel() {
   const reset = useCallback(() => {
     streamRef.current?.cancel();
     streamRef.current = null;
-    setQuestion("");
+    // Back to the seed, not to blank: a closed explainer reopens ready to ask the same scoped
+    // question. The ANSWER is still discarded — ephemeral is about the exchange, not the prompt.
+    setQuestion(seedQuestion ?? "");
     setPhase("idle");
     setFacts([]);
     setAnswer("");
     setDisclaimer("");
     setFallbackSignal(null);
     setError(null);
-  }, []);
+  }, [seedQuestion]);
 
   const close = useCallback(() => {
     reset();
@@ -143,10 +161,10 @@ export function AskPanel() {
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
       >
-        Ask
+        {label}
       </Button>
 
-      <Dialog open={open} onClose={close} title="Ask" size="lg">
+      <Dialog open={open} onClose={close} title={label} size="lg">
         <div className="lf-ask">
           {/* ALWAYS VISIBLE (D-067), and SERVED — the posture is the backend's statement about
               what the device is doing, not a label this component infers. */}

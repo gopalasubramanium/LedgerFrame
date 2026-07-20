@@ -185,3 +185,50 @@ test("AskPanel: closing CANCELS the stream and discards the exchange (D-016 / Co
   await waitFor(() => expect(screen.queryByTestId("ask-answer")).toBeNull());
   expect(screen.getByLabelText("Your question")).toHaveValue("");
 });
+
+// --- The instrument explainer (D-068) ----------------------------------------------------------
+// "Instrument explainer rides P-6" — so it is THIS panel opened with a scoped question, not a
+// second surface and not a second model path. These tests exist to keep it that way.
+
+test("AskPanel: the explainer opens with its scoped question ALREADY TYPED, and sends nothing", async () => {
+  const streamed = vi.spyOn(aiApi, "streamAnswer");
+  const user = userEvent.setup();
+  render(<AskPanel label="Explain" seedQuestion="Explain AAPL — what is it, and how is it doing?" />);
+
+  await user.click(screen.getByRole("button", { name: "Explain" }));
+
+  expect(screen.getByLabelText("Your question")).toHaveValue(
+    "Explain AAPL — what is it, and how is it doing?",
+  );
+  // NOT auto-sent. An explainer that fired on open would spend the user's device — and under a
+  // metered remote provider, their money — on a question they never asked. It also keeps ONE code
+  // path for every answer, which is what P-6 requires.
+  expect(streamed).not.toHaveBeenCalled();
+});
+
+test("AskPanel: the explainer's question is EDITABLE — it is a starting point, not a script", async () => {
+  const user = userEvent.setup();
+  render(<AskPanel label="Explain" seedQuestion="Explain AAPL" />);
+  await user.click(screen.getByRole("button", { name: "Explain" }));
+
+  const box = screen.getByLabelText("Your question");
+  await user.clear(box);
+  await user.type(box, "what is my net worth?");
+  expect(box).toHaveValue("what is my net worth?");
+});
+
+test("AskPanel: closing the explainer discards the ANSWER but restores the seed", async () => {
+  mockStream(GROUNDED_RUN);
+  const user = userEvent.setup();
+  render(<AskPanel label="Explain" seedQuestion="Explain AAPL" />);
+  await user.click(screen.getByRole("button", { name: "Explain" }));
+  await user.click(screen.getAllByRole("button", { name: /^(Explain|Ask)$/ }).at(-1)!);
+  await screen.findByTestId("ask-answer");
+
+  await user.keyboard("{Escape}");
+  await user.click(screen.getByRole("button", { name: "Explain" }));
+
+  // Ephemeral is about the EXCHANGE (Commitment 6), not about the prompt the page supplied.
+  await waitFor(() => expect(screen.queryByTestId("ask-answer")).toBeNull());
+  expect(screen.getByLabelText("Your question")).toHaveValue("Explain AAPL");
+});

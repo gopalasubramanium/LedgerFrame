@@ -30,7 +30,9 @@ row lacks a disposition.** This plan is the rule's first user.*
 | **I-2** | Intake | **Fixture hygiene** — `frontend/src/components/ui/AskPanel.test.tsx:27` mocks `privacy_label` with a **live served string**; make it obviously synthetic | `ROADMAP.md` R-54 (ii) — **⚠ premise corrected, see §0-K** | **OPEN** |
 | **I-3** | §9 | **Posture-descriptor unification** — "OpenAI-compatible endpoint" vs "Ollama-compatible" | `ROADMAP.md` R-54 (iii); decision-shaped, so §9-G not intake | ✅ **DISPOSITIONED 2026-07-20 — UNIFY** (§9-G). One user-facing descriptor, **"Ollama-compatible"**; "Hailo" leaves served copy. **The ruling is closed; the STRINGS ratify at 0a by looking** — the ledger distinguishes the two |
 
-| **F-1** | Finding | **`Total liabilities` is not a GLOSSARY term** — GLOSSARY has **Liability** (`:67`, singular, an asset-class concept) and uses "Liabilities" only inside Net worth's definition prose (`:65`); neither sanctions it as a **figure label**, yet `networth_facts` (`tools.py:330-332`) serves it to users | Found at Phase 0-2a (`0d19a5a`) building the registry — by the first guard ever to measure the **AI's fact labels** against GLOSSARY | **⚑ OPEN — OWNER RULING OWED.** Not renamed: a GLOSSARY spelling is not settled in a Phase-0 delta. Carried as a **declared, reasoned exemption** in `LABELS_NOT_IN_GLOSSARY` (the `_HEADING_NOT_A_TERM` convention) so the guard stays strict and the question stays visible. Its sibling — `Total assets` → **`Gross assets`** — was **APPLIED**, being an existing ratified spelling (D-021, `GLOSSARY.md:66`) |
+| **F-1** | Finding | **`Total liabilities` is not a GLOSSARY term** — GLOSSARY has **Liability** (`:67`, singular, an asset-class concept) and uses "Liabilities" only inside Net worth's definition prose (`:65`); neither sanctions it as a **figure label**, yet `networth_facts` (`tools.py:330-332`) serves it to users | Found at Phase 0-2a (`0d19a5a`) building the registry — by the first guard ever to measure the **AI's fact labels** against GLOSSARY | ✅ **RATIFIED + CLOSED 2026-07-20** (owner: *GLOSSARY catch-up*). Verifying the reading made it stronger than the finding — **D-032** and **D-054** already ratify **Liabilities** by name, `NetWorth.tsx:204` has **shipped** that label, and `:208` renders *"…− Liabilities (GLOSSARY)"*, **citing a spec entry that did not exist**. The defect was the **missing row**. `GLOSSARY.md` gained **Liabilities** spec-first (`2c0016d`), the registry's canonical label follows it, and **the carve-out is deleted — an ordinary row, zero exceptions** (`fa7b656`). Sibling `Total assets` → `Gross assets` applied at 0-2a |
+
+| **F-2** | Finding | **Allocation weights omit three shipped asset classes** — `key_stats`' four buckets are `weight(...)` over hardcoded names (`analytics.py:94-97`); **`bond`, `other` and `retirement` are in NO bucket**, so the weights do not sum to 100% | Found at Phase 0-2b (`fa7b656`) from ruling ②'s *principle* — its stated precondition (a *dynamic* `key_stats` path) **does not exist**; the metrics are static literals | **⚑ OPEN — OWNER RULING OWED.** **Proven live on the SHIPPED DEMO DATA: 6.2 + 4.4 + 1.0 + 80.5 = 92.1, a 7.9-POINT SHORTFALL** on an accepted surface (D-048), caught by nothing. **Not fixed:** the repair changes **what the Portfolio page displays** — a product-content decision, not a refactor — and would break 0-2b's byte-identity proof for a reason unrelated to the derivation. The ruled fix (*derive from the `AssetClass` enum, one source*) is the likely shape, and it lands with the **page-portfolio pre-pass + dated delta note** per the rite |
 
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
@@ -926,6 +928,135 @@ resolver cannot reach are both "protecting nothing", and only the first was visi
 label**, which *is* user-visible — but it moves it **onto** the ratified GLOSSARY spelling, so the
 Help accuracy corpus binds to a term that now matches the spec rather than diverging from it. The
 milestone's Help delta is owed at close (§9-I).
+
+---
+
+### Phase 0-2b — THE DERIVATION, PORTFOLIO-FACING (`fa7b656`) — DONE
+
+**Ruled at §9-B; split from 0-2a and pre-ruled in four items (chat, 2026-07-20).** `analytics.py`'s
+18 inline `term_id` literals are **deleted**; the ids are **derived** from the one registry through
+`_with_term_ids()`. The transitional tripwire is deleted in this same delta.
+
+#### ① F-1 RATIFIED — and verifying the reading made it stronger than the finding
+
+**Spec-first, in its own commit (`2c0016d`) ahead of the code**, as ruled. The owner ruled *GLOSSARY
+catch-up* rather than rename, and the corroboration is overwhelming:
+
+| Evidence | What it shows |
+|---|---|
+| **D-032** | Net worth page canonical for *"Net worth, Gross assets, **Liabilities**"* |
+| **D-054** | KPI strip ratified as *"Net worth / Gross assets / **Liabilities** / Cash & deposits"* |
+| `NetWorth.tsx:204` | **has shipped** `label="Liabilities"` on that **accepted** page |
+| `NetWorth.tsx:208` | renders *"Net worth = Gross assets − Liabilities **(GLOSSARY)**"* |
+
+That last row is the finding in one line: **a user-facing string citing GLOSSARY for a term GLOSSARY
+did not contain.** The defect was never the label — it was the **missing row**. GLOSSARY now carries
+**Liabilities** as the *aggregate figure* (positive, a component of Net worth), stated **distinct
+from Liability**, the asset-class term for a single holding. *A figure and a taxonomy one letter
+apart, which is exactly why nothing noticed.*
+
+Registry canonical label → **Liabilities**; `"total liabilities"` survives as an **alias** so
+`_dedupe` relabels the served fact to the ratified spelling. **The carve-out is deleted: an ordinary
+row, zero exceptions**, as ruled.
+
+**⊕ AND THE AUDIT FOUND TWO CARVE-OUTS THAT WERE NEVER NEEDED.** `Cash & deposits` and
+`Return / volatility` were exempted while **both ARE GLOSSARY terms**. `test_exemptions_are_not_stale`
+could not see it: it asked whether an exemption named a **used** label, never whether it was
+**necessary**. *An unnecessary carve-out is worse than none — it is a hole with a reason attached,
+and it is exactly where the next real violation hides.* The guard now reds on any carve-out whose
+label IS in GLOSSARY. **13 → 10, each proven load-bearing.**
+
+#### ② ⚑ F-2 — THE CENSUS GAP IS REAL, AND IT IS NOT WHERE IT WAS PREDICTED
+
+**The predicted precondition does not exist.** Ruling ② was conditioned on *"the dynamic key_stats
+path"*; there is none. The four allocation metrics are **static literals**
+(`analytics.py:213-216`). **Recorded as a wrong prediction rather than quietly dropped** — the
+survey-side claim was mine, and a prediction that did not hold is worth more on the record than off
+it.
+
+**The real gap is one level down.** The buckets are `weight(...)` over **hardcoded class names**
+(`analytics.py:94-97`), and against the enum:
+
+```
+AssetClass members in NO bucket:  bond · other · retirement
+```
+
+(`liability` is correctly absent — weights are share of **gross** assets, liabilities excluded, per
+GLOSSARY *Allocation weight*.)
+
+**Proven live on the SHIPPED DEMO DATA**, not argued from the enum:
+
+```
+Cash & deposits 6.2 · Equities & ETFs 4.4 · Crypto 1.0 · Alternatives 80.5
+SUM = 92.1        →  a 7.9-POINT SHORTFALL
+```
+
+**The Portfolio stat rail under-reports allocation today**, on an **accepted** surface (D-048), and
+**nothing catches it**. The demo seed contains `other`, so this is visible in the default dataset —
+it did not need real-shaped data to appear, only for someone to add the four numbers up.
+
+**NOT FIXED HERE, and the reason is the point.** The repair changes **what an accepted page
+displays** — a product-content decision, not a refactor — and it would break the byte-identity this
+delta exists to prove, for a reason unrelated to the derivation. Ruling ②'s *"fix in 0-2b"* was
+conditioned on a path that does not exist, so applying it anyway would be executing the letter of a
+ruling whose premise failed. **⚑ F-2 is filed OPEN for an owner ruling.**
+
+#### ③ BYTE-IDENTITY — PROVEN. THE SKIP IS HEREBY STATED.
+
+```
+before: 2740 bytes   sha256 69eba119290186be0236634804519877
+after : 2740 bytes   sha256 69eba119290186be0236634804519877
+*** IDENTICAL — zero byte difference ***      (18 term_id keys, unchanged)
+```
+
+Captured by driving `GET /api/v1/portfolio/stats` through the real app before and after the change,
+serialised with sorted keys.
+
+**⟶ Per ruling ③: byte-identity proven, therefore the `page-portfolio` pre-pass is SKIPPED, AND
+THIS SENTENCE IS THE STATEMENT OF THE SKIP.** No dated delta note is owed on `page-portfolio.md`,
+because the served surface did not move. **No third option was taken.**
+
+**One hazard the proof forced into the open.** A metric with no registry row must carry **no
+`term_id` key at all** — emitting `{"term_id": None}` would be a **new key on the wire** and would
+have broken byte-identity silently. `Positions` is the standing example. `_with_term_ids` omits
+rather than nulls, and `test_analytics_still_derives_term_ids_at_all` pins **both halves**.
+
+#### ④ THE TRANSITIONAL TRIPWIRE IS DELETED IN THE DELTA THAT OBSOLETED IT
+
+`test_analytics_inline_term_id_equals_the_registry` promised its own deletion at 0-2b in its
+docstring, and is **gone**. *A tripwire that outlives its transition asserts a tautology and reads
+to the next person as though a risk is still being managed.*
+
+It is replaced **not by another comparison but by proof that there is only one source**:
+`test_analytics_declares_no_inline_term_id` (AST-parsed, so a comment can neither satisfy nor trip
+it — the Phase 0-1 lesson), plus a blindness pin that fails if the derivation stops attaching ids at
+all.
+
+#### The guards, mutation-proven — four, each on the right one
+
+| Mutation | Guard that fired |
+|---|---|
+| An inline `term_id` returns to `analytics.py` | `test_analytics_declares_no_inline_term_id` |
+| The derivation silently stops attaching ids | `test_analytics_still_derives_term_ids_at_all` (blindness pin) |
+| An **unnecessary** carve-out is added | `test_exemptions_are_not_stale` |
+| A metric emits `term_id=None` instead of omitting | `test_analytics_still_derives_term_ids_at_all` |
+
+#### Gates — solo, uncontended
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** | **1996 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | `**1996 passed, 15 skipped** — exit 0` |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** |
+| **`key_stats` byte-identity** | **PROVEN IDENTICAL** → pre-pass skipped, skip stated |
+
+2014 → 1996 is **−18 by design**: the parametrised tripwire's 18 cases deleted, replaced by 2
+structural guards. Stated so the drop is not read as coverage lost.
+
+**Help currency:** `GLOSSARY.md` gained the **Liabilities** row (spec-first, `2c0016d`). The served
+fact label moves from `"Total liabilities"` to the ratified `"Liabilities"` — **onto** the spec
+rather than away from it. Milestone Help delta still owed at close (§9-I).
 
 ---
 

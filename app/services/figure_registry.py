@@ -85,8 +85,12 @@ REGISTRY: tuple[Figure, ...] = (
     # the GLOSSARY one and "total assets" survives as an alias so old labels still resolve.
     Figure("gross_assets", "Gross assets", _SUMMARY, "gross_assets",
            term_id="term-gross-assets", aliases=("total assets",)),
-    Figure("liabilities", "Total liabilities", _SUMMARY, "liabilities",
-           term_id=None, aliases=()),
+    # ⊕ R-54 F-1, owner-ratified 2026-07-20 as a GLOSSARY CATCH-UP. The canonical label is
+    # **Liabilities** — the spelling D-032 and D-054 already ratified and `NetWorth.tsx:204` has
+    # been shipping. `networth_facts` served "Total liabilities", which was in no spec; it survives
+    # as an alias so old labels still resolve and `_dedupe` relabels them to the ratified spelling.
+    Figure("liabilities", "Liabilities", _SUMMARY, "liabilities",
+           term_id=None, aliases=("total liabilities",)),
     Figure("unrealised_pl", "Unrealised P/L", _SUMMARY, "unrealised_pl",
            term_id="term-unrealised-pl", aliases=("total unrealised p/l",)),
     Figure("todays_change", "Today's change", _SUMMARY, "day_change",
@@ -136,16 +140,15 @@ REGISTRY: tuple[Figure, ...] = (
 # Same convention as `test_glossary_parity._HEADING_NOT_A_TERM`. A canonical label that is not a
 # GLOSSARY term is either a defect or a declared non-term; the difference is written down here so
 # the guard stays strict and the open questions stay visible.
+#
+# ⊕ R-54 Phase 0-2b — EVERY ENTRY MUST BE NECESSARY, and that is now guarded. An audit at F-1 found
+# **"Cash & deposits"** and **"Return / volatility"** carved out while both ARE GLOSSARY terms: the
+# exemptions were never needed, and an unnecessary carve-out is worse than none — it is a hole with
+# a reason attached, and it hides the next real one. `test_exemptions_are_not_stale` now reds on any
+# entry whose label IS in GLOSSARY, so this list can only ever contain entries that are load-bearing.
 LABELS_NOT_IN_GLOSSARY: dict[str, str] = {
-    # ⚑ OPEN — R-54 ledger F-1, for the owner. GLOSSARY:67 has **Liability** (singular, an
-    # asset-class concept) and :65 uses the word "Liabilities" only inside Net worth's definition
-    # prose. Neither sanctions "Total liabilities" as a FIGURE label — yet `networth_facts` has
-    # been serving it to users. NOT renamed here: which spelling is right is the owner's call, and
-    # this exemption is what keeps the question visible instead of settling it by silence.
-    "Total liabilities": "⚑ OPEN (R-54 F-1): served today; GLOSSARY has 'Liability', not this",
     # Asset-class bucket names come from MASTER-DATA, not GLOSSARY. `term-allocation-weight`
     # explains the weight; the bucket names are vocabulary, not terms.
-    "Cash & deposits": "MASTER-DATA asset class, not a GLOSSARY term",
     "Equities & ETFs": "MASTER-DATA asset class, not a GLOSSARY term",
     "Crypto": "MASTER-DATA asset class, not a GLOSSARY term",
     "Alternatives": "MASTER-DATA asset class, not a GLOSSARY term",
@@ -156,7 +159,6 @@ LABELS_NOT_IN_GLOSSARY: dict[str, str] = {
     "1Y return": "a windowed instance of Period return",
     "1Y volatility": "a windowed instance of Volatility",
     "Max drawdown (1Y)": "a windowed instance of Maximum drawdown",
-    "Return / volatility": "portfolio-metric heading; the term is post-release (Tier 3)",
     "Income (div/int)": "sanctioned GLOSSARY-first at ai-surfaces §17-3",
     "Top 5 concentration": "a windowed instance of Concentration",
 }

@@ -23,15 +23,12 @@ import ast
 import re
 from pathlib import Path
 
-import pytest
-
 from app.services.figure_registry import (
     LABELS_NOT_IN_GLOSSARY,
     REGISTRY,
     canonical_label,
     figure_for_label,
     figures_for_term,
-    term_id_for_label,
 )
 
 REPO = Path(__file__).resolve().parents[2]
@@ -130,10 +127,14 @@ def test_every_canonical_label_is_a_glossary_term_or_a_declared_exemption():
     **Liability**). `networth_facts` has been serving both to users. Nothing caught it because
     `test_glossary_parity` measures the HELP store against the spec and never the AI's labels.
 
-    "Total assets" → "Gross assets" is applied here (an existing ratified spelling, D-021 cited in
-    the same GLOSSARY row). "Total liabilities" is left OPEN as ledger F-1 with a declared
-    exemption, because which spelling is right is an owner call — the exemption keeps the question
-    visible instead of settling it by silence.
+    ⊕ BOTH RESOLVED. "Total assets" → "Gross assets" was applied at 0-2a (an existing ratified
+    spelling, D-021 cited in the same GLOSSARY row). **F-1 — "Total liabilities" — was ratified by
+    the owner at 0-2b as a GLOSSARY CATCH-UP**: verifying the reading made it stronger than the
+    finding, since D-032 and D-054 already ratify **Liabilities** by name and `NetWorth.tsx:204`
+    has been shipping that label — while `:208` rendered "…− Liabilities (GLOSSARY)", a user-facing
+    string citing a spec entry that did not exist. GLOSSARY gained the row (spec-first), the
+    registry's canonical label is now **Liabilities**, and **the carve-out is gone: this figure is
+    an ordinary row with zero exceptions.**
     """
     spec = SPEC.read_text(encoding="utf-8")
     for f in REGISTRY:
@@ -147,10 +148,28 @@ def test_every_canonical_label_is_a_glossary_term_or_a_declared_exemption():
 
 
 def test_exemptions_are_not_stale():
-    """An exemption for a label no row uses is dead weight that hides the next real one."""
+    """Every carve-out must be BOTH used and NECESSARY.
+
+    ⊕ R-54 Phase 0-2b — the second half was missing, and it mattered. The first version only asked
+    whether an exemption named a label some row used; it never asked whether the exemption was
+    NEEDED. An audit at F-1 found **"Cash & deposits"** and **"Return / volatility"** carved out
+    while both are perfectly good GLOSSARY terms — two holes in a strict guard, each wearing a
+    plausible reason, neither doing any work.
+
+    *An unnecessary carve-out is worse than no carve-out: it is an exception the reader trusts, and
+    it is exactly where the next real violation will hide.* Both halves are asserted here so the
+    list can only ever hold entries that are load-bearing.
+    """
     labels = {f.canonical_label for f in REGISTRY}
     stale = sorted(set(LABELS_NOT_IN_GLOSSARY) - labels)
     assert not stale, f"LABELS_NOT_IN_GLOSSARY declares labels no figure uses: {stale}"
+
+    spec = SPEC.read_text(encoding="utf-8")
+    unnecessary = sorted(lbl for lbl in LABELS_NOT_IN_GLOSSARY if f"**{lbl}**" in spec)
+    assert not unnecessary, (
+        f"these labels are carved out but ARE GLOSSARY terms, so the exemption is unnecessary "
+        f"and only weakens the guard: {unnecessary}. Delete the entry."
+    )
 
 
 def test_gross_assets_carries_the_retired_label_as_an_alias():
@@ -190,61 +209,50 @@ def test_a_figure_may_have_no_help_entry_and_that_is_a_real_answer():
     assert net_worth is not None and net_worth.term_id is None
 
 
-# ── The transitional parity tripwire (deleted at Phase 0-2b) ──────────────────────────────────
+# ── The Phase 0-2a transitional tripwire is GONE ─────────────────────────────────────────────
+#
+# `test_analytics_inline_term_id_equals_the_registry` lived here for exactly one delta, holding
+# analytics' 18 inline `term_id` literals equal to the registry while both existed. Phase 0-2b
+# deleted the literals, so the tripwire has nothing left to compare and is **deleted in the same
+# delta that made it obsolete** — as its own docstring promised. A tripwire outliving its
+# transition is a test asserting a tautology, and it reads to the next person as though the risk is
+# still being managed.
+#
+# What replaces it is not another comparison but the absence of a second source:
+# `test_analytics_declares_no_inline_term_id` below proves the literals cannot come back.
 
-def _analytics_inline_term_ids() -> list[tuple[str, str, int]]:
-    """(label, term_id, lineno) for every metric dict in analytics.py carrying an inline term_id.
 
-    Parsed from the AST, not the text — the Phase 0-1 lesson: a guard that reads comments finds
-    claims, not code.
+def test_analytics_declares_no_inline_term_id():
+    """analytics.py must never re-declare a `term_id` — the registry is the only source.
+
+    This is the durable form of the deleted tripwire: rather than checking two copies agree, it
+    checks THERE IS ONLY ONE. AST-parsed, so a mention in a comment cannot satisfy or trip it
+    (the Phase 0-1 lesson).
     """
     tree = ast.parse((REPO / "app" / "services" / "analytics.py").read_text(encoding="utf-8"))
-    out: list[tuple[str, str, int]] = []
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Dict):
-            continue
-        pairs = {
-            k.value: v.value
-            for k, v in zip(node.keys, node.values, strict=False)
-            if isinstance(k, ast.Constant) and isinstance(v, ast.Constant)
-        }
-        if "label" in pairs and "term_id" in pairs:
-            out.append((pairs["label"], pairs["term_id"], node.lineno))
-    return out
-
-
-def test_the_inline_analytics_term_ids_are_parsed_at_all():
-    """Blindness pin. If the parser drifts, the parity test below would pass over an empty list."""
-    rows = _analytics_inline_term_ids()
-    assert len(rows) >= 18, f"expected analytics' inline term_ids, parsed {len(rows)}"
-
-
-@pytest.mark.parametrize("label,term_id,lineno", _analytics_inline_term_ids())
-def test_analytics_inline_term_id_equals_the_registry(label, term_id, lineno):
-    """THE TRANSITIONAL TRIPWIRE — Phase 0-2a leaves the fact in two places, deliberately.
-
-    §9-B rules that analytics' `term_id` becomes the derived reverse index of this table. Phase
-    0-2a builds the table AI-side only and leaves `analytics.py` untouched, so for exactly one
-    delta the mapping exists twice. Two sources for one fact is the defect this registry exists to
-    end — so the transitional state is made safe the F6 way, with a guard rather than an intention.
-
-    **This test is DELETED by Phase 0-2b**, when the inline copies go and analytics derives from
-    here. If you are reading it after 0-2b landed, that is the bug.
-    """
-    assert term_id_for_label(label) == term_id, (
-        f"analytics.py:{lineno} metric {label!r} declares term_id {term_id!r} but the registry "
-        f"says {term_id_for_label(label)!r}. Until Phase 0-2b these must agree exactly."
+    inline = [
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Dict)
+        for k in node.keys
+        if isinstance(k, ast.Constant) and k.value == "term_id"
+    ]
+    assert not inline, (
+        f"analytics.py re-declares term_id inline at line(s) {inline} — §9-B ruled it DERIVED "
+        f"from the figure registry. Two sources for one fact is the whole defect (F6)."
     )
 
 
-def test_the_registry_covers_every_metric_analytics_labels_with_a_term():
-    """Coverage in the other direction — a metric the registry does not know is a hole in it."""
-    missing = [
-        (label, lineno)
-        for label, _term, lineno in _analytics_inline_term_ids()
-        if figure_for_label(label) is None
-    ]
-    assert not missing, f"analytics metrics with no registry row: {missing}"
+def test_analytics_still_derives_term_ids_at_all():
+    """Blindness pin for the test above, which would pass happily if term_ids simply vanished."""
+    from app.services.analytics import _with_term_ids
+
+    metrics = _with_term_ids([{"label": "Gross assets"}, {"label": "Positions"}])
+    assert metrics[0]["term_id"] == "term-gross-assets", "derivation no longer attaches term ids"
+    assert "term_id" not in metrics[1], (
+        "a metric with no registry row must carry NO term_id key — emitting None would be a new "
+        "key on the wire and would break the byte-identity this delta proves"
+    )
 
 
 # ── FIGURE_IDENTITY is absorbed, not duplicated ───────────────────────────────────────────────

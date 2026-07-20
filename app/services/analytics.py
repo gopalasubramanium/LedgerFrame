@@ -36,6 +36,28 @@ from app.services.tax import fifo_report, resolve_mergers
 log = logging.getLogger("ledgerframe")
 
 
+# ── R-54 Phase 0-2b — term ids are DERIVED, never declared here ───────────────────────────────
+#
+# §9-B: *"analytics' `term_id` becomes the derived reverse index of the same table."* Until this
+# delta these ids were 18 inline literals sitting beside the registry's copy — two sources for one
+# fact, which is the defect the registry exists to end (F6). Phase 0-2a made that transitional
+# state safe with a parity tripwire; this function replaces it, and the tripwire is deleted in the
+# same delta that makes it obsolete.
+#
+# A metric with no registry row simply carries no `term_id`, exactly as before — `Positions` is the
+# standing example. The key is OMITTED rather than set to None so the served shape is byte-identical
+# to the literals it replaces: `{"term_id": None}` would be a new key on the wire.
+def _with_term_ids(metrics: list[dict]) -> list[dict]:
+    """Attach each metric's Help glossary entry from the ONE registry."""
+    from app.services.figure_registry import term_id_for_label
+
+    for m in metrics:
+        term_id = term_id_for_label(m["label"])
+        if term_id is not None:
+            m["term_id"] = term_id
+    return metrics
+
+
 async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = "SPY",
                     entity_id: int | None = None) -> dict:
     """A panel of deterministic portfolio metrics.
@@ -185,40 +207,40 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
         "base_realised_total_current_fx": float(round(realised, 2)),
         "base_realised_total_historical_fx": float(round(realised_historical, 2)),
         "realised_fx_events_excluded": realised_fx_excluded,
-        "metrics": [
-            {"label": "Gross assets", "value": to_display(val.total_value), "kind": "money", "term_id": "term-gross-assets"},
-            {"label": "Unrealised P/L", "value": to_display(val.unrealised_pl), "kind": "money", "signed": True, "term_id": "term-unrealised-pl"},
-            {"label": "Realised P/L", "value": to_display(money(realised)), "kind": "money", "signed": True, "term_id": "term-realised-pl"},
-            {"label": "Income (div/int)", "value": to_display(money(income)), "kind": "money", "signed": True, "term_id": "term-income"},
-            {"label": "Income yield", "value": round(income_yield, 2), "kind": "pct", "term_id": "term-income-yield"},
+        "metrics": _with_term_ids([
+            {"label": "Gross assets", "value": to_display(val.total_value), "kind": "money"},
+            {"label": "Unrealised P/L", "value": to_display(val.unrealised_pl), "kind": "money", "signed": True},
+            {"label": "Realised P/L", "value": to_display(money(realised)), "kind": "money", "signed": True},
+            {"label": "Income (div/int)", "value": to_display(money(income)), "kind": "money", "signed": True},
+            {"label": "Income yield", "value": round(income_yield, 2), "kind": "pct"},
             # Total return rides the LIVE valuation (current quotes + current FX) — basis stated so it
             # never reads as the same basis as the date-aware metrics below (F-2's silent mixed basis).
             {"label": "Total return", "value": to_display(val.total_return_pct), "kind": "pct", "signed": True,
-             "basis": "live", "term_id": "term-total-return"},
+             "basis": "live"},
             {"label": "Money-weighted return (XIRR)", "value": xirr_pct, "kind": "pct", "signed": True,
-             "note": "invested; annualised" if xirr_pct is not None else "not applicable", "term_id": "term-xirr-twr"},
+             "note": "invested; annualised" if xirr_pct is not None else "not applicable"},
             # §12-R1: the date-aware metrics. When the window isn't covered they REFUSE with a served
             # state (value null + the served reason) — never the −99.93% garbage — and each carries
             # its basis label so the card never mixes a live and a date-aware basis silently.
             {"label": "Time-weighted return (TWR)", "value": twr_pct if da_computable else None, "kind": "pct", "signed": True,
-             "basis": "date-aware", "note": da_note or ("invested; cumulative" if twr_pct is not None else "not applicable"), "term_id": "term-xirr-twr"},
+             "basis": "date-aware", "note": da_note or ("invested; cumulative" if twr_pct is not None else "not applicable")},
             {"label": "1Y return", "value": ret if da_computable else None, "kind": "pct", "signed": True,
-             "basis": "date-aware", "note": da_note, "term_id": "term-period-return"},
+             "basis": "date-aware", "note": da_note},
             {"label": "1Y volatility", "value": vol if da_computable else None, "kind": "pct",
-             "basis": "date-aware", "note": da_note, "term_id": "term-volatility"},
+             "basis": "date-aware", "note": da_note},
             {"label": "Return / volatility", "value": ret_vol if da_computable else None, "kind": "ratio",
-             "basis": "date-aware", "note": da_note, "term_id": "term-return-volatility"},
+             "basis": "date-aware", "note": da_note},
             {"label": "Max drawdown (1Y)", "value": (ps.get("max_drawdown_pct", 0.0) if da_computable else None), "kind": "pct", "signed": True,
-             "basis": "date-aware", "note": da_note, "term_id": "term-max-drawdown"},
-            {"label": "Cash & deposits", "value": round(cash_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},
-            {"label": "Equities & ETFs", "value": round(equity_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},
-            {"label": "Crypto", "value": round(crypto_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},
-            {"label": "Alternatives", "value": round(alt_pct, 1), "kind": "pct", "term_id": "term-allocation-weight"},
+             "basis": "date-aware", "note": da_note},
+            {"label": "Cash & deposits", "value": round(cash_pct, 1), "kind": "pct"},
+            {"label": "Equities & ETFs", "value": round(equity_pct, 1), "kind": "pct"},
+            {"label": "Crypto", "value": round(crypto_pct, 1), "kind": "pct"},
+            {"label": "Alternatives", "value": round(alt_pct, 1), "kind": "pct"},
             {"label": "Largest position", "value": (float(largest.market_value_base / gross * 100) if largest else 0.0), "kind": "pct",
-             "note": largest.label if largest else None, "term_id": "term-concentration"},
-            {"label": "Top 5 concentration", "value": float(top5 / gross * 100), "kind": "pct", "term_id": "term-concentration"},
+             "note": largest.label if largest else None},
+            {"label": "Top 5 concentration", "value": float(top5 / gross * 100), "kind": "pct"},
             {"label": "Positions", "value": len(val.holdings), "kind": "count"},
-        ],
+        ]),
     }
 
 

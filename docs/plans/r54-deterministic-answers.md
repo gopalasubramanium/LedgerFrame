@@ -499,16 +499,43 @@ page does not show.**
 (`ai.py:133`) · `GET /help` (`system.py:993`) · plus the per-figure canonical endpoints of §0-D, on
 demand and **only** those the registry names.
 
-### 3b. Contract deltas — **NOT PROPOSED IN THIS SESSION**
+### 3b. Contract deltas — ✅ **RESOLVED: NONE. And the reason is itself a finding.**
 
-**Deliberately empty.** Whether tier 1 needs a new endpoint — a registry-resolution route, a
-served-display-string route (§9-C), a deep-link resolution route (§9-D) — **depends on §9-B/C/D**,
-which are the owner's. Proposing a shape here would be improvising the resolution the plan exists to
-ask for. **§3b is filled after the §9 one-pass, before Phase 0.**
+**Verified against the frozen contract this session, not assumed:**
 
-**Binding, whatever lands:** built backend-first, regenerating `API-CONTRACT.json` +
-`docs/openapi.json` **in the same commit**; and **every new path is added to `AI_SURFACES`
-(`tests/integration/test_ai_acceptance_gate.py:33-41`) in that same delta** (§0-H).
+```
+docs/specs/API-CONTRACT.json → paths: 141   schemas: 71     (baseline, unchanged)
+AI paths present: /ai/chat · /ai/facts · /ai/grounding-status · /ai/status · /system/ai-config
+AI schemas present: ChatIn — and NOTHING ELSE
+```
+
+**No tier-1 work adds a path.** The §9-B registry resolves **inside** `gather_facts` / the answer
+stream (backend-internal, no surface). §9-C routes figures through the **existing** fact-pack
+projection. §9-D's **served link IDs ride the existing `/ai/facts` response and the `/ai/chat` SSE
+events.** **141 / 71 stand. No regeneration.**
+
+**⚠ BUT — AND THIS IS THE FINDING — THE AI RESPONSE SHAPES ARE NOT PINNED BY THE CONTRACT AT ALL.**
+`ai_facts` is declared `-> dict` (`app/api/v1/routes/ai.py:26`) and returns a hand-built dictionary
+(`:33-38`); `/ai/chat` is a `StreamingResponse` (`ai.py:135-143`). **`GroundingFact` is not a
+contract schema** — it exists only as a Pydantic model (`app/schemas/ai.py:46-67`) that never reaches
+the contract because no route declares it as a `response_model`.
+
+**The consequence, stated plainly: adding link IDs to the served fact shape regenerates NOTHING, so
+`make api-contract-check` stays green while the shape the frontend consumes changes underneath it.**
+This is the TEMPLATE's `response_model` note (`TEMPLATE-page-build.md:204-206`) **inverted** — that
+note warns a typed response *strips* undeclared keys; here there is no model, so nothing is stripped
+**and nothing is pinned**.
+
+**Therefore this milestone pins the shapes itself.** A **served-shape test** on `/ai/facts` and on
+the `facts`/`provenance` SSE events is a **Phase-0 deliverable, not a nicety** — it is the only thing
+that can turn red when tier-1 changes what the panel is handed. *A contract check that cannot see a
+shape is not a guard for that shape, and reporting 141/71 unchanged would otherwise read as "nothing
+moved" when something did.*
+
+**Not filed as a ROADMAP row.** Typing the AI responses properly (`response_model` + contract
+regeneration) is a larger question touching every AI surface and is **out of R-54's scope**; it is
+recorded here so the next milestone on this surface inherits the knowledge rather than the
+assumption. **§9 did not rule on it and this plan does not invent a ruling.**
 
 ## §4. COMPONENTS
 
@@ -549,44 +576,211 @@ spec-first** (§0-L). **§9-F.**
 | **D-105 / DS** | Served display strings for rendered values; the frontend formats nothing — **collides with §0-D, raised at §9-C** |
 | **Help Currency Law** | The close states the Help delta or a **guard-corroborated** "no Help impact" |
 
-## §7. ACCEPTANCE CRITERIA — **PROPOSED, completed after §9**
+## §7. ACCEPTANCE CRITERIA — **COMPLETED from the §9 resolutions**
 
-Stated now only where they follow from ratified rules and do not presuppose a §9 answer.
+*Every row answers **"what turns red?"** — the CLAUDE.md bar. Where the honest answer is "nothing
+today", it says so; silence is not permitted. The guards ruled at §9-D/E/F are AC rows here, not
+footnotes.*
 
-- [ ] **Tier 1 makes zero network calls, and this is GUARDED, not asserted** — the guard is what
-      makes *"by construction"* a fact rather than a claim. **What turns red: to be specified with
-      §9-A's mechanism** — a test that fails if a tier-1 path can reach `egress_client`.
-- [ ] **Tier 1 answers under no-egress**, live, with the panel **local not dark**.
-- [ ] **Every figure tier 1 shows matches its canonical page's figure**, read from the endpoint of
-      §0-D, never recomputed.
-- [ ] **No figure is fabricated** — a term with no live figure explains the term and says so
-      (Guarantee 3); **no CAGR row exists** (D-086).
-- [ ] **Every deep link resolves to a live target**, guarded (§9-E). A missing target is a ROADMAP
-      row, never a link.
-- [ ] **No interactive control renders inside the panel** beyond input/submit/the incidental two —
-      guarded on the `check:primitives` shape **with a blindness pin** (§0-M).
-- [ ] **The legend states who wrote the sentence**, and **the tier declaration (§9-F) does not
-      contradict it**.
-- [ ] **All rendered strings are served**, incl. errors/empty/disabled (§0-C of ai-surfaces).
-- [ ] **Both themes, both densities**; prose full-width responsive; tabular figures.
-- [ ] **Posture strings hold both versions true in their time** — `test_posture_copy_ratified.py`
-      green against the amended table, with dated notes (§0-J).
-- [ ] **The acceptance gate is tested at any new path** — added to `AI_SURFACES` (§0-H); and **the
-      unaccepted/locked deep-link behaviour is stated and asserted** (§9-E).
-- [ ] **Fail-first on every new guard**, each seen RED on a specimen that reproduces the defect.
-- [ ] **Help currency:** the delta below (§9-I), or a guard-corroborated "no Help impact".
+### 7-A. Tier-1 determinism — the claim the milestone exists to make
 
-## §8. BUILD PHASES — *skeleton only; NOT AUTHORED (stop at §9)*
+- [ ] **ONE intent router.** `classify_intent`'s closed enum is the sole authority; the eight
+      `gather_facts` flags are **derived from it, in one table**. **What turns red:** the two routers
+      cannot disagree **because there is only one** — structural. Plus: a test pinning each flag as a
+      derivation, so re-introducing an independent word list reds.
+- [ ] **Word-boundary matching.** **What turns red:** the §0-A substring hazards as **RED
+      specimens** — *"closed"*/*"lost"* must not trip `"los"`, *"downgrade"* must not trip `"own"`.
+      Seen failing on the pre-fix build.
+- [ ] **A miss fails honestly.** An unroutable question returns the **ratified empty-fallback
+      shape** — never an approximate answer. **What turns red:** a specimen question with no intent
+      asserting the empty shape, not a nearest match.
+- [ ] **Tier 1 makes ZERO network calls.** **What turns red:** a guard proving no tier-1 path can
+      reach `egress_client`. *This is what converts "by construction" from a claim into a fact.*
+- [ ] **Tier 1 is never rate-limited** (§9-F). **What turns red:** a test that **produces tier-1
+      answers with the limiter exhausted**, and asserts a rate-limited tier-2 **falls back TO tier-1**
+      rather than to a bare fact list.
+- [ ] **Tier 1 answers under no-egress, live** — the panel goes **local, not dark** (the R-22
+      amendment's two-state consequence).
 
-- **Phase 0** — Contract deltas (§3b, filled after the one-pass), backend-first.
-- **Phase 0a** — Specimen on an isolated instance; **ratified by the owner looking**. Any new DS
-  entry ratifies here.
-- **Phase 1** — Tier-1 assembly.
-- **Phase 2** — Tests + guards.
-- **Phase 3a** — Scripted pre-pass, green before the walk.
-- **Phase 3b** — Owner acceptance walk.
-- **Close** — §-ledger (**I-1/I-2/I-3 reconciled**), strike-check, Help currency, `CURRENT.md` in
-  the close diff, KB-SYNC, push.
+### 7-B. Figures — one derivation, one projection
+
+- [ ] **Every tier-1 figure arrives via the fact-pack projection** (§9-C) — never a `to_display`
+      float, never a raw endpoint read. **What turns red:** a render-path test asserting the
+      projection is the only source.
+- [ ] **Every figure matches its canonical page's figure**, read from the §0-D endpoint, **never
+      recomputed** (one-derivation law). **What turns red:** a cross-check against the canonical
+      reader.
+- [ ] **No fabricated figure.** A term with no live figure **explains the term and says so**
+      (Guarantee 3). **What turns red:** a registry-completeness test — **and no CAGR row exists**
+      (D-086); a row for a figure the engine does not serve reds.
+- [ ] **The registry is ONE table** (§9-B) — `FIGURE_IDENTITY` absorbs it; analytics' `term_id` is
+      its **derived reverse index**. **What turns red:** three-store parity extended to the registry;
+      a second store for one fact reds.
+- [ ] **Glossary entries reach the pack whole** — `what`+`why` unconditional, `improves`+`example`
+      budgeted. **What turns red:** a guard comparing the tier lists to the **actual Glossary
+      schema**, so a field in one and not the other cannot go quiet again (§0-C had nothing).
+
+### 7-C. Links — the panel points, the page acts
+
+- [ ] **Backend serves semantic link IDs; the frontend owns ID→route** (§9-D).
+- [ ] **Bidirectional resolution.** **What turns red:** every **served ID is registered**, and every
+      **registered ID resolves** against the **live route/topic catalogue** — reaching the *served*
+      Help catalogue, since an unknown `?topic=` is a **silent no-op** (`Help.tsx:302,309,334`).
+- [ ] **No interactive control inside the panel** beyond input, submit and the incidental two
+      (§0-M). **What turns red:** a guard in the `check:primitives` shape — narrow scan, named owner,
+      **blindness pin** — **proven RED on a deliberate specimen**, because the boundary is currently
+      held and no live violation exists to catch it.
+- [ ] **A deep link never bypasses the acceptance gate or the PIN** — **the server refuses
+      regardless** (§9-E). **What turns red:** a representative test at the server, not a client
+      matrix; navigation confers no authority.
+- [ ] **A link only ever targets a route that exists today.** **What turns red:** the resolution
+      guard — and it is what makes the **R-54 → R-59 ordering mechanical**: the add-holding form's ID
+      **cannot be registered before its route ships**. Until then tier-1(b) links to the **Holdings
+      page**, which exists.
+
+### 7-D. Provenance, posture and copy
+
+- [ ] **No fourth legend axis** (§9-F). Tier-1 **is** the no-narration state; the ratified
+      *"Built-in intelligence only — no model was used."* stands. **What turns red:** the existing
+      nine `test_ai_provenance.py` assertions, unchanged and still green.
+- [ ] **Tier-1 prose is fixed SERVED sentences** under the **§17-2 truth bar** — a fixed sentence
+      may not cite UI that does not render. **What turns red:** the §17-2 guard.
+- [ ] **All rendered strings served**, incl. errors / empty / disabled (ai-surfaces §0-C).
+- [ ] **The recut five-string posture table is ratified at 0a by looking** (§9-G) — PROPOSED until
+      then. **What turns red:** `test_posture_copy_ratified.py`, incl. its **coverage** assertion, so
+      a new posture branch that forgets a string reds rather than shipping unratified copy.
+- [ ] **"Hailo" is gone from served copy**; **"Ollama-compatible"** is the one user-facing
+      descriptor. **What turns red:** the **deprecated-term guard's corpus extended to ALL served AI
+      strings** — the §14-2 lesson mechanised (*retiring a term without a parity guard is retiring it
+      in one place*).
+- [ ] **Dated notes on the amended strings; both versions true in their time.** **What turns red:**
+      `test_help_content_accuracy.py`, which binds Help claims to live product strings — i.e. **the
+      posture amendment and the Help delta are ONE delta**.
+
+### 7-E. Contract, gate and shape
+
+- [ ] **No contract delta; 141 paths / 71 schemas unchanged**, stated and pinned (§3b).
+- [ ] **The served AI shapes are pinned BY THIS MILESTONE** — a shape test on `/ai/facts` and on the
+      `facts`/`provenance` SSE events. **What turns red:** that test, and **only** that test — the
+      contract check **cannot see these shapes** (§3b), which is precisely why it is owed.
+- [ ] **Any new path is added to `AI_SURFACES`** (`test_ai_acceptance_gate.py:33-41`) **in the same
+      delta**. *Expected to be vacuous — §3b adds no path — and asserted anyway so the rule does not
+      lapse the first time it has nothing to do.*
+
+### 7-F. Presentation and the standing bar
+
+- [ ] **Both themes, both densities**; prose full-width responsive; **tabular figures**; semantic
+      colour only.
+- [ ] **Keyboard + WCAG AA**; the panel is a Dialog and keeps its focus contract.
+- [ ] **Rendered-layout claims verified by RENDERING**, not unit tests (jsdom has no layout engine);
+      the pre-pass carries any measuring assertion.
+- [ ] **Copy hygiene** — no decision IDs, no `§` refs, no endpoint/enum names in user-facing strings.
+- [ ] **Help currency** (§9-I): the `ask` entry rewritten for two tiers **including the zero-egress
+      call-out**; GLOSSARY **spec-first** for new terms; the **HELP CURRENCY SUITE** green at close.
+      *"No Help impact" is not available to this milestone.*
+- [ ] **Every new guard proven RED first**, on a specimen that reproduces the defect — never a
+      theory of it.
+
+---
+
+## §8. BUILD PHASES
+
+*One delta per commit. Backend-first. **Both postures** (§26-bis): never the owner's live stack, no
+hardcoded ports, secrets never printed. Gate verdicts from **uncontended solo runs, ordered AND
+randomized**. **NO PUSH.***
+
+### Phase 0 — BACKEND: one router, one registry, the widened pack *(several deltas)*
+
+Backend-first because every later phase consumes it. Each delta **fail-first RED on the real cause**.
+
+- **0-1 — Router consolidation (§9-A).** `classify_intent`'s enum becomes the single authority; the
+  eight `gather_facts` flags become **one derivation table**. **Word-boundary** matching. **RED
+  first:** the §0-A substring specimens (*closed*/*lost*/*downgrade*) on the pre-fix build. Then the
+  honest-miss path → the ratified empty-fallback shape.
+- **0-2 — The registry (§9-B).** `term-id` → declared fact identity → canonical endpoint, absorbed
+  into `FIGURE_IDENTITY`; analytics' `term_id` re-derived as the **reverse index of the same table**.
+  Three-store parity extended. **No CAGR row** (D-086). **RED first:** a term resolving to two
+  sources, and a registry row for a figure the engine does not serve.
+- **0-3 — The pack widening (§9-B amendment).** Glossary category: `what`+`why` unconditional,
+  `improves`+`example` budgeted, **whole fields, never truncated mid-text**. **RED first:** the §0-C
+  census — a glossary term projecting `body` alone. **Plus the schema-comparison guard**, so the tier
+  lists and the Glossary schema cannot silently diverge again.
+- **0-4 — Figures through the projection (§9-C)** and **0-5 — served link IDs (§9-D)**.
+- **0-6 — The served-shape pins (§3b).** `/ai/facts` and the `facts`/`provenance` SSE events. **The
+  contract cannot see these shapes; this is what turns red.** Contract **141/71 restated unchanged,
+  no regen.**
+
+### Phase 0a — THE SPECIMEN, RATIFIED BY LOOKING *(isolated instance; expect 1–3 revision loops)*
+
+Reset + isolated per the harness convention; **both themes**; zero console errors (excluding expected
+`451`s on an unaccepted install).
+
+**PROPOSED for the owner's look — the ratification surface of this milestone:**
+
+1. **The recut five-string posture table** (§9-G) — "Hailo" gone, **"Ollama-compatible"** throughout,
+   one locality phrasing, `POSTURE_DISABLED`'s *"fact-only answers"* re-cut now tier-1 has landed.
+2. **Tier-1 answer specimens, one per category** — (a) term + the user's own figure, (b) action +
+   Help steps + a deep link, (c) navigation/settings + a deep link.
+3. **Any PROPOSED DS entry** for the link affordance (§4) — *ratified at 0a by looking, never
+   assumed*, and on a **free axis**: colour and slant are both taken.
+4. **The honest-miss render.**
+
+**Revision loops are expected and are the point** — the ai-surfaces 0a took four. **The owner closes
+this phase; it is never self-certified.**
+
+### Phase 1 — ASSEMBLY
+
+Tier-1 wired in the panel; the frontend **ID→route registry** (§9-D); the **link affordance** only as
+ratified at 0a. **Two accepted-surface corrections ship here under the guard-REDs-an-accepted-surface
+rite** (CLAUDE.md), each with **a dated delta note in the page's own plan file AND that page's
+pre-pass re-run, in the same delta — flagging them in the close report is explicitly not sufficient**:
+
+- **`Settings.tsx:110`'s sibling-param drop** → dated note in **`page-settings.md`** + Settings
+  pre-pass re-run.
+- **`AppRoutes.tsx:59`'s stale "four tabs" comment** → corrected in the same commit (records-truth
+  bar; no plan-file note owed — a comment, not a surface).
+
+### Phase 2 — TESTS AND GUARDS
+
+Every §7 row that names a guard. **Each proven RED first**, on a specimen that reproduces the defect.
+
+- The **panel-explains/page-acts** guard and the **bidirectional resolution** guard, both in the
+  `check:primitives` shape — narrow scan, named owner, **blindness pin**.
+- The **deep-link-never-bypasses-the-gate** test, **at the server**.
+- The **limiter** test: tier-1 answers still produced with the limiter exhausted.
+- The **deprecated-term corpus** extended to all served AI strings.
+- **Driven across BOTH egress states and BOTH acceptance states** — a matrix, not a happy path.
+- **`npm run check` exit code stated, run from `frontend/`.** **No known-red left on trunk.**
+
+### Phase 3a — SCRIPTED PRE-PASS *(reset + isolated; green BEFORE the walk)*
+
+Owner-independent, live app + real backend, reset instance, both themes across the breakpoints,
+console errors captured. **Fix everything it surfaces first.** Any geometry fix adds its **measuring
+assertion in the same batch**, seen RED on the pre-fix build. **Plus the Settings pre-pass re-run
+owed by Phase 1.**
+
+### Phase 3b — OWNER ACCEPTANCE WALK *(judgment items only)*
+
+With 3a green, the walk is for **judgment** — copy, feel, semantics, ratifications — not for defects
+3a should have caught. Each finding becomes a numbered **F-n row in the §-ledger**, fixed and
+**re-verified live**. **The owner closes the phase.**
+
+### CLOSE — under the Help Currency Law
+
+- **§-ledger CLOSED** — enumerating **I-1, I-2, I-3** and every **F-n**. **⚠ I-1 (contention
+  robustness, this milestone's by re-assignment — reproduced with the F10 blindness-pin /
+  vacuous-green technique) and I-2 (fixtures, §9-H convention + the second instance) MUST carry
+  dispositions. A ledger claiming CLOSED with an open intake row is a checkably false enumeration** —
+  the §19-K lesson, and this plan is the rule's first user.
+- **Strike-check** every §9/§walk item **against the actual diff** — a claim is not a change.
+- **Help currency:** the delta that shipped (§9-I). *"No Help impact" is unavailable here.*
+- **`CURRENT.md` in the close commit's diff** — a claimed update without the file in the diff **fails
+  the close**.
+- **`RATIFICATION.md §6`** row appended.
+- **KB-SYNC** derived from `git diff --name-only`, never recalled.
+- **The two-commit hash-citation pattern** where a record must cite its delta's hash: **delta, then
+  records-only citation. Never amend-to-substitute — an amended citation dangles.**
+- **NO PUSH** (harness classifier; the owner pushes).
 
 ---
 
@@ -858,4 +1052,5 @@ ROADMAP row, never a link.
 no §4 amendment unresolved · **I-3 dispositioned (§9-G: UNIFY); I-1 and I-2 carry into Phase 0 and
 must be dispositioned before any CLOSED claim.**
 
-**⊕ BUILD AUTHORIZED. §7 and §8 are completed from these resolutions; Phase 0 begins backend-first.**
+**⊕ BUILD AUTHORIZED — §7 and §8 are COMPLETED (above) and §3b is RESOLVED (no delta; 141/71
+unchanged, with the unpinned-shape finding stated). Phase 0 begins backend-first.**

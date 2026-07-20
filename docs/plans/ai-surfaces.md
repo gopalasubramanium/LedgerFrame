@@ -1327,3 +1327,62 @@ it **errs safe** — *the product is quieter than it could be, never wronger* �
 from *"no significant digits"*, so the discard is correct handling applied to a value that parses
 empty legitimately. Any repair must separate those two cases **without widening what the validator
 accepts**, because the contract may not weaken (Commitment 7 / D-071).
+
+### 15-3. FINDING 6 + THE AI TAB COPY — one resolver, one served sentence
+
+**Owner ruled (a) — serve the effective settings — and merged the tab copy into the same delta.**
+
+**Fail-first** (`tests/integration/test_ai_config_effective.py`), reproducing the 0a divergence
+deliberately: a `.env` **file** holding one provider while the **OS environment**, which pydantic
+settings let win, holds another —
+
+```
+FAIL the AI tab reports provider 'hailo' from the .env FILE while the process is running
+     'openai_compatible'. §15st-1 promises this line reflects the served configuration
+FAIL KeyError: 'remote'   [the tab and the Ask panel could not even be compared]
+```
+
+**⚠ BOTH DEFECTS FOLLOWED FROM ONE FACT: THE SENTENCE WAS COMPOSED IN THE BROWSER.**
+`` `AI is on — provider ${ai.provider}, model …` `` interpolated the **raw internal provider id**,
+which is how the **retired vendor word** reached the screen (§14-2); and it described whatever the
+payload said, which was the **`.env` file** rather than the process (§13-C). Those look like two
+findings and are one: a claim the product makes **about itself** had no single author. The sentence
+is now **served and rendered verbatim** — the rule the Ask panel's posture line already follows,
+for the reason §0-C exists.
+
+**ONE RESOLVER.** The five-way posture decision moved out of `/ai/grounding-status` into
+`app/ai/vocabulary.py`, and `/system/ai-config` calls it too. *Two surfaces working the same fact
+out separately **is** Finding 6* — so this is the fix, not a tidy-up that came with it. The module
+also carries the three kinds, so §15-4's provenance legend reads the kind from where the tab reads
+it, and a fourth surface cannot invent a fifth answer.
+
+**⚠ AN EXISTING GUARD WENT RED, AND WAS RE-EXPRESSED RATHER THAN RELAXED.**
+`test_posture_copy_ratified.py`'s reachability check reported **all five** ratified posture
+constants as *"no longer served by the route"* the moment the route stopped naming them in
+branches. **The property it guards did not change** — a ratified string nothing serves is a record
+of copy the user cannot see — so the mechanism now follows the serving path through `POSTURE_COPY`,
+with the second arm **conditional on the route actually referencing the dict**. Proven not blind by
+breaking that reference and watching all five go red again. *A guard that reds on a refactor is
+usually right about the property and wrong about the mechanism; the temptation is to fix the
+verdict.*
+
+**⚠ THE OLD FRONTEND ASSERTION COULD NOT HAVE CAUGHT THIS.** `Settings.test.tsx` matched
+`/^AI is (on|off)/` against a string the **component composed**, so it could only confirm the
+component's own template still ran: under Finding 6 the template renders the **wrong provider in
+the right shape** and the assertion is **green**. It now asserts the **served** sentence verbatim,
+and that `hailo` never reaches the screen **even though the mock's `provider` is `"hailo"`** — a
+claim about the boundary rather than about the template. *Fifth test this milestone has found
+incapable of seeing the defect it sat next to.*
+
+**Dated delta note filed on `page-settings.md` §15st-3**, per the standing `CLAUDE.md` rule; that
+page's pre-pass re-run lands with Phase 3a. **Contract regenerated same-commit: 141 paths / 71
+schemas — unchanged**, docstrings only.
+
+**⚑ FINDING 9 — recorded, NOT fixed, and not in this delta's scope.** Under (a) the tab is always
+**true**. What it does not say is that a `PUT` writing `.env` has **no effect** while an OS-env
+override is in force — `reload_settings()` re-reads, and the override still wins. The user saves,
+the tab honestly reports something else, and nothing explains why. Surfacing that is **option (c)**
+(serve both, warn on drift), which **the owner did not rule**. ⚑ **For the owner.**
+
+**Strings PROPOSED until the 3b look:** the four `AI_TAB_COPY` sentences and the amended static
+note.

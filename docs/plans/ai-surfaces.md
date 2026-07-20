@@ -1798,7 +1798,7 @@ GET /api/v1/portfolio/performance?days=365&benchmark=SPY&include_manual=false �
   sqlite3.IntegrityError: UNIQUE constraint failed: settings.key
 ```
 
-> **⊕ ANNOTATION 2026-07-20 (at the F10 fix commit `29ddbcb`) — the quoted stack above is left
+> **⊕ ANNOTATION 2026-07-20 (at the F10 fix commit `63ec86a`) — the quoted stack above is left
 > exactly as it was recorded; this note sits beside it.** `:980` was **the first flush of what the fix
 > revealed to be a FOUR-flush defect**, not the only one. Actual lines at the fix commit, in
 > `app/services/market.py` as it stood at `2c2053d`: markers selected at **`:976`, `:986`, `:996`**
@@ -1830,7 +1830,7 @@ milestone** — where no reviewer of this milestone's diff would be looking for 
 carrying a known defect one delta further is smaller than the cost of a change landing where nobody
 is looking for it.*
 
-**⊕ DELTA NOTE — SHIPPED 2026-07-20, `29ddbcb`. THE RULE PAID FOR ITSELF.**
+**⊕ DELTA NOTE — SHIPPED 2026-07-20, `63ec86a`. THE RULE PAID FOR ITSELF.**
 
 **The fourth site was found BY the isolation review this section demanded.** §17-5 sent the pricing
 path to its own delta so a reviewer would be looking directly at it — and a reviewer looking directly
@@ -1959,7 +1959,7 @@ recorded with a dated disposition.
 | **F7** | A zero-valued fact can never be narrated (`_sig3("0.00") → ""`) | **FILED — R-56, POST-RELEASE.** Errs safe; the repair is a judgement that must not widen what the validator accepts (Commitment 7 / D-071). | §15-2 |
 | **F8** | `Income (div/int)` is a shown label with no GLOSSARY row | **RULED + FIXED (§17-3)** — sanctioned GLOSSARY-first on the canonical **Income** row, parity guarded both ways, **no app-wide rename** | §17-3 |
 | **F9** | A `PUT` writing `.env` has no effect while an OS-env override is in force, and nothing says so | **RULED + FIXED (§17-4)** — a conditional SERVED sentence, rendered only when true, detected by **divergence** not presence | §17-4 |
-| **F10** | Fresh-DB `get_history_cached` race — `UNIQUE constraint failed: settings.key` | **SHIPPED 2026-07-20, `29ddbcb` — at FOUR sites, not the three this ledger counted.** The isolation review §17-5 required is what found the fourth (`hist_fetched:{id}:{interval}`); scope extended by chat ruling 2026-07-20. One shared `_claim_marker` helper (SAVEPOINT-scoped, tolerates the loser). Both races reproduced RED first. | §17-5 |
+| **F10** | Fresh-DB `get_history_cached` race — `UNIQUE constraint failed: settings.key` | **SHIPPED 2026-07-20, `63ec86a` — at FOUR sites, not the three this ledger counted.** The isolation review §17-5 required is what found the fourth (`hist_fetched:{id}:{interval}`); scope extended by chat ruling 2026-07-20. One shared `_claim_marker` helper (SAVEPOINT-scoped, tolerates the loser). Both races reproduced RED first. | §17-5 |
 | **W-1** | Header/legend redundancy — two locality statements at once | **RULED + FIXED (§17-1)** — a handover; D-067 gains a dated reading note | §17-1 |
 | **W-2** | Phantom timestamps — the stub cites UI that does not render | **RULED + FIXED (§17-2)** — corrected, guarded, specimen pinned | §17-2 |
 | **§0-intake** | Contention-robustness fix for `tests/integration/test_ai_facts_routing.py:34` (fails only under machine contention, passes solo — `r43-historical-backfill.md` §18-F7d) | **MISSED AT CLOSE — found post-close (§19-K). Carried to R-54 by dated re-assignment (chat ruling 2026-07-20), recorded in ROADMAP R-54 and CURRENT.md; mechanised so intake cannot silently vanish again (TEMPLATE amendment, Commit 2).** | §19-K |

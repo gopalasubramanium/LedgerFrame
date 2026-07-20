@@ -77,7 +77,7 @@ The product shell + every built page + the platform milestones, owner-accepted:
 
   ⚠ **2026-07-20 post-close correction (§19-K):** the §0 intake item (contention-robustness, `test_ai_facts_routing.py:34`) was found NOT DONE after close — carried to R-54 by dated re-assignment; intake-in-ledger mechanised (TEMPLATE).
 
-- **F10 — the fresh-DB `get_history_cached` race** — **SHIPPED 2026-07-20**, `29ddbcb`
+- **F10 — the fresh-DB `get_history_cached` race** — **SHIPPED 2026-07-20**, `63ec86a`
   (standalone delta, no plan file; recorded in `ai-surfaces.md` §17-5 delta note + §18 row).
   **RELEASE-TRAIN BLOCKING, cleared.** A check-then-insert race on `settings.key` at **FOUR sites in
   `get_history_cached`, not the three the ruling counted** — the fourth (`hist_fetched:{id}:{interval}`)
@@ -96,7 +96,7 @@ The product shell + every built page + the platform milestones, owner-accepted:
 
 ## NEXT — R-54 kickoff (deterministic answer intelligence, the two-tier Ask panel) — **PLAN ONLY, STOP AT §9**
 
-**⊕ 2026-07-20 — F10 is SHIPPED (`29ddbcb`, see DONE above); the release train moves to R-54.**
+**⊕ 2026-07-20 — F10 is SHIPPED (`63ec86a`, see DONE above); the release train moves to R-54.**
 
 RD-9 Amendment 7 scope. **Not started.** Carries the plan-file gate standard: own plan file,
 survey-first, §9 one-pass, full loop. **Its tier-1 SEED already shipped** — the no-egress

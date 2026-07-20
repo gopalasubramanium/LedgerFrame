@@ -210,6 +210,18 @@ _DEPRECATED_CHECKS: dict[str, str | None] = {
     # so *"The Guarantees are reproduced word for word"* sailed through green.
     "**Product Guarantees** / **Guarantee *n***":
         r"\bproduct guarantees?\b|\bguarantees\b|\bguarantee\s+\d\b",
+    # AI-surfaces §14-2 (owner, 2026-07-20). Retired as a USER-FACING WORD only. The pattern is a
+    # bare `\bhailo\b` because there is no ordinary-English sense of the word to protect — unlike
+    # "guarantee" or "platform" above, this is a vendor name and nothing else, so a wide match is
+    # the safe one rather than the risky one.
+    #
+    # WHAT IT DELIBERATELY DOES NOT REACH, and why that is correct rather than a gap: the internal
+    # provider id (`hailo`), the module `app/providers/ai/hailo_ollama.py`, and the
+    # `LEDGERFRAME_HAILO_*` env keys are all STILL LIVE and must stay so — the owner's `.env` has
+    # to keep working across this rename. This guard reads SERVED PROSE and AI FACT LABELS, which
+    # is exactly the boundary the ruling drew: retire the word where a user can read it, change
+    # nothing where a config can break.
+    "**hailo** (as a user-facing word)": r"\bhailo\b",
     "Detail level: Simple/**Expert**": r"\bsimple\s*/\s*expert\b|\bexpert\s+(?:mode|view)\b",
     "Home layout: Simple / **Full**": r"\bsimple\s*/\s*full\b|\bhome layout\b",
     "Total value": r"\btotal value\b",

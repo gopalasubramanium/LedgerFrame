@@ -340,6 +340,33 @@ values ride their parent term's entry (no per-value rows). **RATIFIED 2026-07-16
 | **Disclaimer** | A stated limit on what a figure or the product means. **Two kinds, deliberately (D-106):** a **scoped caveat** is served by the reader that owns a figure, sits at the point of use, and is **part of the figure** (*"Open lots by FIFO. Organisation only — not tax advice."*); the **product-level position** is stated once, on **Legal**. Removing a scoped caveat is an **honesty regression**, never a de-duplication. *(PROPOSED 2026-07-19, page-legal §9-2/§9-7 — ratify at the 0a.)* |
 | **Licence** | The terms LedgerFrame itself is released under — **AGPL-3.0-or-later**. **Spelling is deliberate and split (page-legal §9-7):** user-facing prose says British **"licence"**; **filenames and SPDX identifiers say "License"** (`LICENSE`, `AGPL-3.0-or-later`), because those are fixed by convention and not freely changeable. The full dependency and licence record is **generated** and **ships with the source** (`NOTICE`, `docs/audit/LICENSES.md`); no page reproduces it. *(PROPOSED 2026-07-19, page-legal §9-5/§9-7 — ratify at the 0a.)* |
 
+### AI answers — the three kinds of intelligence (AI-surfaces §14-2, owner 2026-07-20)
+
+**These three names are the whole user-facing vocabulary for how an answer was produced.** They
+exist because the product asks the reader to trust an answer, and trust needs to know **who wrote
+the sentence** — not only what it was built from. The distinction they draw is **where the
+narration came from and whether anything left the device**; it is not a quality ranking, and none
+of the three is presented as better than another.
+
+| Term | Canonical definition |
+|------|----------------------|
+| **Built-in intelligence** | Deterministic answers assembled from **your own figures** by the app itself. **No model is involved** — nothing is generated, nothing is phrased by an LLM. It works in **every** posture, including **no-egress**, because it makes no call of any kind. This is what answers when no model is configured, when a model is unreachable, and when a model's answer fails the validation contract. |
+| **On-device model** | An LLM running **on this device** (Ollama or a compatible endpoint). Your questions and your figures **never leave the device**, but the narration **is model-generated** — the sentences are written by a model, the figures underneath them are not. Served label: **On-device model (Ollama-compatible)**. |
+| **External model** | A **cloud API**. **Data leaves this device** — the question and the portfolio facts it is grounded in are sent to the configured provider. The copy says so plainly, wherever this is the active kind. |
+
+**Whatever the kind, the figures are the same figures.** A model never supplies a number: it
+narrates facts the engine served (D-068, *"model may add no numbers"*; validation contract clause
+7). So the three kinds differ in **who phrased the answer** and **where the data went** — never in
+where the numbers came from.
+
+**On naming the STANDARD, not the vendor.** The served label says *Ollama-compatible* rather than
+naming one product, because the endpoint is OpenAI-compatible and works with Ollama **and its
+lookalikes**. A label that names a single implementation becomes false the moment a second one is
+what is actually running — which is the same defect as a Settings tab naming a provider that is not
+the one answering (AI-surfaces §14-3). *Retired:* **hailo** as a user-facing word — see
+[Deprecated terms](#deprecated-terms). *(PROPOSED 2026-07-20, AI-surfaces §14-2 — ratify at the 3b
+walk.)*
+
 ---
 
 ## Deprecated terms
@@ -350,6 +377,7 @@ copy.
 | Retired term | Use instead | Decision |
 |--------------|-------------|----------|
 | **Product Guarantees** / **Guarantee *n*** | **Product Commitments** / **Commitment *n*** — *"guarantee" is warranty-family vocabulary and the licence's position is **NO WARRANTY** (AGPL section 15); these seven are self-enforced behavioural commitments, tested.* **Claims unchanged — a rename, not a weakening.** ⚠ **The ordinary English word is NOT retired:** *"indicative, not a guarantee of sale price or timing"* (Liquidity) is a plain-English caveat, not this term, and must not be swept | owner 2026-07-20, page-legal §11-1 |
+| **hailo** (as a user-facing word) | **On-device model (Ollama-compatible)** — *name the standard, not the vendor: the endpoint is OpenAI-compatible and works with Ollama and its lookalikes, so a label naming one implementation is false as soon as a second one is running.* ⚠ **Only the USER-FACING word is retired.** The internal module, the provider id and the `LEDGERFRAME_HAILO_*` env keys are **unchanged and still accepted** — the owner's live `.env` must keep working across this rename | owner 2026-07-20, AI-surfaces §14-2 |
 | Detail level: Simple/**Expert** | *(nothing — the control it named is gone)* Retired first in favour of "Home layout: Simple / Full" (page-home §9-1), which is **itself now retired** — see the row below | D-030 / D-040 / page-home §9-1 → §12ho1-6 |
 | Home layout: Simple / **Full** | *(nothing — Home has ONE layout)* The **Simple** layout was REMOVED (owner, 2026-07-13): Home ships a single composition, the ratified grid. There is no layout control, no `home_layout` setting, and no user-facing choice to label | D-046 AMENDMENT / page-home §12ho1-6 |
 | Total value | Net worth (with liabilities) / Gross assets (positive holdings), per context | D-021 |

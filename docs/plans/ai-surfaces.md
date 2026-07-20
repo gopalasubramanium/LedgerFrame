@@ -1798,6 +1798,15 @@ GET /api/v1/portfolio/performance?days=365&benchmark=SPY&include_manual=false �
   sqlite3.IntegrityError: UNIQUE constraint failed: settings.key
 ```
 
+> **⊕ ANNOTATION 2026-07-20 (at the F10 fix commit `29ddbcb`) — the quoted stack above is left
+> exactly as it was recorded; this note sits beside it.** `:980` was **the first flush of what the fix
+> revealed to be a FOUR-flush defect**, not the only one. Actual lines at the fix commit, in
+> `app/services/market.py` as it stood at `2c2053d`: markers selected at **`:976`, `:986`, `:996`**
+> with their flushes at **`:980`, `:990`, `:1000`** (the three this section counted), plus a **fourth**
+> — `hist_fetched:{instrument.id}:{interval}`, selected at **`:1035`**, inserted at **`:1143`**,
+> flushed at **`:1144`**. A single-line citation of a multi-site defect reads as a single-site defect;
+> that is the only reason this annotation exists.
+
 **Re-verified at this close, not recalled.** `get_history_cached` opens with **three** one-time
 repair blocks (`hist_demo_residue_repaired_v1`, `hist_extended_hours_purged_v1`, and the §12-R3
 wrong-instrument purge), each shaped **`SELECT` marker → if absent, `session.add(Setting(...))` →
@@ -1820,6 +1829,48 @@ and repairing it here would put an **unreviewed change to the pricing path insid
 milestone** — where no reviewer of this milestone's diff would be looking for it. *The cost of
 carrying a known defect one delta further is smaller than the cost of a change landing where nobody
 is looking for it.*
+
+**⊕ DELTA NOTE — SHIPPED 2026-07-20, `29ddbcb`. THE RULE PAID FOR ITSELF.**
+
+**The fourth site was found BY the isolation review this section demanded.** §17-5 sent the pricing
+path to its own delta so a reviewer would be looking directly at it — and a reviewer looking directly
+at it found that the defect had **four** sites, not the three counted here. Swept into the AI
+milestone, the fix would have closed three, left the fourth, and reported F10 done. *The argument for
+isolation was made on principle and was then paid in a defect.*
+
+- **THE RED SHAPE — both reproduced before either fix, concurrent requests against the app.**
+  Sites 1–3: four concurrent `GET /portfolio/performance` on a fresh DB → **3 of 4** died on
+  `IntegrityError: UNIQUE constraint failed: settings.key`. Site 4: eight concurrent
+  `GET /instruments/AAPL/history?range=1D` → **1 of 8** died on the same constraint.
+- **THE FIX SHAPE.** One shared `_claim_marker(session, key)` — the insert inside a **SAVEPOINT**,
+  the loser's `IntegrityError` absorbed, returning whether this caller won. The three repair blocks
+  reach it through `_repair_once_per_install` (ordering kept **repair-then-claim**: claiming first
+  would mark a *failed* repair done forever); the fourth calls it directly. `market.py` now contains
+  **exactly one** `session.add(Setting(...))`, so the four sites cannot drift apart.
+- **THE FOUR SITES.** `hist_demo_residue_repaired_v1` · `hist_extended_hours_purged_v1` ·
+  `hist_wrong_class_candles_purged_v1` · **`hist_fetched:{instrument.id}:{interval}`**.
+- **⚠ THE POSTURE THAT HIDES SITE 4 — the durable lesson.** With a **new** instrument the race does
+  **not** appear: `_get_or_create_instrument` writes first, takes SQLite's write lock, and serialises
+  every concurrent caller, so only one ever reaches the marker check while it is absent (instrumented:
+  **1 of 12** saw it absent). It reproduces only when the instrument **already exists** — which is the
+  **ordinary** case, not the exotic one: any previously-viewed holding whose 12h marker has expired.
+  **A fresh-DB posture is not automatically the worst-case posture**, and here it was the *forgiving*
+  one. The shipped test warms up, then clears only the marker.
+- **THE GUARD IS PINNED AGAINST GOING BLIND** (CLAUDE.md). The site-4 test asserts a `hist_fetched:%`
+  marker exists after the run, proving it **reached** the insert it guards. That pin earned its place
+  during authoring: the first attempt passed while never reaching the insert at all — an
+  `alphavantage` stub without `av_tier="premium"` is gated off as `tier_disabled` (`market.py:510`)
+  and the route returns before calling `get_history_cached`. **A green test that never arrived** is
+  precisely what a §17-5-style isolation review exists to catch.
+- **CENSUS (chat ruling 2026-07-20), read-only across `app/` — the shape `SELECT Setting → if absent
+  → session.add(Setting) → flush()` on `settings.key`.** Nine `Setting` inserts total: **four in
+  `get_history_cached`, fixed here**; **four FILED, deliberately untouched in this delta** —
+  `app/services/feeds.py:72–78` (`FEEDS_SETTING_KEY`), **`app/services/briefing.py:201–207`** (a
+  generic `_set` helper, so it carries the defect to *every* caller — the one to take first),
+  `app/api/v1/routes/settings.py:131–135` (settings PATCH), `app/api/v1/routes/system.py:617–621`
+  (reset → `SEED_FLAG_KEY`); and **one adjacent, not the shape** — `app/seed/demo.py:327`, an
+  unconditional insert with no SELECT, which a concurrent double-seed would still collide on.
+  **A follow-up ruling is owed on the four filed instances.**
 
 ### 17-6. THE §17 RE-DRIVE — the touched renders, re-verified on the isolated instance
 
@@ -1908,7 +1959,7 @@ recorded with a dated disposition.
 | **F7** | A zero-valued fact can never be narrated (`_sig3("0.00") → ""`) | **FILED — R-56, POST-RELEASE.** Errs safe; the repair is a judgement that must not widen what the validator accepts (Commitment 7 / D-071). | §15-2 |
 | **F8** | `Income (div/int)` is a shown label with no GLOSSARY row | **RULED + FIXED (§17-3)** — sanctioned GLOSSARY-first on the canonical **Income** row, parity guarded both ways, **no app-wide rename** | §17-3 |
 | **F9** | A `PUT` writing `.env` has no effect while an OS-env override is in force, and nothing says so | **RULED + FIXED (§17-4)** — a conditional SERVED sentence, rendered only when true, detected by **divergence** not presence | §17-4 |
-| **F10** | Fresh-DB `get_history_cached` race — `UNIQUE constraint failed: settings.key` | **RECORDED, NOT FIXED — its own standalone delta immediately after this close, BEFORE R-54. Release-train blocking.** | §17-5 |
+| **F10** | Fresh-DB `get_history_cached` race — `UNIQUE constraint failed: settings.key` | **SHIPPED 2026-07-20, `29ddbcb` — at FOUR sites, not the three this ledger counted.** The isolation review §17-5 required is what found the fourth (`hist_fetched:{id}:{interval}`); scope extended by chat ruling 2026-07-20. One shared `_claim_marker` helper (SAVEPOINT-scoped, tolerates the loser). Both races reproduced RED first. | §17-5 |
 | **W-1** | Header/legend redundancy — two locality statements at once | **RULED + FIXED (§17-1)** — a handover; D-067 gains a dated reading note | §17-1 |
 | **W-2** | Phantom timestamps — the stub cites UI that does not render | **RULED + FIXED (§17-2)** — corrected, guarded, specimen pinned | §17-2 |
 | **§0-intake** | Contention-robustness fix for `tests/integration/test_ai_facts_routing.py:34` (fails only under machine contention, passes solo — `r43-historical-backfill.md` §18-F7d) | **MISSED AT CLOSE — found post-close (§19-K). Carried to R-54 by dated re-assignment (chat ruling 2026-07-20), recorded in ROADMAP R-54 and CURRENT.md; mechanised so intake cannot silently vanish again (TEMPLATE amendment, Commit 2).** | §19-K |

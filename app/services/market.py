@@ -14,6 +14,7 @@ from typing import NamedTuple
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -951,6 +952,48 @@ async def repair_wrong_class_candles(session: AsyncSession) -> dict:
     return {"purged": purged, "instruments": len(instruments), "by_source": by_source}
 
 
+async def _claim_marker(session: AsyncSession, key: str) -> bool:
+    """Insert a ``Setting`` marker, tolerating a concurrent claimer. True if WE inserted it.
+
+    F10. Every marker in ``get_history_cached`` was written as ``SELECT key -> if absent,
+    session.add(Setting(...)) -> flush()`` — a check-then-insert race. Two concurrent requests
+    both read the key as absent, both insert, and the loser dies on
+    ``UNIQUE constraint failed: settings.key``, 500ing a request that had done nothing wrong.
+
+    The insert goes inside a SAVEPOINT so the loser's ``IntegrityError`` rolls back to that
+    savepoint instead of poisoning the caller's transaction — the request continues and serves
+    its history. Absorbing the error is correct rather than merely convenient: the marker
+    exists afterwards either way, which is the whole contract a marker has.
+
+    Used by every marker write in this function so the four sites cannot drift apart.
+    """
+    from app.models import Setting
+
+    try:
+        async with session.begin_nested():
+            session.add(Setting(key=key, value=datetime.now(UTC).isoformat()))
+        return True
+    except IntegrityError:
+        log.debug("marker %s was claimed by a concurrent request", key)
+        return False
+
+
+async def _repair_once_per_install(session: AsyncSession, marker_key: str, repair) -> None:
+    """Run a one-time repair at most once per install, tolerating concurrent first-loads.
+
+    Ordering is repair-then-claim, deliberately. Claiming first would mark the repair done
+    even if it then failed, and the repair would never run again on that install.
+    """
+    from app.models import Setting
+
+    if (await session.execute(
+        select(Setting).where(Setting.key == marker_key)
+    )).scalars().first() is not None:
+        return
+    await repair(session)
+    await _claim_marker(session, marker_key)
+
+
 async def get_history_cached(
     session: AsyncSession,
     symbol: str,
@@ -972,32 +1015,20 @@ async def get_history_cached(
     # §14dr-25: one-time served purge of demo residue (idempotent, guarded by a Setting
     # marker so it scans once per instance, not per request). Belt to the migration's
     # data-fix — a fresh create_all DB has no residue, so this is a cheap no-op there.
-    if (await session.execute(
-        select(Setting).where(Setting.key == "hist_demo_residue_repaired_v1")
-    )).scalars().first() is None:
-        await repair_history_demo_residue(session)
-        session.add(Setting(key="hist_demo_residue_repaired_v1", value=datetime.now(UTC).isoformat()))
-        await session.flush()
+    await _repair_once_per_install(
+        session, "hist_demo_residue_repaired_v1", repair_history_demo_residue)
 
     # W-3 (R-42 3b): one-time served purge of already-stored extended-hours intraday bars
     # (idempotent, guarded by a Setting marker so it scans once per instance). Belt to the
     # extended_hours=false client fix — a fresh DB has no such rows, so this is a cheap no-op.
-    if (await session.execute(
-        select(Setting).where(Setting.key == "hist_extended_hours_purged_v1")
-    )).scalars().first() is None:
-        await repair_extended_hours_intraday(session)
-        session.add(Setting(key="hist_extended_hours_purged_v1", value=datetime.now(UTC).isoformat()))
-        await session.flush()
+    await _repair_once_per_install(
+        session, "hist_extended_hours_purged_v1", repair_extended_hours_intraday)
 
     # §12-R3: one-time served purge of wrong-instrument candles (crypto rows cached from AV's
     # equity endpoint, the F-1/F-3 root), idempotent + guarded by a Setting marker. A fresh DB has
     # no such rows, so this is a cheap no-op there; it is the belt to the class-aware capability gate.
-    if (await session.execute(
-        select(Setting).where(Setting.key == "hist_wrong_class_candles_purged_v1")
-    )).scalars().first() is None:
-        await repair_wrong_class_candles(session)
-        session.add(Setting(key="hist_wrong_class_candles_purged_v1", value=datetime.now(UTC).isoformat()))
-        await session.flush()
+    await _repair_once_per_install(
+        session, "hist_wrong_class_candles_purged_v1", repair_wrong_class_candles)
 
     instrument = await _get_or_create_instrument(session, symbol, None)
     # §14dr-24: the mock/demo provider is deterministic and free, so its PriceHistory cache
@@ -1120,7 +1151,12 @@ async def get_history_cached(
         if marker:
             marker.value = datetime.now(UTC).isoformat()
         else:
-            session.add(Setting(key=marker_key, value=datetime.now(UTC).isoformat()))
+            # F10 fourth site: same check-then-insert race as the three repair markers above.
+            # It needs the instrument to already exist to appear — with a NEW instrument the
+            # preceding `_get_or_create_instrument` write serialises callers and hides it —
+            # which makes it the ordinary case, not the exotic one: any previously-viewed
+            # holding whose 12h marker has expired.
+            await _claim_marker(session, marker_key)
     await session.flush()
     # §14dr-25: serve from the (now merged + deduped) cache so the returned series is
     # date-collapsed — strictly unique ascending dates — regardless of upsert path.

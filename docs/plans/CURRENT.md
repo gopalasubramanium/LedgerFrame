@@ -70,46 +70,33 @@ The product shell + every built page + the platform milestones, owner-accepted:
   `Income (div/int)` sanctioned GLOSSARY-first; **§17-4** the tab says when writing to it would do
   nothing. Backend **1963 solo, ordered AND randomized**; `npm run check` PASS (**408 vitest / 361
   Playwright**); currency **569/15**; contract **141 paths / 71 schemas**. `RATIFICATION.md §6` row
-  appended. **⚑ Open:** **F10** (the NEXT delta, release-blocking) · **R-54 / R-55** (Amendment 7) ·
+  appended. **⚑ Open (as at that close):** **F10** (the NEXT delta, release-blocking — **since SHIPPED
+  2026-07-20, see the F10 entry below**) · **R-54 / R-55** (Amendment 7) ·
   **R-56** (F7, post-release) · the §19-J gap — **no guard asserts a sanctioned short form is
   searchable in Help**, carried to the pre-release backlog.
+
   ⚠ **2026-07-20 post-close correction (§19-K):** the §0 intake item (contention-robustness, `test_ai_facts_routing.py:34`) was found NOT DONE after close — carried to R-54 by dated re-assignment; intake-in-ledger mechanised (TEMPLATE).
+
+- **F10 — the fresh-DB `get_history_cached` race** — **SHIPPED 2026-07-20**, `29ddbcb`
+  (standalone delta, no plan file; recorded in `ai-surfaces.md` §17-5 delta note + §18 row).
+  **RELEASE-TRAIN BLOCKING, cleared.** A check-then-insert race on `settings.key` at **FOUR sites in
+  `get_history_cached`, not the three the ruling counted** — the fourth (`hist_fetched:{id}:{interval}`)
+  **was found BY the isolation review §17-5 required**, scope extended by chat ruling. Both races
+  **reproduced RED first** through concurrent requests against the app; fixed by one shared
+  `_claim_marker` helper (SAVEPOINT-scoped, tolerates the loser), leaving `market.py` with exactly one
+  `session.add(Setting(...))`. **The posture lesson:** site 4 is invisible on a *new* instrument — the
+  preceding write serialises callers — and reproduces only when the instrument **already exists**, the
+  ordinary case. Gates: backend **1966 solo, ordered AND randomized**; `make lint` PASS; contract
+  **141 / 71 unchanged** (no regen); Help currency **no impact, guard-corroborated**.
+  **⚑ Owed:** a follow-up ruling on **four FILED instances of the same shape outside this function** —
+  `feeds.py:72–78`, **`briefing.py:201–207`** (a generic helper, so widest blast radius),
+  `settings.py:131–135`, `system.py:617–621` (plus `seed/demo.py:327`, adjacent variant).
 
 ---
 
-## NEXT — F10: the fresh-DB `get_history_cached` race (⚡ RELEASE-TRAIN BLOCKING)
+## NEXT — R-54 kickoff (deterministic answer intelligence, the two-tier Ask panel) — **PLAN ONLY, STOP AT §9**
 
-**⊕ 2026-07-20 — AI-surfaces CLOSED (see DONE). This is the very next delta, BEFORE any R-54
-work, by owner ruling (`ai-surfaces.md` §17-5).**
-
-```
-GET /api/v1/portfolio/performance?days=365&benchmark=SPY&include_manual=false → 500
-  app/services/analytics.py:244  performance_series → get_history_cached(...)
-  app/services/market.py:980     get_history_cached → await session.flush()
-  sqlite3.IntegrityError: UNIQUE constraint failed: settings.key
-```
-
-**The mechanism, re-verified at the close rather than recalled.** `get_history_cached` opens with
-**three** one-time repair blocks — `hist_demo_residue_repaired_v1` (`market.py:976`),
-`hist_extended_hours_purged_v1` (`:986`), and the §12-R3 wrong-instrument purge — each shaped
-**`SELECT` marker → if absent, `session.add(Setting(...))` → `flush()`**. Two concurrent first-load
-requests both read absent and both insert; the second hits the `UNIQUE` constraint on
-`settings.key`. **A check-then-insert race, three times over, on the fresh-DB path every new
-install takes.**
-
-**How it must be done:**
-
-1. **Fail-first on the REPRODUCED race** — concurrent first-load, not a unit call. *A race that is
-   only reasoned about is a race that gets "fixed" by a change nobody watched work.*
-2. **Upsert-shaped fix** (get-or-create that tolerates the loser), applied to **all three** blocks —
-   fixing one leaves the same defect at two other sites in the same function.
-3. **The pricing path reviewed in isolation**, which is the whole reason this was not swept into the
-   AI milestone: an unreviewed change to pricing inside an AI-copy delta is a change where no
-   reviewer is looking for it.
-4. **RELEASE-TRAIN BLOCKING** — a first-run defect, and the first run is the one impression an
-   install gets to make.
-
-## THEN — R-54 kickoff (deterministic answer intelligence, the two-tier Ask panel)
+**⊕ 2026-07-20 — F10 is SHIPPED (`29ddbcb`, see DONE above); the release train moves to R-54.**
 
 RD-9 Amendment 7 scope. **Not started.** Carries the plan-file gate standard: own plan file,
 survey-first, §9 one-pass, full loop. **Its tier-1 SEED already shipped** — the no-egress
@@ -119,10 +106,10 @@ here because it is the cross-reference easiest to lose between milestones.
 
 ## THEN — the road to v2.0.0 (RD-9 Amendment 4 + 5 + 6 + **7** + **8**)
 
-The remaining v2.0.0 set, in sequence (**AI-surfaces is CLOSED** — see DONE; the active NEXT
-above is the **F10 delta**, then **R-54**):
+The remaining v2.0.0 set, in sequence (**AI-surfaces is CLOSED** and **F10 is SHIPPED** — see DONE;
+the active NEXT above is the **R-54 kickoff**):
 
-> **F10 → R-54 → R-57 → R-55 → R-45 → R-46 → R-39 → pre-release walk → Gates C→F → tag v2.0.0**
+> **R-54 → R-57 → R-55 → R-45 → R-46 → R-39 → pre-release walk → Gates C→F → tag v2.0.0**
 > *(RD-9 Amendment 8.)*
 
 **⊕ RD-9 SCOPE AMENDMENT 7 (owner, 2026-07-20) — the set GREW by two**, both raised by the owner
@@ -142,7 +129,7 @@ strings rather than moving ones** (architect sequencing under delegation, **reve
 1. ~~**Help**~~ — **CLOSED 2026-07-19** (DONE above).
 2. ~~**Legal**~~ — **CLOSED 2026-07-20** (DONE above).
 3. ~~**AI-surfaces**~~ — **CLOSED 2026-07-20** (DONE above).
-4. **F10** — the fresh-DB `get_history_cached` race (the active NEXT above; release-train blocking).
+4. ~~**F10**~~ — the fresh-DB `get_history_cached` race — **SHIPPED 2026-07-20** (DONE below).
 5. **R-54** — deterministic answer intelligence, the two-tier Ask panel (RD-9 Amendment 7).
    **Carries three intake items** (chat ruling 2026-07-20, `ROADMAP.md` R-54): the
    **contention-robustness fix** re-assigned from AI-surfaces (`ai-surfaces.md` §19-K), **fixture

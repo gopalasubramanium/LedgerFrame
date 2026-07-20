@@ -650,6 +650,12 @@ tests. Never assemble the page against an endpoint that does not exist.*
     of failure as a Help entry describing a feature that moved. An **empty diff is reported as
     "no KB-mirrored files changed"**, explicitly; an **absent block fails the close**, exactly as a
     missing `CURRENT.md` does.
+  - **A record that must cite its delta's commit hash lives in a follow-on records-only commit;
+    never amend-to-substitute a hash — an amended citation dangles (F10, 2026-07-20).** *A commit
+    cannot contain its own hash: committing with a placeholder and amending to substitute it
+    **rewrites the very hash just written in**, leaving the record pointing at a pre-amend object
+    that survives only in the reflog, is **not on `main`**, and dies at the next `gc`. The
+    two-commit pattern — delta, then records-only citation — is the standing shape.*
 
 ---
 

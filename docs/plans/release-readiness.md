@@ -2,10 +2,33 @@
 
 **Status: ⏸ GATES C–F STANDING/DORMANT. GATE A CLOSED (+ A9–A11 addendum) · GATE B CLOSED
 (owner-ratified). RELEASE REQUIRES FULL COMPLETION (RD-9 Amendment 3, as REFINED by Amendment 4 and
-EXTENDED by Amendments 5 + 6, owner 2026-07-18, by Amendment 7, owner 2026-07-20, and by
-**Amendment 8, owner 2026-07-20** — Voice is POST-RELEASE; the v2.0.0 set is enumerated below,
-now incl. R-45 + R-46 + R-43 (with R-8) + R-54 + R-55 + **R-57**; the R-41/R-43/R-44 ruling is now RESOLVED by Amendment 6 — R-43 IN, R-41 + R-44
+EXTENDED by Amendments 5 + 6, owner 2026-07-18, by Amendment 7, owner 2026-07-20, by
+Amendment 8, owner 2026-07-20, and by **Amendment 9, owner 2026-07-20** — Voice is POST-RELEASE; the v2.0.0 set is enumerated below,
+now incl. R-45 + R-46 + R-43 (with R-8) + R-54 + R-55 + R-57 + **R-58**; the R-41/R-43/R-44 ruling is now RESOLVED by Amendment 6 — R-43 IN, R-41 + R-44
 POST-RELEASE).**
+
+> ## ⚠ RD-9 SCOPE AMENDMENT 9 (owner, 2026-07-20, chat) — **v2.0.0 scope += R-58.** *(Filed from the F10 census.)*
+>
+> The enumerated set grows by one — **R-58** (the `settings.key` check-then-insert race at the four
+> filed sites outside `get_history_cached`; `ROADMAP.md` R-58).
+>
+> **Origin — a census, not a bug report.** The F10 delta was required to sweep `app/` read-only for
+> the *shape* of the defect it fixed, rather than stopping at the site that was reported. It found
+> **four more**, none of them touched in that delta by ruling: `briefing.py:201-207` (a **generic
+> helper**, so the widest blast radius and the one to take first), `feeds.py:72-78`,
+> `settings.py:131-135`, `system.py:617-621` — plus `seed/demo.py:327` as an **adjacent variant**
+> (unconditional insert, no SELECT).
+>
+> **Severity, stated rather than implied: none of the four sits on a guaranteed-concurrent path**, so
+> unlike F10 this is **not release-train blocking**. It is in scope because the defect class is
+> **proven to 500 a real request**, the repair is a **known, tested primitive** (F10's `_claim_marker`),
+> and shipping v2.0.0 with four known instances of a race the same release just fixed is the kind of
+> gap the enumerated set exists to close.
+>
+> **Sequencing: after R-54** (architect sequencing under standing delegation, 2026-07-20 —
+> **reversible**; an ordering judgement, not a scope ruling).
+>
+> **The release gate remains FULL COMPLETION of the enumerated set (Amendment 3).**
 
 > ## ⚠ RD-9 SCOPE AMENDMENT 8 (owner, 2026-07-20, chat) — **v2.0.0 scope += R-57.** *(Filed at the AI-surfaces close review.)*
 >

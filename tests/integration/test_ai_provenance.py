@@ -36,6 +36,7 @@ from app.ai.vocabulary import (
     PROVENANCE_BUILT_IN,
     PROVENANCE_COPY,
 )
+from tests.stub_narration import STUB_CLOSING_SENTENCE
 
 
 async def _events(app_client, question: str = "What is my net worth?") -> list[dict]:
@@ -100,7 +101,10 @@ class _EchoProvider:
         # than the figure. Recorded because it is the same shape as R-56: a validator comparing
         # digit runs cannot tell a fact from a timestamp.
         fact = first.lstrip("- ").split("  (")[0].strip()
-        yield AIChunk(delta=f"{fact} These figures come from the facts above.")
+        # §17-2 — the closing sentence comes from the ONE registered home, not from a literal here.
+        # A stub sentence written inline is a sentence outside the phantom-referent guard, and the
+        # sentence the owner rejected at the 3b walk was written exactly that way.
+        yield AIChunk(delta=f"{fact} {STUB_CLOSING_SENTENCE}")
         yield AIChunk(done=True)
 
 

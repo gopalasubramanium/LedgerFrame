@@ -64,6 +64,7 @@ Liabilities    = Σ (LIABILITY-class holdings, counted negative)
 |------|----------------------|
 | **Net worth** | Gross assets − Liabilities, in base currency. The only headline total. In code this equals `value_portfolio.total_value` because liabilities are already stored negative. Canonical on the **Net worth** page. **[Help]** |
 | **Gross assets** | Sum of positive holdings' current market value in base currency at today's FX. Appears **only as a labelled component**, never as a standalone headline (D-021). |
+| **Liabilities** | The **aggregate** figure: the total of all **Liability** holdings, stated **positive** as a component of **Net worth** (`Net worth = Gross assets − Liabilities`). Canonical on the **Net worth** page (D-032); one of its four KPI-strip figures (D-054). **Distinct from Liability**, which is the asset-class term for a single holding — the aggregate is a figure, the class is a taxonomy. |
 | **Liability** | An `AssetClass.liability` holding; counted **negative** toward Net worth. |
 | **Cash & deposits** | The KPI-strip figure for immediately/near-term available cash on the Net worth page (D-054). |
 

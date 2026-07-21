@@ -26,7 +26,7 @@ row lacks a disposition.** This plan is the rule's first user.*
 
 | # | Kind | Item | Origin | Disposition |
 |---|---|---|---|---|
-| **I-1** | Intake | **Contention-robustness fix** — `tests/integration/test_ai_facts_routing.py:34` (`test_performance_question_pulls_risk_metrics`) fails only under machine contention, passes solo | `r43-historical-backfill.md` §18-F7d → re-assigned post-close, `ai-surfaces.md` §19-K → `ROADMAP.md` R-54 (i) | **OPEN — ⊕ root-cause HYPOTHESIS recorded at Phase 0-1 (`88c5ce4`):** the failure is likely a **date-aware coverage / seed-state dependency, NOT machine contention** — `performance_facts` skips `None`-valued metrics (`tools.py:352-353`) and every metric the assertion can be satisfied by is `value if da_computable else None` (`analytics.py:205-210`), so an uncovered window nulls **all** of them at once. Its delta must also account for Phase 0-1 **changing this question's routing** (now `RISK_CONCENTRATION → {perf, alloc}`) against the 20-fact cap |
+| **I-1** | Intake | **Contention-robustness fix** — `tests/integration/test_ai_facts_routing.py:34` (`test_performance_question_pulls_risk_metrics`) fails only under machine contention, passes solo | `r43-historical-backfill.md` §18-F7d → re-assigned post-close, `ai-surfaces.md` §19-K → `ROADMAP.md` R-54 (i) | **OPEN — ⊕ root-cause HYPOTHESIS recorded at Phase 0-1 (`88c5ce4`):** the failure is likely a **date-aware coverage / seed-state dependency, NOT machine contention** — `performance_facts` skips `None`-valued metrics (`tools.py:352-353`) and every metric the assertion can be satisfied by is `value if da_computable else None` (`analytics.py:205-210`), so an uncovered window nulls **all** of them at once. Its delta must also account for Phase 0-1 **changing this question's routing** (now `RISK_CONCENTRATION → {perf, alloc}`) against the 20-fact cap. **⊕ CORROBORATED at 0a-ii (owner ruling 2026-07-22, Recon 3): the covered→uncovered decay was OBSERVED live** on the isolated instance — direct evidence for the date-aware/seed-state hypothesis over machine contention. Still OPEN, owed at close |
 | **I-2** | Intake | **Fixture hygiene** — `frontend/src/components/ui/AskPanel.test.tsx:27` mocks `privacy_label` with a **live served string**; make it obviously synthetic | `ROADMAP.md` R-54 (ii) — **⚠ premise corrected, see §0-K** | **OPEN — ⊕ SHARPENED by Phase 1 delta 1 (`c5c13f6`, 2026-07-21):** the posture recut RETIRED the strings `AskPanel.test.tsx:27` (`Hailo/Ollama`) and `:37-39` (no-egress) mock, so those fixtures now mock **retired** copy, not merely live-byte-identical — worse than the original finding. Delta 1 left them (they are test doubles, not served copy — §9-G scope; no frontend test breaks, the mock is self-consistent). I-2's per-literal synthetic-vs-pin classification (§9-H) now MUST also drop the retired vendor word from these two fixtures |
 | **I-3** | §9 | **Posture-descriptor unification** — "OpenAI-compatible endpoint" vs "Ollama-compatible" | `ROADMAP.md` R-54 (iii); decision-shaped, so §9-G not intake | ✅ **DISPOSITIONED 2026-07-20 — UNIFY** (§9-G). One user-facing descriptor, **"Ollama-compatible"**; "Hailo" leaves served copy. **The ruling is closed; the STRINGS ratify at 0a by looking** — the ledger distinguishes the two |
 
@@ -1865,8 +1865,10 @@ at `docs/plans/assets/` on the `r54-0a-ii-<name>-<theme>.png` pattern.
   The fix is **benchmark warming**: seed `SPY`'s daily series with **`demo_history`'s own generator**
   (`_price_on`, `source='mock'`) — precisely what opening the **Portfolio performance chart** triggers on
   any instance, and consistent with the demo's stated design (its date-aware metrics are *meant* to
-  compute on mock series). Result: **`Return / volatility = 10.51`**, stable across probes. **Flagged for
-  the owner's ruling at the look** — a bounded, stated warming, not a portfolio-shape forcing.
+  compute on mock series). Result: **`Return / volatility = 10.51`**, stable across probes. ✅ **RULED
+  LEGITIMATE at 0a-ii (owner 2026-07-22): "the product's own path, §26-bis honored"** — benchmark warming
+  is what a real user viewing Portfolio performance triggers; it is a bounded, stated warming, not a
+  portfolio-shape forcing.
 - **⚠ RECONCILIATION 3 — the I-1 dynamic was OBSERVED.** A transient **covered→uncovered decay** at boot
   (first stats call momentarily covered, then settled uncovered on the uncovered instance) — the
   **date-aware coverage / seed-state dependency** I-1's Phase-0 hypothesis records, *not* machine
@@ -1899,6 +1901,29 @@ modified). No suite/gate run (none warranted). **Help currency: no Help/GLOSSARY
 posture strings + already-served `label_for`/`unavailable` vocabulary only; guard-corroborated (the
 `ask`-entry rewrite remains §9-I's own close delta). **HARD STOP — the owner closes 0a-ii by looking;
 1–3 revision loops expected; Phase 2 is NOT entered.**
+
+##### ⊕ 0a-ii WALKED 2026-07-22 — RATIFICATIONS + REVISION LOOP 1 (owner, chat)
+
+**The owner walked the full 0a-ii set** ("accept all walk recommendations + ratify as walked").
+
+**① RATIFIED AS WALKED (owner, by looking, 2026-07-22) — dated notes on every covered row:**
+- **(a)** the **§9-G posture table is FORMAL** — all five strings as cut, subject only to item-6ii's
+  one-word fix (**W-7(ii)**: the `no_egress` frame re-cut after the fix; the other four stand).
+- **(b)** the **F-2 + F-7 movers** — per-class rows, human labels, 2dp, sum 100.00, `82.20%` ==
+  Largest position; the U+2212 changes.
+- **(c)** the **ratio kind** (`10.51`, unitless), the **covered/uncovered pair** — the mixed
+  **XIRR-live / TWR-unavailable** frame **ACCEPTED as the stronger R2 specimen** (the plan's
+  "uncovered XIRR" phrasing keeps its dated correction, Recon 1) — and the **sub-cent/unpriced** set
+  (carried from 0a-i, now in tier-1 context).
+- **(d)** the **DS §5.5 trailing-arrow affordance RATIFIED FOR VALUE ROWS** (DESIGN-SYSTEM §5.5
+  updated: PROPOSED → RATIFIED for value rows).
+- **② RECON RULINGS:** **(a)** benchmark warming is **LEGITIMATE** — it is the product's own path
+  (opening the Portfolio performance chart warms `SPY`), §26-bis honored; recorded on the F-5/ratio
+  record. **(b)** the Recon-3 coverage-decay corroboration is **noted on I-1's ledger row** (I-1
+  stays OPEN, owed at close).
+
+**③ REVISION LOOP 1 — one focused delta (W-4 · W-5 · W-6 · W-7), full standing discipline, then
+RE-CUT ONLY THE AFFECTED SPECIMENS.** Shipped as `caa23da` — see the delta record below (`Phase 1 loop-1 delta`).
 
 ### Phase 1 — ASSEMBLY
 
@@ -2441,6 +2466,53 @@ surface**: Portfolio takes only `term-concentration` metrics; Home/Net worth use
 (D-033/D-048), enum-complete, sums to 100. So the four-bucket grouping did **not** prove ratified; the
 premise (*"live on an accepted surface"*) was false, and the fix shape was ruled: delete + re-point
 per-class (options 1+3); option 2 (invent a coarse taxonomy for a grouping nobody renders) rejected.
+
+#### Phase 1 loop-1 delta — W-4 · W-5 · W-6 · W-7 (0a-ii revision loop 1) — `caa23da` — DONE
+
+**Per the 0a-ii walk (owner, chat 2026-07-22).** One focused delta answering four walk findings, full
+standing discipline (the two new guards RED first), then a re-cut of ONLY the affected specimens.
+
+**What shipped.**
+
+| # | Change | Files |
+|---|---|---|
+| **W-5** | A tier-1 **ACTION/NAV** answer (SETTINGS_HELP whose top help hit is a PAGE) is **SCOPED to that one hit** — no headline figures, no second help fact (`gather_facts` returns `[hf[0]]`). MODE-scoped: tier-2 keeps the full pack. **Plus** the fuzzy-rank fix the scope EXPOSED: a settings-tab question promotes the `page-settings` hit over a `Heatmap`-on-"colour" match, so "change the theme" points at **Appearance**, not Heatmap | `app/ai/tools.py` |
+| **W-4** | The **labeled link line** — DS §5.5 second PROPOSED variant, `.lf-ask__linkline`: a scoped action/nav answer POINTS with **"→ Open Holdings" / "→ Open Appearance settings"** (the ratified `--accent` link, no bare orphaned arrow). Value rows + multi-fact prose facts keep the ratified trailing arrow. `askLinkLabel` gains the **Settings tab-label vocabulary** ("Appearance settings") | `frontend/src/components/ui/AskPanel.tsx`, `ask.css`, `nav/askLinks.ts`, `DESIGN-SYSTEM.md` §5.5 |
+| **W-6** | **Two misses, two truths** — `REFUSAL_UNROUTABLE` ("I can't match that to anything I can answer…") distinct from the no-data line; `classify_miss` decides purely from ROUTING (source/symbol/help hit), and grounding emits the matching string | `app/ai/prompts.py`, `app/ai/tools.py`, `app/ai/grounding.py` |
+| **W-7** | **(i)** Help `term-xirr-twr` body/improves *"not applicable"* → *"unavailable"* (aligns the Help with the tier-1 rendering; W-1 deixis clean). **(ii)** `POSTURE_NO_EGRESS` *"no AI narration"* → *"no model narration"* — pin + `ai-surfaces.md` §12-3 record updated **deliberately** | `app/services/help.py`, `app/api/v1/routes/ai.py`, `test_posture_copy_ratified.py`, `ai-surfaces.md` |
+
+**FAIL-FIRST — both new guards RED first, then GREEN:**
+- **W-5** `test_tier1_action_nav_scope.py` (new): reverting the `return [hf[0]]` scope → the action/nav
+  answer carried the portfolio headline + multiple help facts — **RED** on both the holdings and the
+  theme case (the theme case also proving the Settings-over-Heatmap promotion). Restored → GREEN.
+- **W-6** `test_tier1_miss_split.py` (extended): reverting the miss selection to `_template_answer` →
+  the unroutable body carried the **no-data** truth — **RED**. Restored → GREEN. `classify_miss` pinned
+  seed-independently (routed → `no_data`, unmatched → `unroutable`); the two strings are DISTINCT.
+- **W-4** `AskPanel.test.tsx` (4 new): the labeled line renders an `<a>` (never a control, §9-E),
+  names its tab destination, closes the panel on navigate, and a page-linked help fact in a MULTI-fact
+  pack keeps its trailing arrow (the discriminator that leaves ratified frames untouched).
+
+**THE RITE — re-cut ONLY the affected specimens (owner: "ratified frames do not get re-cut").** The
+affected surfaces: **(b)/(c)** action/nav answers (W-4/W-5), the **honest miss** (W-6), the **no_egress**
+posture frame (W-7ii), **and tier-1(a)** covered+uncovered (W-7i changes the Help·XIRR body text VISIBLE
+in that frame — re-cut for camera-honesty, stated). Everything else (ratio, allocation, change, the other
+four postures) is untouched by this delta and is NOT re-cut. **12 re-cut frames (both themes, 0 non-benign
+console errors, isolated instances, `.env` hash-restored):** `action-holdings` + `nav-theme` (scoped to the
+top help hit + the labeled **"↗ Open Holdings"** / **"↗ Open Appearance settings"** line — no headline,
+no second help fact); `honest-miss` (the UNROUTABLE string); `posture-no_egress` ("no model narration");
+`tier1a-covered` + `tier1a-uncovered` (Help·XIRR body now "'unavailable' otherwise"; figures unchanged —
+XIRR live, TWR 71.62%/"unavailable"). **Verified by looking.**
+
+**Gates — solo.** Backend **2102 passed / 15 skipped ordered / 2102 passed / 15 skipped randomized**
+(⚠ ran under the owner's idle dev stack — CPU-contended, ~19–21 min/run; not a competing pytest, fixture
+DB untouched, ordered==randomized corroborates no flakiness). `make lint` PASS. `npm run check` **exit 0
+(vitest 429 passed / 42 files · Playwright 361 passed)**. Suite reconciliation: backend **2097 → 2102, +5**
+(4 action/nav-scope + 1 classify_miss); vitest **425 → 429, +4** (AskPanel W-4), Playwright 361 unchanged.
+**Untyped-shape caveat (§3b):** the SSE `facts` content moves for action/nav (scoped)
+and misses (two strings) — the served-path guards + the miss/scope tests are what see it. **Help
+currency:** the `term-xirr-twr` Help body changed (W-7i) — a Help delta, **stated** (rides §9-I's owed
+`ask`-entry close delta); the posture string moved with its §12-3 record. **HARD STOP for the owner's
+loop-2 look.**
 
 ### Phase 2 — TESTS AND GUARDS
 

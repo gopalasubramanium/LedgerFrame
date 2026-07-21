@@ -2514,6 +2514,43 @@ currency:** the `term-xirr-twr` Help body changed (W-7i) — a Help delta, **sta
 `ask`-entry close delta); the posture string moved with its §12-3 record. **HARD STOP for the owner's
 loop-2 look.**
 
+#### Phase 1 loop-2 walk → loop-3 delta — W-4 EXTENSION (prose facts carry no pointer) — `c10ad30` — DONE
+
+**Loop-2 WALKED 2026-07-22 (owner, chat):**
+**① RATIFIED AS RE-CUT (owner, by looking) — dated notes:** the scoped action answer + the labeled
+link line (**DS §5.5 variant 2 FORMAL**), the nav answer incl. the theme→Appearance promotion,
+`REFUSAL_UNROUTABLE` verbatim, the no_egress recut, the `'unavailable'` Help copy. (DESIGN-SYSTEM §5.5
+updated: variant 2 PROPOSED → RATIFIED.)
+**② W-4 EXTENSION — a deliberate, dated amendment to 1c's ratified frames.** **Prose / help facts now
+render NO pointer** — the bare trailing/orphan ↗ is removed from prose facts EVERYWHERE (it pointed at a
+destination the reader was not being sent to). **Value rows keep the ratified trailing arrow; scoped
+action/nav answers keep the labeled line.** Frontend-only (`AskPanel.tsx`: the prose branch renders the
+labeled line when scoped, else nothing; `FactPointer` JSDoc + DS §5.5 note it is value-rows-only).
+**Guard (loop-3):** `AskPanel.test.tsx` — a prose fact rendering a pointer glyph outside the labeled-line
+variant reds (the loop-1 "prose keeps its arrow" discriminator was FLIPPED deliberately); **proven RED
+first** (restoring the prose `FactPointer` reds it), and a value row still carries its arrow (the
+not-vacuous discriminator).
+**③ GATE NOTE — standing-rules clarification recorded** (`memory/gate-runs-must-be-solo`): "uncontended"
+means no STATE-SHARING process, not zero CPU load; CPU-load contention is flagged and acceptable when
+isolation is proven and ordered==randomized agree. **I-1 corollary noted:** a pass under CPU load is
+disposition-relevant evidence (argues against a pure load-flake).
+
+**Gates.** No backend code changed — the **backend 2102 verdict (loop-1) stands**. `npm run check` **exit 0
+(vitest 429 passed / 42 files · Playwright 361 passed)**; vitest 429 unchanged (the loop-1 discriminator
+test FLIPPED in place, not a count change); Playwright 361 unchanged. `make lint` N/A (no Python moved).
+
+**THE RITE — re-cut ONLY the frames the extension visibly touches (owner's list): `tier1a-covered`,
+`tier1a-uncovered`, `ratio`, `movers-allocation` — both themes** (each had a prose/help fact whose trailing
+↗ is now gone; their value rows keep arrows). `action-holdings`/`nav-theme` already render the labeled line
+(unchanged); `honest-miss`/postures have no facts; `movers-change`'s AAPL rows are VALUE rows (arrows kept)
+— none re-cut. **8 re-cut frames verified (both themes, 0 non-benign console errors, per-row pointer census:
+every prose fact ptr=0/link=0, every value row ptr=1):** the orphan ↗ under each prose fact's "Show more"
+is gone; figures unchanged (XIRR live, TWR 71.62%/"unavailable", ratio 10.51, allocation sums to 100).
+
+**④ PHASE 2 AUTHORIZED after the loop-3 look** (owner ruling item 4): the test matrix (both egress × both
+acceptance states) begins after the owner's loop-3 look, **with no further stop between loop-3 and Phase
+2's report**. **HARD STOP for the owner's loop-3 look.**
+
 ### Phase 2 — TESTS AND GUARDS
 
 Every §7 row that names a guard. **Each proven RED first**, on a specimen that reproduces the defect.

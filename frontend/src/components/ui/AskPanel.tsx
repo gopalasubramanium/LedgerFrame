@@ -1,6 +1,7 @@
 import "./ask.css";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MessageCircleQuestion } from "lucide-react";
+import { ArrowUpRight, MessageCircleQuestion } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import {
   getGroundingStatus,
@@ -9,6 +10,7 @@ import {
   type GroundingFactDTO,
   type GroundingStatus,
 } from "../../api/ai";
+import { askLinkLabel, resolveAskLink } from "../../nav/askLinks";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { EmptyState } from "./EmptyState";
@@ -73,7 +75,36 @@ function firstLine(value: string): string {
   return line.trim();
 }
 
-function FactRow({ fact }: { fact: GroundingFactDTO }) {
+/**
+ * The link affordance — R-54 §9-D/§9-E (PROPOSED DS, DESIGN-SYSTEM §5.5, ratified at 0a-ii by
+ * looking). THE PANEL EXPLAINS AND POINTS; THE PAGE ACTS. A fact that resolves a served link renders
+ * a trailing pointer that NAVIGATES to the fact's canonical page and closes the panel — it never
+ * acts, mutates, or embeds a control (§1 boundary, guarded by `check:ask-boundary`).
+ *
+ * It is a LINK, not a colour or a slant: gain/loss/staleness/warning own colour and model-text owns
+ * italic (§0-G), so the affordance takes the one free axis — an outward arrow with an underline-on-
+ * interaction treatment, in a neutral link tone, never a semantic data colour. A fact with no
+ * resolvable destination renders NO pointer (`askLinkLabel` → null): tier-1 declines rather than
+ * drawing an arrow to nowhere (§0-F dead-affordance 3).
+ */
+function FactPointer({ fact, onNavigate }: { fact: GroundingFactDTO; onNavigate: () => void }) {
+  const to = resolveAskLink(fact.link_id);
+  const dest = askLinkLabel(fact.link_id);
+  if (!to || !dest) return null;
+  return (
+    <Link
+      className="lf-ask__pointer"
+      to={to}
+      onClick={onNavigate}
+      aria-label={`Open ${dest}`}
+      data-testid="ask-pointer"
+    >
+      <ArrowUpRight aria-hidden size={14} />
+    </Link>
+  );
+}
+
+function FactRow({ fact, onNavigate }: { fact: GroundingFactDTO; onNavigate: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const help = isHelpFact(fact);
 
@@ -85,6 +116,7 @@ function FactRow({ fact }: { fact: GroundingFactDTO }) {
         {fact.is_stale && fact.timestamp ? (
           <StalenessChip isStale asOf={fact.timestamp} />
         ) : null}
+        <FactPointer fact={fact} onNavigate={onNavigate} />
       </li>
     );
   }
@@ -103,6 +135,7 @@ function FactRow({ fact }: { fact: GroundingFactDTO }) {
           {expanded ? "Show less" : "Show more"}
         </Button>
       )}
+      <FactPointer fact={fact} onNavigate={onNavigate} />
     </li>
   );
 }
@@ -324,7 +357,7 @@ export function AskPanel({ label = "Ask", seedQuestion }: AskPanelProps = {}) {
               <h3 className="lf-ask__facts-title">What this is built from</h3>
               <ul className="lf-ask__fact-list">
                 {facts.map((f) => (
-                  <FactRow key={`${f.label}-${f.value}`} fact={f} />
+                  <FactRow key={`${f.label}-${f.value}`} fact={f} onNavigate={close} />
                 ))}
               </ul>
             </section>

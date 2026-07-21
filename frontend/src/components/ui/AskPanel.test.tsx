@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 import { AskPanel } from "./AskPanel";
 import * as aiApi from "../../api/ai";
@@ -575,4 +576,60 @@ test("§17-1: NEVER NEITHER — every state carries exactly one locality stateme
   await user.click(screen.getByRole("button", { name: "Ask" }));
   await waitFor(() => expect(screen.getByTestId("ask-privacy-label")).toBeInTheDocument());
   expect(localityStatements()).toBe(1);
+});
+
+// ── R-54 delta 4b — THE LINK AFFORDANCE: the panel POINTS, the page ACTS (§9-D/§9-E) ──────────
+//
+// A fact carrying a SERVED link_id renders a pointer to its canonical page; a fact with none renders
+// no pointer (never an arrow to nowhere); following one closes the ephemeral panel. The panel now
+// renders react-router `Link`, so these mount it in a router — the existing tests do not, and stay
+// unrouted because their mock facts carry no link_id and so render no Link.
+
+const LINKED_RUN: ChatEvent[] = [
+  {
+    type: "facts",
+    facts: [
+      { label: "Net worth", value: "796,543.93 SGD", timestamp: "2026-07-20T00:00:00Z", link_id: "page:/net-worth" },
+      { label: "Today's change", value: "1,204.10 SGD", timestamp: "2026-07-20T00:00:00Z" }, // no link
+    ],
+  },
+  { type: "provenance", kind: "built_in", narrated: false, provenance: PROV_BUILT_IN },
+  { type: "done", grounded: true, provider: "fallback", disclaimer: DISCLAIMER },
+];
+
+async function runAskRouted(events: ChatEvent[]) {
+  mockStream(events);
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter>
+      <AskPanel />
+    </MemoryRouter>,
+  );
+  await user.click(screen.getByRole("button", { name: "Ask" })); // open the dialog
+  await user.type(screen.getByLabelText("Your question"), "what is my net worth?");
+  await user.click(screen.getAllByRole("button", { name: "Ask" })[1]); // submit
+  return user;
+}
+
+test("AskPanel: a fact with a served link renders a pointer that NAMES its destination (§9-D)", async () => {
+  await runAskRouted(LINKED_RUN);
+  const pointer = await screen.findByRole("link", { name: "Open Net worth" });
+  // The destination is the page that owns the figure, from the ONE nav model — not a typed string.
+  expect(pointer.getAttribute("href")).toContain("/net-worth");
+});
+
+test("AskPanel: a fact with no resolvable link renders NO pointer — never an arrow to nowhere", async () => {
+  await runAskRouted(LINKED_RUN);
+  // Two facts, exactly one linked → exactly one pointer.
+  expect(screen.getAllByTestId("ask-pointer")).toHaveLength(1);
+  const unlinkedRow = screen.getByText("Today's change").closest("li");
+  expect(unlinkedRow).not.toBeNull();
+  expect(unlinkedRow!.querySelector('[data-testid="ask-pointer"]')).toBeNull();
+});
+
+test("AskPanel: following a pointer closes the ephemeral panel — it points, then leaves", async () => {
+  const user = await runAskRouted(LINKED_RUN);
+  await user.click(await screen.findByRole("link", { name: "Open Net worth" }));
+  // close() runs on navigate: the dialog unmounts, so its composer is gone.
+  await waitFor(() => expect(screen.queryByLabelText("Your question")).toBeNull());
 });

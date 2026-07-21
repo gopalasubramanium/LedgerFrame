@@ -1202,3 +1202,42 @@ both themes, which is the condition this amendment set for itself.
 read the answer `italic`, the fact value `normal` and the legend `normal`, **both directions, both
 themes** (§16-A) — because *"the italics look right"* is exactly the kind of judgement a screenshot
 invites and cannot settle.
+
+## §5.5 AMENDMENT — the Ask panel LINK AFFORDANCE (PROPOSED 2026-07-21, R-54 §9-D/§9-E; ratify at the 0a-ii look)
+
+**The owner's ruling (delta-4 composition, chat 2026-07-22):** a tier-1 answer that is about an
+action or a place **points to the page/tab where you act** — *"how do I add a holding"* → Holdings,
+*"how do I change the theme"* → Settings › Appearance. **THE PANEL EXPLAINS AND POINTS; THE PAGE
+ACTS** (§1). The affordance is a **link, never an embedded control** — guarded by
+`check:ask-boundary` (the §9-E boundary in the `check:primitives` shape).
+
+### The rule
+
+| | |
+|---|---|
+| **Applies to** | Every fact in the Ask panel's fact list whose SERVED `link_id` resolves to a destination (`nav/askLinks.ts::resolveAskLink`) — a figure fact → the page that owns it, a term fact → its Help entry, a page/tab help fact → that page (`page:/settings?tab=appearance`) |
+| **Renders as** | A trailing **ArrowUpRight** glyph that NAVIGATES on click and closes the ephemeral panel. `aria-label` **names the destination** (`Open Holdings`), from the ONE nav model (D-043), never a typed string |
+| **Never** | Acts, mutates, submits, or embeds a control — the answer body may contain links and nothing interactive besides (§1 boundary). A fact whose `link_id` the resolver refuses renders **NO** pointer (`askLinkLabel` → null): tier-1 declines rather than drawing an arrow to nowhere (§0-F) |
+| **Class** | `.lf-ask__pointer` |
+
+### It speaks SummaryLink's language, not a second one
+
+The DS already has **THE linked-summary affordance** — `SummaryLink` (§5, the corner ↗ that opens
+the page a tile summarises). A fact pointing at the page that owns its figure is **the same idea**,
+so this is a **variant of that language, not a new one** (the centralization rule: *per-instance
+copies of a standard are the defect*): the **ArrowUpRight** glyph, the **`--accent`** navigation
+tone, hover = a **subtle surface pill** (an SVG cannot be underlined — §12ho2-8), the standard focus
+ring, and an `aria-label` that names the destination. Only the **geometry** differs — SummaryLink is
+absolute in a tile corner; this sits at the trailing edge of a fact-list flex row.
+
+### Why `--accent`, and deliberately not a data colour or a slant
+
+Like the model-text amendment above, this needs **a free axis, not a prettier one**. Gain/loss,
+staleness, warning and danger own **colour**; model authorship owns **italic** (the slant, above).
+The **navigation accent** (`--accent`, D-098's established "this links elsewhere" tone — the same
+`.idp__link` / SummaryLink use) is the free axis: it says *"this goes somewhere"* without valuing the
+number or claiming authorship. A link is not a judgement about the fact; it is a door next to it.
+
+**PROPOSED — ratified at 0a-ii by looking, rendered live**, both themes, alongside the recut posture
+table and the tier-1 answer specimens. Phase 1 delta 4b builds it PROPOSED; 0a-ii is where *"ratified
+at 0a by looking"* happens for it (the resolution of the §8 circularity).

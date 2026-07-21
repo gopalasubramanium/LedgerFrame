@@ -17,6 +17,11 @@ export interface GroundingFactDTO {
   is_stale?: boolean;
   fact_type?: string | null;
   explanation?: string | null;
+  /** R-54 §9-D — the SERVED semantic link ID (`<kind>:<key>`), or null. The frontend resolver
+   *  (`nav/askLinks.ts`) turns it into a destination; the Ask panel renders the pointer affordance.
+   *  Declared here DELIBERATELY (the §3b served-shape guard flags a new served field so the frontend
+   *  contract is updated on purpose, not by drift): served since Phase 0-5, consumed from delta 4b. */
+  link_id?: string | null;
 }
 
 export interface FactPack {

@@ -20,8 +20,9 @@
     "check:copy": "node scripts/check-internal-copy.mjs",
     "check:smoke-isolation": "node scripts/check-smoke-isolation.mjs",
     "check:primitives": "node scripts/check-ui-primitives.mjs",
+    "check:ask-boundary": "node scripts/check-ask-boundary.mjs",
     "test:overflow": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run check:tokens && npm run check:copy && npm run check:smoke-isolation && npm run check:primitives && npm run test && npm run test:overflow"
+    "check": "npm run lint && npm run typecheck && npm run check:tokens && npm run check:copy && npm run check:smoke-isolation && npm run check:primitives && npm run check:ask-boundary && npm run test && npm run test:overflow"
   },
   "dependencies": {
     "lucide-react": "^1.24.0",

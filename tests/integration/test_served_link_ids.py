@@ -226,6 +226,43 @@ async def test_a_figure_fact_links_to_the_page_that_owns_it(app_client):
     assert by_label.get("Unrealised P/L") == "page:/portfolio", by_label
 
 
+async def test_a_deep_link_target_still_obeys_the_acceptance_gate(app_client):
+    """§9-E item 3 (owner ruling): a deep link NEVER bypasses the acceptance gate — the server
+    refuses regardless. Navigation confers no authority: a tier-1 `page:` link is a URL, and the
+    page it lands on reads gated endpoints like any other. REPRESENTATIVE, not a matrix.
+
+    The link *"how do I add a holding"* → `page:/holdings` resolves to the Holdings page, whose
+    primary read is `GET /portfolio/holdings` (§0-D). On an unaccepted install that read is 451, so
+    following the deep link lands on a page that refuses to load its data until the terms are
+    accepted — exactly as if the user had navigated there by hand. The client is NOT where this is
+    enforced (§9-E), so this is a server assertion, not a UI matrix.
+    """
+    from sqlalchemy import delete
+
+    from app.db.base import get_session
+    from app.models import LegalAcceptanceEvent
+
+    # The served link a user would follow, and the gated endpoint its destination page reads.
+    links = {f.get("link_id") for f in await _facts(app_client, "how do I add a holding")}
+    assert "page:/holdings" in links, (
+        f"the deep-link premise changed — page:/holdings was not served; links were "
+        f"{sorted(x for x in links if x)}"
+    )
+    holdings_data = "/api/v1/portfolio/holdings"
+
+    async for s in get_session():  # return the install to 'never answered'
+        await s.execute(delete(LegalAcceptanceEvent))
+        await s.commit()
+        break
+
+    r = await app_client.get(holdings_data)
+    assert r.status_code == 451, (
+        f"{holdings_data} answered {r.status_code} on an UNACCEPTED install — a deep link would "
+        f"then reach page data that skipped the gate. Navigation confers no authority (§9-E): the "
+        f"451/PIN layers refuse whatever the URL says."
+    )
+
+
 async def test_a_fact_with_no_canonical_destination_carries_no_link(app_client):
     """`None` is a real answer — tier-1 must not invent a destination.
 

@@ -32,6 +32,12 @@ export const KNOWN_PAGE_ROUTES: ReadonlySet<string> = new Set(
   NAV_GROUPS.flatMap((g) => g.items).filter((i) => i.built).map((i) => i.path),
 );
 
+/** Every built nav page's human label, keyed by route — the ONE source (D-043) the pointer
+ *  affordance names its destination from, so a renamed page renames the pointer automatically. */
+const NAV_LABEL_BY_PATH: ReadonlyMap<string, string> = new Map(
+  NAV_GROUPS.flatMap((g) => g.items).filter((i) => i.built).map((i) => [i.path, i.label]),
+);
+
 /**
  * Resolve a served `<kind>:<key>` link ID to a react-router `to` value, or `null` if it names no
  * destination this registry knows (unknown kind, unbuilt/unknown page route, or a malformed ID).
@@ -49,6 +55,29 @@ export function resolveAskLink(linkId: string | null | undefined): string | null
   if (!key) return null; // kind but no key
 
   if (kind === "help") return `/help?topic=${encodeURIComponent(key)}`;
-  if (kind === "page") return KNOWN_PAGE_ROUTES.has(key) ? key : null;
+  if (kind === "page") {
+    // R-54 delta 4b / R1(iii): a `page:` route MAY carry a query — `page:/settings?tab=appearance`
+    // (tab-level pointing, §9-D). Validate the PATH against the accepted set and PRESERVE the query
+    // verbatim; a query-less link keeps its exact prior contract. The query part is not a route, so
+    // it is never validated as one — only the path is.
+    const q = key.indexOf("?");
+    const path = q === -1 ? key : key.slice(0, q);
+    if (!KNOWN_PAGE_ROUTES.has(path)) return null;
+    return key; // path is a real nav page → the full `to` (path + any ?query) navigates
+  }
   return null; // unknown kind → no destination (honest, never a guess)
+}
+
+/**
+ * The human label for a resolved link's DESTINATION — the pointer affordance's accessible name
+ * (R-54 delta 4b). A `page:` link is named by its nav label (the query notwithstanding); a `help:`
+ * link is named for the Help page it opens. A link the resolver refuses gets `null` — no label, so
+ * no dangling arrow to a destination that does not exist.
+ */
+export function askLinkLabel(linkId: string | null | undefined): string | null {
+  const to = resolveAskLink(linkId);
+  if (!to) return null;
+  if (to.startsWith("/help")) return "Help";
+  const path = to.split("?", 1)[0];
+  return NAV_LABEL_BY_PATH.get(path) ?? null;
 }

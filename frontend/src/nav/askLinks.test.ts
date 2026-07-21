@@ -19,7 +19,7 @@
 
 import { describe, expect, test } from "vitest";
 
-import { KNOWN_LINK_KINDS, KNOWN_PAGE_ROUTES, resolveAskLink } from "./askLinks";
+import { askLinkLabel, KNOWN_LINK_KINDS, KNOWN_PAGE_ROUTES, resolveAskLink } from "./askLinks";
 
 describe("askLinks — the frontend ID→route registry (R-54 §9-D)", () => {
   // ── Every accepted route round-trips ────────────────────────────────────────────────────────
@@ -76,5 +76,52 @@ describe("askLinks — the frontend ID→route registry (R-54 §9-D)", () => {
     // Help.tsx reads ?topic= against the served catalogue; a raw key with URL metacharacters must
     // not break the query. Real ids are slug-safe, so this is a robustness pin, not a live case.
     expect(resolveAskLink("help:a b&c")).toBe("/help?topic=a%20b%26c");
+  });
+
+  // ── R-54 delta 4b / R1(iii) — a `page:` route may carry a query (the tab), ROUND-TRIP ────────
+  //
+  // The composition ruling (owner 2026-07-22): a Settings help fact points at
+  // `page:/settings?tab=appearance` — tab-level pointing, which §9-D already ruled sufficient. The
+  // backend serves the query; this resolver was extended to VALIDATE the path against the accepted
+  // set and PRESERVE the query, where before it rejected any route with a `?`.
+  describe("a page: route with a ?tab= query (R1iii)", () => {
+    test("the path is validated and the query preserved, so the tab survives the round-trip", () => {
+      expect(resolveAskLink("page:/settings?tab=appearance")).toBe("/settings?tab=appearance");
+      expect(resolveAskLink("page:/settings?tab=data-feeds")).toBe("/settings?tab=data-feeds");
+    });
+
+    test("a query on an UNKNOWN page still resolves to null — the path is what is validated", () => {
+      expect(resolveAskLink("page:/not-a-real-page?tab=appearance")).toBeNull();
+      expect(resolveAskLink("page:/kitchen-sink?tab=x")).toBeNull(); // real route, not a nav page
+    });
+
+    test("a query does not disturb the tab-less round-trip", () => {
+      // The pre-existing contract for query-less page links is unchanged.
+      expect(resolveAskLink("page:/settings")).toBe("/settings");
+      expect(resolveAskLink("page:/net-worth")).toBe("/net-worth");
+    });
+  });
+
+  // ── The destination LABEL — the pointer affordance's accessible name (delta 4b) ──────────────
+  //
+  // The affordance names WHERE it goes from the ONE nav model (D-043), never a hand-typed string,
+  // so a renamed page renames the pointer automatically and a served link the resolver refuses
+  // gets no label (null → no affordance, never a dangling arrow).
+  describe("askLinkLabel — the pointer's destination name", () => {
+    test("a page: link is named by its nav label, the query notwithstanding", () => {
+      expect(askLinkLabel("page:/net-worth")).toBe("Net worth");
+      expect(askLinkLabel("page:/holdings")).toBe("Holdings");
+      expect(askLinkLabel("page:/settings?tab=appearance")).toBe("Settings");
+    });
+
+    test("a help: link is named for the Help page it opens", () => {
+      expect(askLinkLabel("help:term-xirr-twr")).toBe("Help");
+    });
+
+    test("an unresolvable link has no label — no affordance is rendered for it", () => {
+      expect(askLinkLabel("page:/not-a-real-page")).toBeNull();
+      expect(askLinkLabel("route:/net-worth")).toBeNull();
+      expect(askLinkLabel(null)).toBeNull();
+    });
   });
 });

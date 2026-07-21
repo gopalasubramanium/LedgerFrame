@@ -69,6 +69,32 @@
   font-weight: var(--weight-medium);
 }
 
+/* R-54 §9-D/§9-E — THE LINK AFFORDANCE (PROPOSED DS, DESIGN-SYSTEM §5.5; ratified at 0a-ii by
+   looking). The panel EXPLAINS AND POINTS; the page ACTS. It SPEAKS SummaryLink's already-ratified
+   language rather than inventing a second linked-affordance form (the centralization rule): the
+   Lucide **ArrowUpRight** glyph, the navigation **`--accent`** tone, hover = a subtle **surface
+   pill** (an SVG cannot be underlined — §12ho2-8), the standard focus ring, and an `aria-label` that
+   names the destination. It takes the ONE FREE AXIS (§0-G) — a navigation accent, NOT a semantic
+   data colour (gain/loss/staleness/warning own colour) and NOT the italic that marks model text.
+   The geometry differs from SummaryLink's absolute tile-corner: here it sits at the trailing edge of
+   a fact-list flex row (the label flexes to push it right). Theme-aware through the tokens. */
+.lf-ask__pointer {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: var(--space-1);
+  color: var(--accent);
+  border-radius: var(--radius-sm);
+  line-height: 0;
+}
+.lf-ask__pointer:hover {
+  background: var(--surface);
+}
+.lf-ask__pointer:focus-visible {
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
 /* D-070's served fallback signal. Deliberately NOT error-styled. */
 .lf-ask__signal {
   margin: 0;

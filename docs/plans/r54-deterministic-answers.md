@@ -1628,6 +1628,68 @@ not asserted here. The milestone's Help delta remains owed at close (§9-I).
 
 ---
 
+### Phase 0-6 — THE SERVED-SHAPE TEST (`1df5ac5`) — DONE
+
+**§3b / §7-E, on the chat ruling of 2026-07-21 (GO 0-6 as scoped).** The last Phase-0 deliverable:
+the guard that reds when tier-1 changes what the frontend is handed. No normative question surfaced
+in the survey — the shapes are mechanical to pin — so it ran survey → guard → RED-specimen → gates
+without stopping.
+
+**Why it is owed, restated from the survey.** `ai_facts` is `-> dict` (`ai.py:26`), `/ai/chat` is a
+`StreamingResponse` (`ai.py:134`), and `GroundingFact` is **no route's `response_model`**, so it never
+reaches the frozen contract. `make api-contract-check` therefore stays green while the served shape
+moves — which it has, twice this milestone: `link_id` landed at 0-5 and F-5 moved the rendered
+pct/ratio *values* at 0-5a, the counts unmoved both times. **This file is the only thing that reds on
+those.** R-61 (typed AI responses + contract regen) is the durable fix and is post-release; this is
+the release-relevant cover.
+
+**What it pins** (`tests/integration/test_ai_served_shapes.py`, 8 tests):
+
+| Pinned | How |
+|---|---|
+| `/ai/facts` envelope | keys == the frontend's `FactPack` (parsed from `ai.ts`); `count == len(facts)`; served `disclaimer == DISCLAIMER` |
+| Every served fact's shape | carries **every field `ai.ts::GroundingFactDTO` declares** (the panel's own contract, parsed not copied) AND the **full `GroundingFact` model** incl. `link_id` — on BOTH `/ai/facts` and the SSE `facts` event |
+| SSE `provenance` | keys **exactly** `{type, kind, narrated, provenance}`; `narrated` is a real `bool` (any string is truthy and would mis-style every answer) |
+| SSE `facts` / `done` ordering | facts **lead** (clause 7); the legend **precedes** its deltas; `done` is **last and unique**, carrying `{grounded, provider, disclaimer}` |
+| `fallback_signal` | present on `done` on the **validator-rejected branch** (driven with an ungrounded provider — a shape pinned on a branch that never emits it is a pin on nothing) |
+| §3b signpost | `GroundingFact` is asserted **absent** from the contract schemas — reds if R-61 types the responses, so the overlap is retired deliberately, not left to drift |
+
+**⊕ THE REDUNDANT-ROUTE AUDIT, and it is load-bearing here.** The shapes are read from the **served
+wire** (`GET /ai/facts`, the `POST /ai/chat` SSE stream), never from `GroundingFact` in-process.
+Asserting against the Python model would be **circular** — green even if a route stopped serving the
+model (a `response_model` that strips undeclared keys is the classic way). The model DERIVES the
+expected field set; the served bytes are what is checked. The frontend contract is likewise **parsed
+from `ai.ts`**, not transcribed, so adding a consumed field there extends the pin automatically.
+
+**FAIL-FIRST — proven RED on deliberate specimens** (the §0-M pattern: the shapes exist and hold
+today, so a specimen must reproduce a break). Both reverted after observation:
+
+| Mutation | Guard that fired |
+|---|---|
+| provenance event key `provenance` → `prov` | `test_the_provenance_event_shape_is_exact` |
+| `/ai/facts` serialises facts with `exclude={"link_id"}` | `test_every_served_fact_carries_the_full_frontend_and_model_field_set` |
+
+**Gates — solo, uncontended.**
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** (`-p no:randomly`) | **2072 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | **2072 passed, 15 skipped** — exit 0 |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** (no app code changed) |
+
+**Suite reconciliation: 2064 → 2072, +8 = this delta's own** (2 blindness/parity + 1 envelope + 1
+fact-shape + 3 SSE event shapes + 1 §3b signpost). No other test moved.
+
+**⚠ The untyped-shape sentence, one more time and now with a guard behind it:** the served `/ai/facts`
+and SSE `facts`/`provenance` shapes are pinned by THIS test and by **nothing in the contract**
+(141/71 cannot see them). That is the §3b finding, and 0-6 is the guard it asked for.
+
+**Help currency:** no Help or GLOSSARY entry changed — a test-only delta. The milestone's Help delta
+remains owed at close (§9-I).
+
+---
+
 ### Phase 0a — THE SPECIMEN, RATIFIED BY LOOKING *(isolated instance; expect 1–3 revision loops)*
 
 Reset + isolated per the harness convention; **both themes**; zero console errors (excluding expected

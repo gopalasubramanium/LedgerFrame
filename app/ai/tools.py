@@ -17,7 +17,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.money import format_fact_by_kind, format_fact_display, format_pct_display
+from app.core.money import (
+    format_fact_by_kind,
+    format_fact_display,
+    format_pct_display,
+    format_signed_pct_display,
+)
 from app.models import Watchlist
 from app.schemas.ai import GroundingFact
 from app.services.figure_registry import (
@@ -51,6 +56,50 @@ class AnswerMode(str, enum.Enum):
 
     DETERMINISTIC = "deterministic"
     GROUNDING = "grounding"
+
+
+# ── THE PACK-CONTEXT ANNOTATION TIER (R-54 F-7, owner ruling 2026-07-22) ───────────────────────
+#
+# The figure registry (`app/services/figure_registry.py`) is the NAMED / term-resolvable figure
+# tier: each row has a `figure_id`, a canonical page, and often a Help term. These are the DECLARED
+# SECOND TIER — annotations on facts that carry NO `figure_id`: a per-holding or per-class WEIGHT, a
+# quote's or a series' CHANGE. The F-7 survey found five of them rendered by ambient inline f-strings
+# (`{…:.1f}%`, `{…:+.2f}%`) that drifted from the canonical pages on TWO axes — precision (1dp vs the
+# pages' 2dp: the two-faces defect W-2 caught live) and vocabulary (`Allocation (asset_class) — equity`
+# leaking an internal token + a raw enum). The ruling KEEPS them (useful grounding context) but
+# DECLARES them: each renders ONLY through a money.py variant, enumerated here, and a census guard
+# (`test_no_ambient_pct_fstring_survives_in_the_pack`) proves no ambient annotation f-string survives.
+class PackContext(str, enum.Enum):
+    """A non-registry annotation's kind — the one input that picks its canonical renderer."""
+
+    WEIGHT = "weight"  # an unsigned share of gross assets → 2dp, no sign (format_pct_display)
+    CHANGE = "change"  # a signed % change → 2dp, explicit +/U+2212 (format_signed_pct_display)
+
+
+# The renderer per kind — money.py owns the rendering, this owns only the kind→variant dispatch,
+# exactly as the registry owns value_kind and money.py owns format_fact_by_kind.
+_PACK_CONTEXT_RENDER = {
+    PackContext.WEIGHT: format_pct_display,
+    PackContext.CHANGE: format_signed_pct_display,
+}
+
+# The five sites, ENUMERATED so the tier is a map, not an ambient scatter (census-guarded).
+_PACK_CONTEXT_SITES: tuple[tuple[str, PackContext], ...] = (
+    ("allocation weight", PackContext.WEIGHT),       # allocation_facts
+    ("holdings weight", PackContext.WEIGHT),          # holdings_facts
+    ("market quote change", PackContext.CHANGE),      # market_facts
+    ("instrument quote change", PackContext.CHANGE),  # instrument_deep_facts (quote)
+    ("instrument period change", PackContext.CHANGE), # instrument_deep_facts (~6-month)
+)
+
+
+def format_pack_context(value: object, kind: PackContext) -> str | None:
+    """Render a pack-context annotation through its DECLARED money.py variant (F-7).
+
+    The ONE place a non-registry annotation is formatted — never an inline f-string (the census
+    guard proves it). `None` passes through (never a fabricated 0), like every money.py variant.
+    """
+    return _PACK_CONTEXT_RENDER[kind](value)
 
 
 # ⊕ R-54 F-3 — `_fmt` IS GONE. It was `f"{value:,.2f} {ccy}"`, a second home for rendering logic,
@@ -142,6 +191,20 @@ async def movers_facts(session: AsyncSession) -> list[GroundingFact]:
     return facts
 
 
+def _alloc_bucket_label(key: str, bucket: str) -> str:
+    """The served human label for an allocation bucket (F-7 Q2, owner ruling 2026-07-22).
+
+    An `asset_class` bucket resolves through `label_for` — the SAME served /refdata truth the
+    Portfolio donut renders via `labelFor` (MASTER-DATA §2), so *"equity"* reads *"Equity"* and the
+    internal token never reaches user copy. A currency dimension keeps its code (Q2: `Allocation —
+    <code>`), which is already display-ready. No raw enum, no `(asset_class)` wrapper.
+    """
+    if key == "asset_class":
+        from app.api.v1.routes.refdata import label_for
+        return label_for("asset_class", bucket)
+    return bucket
+
+
 async def allocation_facts(session: AsyncSession, key: str = "asset_class") -> list[GroundingFact]:
     base = get_settings().base_currency
     val = await value_portfolio(session, base)
@@ -150,9 +213,13 @@ async def allocation_facts(session: AsyncSession, key: str = "asset_class") -> l
     # the asset base — a liability (negative) can't push a class above 100%.
     gross = sum((v for v in alloc.values() if v > 0), Decimal(0)) or Decimal(1)
     now = datetime.now(UTC)
+    # ⊕ R-54 F-7 (owner ruling 2026-07-22). Label: `Allocation — <served class label>` (Q2, the
+    # `(asset_class)` token + raw enum gone). Weight: the declared pack-context WEIGHT variant → 2dp
+    # (Q1), ending the two-faces split with the 2dp concentration figures. No inline f-string.
     return [
-        GroundingFact(label=f"Allocation ({key}) — {k}",
-                      value=f"{format_fact_display(v, base)} ({v / gross * 100:.1f}%)", timestamp=now)
+        GroundingFact(label=f"Allocation — {_alloc_bucket_label(key, k)}",
+                      value=f"{format_fact_display(v, base)} ({format_pack_context(v / gross * 100, PackContext.WEIGHT)})",
+                      timestamp=now)
         for k, v in sorted(alloc.items(), key=lambda kv: kv[1], reverse=True)
         if v > 0
     ]
@@ -205,7 +272,8 @@ async def market_facts(session: AsyncSession, limit: int = 14) -> list[Grounding
             q = await display_quote(session, sym)
             if q.price is None:
                 continue
-            chg = f" ({q.change_pct:+.2f}%)" if q.change_pct is not None else ""
+            # R-54 F-7 (Q3): the canonical signed-% variant — U+2212 minus, explicit sign, 2dp.
+            chg = f" ({format_pack_context(q.change_pct, PackContext.CHANGE)})" if q.change_pct is not None else ""
             facts.append(GroundingFact(
                 label=label, value=f"{format_fact_display(q.price, q.currency)}{chg}", source=q.source,
                 timestamp=q.received_at, entitlement=q.entitlement.value, is_stale=q.is_stale))
@@ -585,7 +653,9 @@ async def holdings_facts(session: AsyncSession, n: int = 8) -> list[GroundingFac
     return [
         GroundingFact(
             label=(h.name or h.label),
-            value=f"{format_fact_display(h.market_value_base, base)} ({h.market_value_base / gross * 100:.1f}%)",
+            # R-54 F-7 (Q1): the declared pack-context WEIGHT variant → 2dp, so the largest holding no
+            # longer wears two faces against `Largest position NN.NN%` (registry).
+            value=f"{format_fact_display(h.market_value_base, base)} ({format_pack_context(h.market_value_base / gross * 100, PackContext.WEIGHT)})",
             is_stale=h.is_stale)
         for h in priced if h.market_value_base > 0
     ]
@@ -659,7 +729,9 @@ async def _one_instrument_facts(session: AsyncSession, sym: str) -> list[Groundi
     label = f"{name} ({sym})" if name else sym
 
     if q.price is not None:
-        chg = f" ({q.change_pct:+.2f}% today)" if q.change_pct is not None else ""
+        # R-54 F-7 (Q3): canonical signed-% (U+2212, explicit sign, 2dp); " today" KEPT — period
+        # context is honesty in a context-free line (ruling 2026-07-22).
+        chg = f" ({format_pack_context(q.change_pct, PackContext.CHANGE)} today)" if q.change_pct is not None else ""
         out.append(GroundingFact(label=f"{label} price", value=f"{format_fact_display(q.price, q.currency)}{chg}",
                                  source=q.source, timestamp=q.received_at,
                                  entitlement=q.entitlement.value, is_stale=q.is_stale))
@@ -675,8 +747,12 @@ async def _one_instrument_facts(session: AsyncSession, sym: str) -> list[Groundi
         if len(closes) > 5:
             first, last = closes[0], closes[-1]
             if first:
+                # R-54 F-7 (Q1+Q3): the declared pack-context CHANGE variant → 2dp, U+2212, explicit
+                # sign — the whole value here, not a parenthetical. KEPT as a pack-context annotation
+                # (Q4: no page renders a per-instrument period change; it is the declared second tier).
                 out.append(GroundingFact(label=f"{label} ~6-month change",
-                                         value=f"{(last - first) / first * 100:+.1f}%", timestamp=end))
+                                         value=format_pack_context((last - first) / first * 100, PackContext.CHANGE),
+                                         timestamp=end))
             hi = max(float(c.high) for c in candles if c.high is not None)
             lo = min(float(c.low) for c in candles if c.low is not None)
             out.append(GroundingFact(label=f"{label} 6-month range",

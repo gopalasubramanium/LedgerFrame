@@ -53,8 +53,9 @@ def _movers(labels: list[str]) -> list[str]:
 
 
 def _allocation(labels: list[str]) -> list[str]:
-    """Allocation facts are labelled `Allocation (<key>) — <bucket>` (`app/ai/tools.py:121`)."""
-    return [x for x in labels if x.startswith("Allocation (")]
+    """Allocation facts are labelled `Allocation — <served class label>` (F-7, 2026-07-22 —
+    the `(asset_class)` token + raw enum left user copy; `app/ai/tools.py::allocation_facts`)."""
+    return [x for x in labels if x.startswith("Allocation — ")]
 
 
 async def test_download_question_does_not_pull_movers_or_holdings(app_client):

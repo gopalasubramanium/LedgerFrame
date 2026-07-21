@@ -41,11 +41,15 @@ blast radius. The capability probes carry the redundant-route audit (F-6 consequ
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
+
+REPO = Path(__file__).resolve().parents[2]
 
 
 async def _pack(app_client, question: str) -> list[dict]:
@@ -140,21 +144,98 @@ async def test_total_return_the_dedupe_winner_renders_through_money_py(app_clien
     )
 
 
-# ── F-7 byte-identity: the per-item annotations are NOT touched this delta ────────────────────
-# Allocation weights render `(NN.N%)` — ONE decimal, an inline `.1f`. Routing them through the
-# 2dp pct variant would make it `(NN.NN%)`. Asserting the one-decimal shape survives IS the
-# byte-identity proof that F-5 left the annotation sites (F-7) alone.
+# ── F-7 CONFORMANCE (owner ruling 2026-07-22) — the pack-context annotation tier is DECLARED ──
+#
+# ⊕ 2026-07-22 — THIS PIN WAS DELIBERATELY UPDATED (the guard-REDs-an-accepted-surface rite).
+# It formerly pinned the `.1f%` one-decimal form and the `Allocation (asset_class) — <raw enum>`
+# label as byte-identical — the F-5 delta's proof that it left F-7 alone. F-7 is now RULED: sites
+# 1/4/5 conform to the canonical 2dp variant (Q1, ending the two-faces defect W-2 named), and the
+# allocation LABEL becomes `Allocation — <served class label>` via `label_for` (Q2 — the token
+# `asset_class` and the raw enum both gone). So this pin FLIPS: it now proves the conformed form.
+# DATED NOTE: the pre-F-7 one-decimal/raw-enum ratification is superseded here on 2026-07-22.
 
-async def test_allocation_weight_annotation_is_unchanged(app_client):
-    """The `.1f%` weight annotation (F-7 territory) is byte-identical — it did NOT move to money.py."""
+async def test_allocation_weight_annotation_conforms_to_2dp_and_the_served_class_label(app_client):
+    """F-7 Q1+Q2: the allocation weight renders at 2dp through money.py, and the label is
+    `Allocation — <served class label>` (label_for/MASTER-DATA) — no `(asset_class)` wrapper, no raw
+    enum. FAIL-FIRST: RED on the pre-F-7 build (`.1f` inline + `Allocation (asset_class) — equity`)."""
     facts = await _pack(app_client, "What is my allocation?")
-    allocs = [f for f in facts if f["label"].startswith("Allocation (")]
+    allocs = [f for f in facts if f["label"].startswith("Allocation")]
     assert allocs, f"no allocation facts; labels were {[f['label'] for f in facts]}"
     for f in allocs:
-        assert re.search(r"\(\d+\.\d%\)$", f["value"]), (
-            f"{f['label']!r} = {f['value']!r} — the weight annotation must keep its ONE-decimal "
-            f"inline form. If it moved to the 2dp variant, that is F-7 escaping into an F-5 delta."
+        assert f["label"].startswith("Allocation — "), (
+            f"{f['label']!r} — the label must read `Allocation — <class label>`; the `(asset_class)` "
+            f"wrapper and the raw enum leak into user copy (F-7 Q2, W-2)."
         )
+        assert "asset_class" not in f["label"] and "native_currency" not in f["label"], (
+            f"{f['label']!r} still carries an internal dimension token (F-7 Q2)."
+        )
+        assert re.search(r"\(\d[\d,]*\.\d{2}%\)$", f["value"]), (
+            f"{f['label']!r} = {f['value']!r} — the weight must render at fixed 2dp through money.py "
+            f"(F-7 Q1), ending the two-faces split with the 2dp concentration figures."
+        )
+
+
+async def test_holdings_weight_annotation_conforms_to_2dp(app_client):
+    """F-7 Q1: the per-holding weight renders at 2dp, so the largest holding no longer wears two
+    faces — `Largest position NN.NN%` (registry) and its holdings-weight annotation now agree.
+    FAIL-FIRST: RED on the pre-F-7 `.1f` form."""
+    facts = await _pack(app_client, "What are my largest holdings?")
+    weighted = [f for f in facts if re.search(r"\([\d,.]+%\)$", f["value"]) and not f["label"].startswith(("Allocation", "Help"))]
+    assert weighted, f"no per-holding weight annotations; labels were {[f['label'] for f in facts]}"
+    for f in weighted:
+        assert re.search(r"\(\d[\d,]*\.\d{2}%\)$", f["value"]), (
+            f"{f['label']!r} = {f['value']!r} — the holdings weight must render at fixed 2dp (F-7 Q1)."
+        )
+
+
+def test_no_ambient_pct_fstring_survives_in_the_pack():
+    """F-7 CENSUS GUARD (ruling 2026-07-22): the pack-context annotation tier is DECLARED — every
+    non-registry pct annotation renders through a money.py variant, never an inline f-string. This
+    AST-scans `app/ai/tools.py` and reds if any f-string still formats a float AND appends a '%'
+    (the five sites F-7 conformed). The registry figures were the F-5 census; this is the second-
+    tier census — *no ambient annotation f-string survives in either.*
+
+    FAIL-FIRST: RED on the pre-F-7 build (5 inline `:.1f}%`/`:+.2f}%` sites).
+    """
+    tree = ast.parse((REPO / "app" / "ai" / "tools.py").read_text(encoding="utf-8"))
+    offenders = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.JoinedStr):
+            continue
+        has_pct = any(
+            isinstance(p, ast.Constant) and isinstance(p.value, str) and "%" in p.value
+            for p in node.values
+        )
+        floaty = [
+            spec
+            for p in node.values
+            if isinstance(p, ast.FormattedValue) and p.format_spec is not None
+            for spec in ["".join(
+                c.value for c in p.format_spec.values
+                if isinstance(c, ast.Constant) and isinstance(c.value, str)
+            )]
+            if re.search(r"\.\d+f", spec)
+        ]
+        if has_pct and floaty:
+            offenders.append(node.lineno)
+    assert not offenders, (
+        f"ambient pct f-string(s) survive in app/ai/tools.py at line(s) {sorted(offenders)} — "
+        f"every pack-context annotation must render through a money.py variant (F-7 declared tier), "
+        f"never an inline float-and-'%'."
+    )
+
+
+def test_the_pack_context_tier_is_declared_not_ambient():
+    """The declared second tier exists and is enumerated (blindness pin for the census above): a
+    census that guarded an empty declaration would pass by protecting nothing."""
+    from app.ai.tools import PackContext, format_pack_context
+
+    # Both ruled kinds are declared and render through money.py at 2dp.
+    assert format_pack_context(Decimal("80.554"), PackContext.WEIGHT) == "80.55%", "weight → 2dp unsigned"
+    assert format_pack_context(Decimal("-2.134"), PackContext.CHANGE) == "−2.13%", (
+        "change → 2dp signed with the U+2212 minus (Q3), not an ASCII hyphen"
+    )
+    assert format_pack_context(Decimal("2.134"), PackContext.CHANGE) == "+2.13%", "change → explicit +"
 
 
 # ── THE BLAST-RADIUS PIN (ruling c) — unit level, deterministic ──────────────────────────────

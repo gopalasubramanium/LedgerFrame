@@ -716,3 +716,27 @@ pixel moved.
 **Verification:** isolated live instance (spare ports, temp data dir, `.env` restored) —
 `/api/v1/portfolio/stats` serves `Gross assets` and no longer serves `Total value`; Portfolio driven
 at 1366×768 with **0 console errors**, stat rail and Concentration section unchanged.
+
+## DELTA NOTE — 2026-07-22 (R-54 F-7 · the AI pack's allocation weight conformed to this page)
+
+**Portfolio is CLOSED/accepted; dated delta note under the guard-REDs-an-accepted-surface rite
+(owner F-7 ruling 2026-07-22) — not a re-opening. The rendered page did NOT change.**
+
+The AI Ask panel's `allocation_facts` (`app/ai/tools.py`) rendered each class weight at **1dp** via an
+inline f-string and labelled it **`Allocation (asset_class) — equity`** — a raw enum under an internal
+token. Against THIS page — the canonical owner of allocation (D-033) — that was **two faces on one
+axis**: the donut renders the same share at **2dp** (`formatPercent`) with the **served class label**
+(`labelFor` → "Equity"), and the pack's largest weight (`80.6%`) disagreed with `Largest position
+80.55%` (the 2dp registry concentration figure) **on one screen** (W-2, owner's 0a-i look).
+
+F-7 conforms the pack to this page: the weight renders **2dp** through `money.py`'s declared
+pack-context WEIGHT variant (Q1), and the label is **`Allocation — <served class label>`** via
+`label_for` — the **same served /refdata truth** the donut's `labelFor` reads (Q2). The token and the
+raw enum leave user copy; the two-faces ends (pack `Allocation — Property 80.55%` now equals the page's
+concentration 2dp). **This page's donut, labels and Concentration section are untouched** — the pack was
+conformed TO them.
+
+**Verification (isolated, spare ports, temp data, `.env` restored):** `/api/v1/ai/facts?q=what is my
+allocation` served every bucket as `Allocation — <human label>` at 2dp; the Ask panel rendered them
+live with **0 console errors**; pack `80.55%` == the page's largest concentration. The formal
+movers-on-camera is owed at R-54 0a-ii (owner's look).

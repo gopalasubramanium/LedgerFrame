@@ -567,3 +567,19 @@ display-sort) → §9 one-pass owner resolution → Phase 0 skipped, Phase 0a co
 **Deltas:** one backend (D-105 `price_display` on `Quote` + `HoldingView`; contract regenerated, no
 path change) — otherwise ratified-component composition throughout. **Open follow-ups:** none blocking;
 the batch history endpoint (batch-2 scoped option (c)) stays **NOT-REGISTERED**, revisit on need.
+
+## DELTA NOTE — 2026-07-22 (R-54 F-7 · the AI pack's quote change conformed to this page)
+
+**Markets is CLOSED/accepted; dated delta note under the guard-REDs-an-accepted-surface rite (owner
+F-7 ruling 2026-07-22) — not a re-opening. The rendered page did NOT change.**
+
+The AI Ask panel's `market_facts` (`app/ai/tools.py`) rendered an index/quote **% change** with an
+inline `+.2f}%` — 2dp already, but with a Python **ASCII `-`** on declines, where THIS page (the
+canonical owner of the market grid) renders change via `formatSignedPercent` with the app's
+**U+2212 `−`** and an explicit sign. F-7 routes the pack through the declared pack-context CHANGE
+variant (`format_signed_pct_display`), so the pack's changes now read like every signed figure on this
+page (Q3). Precision was already 2dp — the mover is the **minus glyph on negatives** and the explicit
+`+` convention. **This page is untouched** — the pack was conformed TO it.
+
+**Verification:** `format_pack_context(Decimal("-2.134"), CHANGE) == "−2.13%"` (unit-pinned); the served
+pack renders index changes through the same variant. Formal movers-on-camera owed at R-54 0a-ii.

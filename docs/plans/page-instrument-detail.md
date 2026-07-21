@@ -396,3 +396,21 @@ Both are **PROPOSED pending the owner's visual ratify** at the next look.
   (`overlay-hover.spec.ts`): the overlay line appears past warm-up and is absent at the
   warm-up edge (jsdom has no layout, so hover-index math is browser-only). Instrument Detail
   pre-pass re-run stated in the report.
+
+## DELTA NOTE — 2026-07-22 (R-54 F-7 · the AI pack's quote + period change conformed to this page)
+
+**Instrument Detail is CLOSED/accepted; dated delta note under the guard-REDs-an-accepted-surface rite
+(owner F-7 ruling 2026-07-22) — not a re-opening. The rendered page did NOT change.**
+
+The AI Ask panel's `instrument_deep_facts` (`app/ai/tools.py`) had two annotations against this page's
+figures: the **quote change** (`+.2f% today`, ASCII `-`) and an instrument **~6-month change**
+(`+.1f%` — 1dp, ASCII `-`). THIS page's header renders the quote change at **2dp** and the app's signed
+convention. F-7 routes both through the declared pack-context CHANGE variant (`format_signed_pct_display`
+→ 2dp, **U+2212**, explicit sign, Q3); the 6-month change also gains a decimal (1dp → 2dp, Q1). The
+**`" today"`** suffix is KEPT (owner ruling — period context is honesty in a context-free line). The
+~6-month change is KEPT as a **declared pack-context annotation** (Q4: no page renders a per-instrument
+period change; it is the declared second tier, not a registry figure this page owns). **This page is
+untouched** — the pack was conformed TO it.
+
+**Verification:** unit-pinned via `format_pack_context(..., CHANGE)`; the census guard proves no ambient
+annotation f-string survives in the pack. Formal movers-on-camera owed at R-54 0a-ii.

@@ -174,7 +174,7 @@ REGISTRY: tuple[Figure, ...] = (
     #    Extending grounding to a census known to be incomplete would feed the model figures that do
     #    not add up. They are extended by F-2's own delta, which owns the census. The model is not
     #    blind to allocation meanwhile: `allocation_facts` already grounds it, under
-    #    `Allocation (asset_class) — <bucket>` labels. Their labels are MASTER-DATA asset-class names, not GLOSSARY terms;
+    #    `Allocation — <served class label>` labels (F-7 2026-07-22). Their labels are MASTER-DATA asset-class names, not GLOSSARY terms;
     #    the shared `term-allocation-weight` entry explains what a weight IS. ──
     Figure("alloc_cash_deposits", "Cash & deposits", _STATS, "Cash & deposits", value_kind="pct",
            term_id="term-allocation-weight", pack_reachable=False, canonical_page="/portfolio"),

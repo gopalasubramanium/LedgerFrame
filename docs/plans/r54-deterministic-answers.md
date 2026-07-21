@@ -1828,6 +1828,78 @@ name its cause in GLOSSARY vocabulary; **(c)** `remote` adopts the ratified thre
 model"**. `no_egress` stays as drafted. **These are copy, ratified by looking at 0a-ii, rendered live;
 Phase 1 implements them (item 7).**
 
+##### ⊕ 0a-ii DRIVEN 2026-07-21 — FULL SPECIMEN SET CUT, both themes — **AWAITING THE OWNER'S LOOK (HARD STOP)**
+
+**Isolation.** Two isolated instances, owner's stack (`:8321`/`:5173`) untouched, `.env` snapshot
+hash-verified restored (`460a2da0…` before == after). Both instances **AI-disabled → tier-1
+deterministic**; terms accepted per install. Frontend served **same-origin by each backend** (prod
+`dist`), the 0a-i approach — the ONE benign prod-dist CSP theme-flash console error is filtered (it is
+pre-paint, never in a settled frame; documented at 0a-i). **All 26 specimens: 0 non-benign console
+errors.** Panel `.lf-ask__facts` is the ratified `max-height:30vh` scroll region, so long answers were
+scrolled to bring the specimen's subject in-frame (the panel's scroll IS the real surface). Screenshots
+at `docs/plans/assets/` on the `r54-0a-ii-<name>-<theme>.png` pattern.
+
+**⚑ THE INSTANCE PLAN — OUTCOME, with reconciliations (files won over the kickoff; stated as ruled):**
+
+- **UNCOVERED = the standard demo seed** (`:8399`). Coverage census proven live: **7/8 covered; the
+  SOLE blocker is `HDFCNIFTY`** ("No AMFI scheme mapped"), exactly as the plan predicted. `RELIANCE`
+  (INR) is covered (INR FX + price history seeded by `demo_history`). `all_covered=False` → the
+  date-aware set (TWR/1Y/ratio/max-dd) is null.
+- **COVERED = the demo minus `HDFCNIFTY`** (`:8398`) — built by **deleting the one HDFCNIFTY txn via
+  the real product API** (`DELETE /portfolio/transactions/{id}`, a real user removing a position), the
+  "no Indian **funds**" shape (RELIANCE, a coverable Indian **stock**, stays). Result: **`all_covered=True`,
+  7/7, `da_computable=True`** — **the R-43 backfill fallback was NOT needed** (FX + held-instrument
+  history already seeded). §26-bis honored: both are shapes a real user occupies; neither is mock-forced.
+- **⚠ RECONCILIATION 1 — the kickoff's "uncovered XIRR" premise is imprecise; XIRR is CASH-FLOW-based,
+  not coverage-gated.** XIRR renders **live on BOTH instances** (0.57% uncovered / 0.59% covered) —
+  it needs dated cash flows, not window price+FX coverage. What the coverage gate governs is **TWR and
+  the 1Y set (return/volatility/ratio/max-dd)**. So the tier-1(a) **uncovered** specimen is honestly a
+  **mixed** answer — **XIRR live + TWR "unavailable"** — and the covered/uncovered *distinction on camera*
+  is carried by **TWR** (71.62% vs "unavailable"), which is R2's point either way (a reachable figure that
+  is null renders the "unavailable"-style served string, not a silent omit). Both labelled accordingly.
+- **⚠ RECONCILIATION 2 — the RATIO needed a SEPARATE, NON-R-43 fallback, stated.** Even at
+  `all_covered=True` the ratio was null: `performance_series` builds its 1Y axis **from the benchmark's
+  candles**, and **`SPY` had 0 seeded price rows** (`demo_history` seeds *held* instruments only; nobody
+  holds the benchmark) → empty series → `ret=vol=0` → ratio `None`. This is **not** the R-22/R-43 coverage
+  machinery the plan pre-authorised (that addresses HDFCNIFTY's mapping, which the delete already solved).
+  The fix is **benchmark warming**: seed `SPY`'s daily series with **`demo_history`'s own generator**
+  (`_price_on`, `source='mock'`) — precisely what opening the **Portfolio performance chart** triggers on
+  any instance, and consistent with the demo's stated design (its date-aware metrics are *meant* to
+  compute on mock series). Result: **`Return / volatility = 10.51`**, stable across probes. **Flagged for
+  the owner's ruling at the look** — a bounded, stated warming, not a portfolio-shape forcing.
+- **⚠ RECONCILIATION 3 — the I-1 dynamic was OBSERVED.** A transient **covered→uncovered decay** at boot
+  (first stats call momentarily covered, then settled uncovered on the uncovered instance) — the
+  **date-aware coverage / seed-state dependency** I-1's Phase-0 hypothesis records, *not* machine
+  contention. Mitigated by settling + re-probing to a stable state before every capture; final states held
+  across many calls. Corroborates the I-1 hypothesis on the record (I-1 remains OPEN, owed Phase-2/close).
+
+**⚑ ITEM 0 — the owed F-2 statement (echoed).** The `/portfolio/stats` four-bucket **field removal is a
+DELIBERATE contract change**; the regen ran **same-commit** (`125cac5`). "141/71 unchanged" is the
+**expected** outcome because the four metrics lived in the **untyped `/portfolio/stats -> dict` `metrics`
+list, not a typed schema** — so the schema *content* moved but the **typed contract counts did not**, and
+the **served-shape pins + the census guard** carried the change (the §3b situation, stated not silent).
+Neither "path/schema count moved" nor a silent drop; the second branch of the owed either/or holds.
+
+**THE SPECIMEN TABLE — file ↔ on camera ↔ ruling ratified:**
+
+| 0a-ii item | Files (`…-{light,dark}.png`) | On camera / ruling |
+|---|---|---|
+| **1 — recut posture table (§9-G)** | `r54-0a-ii-posture-{disabled,no_egress,local_openai,local_npu,remote}` | The FIVE recut strings live (idle panel). **`local_openai` == `local_npu` byte-identical** — *"On-device (local, Ollama-compatible) — data stays on this device."* (**Hailo gone, local pair identical**); `disabled` *"Model AI is off — … built-in intelligence …"*; `no_egress` recut w/ the tier-1 *"app's own explanations"* clause (+ `--closed` accent); `remote` *"External model — …"*. Verified against `/ai/grounding-status` per posture. **Formal §9-G ratification cut.** |
+| **2a covered** | `r54-0a-ii-tier1a-covered` | *"what is XIRR"*: explanation + **XIRR 0.59%** + **TWR 71.62%** BOTH live, each → Portfolio. R2 covered state. |
+| **2a uncovered** | `r54-0a-ii-tier1a-uncovered` | **XIRR 0.57% live + TWR "unavailable"** — R2's null-state PROPOSED served string (recon. 1: the covered/uncovered face is TWR). |
+| **3 — (b) action** | `r54-0a-ii-action-holdings` | *"how do I add a holding"*: Help·Holdings inline + **→ Open Holdings** (`page:/holdings`). R1 (R-59 supplies the add-form id later). |
+| **4 — (c) navigation** | `r54-0a-ii-nav-theme` | *"how do I change the theme"*: Help·Settings (Appearance=theme) + **→ Open Settings** (`page:/settings?tab=appearance`). R1(ii). |
+| **5 — link affordance (PROPOSED DS §5.5)** | *(in-frame on every tier-1 answer specimen)* | The trailing **ArrowUpRight** pointer in **`--accent`**, `font-style:normal` (measured at 4b), on every resolvable fact, none on unlinked facts. Ratified by looking, live. |
+| **6 — the ratio kind** | `r54-0a-ii-ratio` | **`Return / volatility  10.51`** — unitless, **NO `%`** (F-5 ratio kind; 0a-i deferral discharged). Recon. 2 applies (benchmark warmed). |
+| **7 — tier-1 honest miss (funded)** | `r54-0a-ii-honest-miss` | Unroutable question → the **empty tier-1 miss** (*"I don't have the data needed…"*), **NO last-resort facts** — the delta-2 split, proven on a FUNDED instance. |
+| **8 — F-7 + F-2 movers** | `r54-0a-ii-movers-allocation`; `r54-0a-ii-movers-change` | Allocation: **9 per-class rows, `Allocation — <human label>`, 2dp weights, sum = 100.00, `82.20%` == Largest position** (F-2 census + F-7 Q1/Q2, two-faces dissolved). Change: AAPL **`~6-month change −25.95%`** — **U+2212** minus (F-7 Q3). |
+
+**No code moved** — specimen assets + this record only (`git status`: 26 untracked assets, nothing tracked
+modified). No suite/gate run (none warranted). **Help currency: no Help/GLOSSARY entry changed** — served
+posture strings + already-served `label_for`/`unavailable` vocabulary only; guard-corroborated (the
+`ask`-entry rewrite remains §9-I's own close delta). **HARD STOP — the owner closes 0a-ii by looking;
+1–3 revision loops expected; Phase 2 is NOT entered.**
+
 ### Phase 1 — ASSEMBLY
 
 Tier-1 wired in the panel; the frontend **ID→route registry** (§9-D); the **link affordance** only as

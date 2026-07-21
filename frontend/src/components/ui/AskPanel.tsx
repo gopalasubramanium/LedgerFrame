@@ -76,10 +76,13 @@ function firstLine(value: string): string {
 }
 
 /**
- * The link affordance — R-54 §9-D/§9-E (PROPOSED DS, DESIGN-SYSTEM §5.5, ratified at 0a-ii by
- * looking). THE PANEL EXPLAINS AND POINTS; THE PAGE ACTS. A fact that resolves a served link renders
- * a trailing pointer that NAVIGATES to the fact's canonical page and closes the panel — it never
- * acts, mutates, or embeds a control (§1 boundary, guarded by `check:ask-boundary`).
+ * The link affordance — R-54 §9-D/§9-E (DESIGN-SYSTEM §5.5, ratified at 0a-ii by looking). THE PANEL
+ * EXPLAINS AND POINTS; THE PAGE ACTS. A VALUE/figure fact that resolves a served link renders a
+ * trailing pointer that NAVIGATES to the fact's canonical page and closes the panel — it never acts,
+ * mutates, or embeds a control (§1 boundary, guarded by `check:ask-boundary`). ⊕ W-4 loop-2 (owner
+ * 2026-07-22): PROSE / help facts carry NO trailing arrow (the caller passes it only for value rows,
+ * or the labeled link line for a scoped action/nav answer) — the help content is the reference, not
+ * a door.
  *
  * It is a LINK, not a colour or a slant: gain/loss/staleness/warning own colour and model-text owns
  * italic (§0-G), so the affordance takes the one free axis — an outward arrow with an underline-on-
@@ -163,11 +166,13 @@ function FactRow(
           {expanded ? "Show less" : "Show more"}
         </Button>
       )}
-      {/* W-4: an action/nav answer POINTS with a labeled link line; every other prose fact keeps
-          the ratified trailing arrow. (Value rows keep theirs unconditionally, below.) */}
-      {actionNav
-        ? <FactLinkLine fact={fact} onNavigate={onNavigate} />
-        : <FactPointer fact={fact} onNavigate={onNavigate} />}
+      {/* W-4 (owner 2026-07-22, loop-2 extension): a PROSE fact carries NO trailing/orphan arrow —
+          the help content IS the reference; a bare ↗ under "Show more" pointed at a destination the
+          reader was not being sent to. The ONLY pointer a prose fact may render is the labeled link
+          line, and ONLY when it is the scoped action/nav answer. Value rows keep the ratified
+          trailing arrow (below). Guard: a prose fact rendering a pointer glyph outside the
+          labeled-line variant reds (`AskPanel.test.tsx`). */}
+      {actionNav ? <FactLinkLine fact={fact} onNavigate={onNavigate} /> : null}
     </li>
   );
 }

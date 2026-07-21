@@ -1215,7 +1215,7 @@ ACTS** (§1). The affordance is a **link, never an embedded control** — guarde
 
 | | |
 |---|---|
-| **Applies to** | Every fact in the Ask panel's fact list whose SERVED `link_id` resolves to a destination (`nav/askLinks.ts::resolveAskLink`) — a figure fact → the page that owns it, a term fact → its Help entry, a page/tab help fact → that page (`page:/settings?tab=appearance`) |
+| **Applies to** | ~~Every fact~~ **A VALUE/figure row** whose SERVED `link_id` resolves to a destination (`nav/askLinks.ts::resolveAskLink`) → the page that owns the figure. ⊕ **W-4 loop-2 amendment (owner 2026-07-22, RATIFIED loop-3): PROSE / help facts carry NO trailing arrow** — the help content is the reference, not a door; a bare ↗ under "Show more" pointed at a destination the reader was not being sent to. A prose fact's only permitted pointer is the labeled link line (variant 2), and only when it is the scoped action/nav answer. **Guard:** a prose fact rendering a pointer glyph outside the labeled-line variant reds (`AskPanel.test.tsx`) |
 | **Renders as** | A trailing **ArrowUpRight** glyph that NAVIGATES on click and closes the ephemeral panel. `aria-label` **names the destination** (`Open Holdings`), from the ONE nav model (D-043), never a typed string |
 | **Never** | Acts, mutates, submits, or embeds a control — the answer body may contain links and nothing interactive besides (§1 boundary). A fact whose `link_id` the resolver refuses renders **NO** pointer (`askLinkLabel` → null): tier-1 declines rather than drawing an arrow to nowhere (§0-F) |
 | **Class** | `.lf-ask__pointer` |
@@ -1259,4 +1259,5 @@ DS gains a **second variant of the same affordance**:
 
 Same **free axis** as the trailing arrow — the `--accent` navigation tone, no data colour, no slant —
 just given the **prominence a call-to-action needs**; it is the *primary* affordance of an action answer
-rather than an adornment of a figure. **PROPOSED — ratified at 0a-ii loop-2 by looking, both themes.**
+rather than an adornment of a figure. ~~PROPOSED~~ **RATIFIED 2026-07-22 (owner, 0a-ii loop-2 walk, item 1),
+both themes** — "↗ Open Holdings" / "↗ Open Appearance settings" on the scoped action/nav answers.

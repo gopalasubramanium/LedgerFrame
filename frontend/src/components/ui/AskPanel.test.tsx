@@ -685,9 +685,12 @@ test("AskPanel W-4: following the labeled line closes the ephemeral panel", asyn
   await waitFor(() => expect(screen.queryByLabelText("Your question")).toBeNull());
 });
 
-test("AskPanel W-4: a page-linked help fact in a MULTI-fact pack keeps its trailing arrow (discriminator)", async () => {
-  // Not a scoped action answer (two facts) → no labeled line; the page-linked help fact keeps the
-  // ratified trailing pointer, so ratified multi-fact frames (allocation/ratio/term) are untouched.
+test("AskPanel W-4 (loop-2 extension): a PROSE fact renders NO pointer glyph; only VALUE rows do", async () => {
+  // Owner ruling 2026-07-22 (loop-2): the bare trailing/orphan arrow is removed from prose facts
+  // EVERYWHERE. In a multi-fact pack (not the scoped action/nav shape), a page-linked help fact
+  // renders NEITHER a trailing arrow NOR a labeled line — the help content is the reference, not a
+  // door. The VALUE row beside it keeps the ratified trailing arrow. Guard: a prose fact with a
+  // pointer glyph outside the labeled-line variant reds.
   const MIXED: ChatEvent[] = [
     {
       type: "facts",
@@ -701,7 +704,12 @@ test("AskPanel W-4: a page-linked help fact in a MULTI-fact pack keeps its trail
     { type: "done", grounded: true, provider: "fallback", disclaimer: DISCLAIMER },
   ];
   await runAskRouted(MIXED);
-  await screen.findByText("Help · Portfolio");
-  expect(screen.queryByTestId("ask-linkline")).toBeNull();
-  expect(screen.getAllByTestId("ask-pointer").length).toBeGreaterThanOrEqual(1);
+  const proseRow = (await screen.findByText("Help · Portfolio")).closest("li");
+  expect(proseRow).not.toBeNull();
+  // The prose fact carries NO pointer of any kind — not a trailing arrow, not a labeled line.
+  expect(proseRow!.querySelector('[data-testid="ask-pointer"]')).toBeNull();
+  expect(proseRow!.querySelector('[data-testid="ask-linkline"]')).toBeNull();
+  // The VALUE row keeps the ratified trailing arrow — the discriminator (not "no pointer anywhere").
+  const valueRow = screen.getByText("Net worth").closest("li");
+  expect(valueRow!.querySelector('[data-testid="ask-pointer"]')).not.toBeNull();
 });

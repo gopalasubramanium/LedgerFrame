@@ -1733,6 +1733,42 @@ Reset + isolated per the harness convention; **both themes**; zero console error
 6. **The honest-miss render.** An unroutable question returns the ratified empty-fallback shape —
    the panel goes to its idle/miss state, not an approximate answer.
 
+##### ⊕ 0a-i DRIVEN 2026-07-21 (`2e9104e`) — SPECIMENS CUT, TWO OBSTACLES FLAGGED — awaiting owner's look
+
+Isolated instance (`:8399`, temp data dir, `mock` provider, demo seed + a seeded sub-cent token),
+owner's stack (`:8321`/`:5173`) untouched; `.env` snapshot invariant held; both themes; **0 console
+errors** excluding the benign prod-dist CSP theme-flash. Screenshots at `docs/plans/assets/`:
+
+| Specimen | Files | Shows |
+|---|---|---|
+| **F-5 per-kind** (item 4) | `r54-0a-i-perkind-{light,dark}.png` | **money** (`Realised P/L 802.30 SGD`), **pct** — the F-5 fixes on camera: **`Income yield 0.00%`** and **`Top 5 concentration 94.60%`** (trailing-zero movers, fixed 2dp). Allocation annotations render `(80.6%)` one-decimal — **F-7 byte-identity, live** |
+| **F-3 sub-cent + unpriced** (item 3) | `r54-0a-i-subcent-unpriced-{light,dark}.png` | **`SHIBX 0.00004567 USD`** (sub-cent, not `0.00`) and **`GLD unavailable`** (unpriced, `None` passthrough — the demo's own unpriced instrument) |
+
+**⚑ TWO 0a-i SPECIMENS ARE COVERAGE-GATED — reported for the owner's steer, NOT cut (and NOT mocked):**
+
+1. **The RATIO kind** (item 4's third value_kind — `Return / volatility`). It is **date-aware**: `None`
+   until `all_covered` (every held holding priced in the carry window + per-date FX). On a fresh
+   isolated instance the demo's **`HDFCNIFTY`** (an unmapped Indian fund, held) is uncovered, so
+   `da_computable=False` and the ratio never renders. Giving it coverage needs AMFI-scheme mapping +
+   INR FX backfill — R-43 machinery disproportionate to a rendering specimen. *Its rendering is
+   deterministically unit-tested (`format_ratio_display`, `test_ratio_rendering_matches_the_same_classes`);
+   its LIVE look is owed on a **covered** instance — cleanest folded into 0a-ii, which already needs
+   assembly.*
+2. **The honest-miss EMPTY shape** (item 6). `gather_facts` has a **last-resort** — `if not facts:
+   portfolio_facts + movers` (`tools.py:704-705`) — so an unroutable question on a seeded portfolio
+   returns portfolio facts, **never** the empty `REFUSAL_NO_FACTS` shape. Reproducing the empty render
+   needs an **empty-portfolio** instance. *Reported as a finding: the "honest miss" the panel actually
+   shows on a funded account is the last-resort fallback, not the empty shape — the owner may want to
+   rule which is the ratification target.*
+
+**⊕ DATED NOTE on the F-3 fact-pack rendering pin (owed by F-3, ruling 2026-07-21 item 4):** the
+2026-07 ratification exhibited **no sub-cent case** (the demo set has no sub-cent instrument); this
+0a-i cut **puts one on camera** — `SHIBX 0.00004567 USD` — for the owner's look. **⊕ DATED NOTE on
+F-5's moved renderings:** the pct trailing-zero movers (`Income yield 0.00%`, `Top 5 concentration
+94.60%`) are user-visible and are now before the owner at 0a-i, per ruling item 1d.
+
+**HARD STOP — the owner closes 0a-i by looking; it is never self-certified.**
+
 #### Phase 0a-ii — owed AFTER Phase 1 assembly *(not cuttable now; NOT mocked)*
 
 1. **The recut five-string posture table** (§9-G) — "Hailo" gone, **"Ollama-compatible"** throughout,

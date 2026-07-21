@@ -2620,6 +2620,36 @@ is covered instead by per-test isolation (`_fresh_engine_per_test` + per-test te
 `test_key_stats_recovers…` (**+1**, I-1); vitest/Playwright unchanged (the matrix is backend-only).
 **§3b untyped-shape caveat unchanged; no contract delta (141/71).** No known-red left on trunk.
 
+**⊕ SESSION-END STATE (2026-07-22).** **I-1, I-2 and Phase 2 are DONE** (commits `95d14a5` · `c124eda`
+· `d19fc59` · `097fa34` · `2cd0193`). **Phase 3a (the scripted pre-pass) is the NEXT and was NOT run
+this session** — a full isolated live drive (both themes, the whole Ask surface, 0 non-benign console
+errors) is a re-drive-prone task whose value is in being done carefully, not rushed at a session's tail,
+and the owner's live stack is up on `:8321` (isolate to `:8399`/spare ports; `.env` snapshot-restore;
+prod-`dist` same-origin, filter the one benign CSP theme-flash; harness recipe in `memory/prepass-harness`).
+**Then Phase 3b (owner walk) → CLOSE.**
+
+**⊕ ACCUMULATING §-LESSON CANDIDATES (for the close — MECHANISED there, not written here):**
+1. **A flake's mechanism must be REPRODUCED, not inferred.** I-1's Phase-0 seed-state hypothesis was
+   *confounded* because it never executed the fixture's coverage state (which is fully covered); the real
+   cause was R-43's session-poison, reproduced by a forced cancellation. *What turns red:* the rollback-spy
+   guard — but the deeper lesson is a review habit, not a guard.
+2. **`asyncio.wait_for` over a session-using coroutine is a session-poison hazard.** Its cancellation lands
+   mid-query and invalidates the transaction; recovery is `rollback()` + keeping all ORM reads ahead of the
+   bounded call (async SQLAlchemy cannot re-load an expired attribute). *What turns red:* the recovery guard.
+3. **When the failure itself is not deterministically reproducible, guard the FIX's mechanism and SAY SO.**
+   (`wait_for` converts `CancelledError`→`TimeoutError`; a caught statement error does not persist.) The
+   test's docstring carries the honesty; the real recovery was hand-verified 5/5.
+4. **A fixture-hygiene sweep must cover the WHOLE fixture object, not the named literals.** I-2's row named
+   two `privacy_label`s; the pass found a third byte-identical served string (`kind_label`) in the same
+   object. A byte-identical served string in a test is a grep/specimen hazard whether or not it is asserted.
+5. **A matrix guard must CROSS its axes.** The egress and acceptance axes were each driven but never crossed
+   for AI; the default suite runs one cell and the corners hide there. And: compare egress-independence on a
+   **coverage-stable** question — a settings-write side effect (`§12-R3` candle purge → coverage flip)
+   confounds a coverage-gated comparison (which also corroborated I-1's live decay on a second surface).
+6. **⚠ CARRIED FINDING (owner ruling owed):** on a genuine perf-series timeout, `vol = ps.get(...) or 0.0`
+   renders **fabricated `0.00%` volatility/drawdown** (Guarantee 3) while TWR/ratio honestly drop —
+   pre-existing, rare, a rendered-Portfolio-output change; not fixed in I-1 (normative). Needs a ruling.
+
 ### Phase 3a — SCRIPTED PRE-PASS *(reset + isolated; green BEFORE the walk)*
 
 Owner-independent, live app + real backend, reset instance, both themes across the breakpoints,

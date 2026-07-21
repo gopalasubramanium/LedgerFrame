@@ -163,8 +163,11 @@ async def test_no_unprojected_float_reaches_the_served_pack(app_client):
     projection imposes. That is what is asserted here — plus that money figures carry their
     currency, which no raw float ever does.
 
-    **The residue is filed as F-5, not fixed here:** `pct`/`ratio`/`count` are still rendered inline
-    in `tools.py`, so "no rendering logic outside money.py" is true of money and not yet of the rest.
+    **The residue F-5 exposed is now FIXED** (R-54 F-5, ruling 2026-07-21): `pct`/`ratio` render
+    through money.py's per-kind variants, dispatched on the declared `value_kind`, so "no rendering
+    logic outside money.py" holds for every value_kind-dispatched render. See
+    `test_fact_pack_kinds.py`. (`count` has no renderer by ruling — no count fact is pack-reachable;
+    per-item annotations ride F-7.)
     """
     MONEY_FIGURES = {"net_worth", "gross_assets", "liabilities", "unrealised_pl",
                      "todays_change", "realised_pl", "income"}

@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.money import format_fact_display
+from app.core.money import format_fact_by_kind, format_fact_display, format_pct_display
 from app.models import Watchlist
 from app.schemas.ai import GroundingFact
 from app.services.figure_registry import canonical_label, figure_for_label
@@ -86,7 +86,13 @@ async def portfolio_facts(session: AsyncSession) -> list[GroundingFact]:
                       is_stale=val.has_stale),
     ]
     if val.total_return_pct is not None:
-        facts.append(GroundingFact(label="Total return %", value=f"{val.total_return_pct}%", timestamp=now))
+        # ⊕ R-54 F-5. This is the WINNING render for `total_return`: gather_facts prepends
+        # portfolio_facts on any portfolio intent, so `_dedupe` (first-wins) keeps THIS fact and
+        # drops performance_facts' copy. It rendered `f"{val.total_return_pct}%"` inline — the
+        # F-3 "the formatter exists but is bypassed" lesson recurring at the dedupe layer. Routed
+        # through money.py's pct variant so the winning site formats like everything else.
+        # (Byte-identical below 1000%: total_return_pct is a pre-quantized 2dp Decimal.)
+        facts.append(GroundingFact(label="Total return %", value=format_pct_display(val.total_return_pct), timestamp=now))
     return facts
 
 
@@ -385,28 +391,20 @@ async def performance_facts(session: AsyncSession) -> list[GroundingFact]:
     for m in ks.get("metrics", []):
         if m["label"] not in want or m["value"] is None:
             continue
-        kind = m.get("kind")
-        v = m["value"]
-        if kind == "pct":
-            value = f"{round(float(v), 2)}%"
-        elif kind == "ratio":
-            value = f"{round(float(v), 2)}"
-        elif kind == "count":
-            value = f"{v}"
-        else:
-            # §14-3 / Finding 5, the FORMAT half. This read `f"{v} {base}"` — no formatting at
-            # all — and shipped `79326.3 SGD` and `0.0 SGD` to a user-facing money list, directly
-            # beneath a correctly-formatted copy of the same figure (D-105: no raw numbers on a
-            # money surface).
-            #
-            # ⚠ `_fmt` was never broken; it was BYPASSED. A guard on the formatter would have been
-            # green throughout — which is why the guard for this is on the SERVED PACK
-            # (`tests/integration/test_ai_fact_pack_canonical.py`), where a caller that does not
-            # call the formatter is visible.
-            #
-            # The validator is format-insensitive (`_sig3` compares leading significant digits),
-            # so this changes what the reader sees without changing what the model may cite.
-            value = format_fact_display(Decimal(str(v)), base)
+        # ⊕ R-54 F-5. Rendering dispatches on the DECLARED value_kind (money/pct/ratio) — never
+        # inferred from the value. The kind is read from the figure registry (the declaration home);
+        # analytics' own `kind` is the authority the registry cites and is parity-guarded equal, so
+        # this is a declared dispatch either way. money.py owns every variant — the pack used to
+        # render pct/ratio/count INLINE here (`f"{round(float(v), 2)}%"` and siblings), the residue
+        # F-3 left when it scoped "no rendering logic outside money.py" to `_fmt`. That is completed
+        # now, for value_kind-dispatched renders (per-item annotations ride F-7).
+        #
+        # ⚠ `_fmt`/the inline formatters were never broken; they were BYPASSED, which is why the
+        # capability probe is on the SERVED PACK (`tests/integration/test_fact_pack_kinds.py`),
+        # where a caller that renders the wrong way is visible.
+        fig = figure_for_label(m["label"])
+        kind = fig.value_kind if fig else m.get("kind")
+        value = format_fact_by_kind(m["value"], kind, base)
         if m.get("note"):
             value += f" ({m['note']})"
         facts.append(GroundingFact(label=m["label"], value=value))

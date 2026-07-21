@@ -71,6 +71,69 @@ def format_fact_display(value: Decimal | None, currency: str) -> str | None:
     return f"{rendered} {currency}"
 
 
+def format_pct_display(value: Decimal | None) -> str | None:
+    """A served display string for an UNSIGNED percentage FACT: 2dp HALF_UP, trailing '%'.
+
+    THE NAMED PACK VARIANT for the ``pct`` value_kind (R-54 F-5, owner ruling 2026-07-21). The fact
+    pack used to render percentages INLINE as ``f"{round(float(v), 2)}%"`` — float-based (banker's
+    rounding, the F-3(ii) class) and trailing-zero-dropping, so a Top-5 concentration of
+    ``94.60375…`` reached the user as ``94.6%``, at a different precision from the money figures
+    beside it. This is the fixed-2dp, HALF_UP form, sharing the D-105 core, so the pack keeps no
+    rendering logic of its own.
+
+    UNSIGNED, deliberately: the pack's percentages carry no leading ``+`` (a signed percentage
+    CHANGE is :func:`format_signed_pct_display`, a different variant with its own U+2212 sign). None
+    passes through, so an unavailable metric stays honestly empty and is never a fabricated 0%
+    (Guarantee 3)."""
+    if value is None:
+        return None
+    return f"{format(D(value).quantize(CENTS, rounding=ROUND_HALF_UP), ',.2f')}%"
+
+
+def format_ratio_display(value: Decimal | None) -> str | None:
+    """A served display string for a UNITLESS RATIO FACT: 2dp HALF_UP, no unit (R-54 F-5).
+
+    ``Return / volatility`` is the live case, and ruling (e) records the lesson that made this a
+    distinct kind: an earlier guard drafted it as an unprojected float and RED on ``11.82`` — but a
+    ratio is legitimately unitless, so *an assertion that reds on correct behaviour is wrong about
+    the product.* None passes through (Guarantee 3)."""
+    if value is None:
+        return None
+    return format(D(value).quantize(CENTS, rounding=ROUND_HALF_UP), ",.2f")
+
+
+# The per-kind renderers for a GROUNDING FACT, keyed by the DECLARED value_kind (R-54 F-5). Kept as
+# a lookup so the count tripwire can ask which kinds have a renderer (Q2 ruling): 'count' is absent
+# ON PURPOSE — no count fact is pack-reachable, and a formatter with no live caller is the code
+# shape of a dead affordance. The moment a count fact ships, the tripwire (a pack_reachable count
+# row with no renderer) reds and this dict gains a 'count' entry.
+_FACT_KIND_RENDERERS = {
+    "money": lambda value, currency: format_fact_display(value, currency),
+    "pct": lambda value, currency: format_pct_display(value),
+    "ratio": lambda value, currency: format_ratio_display(value),
+}
+
+
+def format_fact_by_kind(value: object, value_kind: str, currency: str) -> str | None:
+    """Render a grounding-fact value by its DECLARED value_kind — never inferred from the value.
+
+    R-54 F-5, the F5-identity lesson applied to units: a whole-number percentage is not a count, and
+    only the declaration can tell them apart. ``money.py`` owns every per-kind variant, so the fact
+    pack keeps no rendering logic of its own — *'no rendering logic outside money.py', completed for
+    value_kind-dispatched renders* (clause (b), scoped 2026-07-21; per-item annotations ride F-7).
+
+    A ``value_kind`` with no registered renderer raises — the code-level tripwire. Today that is
+    ``count`` alone (Q2 ruling): declare a renderer the moment a count fact becomes pack-reachable."""
+    try:
+        render = _FACT_KIND_RENDERERS[value_kind]
+    except KeyError:
+        raise ValueError(
+            f"no fact renderer for value_kind {value_kind!r} — a 'count' value reaching here is the "
+            f"R-54 F-5 tripwire (Q2 ruling): register a renderer before a count fact becomes reachable"
+        ) from None
+    return render(value, currency)
+
+
 def format_money_display(value: Decimal | None) -> str | None:
     """A served display string for a MONEY amount: grouped thousands, 2dp (page-heatmap §12hm1-1,
     D-105 posture — the frontend renders it verbatim and formats nothing). None passes through, so

@@ -37,8 +37,9 @@ row lacks a disposition.** This plan is the rule's first user.*
 | **F-3** | Finding | **The fact pack has its OWN money formatter, and it destroys sub-cent prices.** `_fmt` (`tools.py:25`) is `f"{value:,.2f} {ccy}"`; the D-105 formatters (`money.py:25,38,47`) are the product's. Three differences, one of them live | Found at Phase 0-4 by the ruled survey (1a), **before** any unification — which is what the survey-first ordering was for | ✅ **RULED + FIXED 2026-07-21** (`33f57bf`) — `_fmt` deleted, `money.py` owns all rendering, `format_fact_display` is the named pack variant. **Pending the 0a look** (specimen obligation below). Original finding, for the record: **⚑ (ruling 1c: STOP, change nothing).** **(i) LIVE — sub-cent destruction:** a crypto quote of `0.00004567` renders **`0.00 USD`** through `_fmt`, while `format_price_display(…, "crypto")` gives `0.00004567`. `money.py:19-20` states the D-105 intent **verbatim**: *"crypto → up to 6 significant digits (so sub-cent tokens aren't truncated to `0.00`)"* — **the pack does exactly what D-105 exists to prevent.** Compounds with **R-56**: `_sig3("0.00") → ""` is discarded, so such a fact **cannot be narrated either** — fact list shows `0.00`, model falls back. Invisible on the demo set (BTC is high-priced): a **real-shaped-data** case. **(ii) LATENT — rounding mode:** `_fmt` uses Python's default (**banker's/HALF_EVEN** — `2.005 → 2.00`), D-105 uses **HALF_UP** (`→ 2.01`). **Not reachable on headline money today**, because `portfolio.py:577` cent-quantizes each holding first — latent, not live. **(iii) LATENT — `None`:** `_fmt(None)` **raises `TypeError`**; the D-105 formatters pass `None` through (Guarantee 3, never a fabricated 0). **⚠ NOT a pure refactor either way:** D-105's crypto path also drops thousands grouping and trims trailing zeros (`68000.50 → 68000.5`), so unification **changes ratified fact-list rendering** (ratified at AI-surfaces 0a) and needs a ruling + dated note. The R-54 0a specimens will put it in front of the owner regardless |
 
 | **F-4** | Finding | **Watchlist fact fidelity** — `watchlist_quote_facts` read `wl.items[:8]` over a relationship with **no `order_by`** (`models/__init__.py:492`), so facts followed **insertion order** and could slice away the rows the user put at the top | Found at Phase 0-4 while building the F-3 fixture; **filed by owner ruling 2026-07-21 item 4** | ✅ **FIXED 2026-07-21** (`7ba669f`). **It was the one-line ORDER BY it appeared to be** — and in the **AI path**, not the model: `watchlists.py:34` already sorts explicitly, so the **page was right and only the AI's view of it was wrong**. Fixed in `tools.py` so no shipped surface moves. *Grounding that does not mirror what the user sees is a **fidelity** defect, not a cosmetic one* |
-| **F-5** | Finding | **`pct` / `ratio` / `count` are still rendered INLINE in `tools.py`** (`f"{round(float(v), 2)}%"` and siblings) — F-3's *"no rendering logic outside `money.py`"* was **scoped to `_fmt`** and these three survived it | Found at Phase 0-4, exposed by a **false positive** in the raw-float guard (it fired on `Return / volatility = 11.82`, a legitimately unitless ratio) | ✅ **RULED 2026-07-21 — the F-3 precedent applies WHOLESALE; own delta immediately after 0-5, BEFORE 0a's specimens are cut.** (a) registry gains **`value_kind`** (money/pct/ratio/count) as a **declared column** — rendering dispatches on kind, **never inferred from the value** (the F5-identity lesson applied to units); (b) `money.py` owns **per-kind named variants**, no inline formatting survives anywhere; (c) blast radius proven **the F-3 way** — byte-identity for every unaffected rendering, movers enumerated by ruled class; (d) **0a gains one fact per kind**, rounding changes ratified **by looking**, dated notes on any moved ratified rendering; (e) **the false-positive lesson rides the record** — `Return / volatility` stays a **unitless ratio**. Original finding: The architecture holds for **money** and not yet for the rest. `round(float(v), 2)` is float-based, carrying the **same banker's-rounding class as F-3(ii)**. **Filed not fixed:** it is the same ratified-rendering question F-3 was, on three more value kinds, so it wants a ruling rather than a judgement call inside a delta |
+| **F-5** | Finding | **`pct` / `ratio` / `count` are still rendered INLINE in `tools.py`** (`f"{round(float(v), 2)}%"` and siblings) — F-3's *"no rendering logic outside `money.py`"* was **scoped to `_fmt`** and these three survived it | Found at Phase 0-4, exposed by a **false positive** in the raw-float guard (it fired on `Return / volatility = 11.82`, a legitimately unitless ratio) | ✅ **RULED 2026-07-21 — the F-3 precedent applies WHOLESALE; own delta immediately after 0-5, BEFORE 0a's specimens are cut.** (a) registry gains **`value_kind`** (money/pct/ratio/count) as a **declared column** — rendering dispatches on kind, **never inferred from the value** (the F5-identity lesson applied to units); (b) `money.py` owns **per-kind named variants**, no inline formatting survives anywhere; (c) blast radius proven **the F-3 way** — byte-identity for every unaffected rendering, movers enumerated by ruled class; (d) **0a gains one fact per kind**, rounding changes ratified **by looking**, dated notes on any moved ratified rendering; (e) **the false-positive lesson rides the record** — `Return / volatility` stays a **unitless ratio**. ✅ **FIXED 2026-07-21 (`a8c89f5`).** `value_kind` is a declared registry column dispatched on (never inferred); `money.py` owns `format_pct_display` (unsigned, 2dp HALF_UP) + `format_ratio_display` + `format_fact_by_kind`; the inline `round(float(v),2)` dispatch is gone from `performance_facts` **and** from `total_return`'s WINNING render (`portfolio_facts` — the first-wins dedupe bypass, the F-3 "formatter exists but is bypassed" lesson recurring at the dedupe layer). Count declared on Positions, **no renderer** (Q2), tripwire armed. **⊕ CLAUSE (b) DATED SCOPE ANNOTATION (Q1 ruling 2026-07-21):** *"no rendering logic outside `money.py` — **completed for value_kind-dispatched registry-figure renders** (incl. `total_return`@`portfolio_facts`); **per-item annotations = F-7.**"* An absolute claim with five known exceptions is the §19-K shape; the claim is **re-scoped, not carried as a lie**. Original finding: The architecture holds for **money** and not yet for the rest. `round(float(v), 2)` is float-based, carrying the **same banker's-rounding class as F-3(ii)**. **Filed not fixed:** it is the same ratified-rendering question F-3 was, on three more value kinds, so it wants a ruling rather than a judgement call inside a delta |
 | **F-6** | Finding | **⛔ A REGRESSION THIS MILESTONE SHIPPED.** Phase 0-1's word-boundary conversion **silently killed the stems** written for the substring matcher (`perform`, `return`, `concentrat`, `diversif`): under `\b(...)\b` the trailing boundary requires the word to END there, so *"performing"*, *"concentration"* and *"diversified"* stopped routing. **6 of 9 probes misrouted** | Found at Phase 0-4 **by accident**, asking whether XIRR reached the pack — **not by any gate**, and not by the delta that introduced it | ✅ **FIXED 2026-07-21** (`7ba669f`) — stems carry `\w*`; **0/16 misrouted**; pinned by `test_intent_stem_probes.py` through **inflected** forms, with a blindness pin that caught `liabilit` unprobed on its first run. **⚑ THE LESSON, and it is new: A TEST THAT CAN REACH ITS ASSERTION BY TWO ROUTES CANNOT TELL YOU THAT ONE OF THEM BROKE** — the 1982-test suite stayed green because the one performance test's question also contains *"risk"*. Phase 0-1's guards were sound about what they measured and **none asked whether the rules still matched real questions**: the property was verified, the capability was not |
+| **F-7** | Finding | **Per-item annotation rendering is still inline** — 5 sites in `tools.py` format a pct annotation inline and are NOT registry figures (no declared `value_kind`): allocation weight `.1f%` (`:118`), market/instrument quote change `+.2f%` (`:171,499`), holdings weight `.1f%` (`:425`), series change `+.1f%` (`:516`) | Filed at the F-5 delta (Q1 ruling 2026-07-21) — the residue of scoping F-5 to value_kind-dispatched registry figures; the ruled mechanism (registry `value_kind` dispatch) structurally cannot apply to a quantity with no `figure_id` | **⚑ OPEN — REQUIRED SURVEY BEFORE ANY RULING (r2).** For each annotated quantity, compare the pack's precision against the **canonical page's rendering of the SAME quantity** — the real question is not *"which file owns the f-string"* but whether the same figure **wears two faces** (the F-3 species); bespoke precisions may be deliberate conventions or drift, and only the survey table can say. **Byte-identity asserted for all five sites at the F-5 delta** (`test_allocation_weight_annotation_is_unchanged` pins the one-decimal `.1f` weight form on the served pack). Not release-blocking; own delta after F-5 |
 
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
@@ -1533,6 +1534,100 @@ copy; how the panel renders a link is Phase 1 and ratifies at 0a.
 
 ---
 
+### Phase 0-5a — F-5 FIXED: PER-KIND RENDERING (`a8c89f5`) — DONE
+
+**F-5, ruled 2026-07-21, its own delta immediately after 0-5, before 0a's specimens are cut.** The
+scope readings (Q1/Q2) were put to the owner in chat 2026-07-21 and are recorded on the F-5 and F-7
+ledger rows and the specimen list.
+
+**The ruling, echoed item by item:**
+
+- **(a) `value_kind` is a DECLARED registry column.** Added to `Figure`, required (no default, so a
+  new row cannot forget it), declared on all 22 rows. Rendering dispatches on the declared kind —
+  **never inferred from the value** (the F5-identity lesson applied to units). Its authority is cited
+  per row: stats-served rows cite `analytics.py`'s per-metric `kind` (parity-guarded); summary rows
+  cite the canonical-page derivation clause (`total_return`'s pct is the summary field name).
+- **(b) `money.py` owns per-kind named variants.** `format_pct_display` (unsigned, 2dp HALF_UP,
+  trailing `%`), `format_ratio_display` (2dp HALF_UP, no unit), and `format_fact_by_kind` (the
+  dispatcher). `performance_facts`' inline `if kind == "pct": f"{round(float(v),2)}%"` block is gone.
+  **⊕ The clause-(b) claim is RE-SCOPED with a dated annotation (Q1/r1)** — "completed for
+  value_kind-dispatched registry-figure renders; per-item annotations = F-7" — because an absolute
+  claim with five known exceptions is the §19-K shape.
+- **(c) Blast radius proven the F-3 way.** Unit corpus byte-identical (`UNAFFECTED`), movers
+  enumerated by ruled class: **trailing-zero** (`0.0→0.00`, `94.60375→94.60`, `5.0→5.00`, `12.5→12.50`)
+  and **half-cent HALF_UP** (`0.125→0.13`, `2.675→2.68`); ratio the same two classes. Every mover is a
+  fixed-2dp normalisation, all within the ruled class.
+- **(d) 0a gains one fact per kind** — **except count**, dropped with the reason recorded (Q2, below).
+- **(e) `Return / volatility` stays a unitless RATIO** — no `%`, no currency, 2dp. The false-positive
+  lesson rides `figure_registry.py` and `test_return_volatility_stays_a_unitless_ratio`.
+
+**Q2 — count: declared, NO renderer (option 3 + tripwire).** Positions declares `value_kind="count"`
+for parity completeness, but there is **no `format_count_display`** — a formatter with no live caller
+is the code shape of a dead affordance, and no count fact is pack-reachable (`pack_reachable=False`).
+Two tripwires: `format_fact_by_kind("count")` **raises** (code level), and
+`test_count_has_no_renderer_and_no_reachable_row_demands_one` **reds** the moment a `pack_reachable`
+count row appears without a renderer (with a blindness pin that there IS a count figure). **The 0a
+count specimen is dropped, reason recorded** — *"no count fact is pack-reachable; specimen owed when
+one becomes so."* Option 2 (make Positions reachable) was rejected: expanding what the panel grounds
+inside a rendering delta is the exact side-effect narrow-by-demand exists to prevent.
+
+**⊕ THE DEDUPE-LAYER DISCLOSURE (ruling disclosure 2).** `total_return` is rendered by
+`portfolio_facts:89`, which **wins `_dedupe`** (first-wins; `gather_facts` prepends `portfolio_facts`
+on any portfolio intent) over `performance_facts`' copy. So fixing only `performance_facts` would
+have left the user-facing Total return on its inline `f"{val.total_return_pct}%"` — **the F-3
+"formatter exists but is bypassed" lesson recurring at the DEDUPE layer**, recorded as such. The
+winning site now renders through `format_pct_display`. Byte-identical below 1000% (total_return_pct
+is a pre-quantized 2dp `Decimal`), so the move is architectural, not a live defect.
+
+**⊕ F-7 FILED (ruling r2).** The five per-item annotation sites (allocation/holdings weights, quote
+and series % changes) are NOT registry figures — no declared `value_kind`, so the ruled dispatch
+mechanism cannot reach them. Filed OPEN with a **required survey before any ruling**: pack precision
+vs the canonical page's rendering of the SAME quantity (does the figure *wear two faces* — the F-3
+species). **Byte-identity asserted for all five this delta** (`test_allocation_weight_annotation_is_unchanged`
+pins the `.1f` one-decimal weight form on the served pack — routing it through the 2dp variant would
+have broken it).
+
+**FAIL-FIRST — the served pack, real (demo) values.** `Income yield` is `0.0` on the demo seed and
+was RED before the fix, rendering `0.0%`; it now renders `0.00%` — **deterministic in every suite
+context**, so it is the guaranteed served RED. *⚠ A first draft pinned Top-5 concentration's exact
+`94.60%`, which passed solo and FAILED at the full-suite gate — its number moves with cross-test
+FX/quote state (a separate concern from this delta's rendering). Corrected to assert the fixed-2dp
+SHAPE at the served level and keep the exact trailing-zero proof at the deterministic UNIT level.*
+The F-6 consequence applied: capability probes drive real questions end-to-end at the served surface,
+and each carries its redundant-route note (a bare "some pct has 2dp" would pass on an already-2dp
+value; the guaranteed RED names the specific zero-yield figure).
+
+**One home for rendering, guarded AST-not-substring.** `test_performance_facts_no_longer_rounds_floats_inline`
+walks the AST for a real `round(float(...))` call — *a guard that reads comments finds claims, not
+code* (Phase 0-1's lesson; the docstring and code comments quote the old form verbatim). Blindness
+pin: `format_fact_by_kind` must still be called.
+
+**Gates — solo, uncontended.**
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** (`-p no:randomly`) | **2064 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | **2064 passed, 15 skipped** — exit 0 |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** |
+
+**Suite reconciliation: 2049 → 2064, +15 = this delta's own** (2 served-pack capability probes + 1
+ratio-shape probe + 1 total_return probe + 1 annotation byte-identity + 5 blast-radius unit + 2 count
+tripwire + 2 parity + 1 one-home guard). No other test moved.
+
+**⚠ Contract note (§3b in action, again):** the pct/ratio facts' **rendered values changed**
+(`0.0%→0.00%`, and every trailing-zero/half-cent mover) — a change to the served `/ai/facts` and SSE
+`facts` shapes' CONTENT — and the contract counts are **unchanged**, because `GroundingFact.value`
+is an untyped served shape (`ai_facts -> dict`). *The contract cannot see a rendering change; what
+sees it is this delta's served-pack probes.* Phase 0-6 pins the shape formally.
+
+**Help currency:** no Help or GLOSSARY entry changed — no new sanctioned term (the kinds are internal
+render dispatch, not user-facing vocabulary). The **rendered fact values** move in the enumerated
+classes, which is user-visible and therefore ratified at **0a by looking** (specimen list item 4),
+not asserted here. The milestone's Help delta remains owed at close (§9-I).
+
+---
+
 ### Phase 0a — THE SPECIMEN, RATIFIED BY LOOKING *(isolated instance; expect 1–3 revision loops)*
 
 Reset + isolated per the harness convention; **both themes**; zero console errors (excluding expected
@@ -1550,9 +1645,14 @@ Reset + isolated per the harness convention; **both themes**; zero console error
    *"the 2026-07 ratification exhibited no sub-cent case."* **The 2026-07 ratification could not
    have covered this — the demo set has no sub-cent instrument**, which is precisely why the
    defect survived a walk.
-4. **⚑ OWED BY F-5 (ruling 2026-07-21, item 1d) — ONE FACT PER `value_kind`**: money, pct, ratio,
-   count. The per-kind rounding changes are **user-visible** and are ratified **by looking**; any
-   ratified rendering that moves carries a **dated note**.
+4. **⚑ OWED BY F-5 (ruling 2026-07-21, item 1d) — ONE FACT PER `value_kind`**: money, pct, ratio
+   — **count DROPPED, reason recorded (Q2 ruling 2026-07-21):** *no count fact is pack-reachable
+   (Positions is `pack_reachable=False`), so no count specimen can be cut; the specimen is owed when
+   a count fact becomes reachable, and the tripwire announces that moment.* The per-kind rounding
+   changes are **user-visible** and are ratified **by looking**; any ratified rendering that moves
+   carries a **dated note**. **⊕ F-5 SHIPPED (`a8c89f5`), so this look now has real specimens** — a
+   fixed-2dp pct (`Income yield 0.00%`, and every trailing-zero/half-cent mover), a ratio
+   (`Return / volatility`, no `%`).
 5. **Any PROPOSED DS entry** for the link affordance (§4) — *ratified at 0a by looking, never
    assumed*, and on a **free axis**: colour and slant are both taken.
 6. **The honest-miss render.**

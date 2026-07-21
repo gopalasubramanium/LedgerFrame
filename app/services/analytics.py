@@ -121,39 +121,18 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
     largest = priced[0] if priced else None
     top5 = sum((h.market_value_base for h in priced[:5]), ZERO)
 
-    # §12-R1 (F-2 REFUSE-UNTIL-COVERAGE): the date-aware risk metrics (TWR / 1Y return / volatility
-    # / drawdown) are computed from the per-date price+FX series. If the on-stack history doesn't
-    # cover the window, that series is dominated by carried-from-nothing values and yields the
-    # F-2 −99.93% garbage — so we REFUSE with a served state instead, never a fabricated number.
-    from app.services.coverage import date_aware_computable
-
-    cov = await date_aware_computable(session, base_currency)
-    da_computable = cov["computable"]
-    da_note = cov["reason"]  # the served refusal string when not computable (else None)
-
-    # 1Y risk/return metrics from the invested performance series (best-effort —
-    # never block the panel if the provider is slow/rate-limited). Skipped entirely when the
-    # window isn't covered (no wasted per-date valuation, and no garbage to show).
-    import asyncio
-
-    ps: dict = {}
-    if da_computable:
-        try:
-            perf = await asyncio.wait_for(
-                performance_series(session, base_currency, 365, benchmark, entity_id=entity_id), timeout=14)
-            ps = perf.get("stats") or {}
-        except (TimeoutError, Exception):  # noqa: BLE001
-            ps = {}
-    vol = ps.get("volatility_pct") or 0.0
-    ret = ps.get("return_pct") or 0.0
-    ret_vol = round(ret / vol, 2) if vol else None
-
-    income_yield = float(income / total * 100) if total else 0.0
-
-    # Money-weighted return (XIRR) over the transaction-backed (market) portfolio.
-    # Manual/statement assets are excluded — they have no dated cost flow — so this is
-    # the IRR of the invested cash flows plus the current invested value. Returns None
-    # ("not applicable") when the cash-flow history is too thin to be meaningful.
+    # ⊕ R-54 I-1 — XIRR is computed HERE, BEFORE the bounded (cancellable) perf/TWR calls below, on
+    # purpose. The `txns` loop is the ONLY ORM-attribute access left in this function; the two bounded
+    # calls are wrapped in `asyncio.wait_for`, whose wall-clock cancellation (which CPU contention
+    # triggers even for this small, network-free work) lands MID-QUERY and poisons the session. The
+    # timeout handlers recover it with `rollback()`, which EXPIRES ORM instances — and async SQLAlchemy
+    # cannot implicitly re-load an expired attribute. So every read AFTER a possible rollback must be a
+    # plain dataclass (`val`/`largest` are `@dataclass`, unaffected) or a fresh query (TWR) — never a
+    # stale ORM object. Moving `txns`'s reads up front makes that invariant hold. (R-43 §18-F7d.)
+    # Money-weighted return (XIRR) over the transaction-backed (market) portfolio. Manual/statement
+    # assets are excluded — they have no dated cost flow — so this is the IRR of the invested cash
+    # flows plus the current invested value. Returns None ("not applicable") when the cash-flow history
+    # is too thin to be meaningful.
     from datetime import date as _date
 
     from app.core.xirr import xirr as _xirr
@@ -186,6 +165,43 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
         flows.append((datetime.now(UTC).date(), float(invested_now)))
     xirr_pct = _xirr(flows)
 
+    # §12-R1 (F-2 REFUSE-UNTIL-COVERAGE): the date-aware risk metrics (TWR / 1Y return / volatility
+    # / drawdown) are computed from the per-date price+FX series. If the on-stack history doesn't
+    # cover the window, that series is dominated by carried-from-nothing values and yields the
+    # F-2 −99.93% garbage — so we REFUSE with a served state instead, never a fabricated number.
+    from app.services.coverage import date_aware_computable
+
+    cov = await date_aware_computable(session, base_currency)
+    da_computable = cov["computable"]
+    da_note = cov["reason"]  # the served refusal string when not computable (else None)
+
+    # 1Y risk/return metrics from the invested performance series (best-effort —
+    # never block the panel if the provider is slow/rate-limited). Skipped entirely when the
+    # window isn't covered (no wasted per-date valuation, and no garbage to show).
+    import asyncio
+
+    ps: dict = {}
+    if da_computable:
+        try:
+            perf = await asyncio.wait_for(
+                performance_series(session, base_currency, 365, benchmark, entity_id=entity_id), timeout=14)
+            ps = perf.get("stats") or {}
+        except (TimeoutError, Exception):  # noqa: BLE001
+            # ⊕ R-54 I-1 / R-43 §18-F7d — RECOVER THE SESSION. `wait_for` cancels its coroutine
+            # mid-query when the wall-clock budget is exceeded; the cancellation leaves the transaction
+            # invalid, and every later query (the TWR call below, and the downstream fact sources
+            # `gather_facts` runs after this one) then raises PendingRollbackError — 500-ing the perf
+            # card and the Ask "performance" answer. That was R-43 §18-F7d's "fails only under
+            # contention" flake: a poisoned session, not a nulled metric. `rollback()` clears the invalid
+            # state; nothing after it reads a stale ORM object (XIRR's `txns` reads are already done).
+            ps = {}
+            await session.rollback()
+    vol = ps.get("volatility_pct") or 0.0
+    ret = ps.get("return_pct") or 0.0
+    ret_vol = round(ret / vol, 2) if vol else None
+
+    income_yield = float(income / total * 100) if total else 0.0
+
     # Time-weighted return (best-effort; None when history is too thin to be honest).
     import asyncio as _asyncio
 
@@ -194,7 +210,11 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
         try:
             twr_pct = await _asyncio.wait_for(time_weighted_return(session, base_currency), timeout=12)
         except (TimeoutError, Exception):  # noqa: BLE001
+            # Same recovery as the perf series above (R-54 I-1) — a cancellation here also invalidates
+            # the transaction; roll it back so the downstream fact sources don't inherit a poisoned
+            # session. The return dict below reads only dataclasses and captured scalars, never ORM.
             twr_pct = None
+            await session.rollback()
 
     return {
         "base_currency": base_currency,

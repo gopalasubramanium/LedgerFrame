@@ -1879,6 +1879,92 @@ deprecated-vendor guard; the distinctness test was rewritten in place). No other
 no Help/GLOSSARY entry changed** (no Help entry quotes the posture strings; the `ask`-entry rewrite is
 §9-I's own delta). Formal ratification of the strings is owed at **0a-ii**, rendered live.
 
+#### Phase 1 delta 2 — THE TIER BOUNDARY + THE TIER-1 MISS SPLIT (`766717a`) — DONE
+
+**Pre-ruled (chat 2026-07-21; 0a-i item 4).** The tier-1/tier-2 boundary did not exist in code —
+**defining it was this delta's job.** `AnswerMode` (`tools.py`) is the name the survey found missing:
+the product already shipped both a deterministic template path and a model-narration path (§0-B),
+unreconciled and un-named. The serving path now **declares** which tier answers, and the ruled miss
+split becomes construction on top of it.
+
+**⊕ THE REQUIRED SURVEY — the ruled reorder question, answered NO-REORDER.** Delta 2 carried a
+pre-authorisation: *"if the survey shows the boundary cannot be defined without the composition work
+(delta 4), reordering delta 4 ahead is pre-authorized."* It cannot and was not needed. The tier is
+**"will a model narrate?"**, which is decidable at the top of `answer_stream` from **`health.available`
++ the in-process limiter alone** — `DisabledAIProvider.health()` returns `available=False` directly,
+and a live provider's health probe fails closed under the egress gate, so disabled / no-egress /
+model-down **all collapse to one check**. Nothing from delta 4's answer *composition* feeds the mode
+decision. **Delta 2 proceeded as sequenced.**
+
+**What shipped.**
+
+| Change | File |
+|---|---|
+| `AnswerMode` enum — `DETERMINISTIC` (tier 1) / `GROUNDING` (tier 2); the declared boundary | `app/ai/tools.py` |
+| `gather_facts(…, *, mode=AnswerMode.GROUNDING)` — the last-resort (`if not facts: portfolio_facts + movers`) is **TIER-2 ONLY**; tier-1 returns the empty honest miss. Default `GROUNDING` → `/ai/facts` and every existing caller/test **byte-identical** | `app/ai/tools.py` |
+| `_answer_mode(health)` — resolves the tier from health + limiter, folding **§0-I's two-conditions-one-`if`** into one declared mode | `app/ai/grounding.py` |
+| `answer_stream` resolves mode **before** gathering (the mode drives `gather_facts`' miss behaviour), then branches: `DETERMINISTIC` → template/honest-miss; `GROUNDING` → narration | `app/ai/grounding.py` |
+| 5 `gather_facts` fakes gain the `mode` kwarg the serving path now passes | `tests/unit/test_{ai_fallback,ask_answer_projection,d070_fallback_signal,disclaimer_closure,validation_contract_pinned}.py` |
+
+**§9-F, structurally.** Merging the limiter into mode resolution makes the two §9-F promises
+*separable* and true by construction: (1) a **tier-1 posture never consults the limiter** — the
+`_rate_limited()` side-effect is charged only on the model-available branch, so tier 1 can never be
+throttled (*"zero network calls by construction"* now also means *"never rate-limited"*); (2) a
+**rate-limited tier-2 falls back TO tier 1** — an available-but-exhausted model resolves to
+`DETERMINISTIC` and produces a real deterministic answer, never a bare fact list. The old
+`not health.available or _rate_limited()` sharing one `if` (§0-I) is retired.
+
+**⚠ THE MISS SPLIT IS SYMMETRIC — and the guard proves both halves.** The headline guard is the ruled
+one (*"a tier-1 response carrying facts for an unroutable question turns RED"*), but a fix that emptied
+the last-resort for **both** tiers would satisfy it while silently breaking tier 2. So the split is
+pinned in both directions: tier-1 miss → empty (served path, `test_tier1_miss_split.py`), tier-2 miss
+→ **keeps** the last-resort (seeded helper, same file), and a routable tier-1 question still carries
+its facts (the not-vacuously-empty discriminator).
+
+**FAIL-FIRST — RED on the real cause, at the served pack.** The suite's default posture
+(`LEDGERFRAME_AI_ENABLED=false` → `DisabledAIProvider` → `health.available is False`) **is tier 1**, so
+`POST /ai/chat` exercises the exact posture the split governs. On the pre-split build an unroutable
+question (`"xyzzy plugh frobnicate"` → `UNKNOWN_GENERAL_QUESTION`, empty sources, no symbol, no Help
+match) returned the last-resort `Gainer …`/`Detractor …` pack, and the body fell to the disclaimer-only
+(facts-present) path instead of the refusal — **both assertions seen RED**, reverted by the split. The
+mode resolver is pinned in isolation (`test_answer_mode.py`), including the limiter side-effect on both
+tiers (the tier-1-silence assertion means nothing without the tier-2-records discriminator).
+
+**⚑ ONE SCOPED DESIGN CALL, STATED.** `GET /ai/facts` — the *"answer basis"* diagnostic
+(`ai.py:24-38`) — keeps the `GROUNDING` default rather than becoming posture-aware. It reports the
+**maximal** grounding set (what *can* be used), which is a different concern from the tiered *answer*
+the panel streams over SSE; the ruled miss is an **answer-path** behaviour (*"tier-1's unroutable
+path"*), and `/ai/facts` runs no health check today. Making the basis endpoint posture-aware would
+break its byte-identity and the Phase 0-6 shape pin for a gain outside the ruling's scope. A follow-up
+if the owner wants it; not folded in here.
+
+**Gates — solo, uncontended.**
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** (`-p no:randomly`) | **2082 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | **2082 passed, 15 skipped** — exit 0 |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** (no path, no schema) |
+
+**Suite reconciliation: 2073 → 2082, +9 = this delta's own** (4 tier-1 miss-split + 5 answer-mode). No
+other test moved — every existing caller runs `gather_facts` at the `GROUNDING` default, so tier-2 is
+byte-identical.
+
+**⚠ Untyped-shape caveat (§3b in action):** the SSE `facts` event's **content** now differs by tier for
+an unroutable question (empty in tier 1, last-resort in tier 2) — an untyped served shape the contract
+cannot see (`ai_facts -> dict`; `/ai/chat` a `StreamingResponse`). What sees it is this delta's
+served-path guards; Phase 0-6's `test_ai_served_shapes.py` pins the envelope regardless of tier.
+
+**Help currency: no Help/GLOSSARY entry changed** — the tier boundary is serving-path internals, no
+user-facing vocabulary. The 0a-ii honest-miss ratification (item 8: *"the tier-1 honest-miss on a
+funded instance"*) now has its split in place to render. The milestone's Help delta remains owed at
+close (§9-I).
+
+**⊕ I-1 TOUCHPOINT, noted not resolved.** This delta does not change I-1's question's routing, but it
+does change what an *unroutable* tier-1 question returns. I-1 remains OPEN, owed in the Phase-2/close
+window with its recorded date-aware/seed-state hypothesis intact.
+
 ### Phase 2 — TESTS AND GUARDS
 
 Every §7 row that names a guard. **Each proven RED first**, on a specimen that reproduces the defect.

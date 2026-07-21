@@ -53,12 +53,27 @@ async def ai_facts(q: str = Query(min_length=1, max_length=500),
 # copy said no-egress meant no AI at all; what SHIPPED says answers are still built, from the
 # user's data, without narration. The shipped sentence is the true one, and R-54 (tier-1
 # deterministic answering) owns the amendment when that capability formally lands.
+# ⊕ R-54 POSTURE-COPY AMENDMENT (Phase 1 delta 1; owner item-6 direction 2026-07-21). Recut per
+# §9-G: "Hailo" leaves served copy; ONE user-facing local descriptor ("Ollama-compatible"); one
+# locality phrasing; POSTURE_DISABLED's "fact-only" re-cut now tier-1 explains terms, not only
+# figures. The strings are PROPOSED — formal ratification is by LOOKING at 0a-ii, rendered live —
+# but the AC-L3 parity guard binds code↔record throughout, so the recut wording is recorded in
+# `ai-surfaces.md` §12-3 with a dated note ("both versions true in their time").
+#
+# ⚠ NO_EGRESS keeps "answers are built" and "no AI narration" (both pinned by
+# `test_the_no_egress_string_is_the_one_the_owner_RULED`, §12-3): it only GAINS the tier-1 clause —
+# answers are now built from your data AND the app's own explanations, not "from your data only".
 POSTURE_NO_EGRESS = ("No-egress is on — this device makes no outbound calls, so answers are built "
-                     "from your data only, with no AI narration.")
-POSTURE_DISABLED = "Deterministic — fact-only answers; nothing is sent anywhere."
-POSTURE_LOCAL_OPENAI = "On-device (local OpenAI-compatible endpoint) — data stays on this device."
-POSTURE_REMOTE = "Remote — prompts (incl. portfolio facts) are sent to the configured provider."
-POSTURE_LOCAL_NPU = "On-device (local Hailo/Ollama) — portfolio facts stay on this device."
+                     "on this device from your data and the app's own explanations, with no AI "
+                     "narration.")
+# item-6b: names its CAUSE in GLOSSARY vocabulary ("built-in intelligence"), no "deterministic" jargon.
+POSTURE_DISABLED = ("Model AI is off — answers use built-in intelligence: your data and the app's "
+                    "own explanations, on this device.")
+# item-6a: the local pair is ONE user-facing kind, deliberately IDENTICAL — locality is the promise.
+POSTURE_LOCAL_OPENAI = "On-device (local, Ollama-compatible) — data stays on this device."
+POSTURE_LOCAL_NPU = "On-device (local, Ollama-compatible) — data stays on this device."
+# item-6c: adopts the ratified three-kinds name "External model".
+POSTURE_REMOTE = "External model — prompts (incl. your portfolio facts) are sent to the configured provider."
 
 #: Every posture string the product can serve. The guard iterates THIS, so a new posture branch
 #: that forgets to add its string here is caught by a coverage assertion rather than shipping

@@ -173,12 +173,69 @@ def test_the_posture_branches_are_all_registered():
     )
 
 
+# The local pair is ONE user-facing kind, and its two strings are DELIBERATELY IDENTICAL — R-54
+# §9-G(2) / item-6a (owner 2026-07-21): *"both local providers are one user-facing kind; locality is
+# the promise."* The distinctness assertion below carves them out BY NAME WITH A REASON, and — the
+# 0-2b lesson — the exception must red as UNNEEDED the moment the pair diverges, so a hole with a
+# reason cannot outlive the reason.
+_LOCAL_PAIR = ("local_openai", "local_npu")
+
+
 def test_the_strings_are_neither_empty_nor_interchangeable():
     """Against going blind: any record contains the empty string, and one string for every posture
-    would pass parity while telling the user the same thing in opposite states."""
+    would pass parity while telling the user the same thing in opposite states.
+
+    ⊕ R-54 item-6a: the local pair is exempt from distinctness (declared, above), because it is one
+    user-facing kind. Every OTHER pair must still be distinct; the exempt pair must still be
+    NON-empty; and the all-same vacuity catch is retained."""
     for key, served in POSTURE_COPY.items():
         assert len(served) > 40, f"{key}: {served!r} is too short to be a posture statement"
-    assert len(set(POSTURE_COPY.values())) == len(POSTURE_COPY), (
-        "Two postures serve the SAME sentence. The panel would describe opposite states "
-        "identically, which is the failure posture copy exists to prevent."
+
+    # The exception reds as UNNEEDED if the pair diverges (0-2b: an unnecessary carve-out is worse
+    # than none — it is a hole with a reason attached).
+    pair_values = {POSTURE_COPY[k] for k in _LOCAL_PAIR}
+    assert len(pair_values) == 1, (
+        f"the declared local-pair distinctness exception is UNNEEDED: {_LOCAL_PAIR} have DIVERGED "
+        f"({sorted(pair_values)!r}). Remove the exception and treat them as ordinary distinct "
+        f"postures — item-6a makes them identical only while they are one user-facing kind."
+    )
+
+    # Every posture OUTSIDE the exempt pair is distinct from every other and from the pair's string.
+    others = {k: v for k, v in POSTURE_COPY.items() if k not in _LOCAL_PAIR}
+    distinct = set(others.values()) | pair_values
+    assert len(distinct) == len(others) + 1, (
+        "Two postures serve the SAME sentence (outside the declared local pair). The panel would "
+        "describe opposite states identically, which is the failure posture copy exists to prevent."
+    )
+
+    # Vacuity catch (retained): one string reused for EVERY posture would satisfy parity.
+    assert len(set(POSTURE_COPY.values())) > 1, (
+        "every posture serves one string — parity would be satisfied vacuously"
+    )
+
+
+def test_no_served_posture_string_carries_the_retired_vendor_word():
+    """§14-2 / §9-G — 'Hailo' is retired as a USER-FACING word, and the deprecated-term corpus
+    extends to ALL served AI copy, not just the Settings tab summary.
+
+    THE FAIL-FIRST: seen RED on `POSTURE_LOCAL_NPU = "On-device (local Hailo/Ollama) — …"`, which
+    `test_the_tab_never_shows_the_retired_vendor_word` (the tab summary) never covered — *retiring a
+    term without a parity guard is retiring it in ONE place* (§14-2). The recut removes it.
+
+    §11-I boundary (owner 2026-07-21): the corpus is SERVED strings — POSTURE_COPY and the served
+    KIND_LABEL. Provider class names (`HailoOllamaProvider`) and internal module docstrings are NOT
+    served text and are deliberately out of scope; the `.env` provider id `hailo` also stays."""
+    from app.ai.vocabulary import KIND_LABEL
+
+    served_ai_copy = {f"POSTURE_COPY[{k!r}]": v for k, v in POSTURE_COPY.items()}
+    served_ai_copy.update({f"KIND_LABEL[{k!r}]": v for k, v in KIND_LABEL.items()})
+    for where, text in served_ai_copy.items():
+        assert "hailo" not in text.lower(), (
+            f"the retired vendor word 'Hailo' is in served AI copy at {where}: {text!r}. "
+            f"GLOSSARY's deprecated table gives 'On-device model (Ollama-compatible)' (§14-2)."
+        )
+    # Blindness pin: the corpus must be non-empty and actually include the posture strings, or a
+    # future refactor that empties it makes this guard pass by checking nothing.
+    assert len(served_ai_copy) >= len(POSTURE_COPY) >= 5, (
+        "the served-AI-copy corpus shrank below the posture set — this guard has gone blind"
     )

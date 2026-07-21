@@ -989,6 +989,28 @@ presented at this walk and ratified by the look.
 | **remote provider** | Remote — prompts (incl. portfolio facts) are sent to the configured provider. |
 | **local NPU (Hailo/Ollama)** | On-device (local Hailo/Ollama) — portfolio facts stay on this device. |
 
+**⊕ R-54 POSTURE-COPY AMENDMENT (Phase 1 delta 1; owner item-6 direction 2026-07-21) — BOTH VERSIONS
+TRUE IN THEIR TIME.** The table above is the 2026-07-20 ratified set; R-54's recut below is what the
+route now serves, and the AC-L3 parity guard binds to it. Per §9-G: "Hailo" leaves served copy, one
+user-facing local descriptor ("Ollama-compatible"), one locality phrasing, and `disabled`'s
+"fact-only" re-cut now tier-1 explains terms. **These strings are PROPOSED — formal ratification is by
+LOOKING at 0a-ii, rendered live (R-54 plan 0a-ii list); recorded here now so the parity guard carries
+them and the owner can object to wording early.**
+
+| Posture | R-54 recut string (served; ratified live at 0a-ii) |
+|---|---|
+| **no-egress** ⚑ | No-egress is on — this device makes no outbound calls, so answers are built on this device from your data and the app's own explanations, with no AI narration. |
+| **disabled / model AI off** | Model AI is off — answers use built-in intelligence: your data and the app's own explanations, on this device. |
+| **local OpenAI-compatible** | On-device (local, Ollama-compatible) — data stays on this device. |
+| **local NPU** | On-device (local, Ollama-compatible) — data stays on this device. |
+| **remote provider** | External model — prompts (incl. your portfolio facts) are sent to the configured provider. |
+
+The **local pair is deliberately identical** (§9-G(2) / item-6a — one user-facing kind; the distinctness
+guard carves it out by name and reds if it ever diverges). `no_egress` keeps "answers are built" and
+"no AI narration" (still pinned); it only gains the tier-1 "explanations" clause. **"Hailo" is gone
+from served copy**, and the deprecated-term guard now covers ALL served AI strings (POSTURE_COPY +
+KIND_LABEL), not just the tab summary — the §14-2 one-place gap, closed.
+
 **PINNED.** The five served posture strings are now named constants (`app/api/v1/routes/ai.py`) and
 bound to this section by `tests/unit/test_posture_copy_ratified.py` — the **AC-L3 spec↔code parity
 pattern** the fallback signal already uses: edit this record and the guard carries the change into

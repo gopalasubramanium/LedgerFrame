@@ -2159,6 +2159,80 @@ it does not touch I-1's performance-question routing (its date-aware/seed-state 
 owed in the Phase-2/close window). I-2 (fixture hygiene) and F-2 (allocation census) and F-7
 (per-item annotation survey) remain OPEN with their scheduled deltas.
 
+#### Phase 1 delta 4b — FRONTEND: THE LINK AFFORDANCE + THE §9-E BOUNDARY (`34f6245`) — DONE
+
+**The frontend half of the composition ruling — the panel now POINTS on screen.** Delta 4a served the
+link IDs and the composed pack; this renders the affordance, extends the resolver for the tab query,
+and guards the boundary. **Camera-over-green: the affordance was rendered live and measured, not
+trusted green.**
+
+**What shipped.**
+
+| Change | File |
+|---|---|
+| **R1(iii) — `resolveAskLink` accepts a `?tab=` query** on a `page:` route: validate the PATH against the accepted nav set, PRESERVE the query verbatim (was: reject any route with a `?`). `askLinkLabel` names a link's destination from the ONE nav model (D-043) | `frontend/src/nav/askLinks.ts` |
+| **The affordance — `FactPointer`**: a fact whose served `link_id` resolves renders a trailing **ArrowUpRight** pointer that NAVIGATES and closes the ephemeral panel; a fact with no resolvable link renders **none** (never an arrow to nowhere). `aria-label` names the destination | `frontend/src/components/ui/AskPanel.tsx` |
+| **`GroundingFactDTO` gains `link_id`** — the DELIBERATE frontend-contract update the §3b served-shape guard exists to force (a new served field is adopted on purpose, not by drift) | `frontend/src/api/ai.ts` |
+| **PROPOSED DS entry (§5.5) + `.lf-ask__pointer`** — SPEAKS SummaryLink's ratified language (ArrowUpRight · `--accent` · surface-pill hover · focus ring · aria-label names destination), NOT a second affordance form | `DESIGN-SYSTEM.md`, `ask.css` |
+| **§9-E boundary guard — `check:ask-boundary`** (wired into `npm run check`): the panel may render only the ratified §4 primitives + links; a control component or raw interactive HTML in the panel reds. Named owner, comment-stripped, **blindness-pinned** | `frontend/scripts/check-ask-boundary.mjs`, `package.json` |
+| **Deep-link gate representative test** (§9-E item 3): a tier-1 link's destination page reads a **gated** endpoint — `GET /portfolio/holdings` is 451 on an unaccepted install. Navigation confers no authority; the server refuses | `tests/integration/test_served_link_ids.py` |
+
+**⊕ THE FREE AXIS, and why it is `--accent` not a new colour.** Like the model-text italic amendment,
+the affordance needs *a free axis, not a prettier one* (§0-G). Gain/loss/staleness/warning own
+**colour**; model authorship owns **italic**. The navigation accent (`--accent`, D-098's "this links
+elsewhere" tone — the same `.idp__link` / SummaryLink use) is the free axis: it says *"this goes
+somewhere"* without valuing the number or claiming authorship. **This reuses the ratified SummaryLink
+LANGUAGE** rather than inventing a second linked-affordance form — the centralization rule.
+
+**FAIL-FIRST.** The `askLinks` round-trip was RED before the query extension (a `?tab=` route resolved
+to `null`); the `check:ask-boundary` guard was **proven RED on TWO deliberate specimens** — a raw
+`<select>` in the panel AND a non-allow-listed `./` control import — and its **blindness pin fires**
+(removing the Dialog import makes it exit 1 rather than pass). The AskPanel affordance tests assert the
+pointer renders + names its destination, renders NONE for an unlinked fact, and closes the panel on
+navigate.
+
+**⊕ CAMERA-OVER-GREEN (owner instruction).** Driven on an **isolated** stack (Vite dev :5199 → backend
+:8399, temp data, demo seed, AI disabled → tier-1; owner's `:8321`/`:5173` untouched, `.env` snapshot
+hash-verified restored). The panel opened on *"what is XIRR"* rendered the delta-4a composition (the
+explanation + the XIRR/TWR figures) with a pointer on every linked fact. **Measured, not eyeballed**
+(`getComputedStyle`, settle before probe): the pointer colour is **exactly `--accent`** — `#24476f`
+(light) / `#6f9fd4` (dark) — and **`font-style: normal`** (NOT the model-text italic), in **both
+themes**, distinct from the fact-value tone. **0 non-benign console errors.** Screenshots looked at.
+The DS entry's claims are thus measured; its **FORMAL ratification stays at 0a-ii** (item 5 — both
+themes, owner's look), where this delta's live surface is exactly what gets cut.
+
+**W-1 deixis: N/A this delta — no Help body copy was touched.** The affordance adds navigation chrome
+(`Open <page>`) from the nav model, not served answer copy; the `ask`-entry rewrite (§9-I) and its W-1
+named-deixis are the close's delta.
+
+**Gates.**
+
+| Gate | Result |
+|---|---|
+| Frontend `npm run check` (from `frontend/`) | **exit 0** — vitest **424 passed** (42 files; +9), Playwright **361 passed**, all check scripts incl. **`check:ask-boundary`** |
+| Backend, **ordered** (`-p no:randomly`) | **2093 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | **2093 passed, 15 skipped** — exit 0 |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged** (no path, no schema) |
+
+**Suite reconciliation: vitest 415 → 424, +9 this delta's own** (6 askLinks query/label + 3 AskPanel
+affordance); **backend 2092 → 2093, +1** (the deep-link gate representative test); Playwright 361
+unchanged (the camera used a throwaway driver, deleted — not a committed spec, matching the italic
+legend's pre-pass-measurement precedent). No other test moved.
+
+**⚠ Untyped-shape caveat (§3b):** `GroundingFactDTO` now declares `link_id` — the served field the
+Phase 0-6 shape pin already asserts on every served fact; the frontend contract is updated
+deliberately, which is exactly the §3b flow (a new served field is adopted on purpose, R-61 the
+durable fix).
+
+**Help currency: no Help/GLOSSARY entry changed, guard-corroborated.** The affordance is navigation
+chrome; no served answer copy or vocabulary moved. The currency suite ran inside `npm run check`.
+
+**⊕ I-LEDGER.** I-1 / I-2 / F-2 / F-7 remain OPEN, carried visibly. Delta 4 (a+b) is complete; the
+Phase-1 delta sequence continues with **delta 5** (accepted-surface corrections: `setParams`
+sibling-param fix under the Settings rite, the F-2 census own delta, the `AppRoutes.tsx:59` comment).
+The **F-7 survey** stays STOP-for-chat; **0a-ii PREP** is the HARD STOP.
+
 ### Phase 2 — TESTS AND GUARDS
 
 Every §7 row that names a guard. **Each proven RED first**, on a specimen that reproduces the defect.

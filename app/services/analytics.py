@@ -196,9 +196,16 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
             # state; nothing after it reads a stale ORM object (XIRR's `txns` reads are already done).
             ps = {}
             await session.rollback()
-    vol = ps.get("volatility_pct") or 0.0
-    ret = ps.get("return_pct") or 0.0
-    ret_vol = round(ret / vol, 2) if vol else None
+    # ⊕ R-54 F-8 (owner+architect ruling 2026-07-23, Guarantee-3). `or 0.0` conflated a MISSING
+    # metric (empty `ps` — the perf series timed out / recovered above) with a genuine zero, so on a
+    # real 14s perf-series timeout while the window IS covered (da_computable), `1Y return`,
+    # `1Y volatility` and `Max drawdown (1Y)` all rendered a FABRICATED `0.00%` — TWR and the ratio
+    # already dropped honestly. Keep None when absent so the established honest shape renders (the
+    # frontend's `metricDisplay` → "—", the AI pack omits the None metric); a genuine 0.0 from a
+    # populated `ps` still renders 0.00% as the real value it is.
+    vol = ps.get("volatility_pct")
+    ret = ps.get("return_pct")
+    ret_vol = round(ret / vol, 2) if (ret is not None and vol) else None
 
     income_yield = float(income / total * 100) if total else 0.0
 
@@ -247,7 +254,7 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
              "basis": "date-aware", "note": da_note},
             {"label": "Return / volatility", "value": ret_vol if da_computable else None, "kind": "ratio",
              "basis": "date-aware", "note": da_note},
-            {"label": "Max drawdown (1Y)", "value": (ps.get("max_drawdown_pct", 0.0) if da_computable else None), "kind": "pct", "signed": True,
+            {"label": "Max drawdown (1Y)", "value": (ps.get("max_drawdown_pct") if da_computable else None), "kind": "pct", "signed": True,
              "basis": "date-aware", "note": da_note},
             # ⊖ F-2: the four hardcoded allocation-bucket metrics were removed here (see above).
             {"label": "Largest position", "value": (float(largest.market_value_base / gross * 100) if largest else 0.0), "kind": "pct",

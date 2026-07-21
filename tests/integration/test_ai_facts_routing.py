@@ -106,6 +106,42 @@ async def test_key_stats_recovers_the_session_after_a_bounded_series_timeout(ses
     assert (await session.execute(text("SELECT 1"))).scalar() == 1
 
 
+async def test_covered_window_perf_timeout_nulls_not_fabricated_zeros(session, monkeypatch):
+    """R-54 F-8 (owner+architect ruling 2026-07-23) — a perf-series timeout must NULL, never 0.00%.
+
+    When the window IS covered (`da_computable`) but `performance_series` times out and is recovered
+    to an empty `ps`, `1Y return` / `1Y volatility` / `Max drawdown (1Y)` used to render a FABRICATED
+    `0.00%` (`ps.get(...) or 0.0` / `.get(..., 0.0)`) — a Guarantee-3 violation, while TWR and the
+    ratio already dropped honestly. The value must be None so the established honest shape renders
+    (frontend `metricDisplay` → "—"; the AI pack omits the None metric).
+
+    FAIL-FIRST / BLINDNESS PIN: pre-fix these three assert on the fabricated `0.0` and go RED. The
+    da_computable assertion pins against going vacuous — if the book stopped being covered the metrics
+    would be None for a *different* reason (uncovered, not timed-out) and the test would not prove F-8.
+    """
+    import app.services.analytics as an
+    from app.services.coverage import date_aware_computable
+
+    await seed_demo_data(session)
+    await session.commit()
+    assert (await date_aware_computable(session, "SGD"))["computable"], (
+        "demo book must be date-aware-computable, else the metrics null for coverage — not the timeout F-8 is about"
+    )
+
+    async def times_out(*args, **kwargs):
+        raise TimeoutError
+
+    monkeypatch.setattr(an, "performance_series", times_out)
+
+    ks = await an.key_stats(session, "SGD")
+    by_label = {m["label"]: m for m in ks["metrics"]}
+    for label in ("1Y return", "1Y volatility", "Max drawdown (1Y)"):
+        assert by_label[label]["value"] is None, (
+            f"{label} fabricated {by_label[label]['value']!r} on a covered-window perf timeout — "
+            "Guarantee-3: a missing metric must be null (renders '—' / omitted), never a 0.00%"
+        )
+
+
 async def test_general_question_anchors_with_portfolio(app_client):
     """A question with no specific intent still anchors on the headline figure.
 

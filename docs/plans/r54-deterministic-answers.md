@@ -2076,6 +2076,89 @@ parity); **vitest 408 → 415, +7 = this delta's own** (askLinks semantics). No 
 vocabulary. The link **affordance** (how a resolved link renders in the panel) is delta 4, PROPOSED and
 ratified at 0a-ii. The milestone's Help delta remains owed at close (§9-I).
 
+#### Phase 1 delta 4a — BACKEND TIER-1 COMPOSITION: THE ANSWER POINTS (`0a7e05d`) — DONE
+
+**Per the delta-4 composition ruling (owner, chat 2026-07-22), R1 + R2, backend half of the 4a/4b
+split.** The survey found the pack already GROUNDS each category, but the tier-1 answer did not yet
+**point** (R1) and a term answer showed the explanation without the user's own figure (R2). This
+delta builds both on the served path; the frontend affordance, the resolver query extension and the
+§9-E guard are **delta 4b**.
+
+**What shipped.**
+
+| Change | File |
+|---|---|
+| **R2 — `term_figure_facts`**: a term question surfaces the term's registry figures (`figures_for_term`) into the pack, **live-or-`"unavailable"`**. Scoped to the **top-ranked** help hit (search_help's #1 is what the question is about) so an action question whose top hit is a PAGE gathers no figures and a low-rank term hit injects no noise. Both tiers (surfacing a figure is grounding, honest in tier 2) | `app/ai/tools.py` |
+| **ONE DERIVATION, never a second** — values read from the SAME canonical producers `gather_facts` already uses (`performance_facts` / `portfolio_facts` / `networth_facts`), the producer chosen from the figure's **declared** endpoint (`SUMMARY_ENDPOINT`/`STATS_ENDPOINT`, now public on the registry), matched back by declared identity | `figure_registry.py`, `tools.py` |
+| **NULL IS SAID, NOT SWALLOWED** — a reachable figure whose value is null (XIRR/TWR are date-aware; the coverage gate that deferred the ratio kind at 0a-i) renders the **watchlist/GLD `"unavailable"` pattern** (`tools.py:180`), never `performance_facts`' silent None-omit (§7-B: "explains the term and **says so**"). The string is PROPOSED, ratified by looking at 0a-ii. Unreachable rows (the four F-2 alloc buckets) yield **no** fact — unreachable ≠ null | `tools.py` |
+| **R1(i) — `_help_link_id` / `_page_help_route`**: a `page-<slug>` help fact points at **`page:/<slug>`** (Home → `/`), not `help:page-<slug>` — the help content is already shown inline, so the pointer goes where the action happens | `tools.py` |
+| **R1(ii) — `_settings_tab_for`**: a Settings help fact carries **`page:/settings?tab=<tab>`** for the topic asked (theme → appearance). Ordered, word-boundary matched, ratified tab vocabulary; NOT an intent router (selects no facts) | `tools.py` |
+
+**⊕ SURVEY CORRECTION, on the record.** The ruling's map was ILLUSTRATIVE and one entry was wrong
+against the shipped UI: it said *"PIN/lock → privacy"*, but **PIN and auto-lock live on the SYSTEM
+tab** (`Settings.tsx:84`; the `page-settings` body: *"System covers your PIN, auto-lock, network
+access and data controls"*). Privacy holds no-egress and API tokens. Each class is mapped to the tab
+that **actually holds its control** — pointing where the action happens is the ruling's own
+principle, so this corrects the example against verified UI rather than deviating from it. The
+theme → appearance mapping (the on-camera 0a-ii specimen) is unaffected.
+
+**FAIL-FIRST — five RED on the real cause, reverted by the build** (dumped the served pack first):
+(1) *"what is XIRR"* carried `help:term-xirr-twr` **alone**, no XIRR/TWR figure — RED
+(`figures present were ['net_worth','todays_change','total_return','unrealised_pl']`); (2) the null
+figure was **omitted**, not `"unavailable"` — RED (`term_figure_facts` did not exist → AttributeError,
+then a missing fact); (3) the Help·Holdings fact linked to `help:page-holdings` — RED; (4) the
+Help·Settings fact carried no `?tab=` — RED; (5) the served-page-link guard was vacuous until page
+facts served `page:` links. Each seen RED at the served surface, then GREEN.
+
+**Guards — capability probes + redundant-route audits, blindness-pinned, mutation-proven.** Two new
+`page:`-link **declared-table closures**, both **mutation-proven RED**: `page-home`→`/home` (broken
+special case) reds the Pages→route invariant guard; a bogus tab id in the map reds the tab-id-validity
+guard. The R2 covered/null probes distinguish the composition path from the pre-existing
+performance-pack path (redundant-route audit). **Served-shape pins (0-6) already cover the
+composition**: `test_ai_served_shapes` reads *"what is XIRR"* off the wire and asserts the full
+`GroundingFact` field set on every fact — so the new figure/`"unavailable"` facts and the
+query-bearing `page:` links are validated with no new envelope (still a `GroundingFact` list).
+
+**Gates — solo, uncontended.**
+
+| Gate | Result |
+|---|---|
+| Backend, **ordered** (`-p no:randomly`) | **2092 passed, 15 skipped** — exit 0 |
+| Backend, **randomized** | **2092 passed, 15 skipped** — exit 0 |
+| `make lint` | **PASS** |
+| Contract | **141 / 71 unchanged, no regen** (no path, no schema — R2 adds facts, not endpoints) |
+
+**Suite reconciliation: 2085 → 2092, +7 = this delta's own** — 5 in `test_served_link_ids.py`
+(page-fact-points-at-page, settings-topic-points-at-tab, pages-entry-maps-to-registered-route,
+tab-map-emits-real-tabs, served-page-link-names-registered-route) + 2 in `test_pack_reachability.py`
+(term-question-surfaces-figures, null-figure-renders-unavailable). No other test moved — the top-hit
+scoping kept an action question's pack byte-identical and the perf/routing/corpus suites unchanged.
+
+**⚠ Untyped-shape caveat (§3b in action):** the SSE/`/ai/facts` `facts` event **content** now differs
+for a top-hit-term question (gains the term's figure facts, live or `"unavailable"`) and page-help
+facts now carry `page:` links, some with a `?tab=` query — untyped served strings the contract cannot
+see (`ai_facts -> dict`; `/ai/chat` a `StreamingResponse`). What sees them is this delta's served-path
+guards plus the Phase 0-6 shape pin, which reads *"what is XIRR"* and asserts the full fact shape.
+
+**Help currency: no Help/GLOSSARY entry changed, guard-corroborated.** No help entry text moved — the
+`"unavailable"` value is the **already-served** watchlist word (`tools.py:180`), not a new sanctioned
+term, and it is ratified by looking at 0a-ii; the `?tab=` targets are internal link IDs, not user
+copy. The `ask`-entry rewrite (§9-I) and W-1 deixis on any touched Help body are **delta 4b / close**.
+The HELP CURRENCY SUITE ran inside the gate.
+
+**⊕ SEQUENCING — delta 4b is owed next.** The frontend half: the link **affordance** rendered as
+PROPOSED DS (§4, ratified live at 0a-ii); the §9-E **panel-explains/page-acts** guard; **`resolveAskLink`
+extended to accept a `?tab=` query on a `page:` route** (the R1(iii) delta-3 surface change, with its
+`askLinks.test.ts` round-trip widened) so `page:/settings?tab=appearance` resolves end-to-end; the
+deep-link-inherits-gate/PIN representative test; W-1 named-deixis on any Help copy the composition
+pulls. **Between 4a and 4b the served query link exists but the resolver returns null — not a trunk
+red (no guard asserts it) and not user-visible (the affordance is 4b).**
+
+**⊕ I-LEDGER touchpoints, noted not resolved.** This delta changes what a **term** question returns;
+it does not touch I-1's performance-question routing (its date-aware/seed-state hypothesis stands,
+owed in the Phase-2/close window). I-2 (fixture hygiene) and F-2 (allocation census) and F-7
+(per-item annotation survey) remain OPEN with their scheduled deltas.
+
 ### Phase 2 — TESTS AND GUARDS
 
 Every §7 row that names a guard. **Each proven RED first**, on a specimen that reproduces the defect.

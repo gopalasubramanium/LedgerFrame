@@ -2291,6 +2291,72 @@ the census guard are what see it. **Help currency: no Help/GLOSSARY entry change
 labels come from the existing `/refdata` MASTER-DATA vocabulary (`label_for`), not new copy;
 guard-corroborated.
 
+#### Phase 1 delta 5 — ACCEPTED-SURFACE CORRECTIONS: setParams + AppRoutes comment (`817a73c`) — DONE
+
+**Per the queue (owner 2026-07-22) — the mechanical accepted-surface corrections under the rite.**
+The **F-2 census is its OWN delta** and is surveyed below (STOP for chat).
+
+**What shipped.**
+
+| Change | File |
+|---|---|
+| **`setParams` sibling-param fix (§9-D)** — `Settings.tsx` switched tabs with a **fresh** `{tab:v}` object, dropping every sibling query param. Replaced with the react-router **functional updater** (`(prev) => { prev.set("tab", v); return prev; }`), so only `tab` changes and siblings survive. Latent today (no sibling is produced yet — R-60 is post-release), fixed so a future one can't be silently dropped | `frontend/src/routes/Settings.tsx` |
+| **`AppRoutes.tsx:59` comment** — "four URL-addressable tabs" → **seven** (records-truth bar; rides this commit, no plan note) | `frontend/src/AppRoutes.tsx` |
+
+**FAIL-FIRST + THE RITE.** `Settings.test.tsx` — *"changing a tab PRESERVES sibling query params"* —
+RED before (the sibling `keep=me` dropped), GREEN after. **Settings pre-pass re-run (isolated, spare
+ports, `.env` restored):** `/settings?tab=general&keep=me` driven Appearance → Privacy → System →
+About, **`keep=me` preserved on every switch**, each tab set correctly, **0 console errors**. **Dated
+delta note in `page-settings.md`** (the guard-REDs-an-accepted-surface rite — the ruling required it).
+
+**Gates.** `npm run check` **exit 0** (vitest **425 passed** / Playwright **361** / all check scripts
+incl. `check:ask-boundary`); no backend change. Suite reconciliation: **vitest 424 → 425, +1** (the
+sibling-param test). **Help currency: no Help entry changed** — a param-plumbing fix + a comment;
+guard-corroborated.
+
+#### Phase 1 F-2 delta — ALLOCATION CENSUS — ⚑ SURVEYED → STOP FOR CHAT (2026-07-22)
+
+**The owner's F-2 ruling: "STOP for chat if the four-bucket grouping proves ratified; no-silent-drop
+governs regardless."** The survey follows; **no code changed**. The four-bucket grouping's status is
+the crux, and the survey found a **premise correction** worth the owner's eyes.
+
+**The four `key_stats` buckets** (`analytics.py:116-119`) — `weight("cash","fixed_deposit")` →
+*Cash & deposits*, `weight("equity","etf","mutual_fund")` → *Equities & ETFs*, `weight("crypto")` →
+*Crypto*, `weight("commodity","property","private")` → *Alternatives* — **omit `bond`, `retirement`
+and `other`** (and `liability`, correctly, as negatives are excluded). On the demo set they sum to
+**92.14%** (`6.20 + 4.35 + 1.04 + 80.55`); the **7.9-pt shortfall is `bond 2.50` + `retirement 5.34`**.
+
+**⊕ PREMISE CORRECTION — the four buckets render on NO accepted surface.** The finding read *"on an
+accepted surface (D-048)"*; the survey (frontend, exhaustive) finds **no consumer**: Portfolio takes
+only `term-concentration` metrics (`:318`) plus named return/risk metrics; Home and Net worth render
+allocation from **`allocation_by_class`** (per-class, from `/portfolio/summary`), **not** these four
+`key_stats` metrics; the AI pack's `performance_facts` `want` set excludes them. The four buckets are
+**computed and served in `/portfolio/stats`, rendered by nobody.** The **RATIFIED** allocation is the
+**per-class donut** (D-033/D-048) — which is enum-complete and **sums to 100** — and the AI pack's
+per-class `allocation_facts` (F-7-conformed).
+
+**So the four-bucket grouping does NOT prove ratified** (no spec defines it; no page renders it; the
+only declarations are the four `alloc_*` registry rows, `pack_reachable=False`, `DEFERRED_TO_F2`). By
+the owner's ruling that means the *"explicit bucket assignments"* STOP is **not triggered on
+ratification** — but the survey turned up that the finding's premise (live on an accepted page) is
+false, which changes F-2's SHAPE, and *"no-silent-drop governs regardless."* **The fix shape is now a
+product+architecture decision, so it STOPs for chat.** Options, for the owner's ruling:
+
+1. **Per-class, enum-derived** *(recommended)* — replace the four hardcoded buckets with a census
+   derived from the `AssetClass` enum (every class its own bucket), matching the ratified donut. Covers
+   every class and sums to 100 **by construction** (the D-082-generalised principle, verbatim); the four
+   `alloc_*` registry rows become per-class rows; no bucket-assignment decision needed.
+2. **Complete the four buckets** — keep the coarse grouping and assign `bond` / `retirement` / `other`
+   to buckets (e.g. a new *Fixed income* bucket? `retirement` → ?). **This is the explicit-assignments
+   case the ruling flagged** — product content, back to chat per bucket.
+3. **Delete the dead grouping** — the four buckets render nowhere; remove them + the four `alloc_*`
+   registry rows, leaving the ratified per-class donut/pack as the sole allocation census.
+
+**No option taken; no code changed. The `DEFERRED_TO_F2` exemption in `test_pack_reachability` stays
+until the ruling.** Whichever way, the fix is its own delta with a fail-first on the 92.1% sum
+(real-shaped data), a `page-portfolio` pre-pass re-run + dated note, and any new label GLOSSARY/
+MASTER-DATA-first.
+
 ### Phase 2 — TESTS AND GUARDS
 
 Every §7 row that names a guard. **Each proven RED first**, on a specimen that reproduces the defect.

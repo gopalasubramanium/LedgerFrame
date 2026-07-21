@@ -56,7 +56,8 @@ export function AppRoutes() {
               <Route path="/instrument/:symbol" element={<InstrumentDetail />} />
               <Route path="/pricing-health" element={<PricingHealth />} />
               <Route path="/reports" element={<Reports />} />
-              {/* Settings (System nav group) — four URL-addressable tabs (Amendment C). */}
+              {/* Settings (System nav group) — seven URL-addressable tabs (Amendment C; the
+                  seventh, About, added page-help §9-bis-11(c) — Settings.tsx TAB_IDS is the source). */}
               <Route path="/settings" element={<Settings />} />
               {/* Help (System nav group) — the served knowledge base; ?q= search + ?topic= deep link. */}
               <Route path="/help" element={<Help />} />

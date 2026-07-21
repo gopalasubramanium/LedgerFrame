@@ -1270,3 +1270,23 @@ delta**. Recorded as **ai-surfaces FINDING 9**.
 
 **Pre-pass re-run and gates:** see ai-surfaces §16 (Phase 3a) — this page's AI tab is driven **by
 name**, both themes, with the corrected line on camera.
+
+## DELTA NOTE — 2026-07-22 (R-54 §9-D · the `setParams` sibling-param fix)
+
+**Settings is CLOSED/accepted; dated delta note on a touched accepted surface under the
+guard-REDs-an-accepted-surface rite (R-54 §9-D ruling; delta 5) — not a re-opening.**
+
+`Settings.tsx` switched tabs with `setParams({ tab: v }, { replace: true })` — a **fresh object**, so
+it **dropped every sibling query param**. A deep link like `/settings?tab=general&keep=me` lost `keep`
+on the first tab click. **Latent today** (no sibling param is produced yet — R-60's `?control=` is
+post-release, and R-54's `page:/settings?tab=appearance` carries only `tab`), so **no rendered
+behaviour changed**; fixed now so a future sibling can never be silently dropped. The fix is the
+react-router **functional updater** — `setParams((prev) => { prev.set("tab", v); return prev; })` —
+which mutates the current params, changing only `tab`.
+
+**Guard:** `Settings.test.tsx` — *"changing a tab PRESERVES sibling query params"* — RED before (the
+sibling `keep=me` dropped), GREEN after. **Settings pre-pass re-run (isolated, spare ports, `.env`
+restored):** `/settings?tab=general&keep=me` driven through Appearance → Privacy → System → About;
+**`keep=me` preserved on every switch**, each tab set correctly, **0 console errors**. The stale
+`AppRoutes.tsx` comment ("four URL-addressable tabs" → **seven**) was corrected in the same commit
+under the records-truth bar (no plan note owed for a comment).

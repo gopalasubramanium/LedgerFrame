@@ -3,7 +3,7 @@
 // serve and behaves honestly (no dead buttons, no fabricated success, write-only key never echoed).
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { cleanup, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { ThemeProvider } from "../theme/ThemeProvider";
 import { DisplayProvider } from "../theme/DisplayProvider";
 import { ToastProvider } from "../components/ui";
@@ -145,6 +145,29 @@ test("renders the seven D-069 tabs (§14st-2, amendment #3) and defaults to Gene
   // General is the default control set: base currency + timezone + the long-term threshold.
   expect(await screen.findByLabelText("Base currency")).toBeTruthy();
   expect(screen.getByLabelText("Long-term threshold in days")).toBeTruthy();
+});
+
+test("changing a tab PRESERVES sibling query params (the setParams sibling-param fix, R-54 §9-D)", async () => {
+  // FAIL-FIRST: `setTab` called `setParams({ tab: v })` with a FRESH object, which drops EVERY
+  // sibling param. A deep link like `/settings?tab=general&keep=me` lost `keep` on the first tab
+  // click. Latent today (no sibling is produced yet — R-60's `?control=` is post-release), fixed
+  // here under the guard-REDs-an-accepted-surface rite so a future sibling can never be dropped.
+  let search = "";
+  function Probe() {
+    search = useLocation().search;
+    return null;
+  }
+  render(
+    <MemoryRouter initialEntries={["/settings?tab=general&keep=me"]}>
+      <ThemeProvider><DisplayProvider><ToastProvider>
+        <Settings />
+        <Probe />
+      </ToastProvider></DisplayProvider></ThemeProvider>
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Appearance" }));
+  await waitFor(() => expect(search).toContain("tab=appearance"));
+  expect(search).toContain("keep=me"); // the sibling survives the tab switch
 });
 
 test("General serves long_term_days verbatim (D-105 — the frontend carries no 365 literal)", async () => {

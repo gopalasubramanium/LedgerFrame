@@ -107,7 +107,18 @@ export function Settings() {
   const [params, setParams] = useSearchParams();
   const raw = params.get("tab");
   const tab: TabId = TAB_IDS.includes(raw as TabId) ? (raw as TabId) : "general";
-  const setTab = (v: string) => setParams({ tab: v }, { replace: true });
+  // R-54 §9-D: preserve sibling params. A fresh `{ tab: v }` object dropped every other query param
+  // (latent today — no sibling is produced yet — fixed under the accepted-surface rite so R-60's
+  // `?control=` and any future param survive a tab switch). The functional updater mutates the
+  // CURRENT params, so only `tab` changes and siblings pass through.
+  const setTab = (v: string) =>
+    setParams(
+      (prev) => {
+        prev.set("tab", v);
+        return prev;
+      },
+      { replace: true },
+    );
 
   return (
     <div className="lf-page set">

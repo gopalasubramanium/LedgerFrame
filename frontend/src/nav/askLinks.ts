@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// THE FRONTEND-OWNED ID→ROUTE REGISTRY (R-54 §9-D). The backend issues semantic link IDs of the
+// form `<kind>:<key>` (`app/services/figure_registry.py` canonical_page → `page:<route>`;
+// `app/ai/tools.py` help hits → `help:<entry-id>`); this module is the ONLY place that turns one
+// into a destination the Ask panel can navigate to. Same principle as `holdingsLink.ts`: a single
+// builder so a served ID and its route can never silently diverge — two hand-built hrefs to one
+// destination is how one rots (page-accounts §14ac-5).
+//
+// Owner ruling (R-54 §9-D): "Strict separation of concerns — backend issues semantic IDs, frontend
+// maps them to routes — coupled with a bidirectional resolution guard eliminates silent dead-link
+// failures." The guard lives in `askLinks.test.ts` (this half) and `tests/integration/
+// test_served_link_ids.py` (the served half): every served ID is registered here, and every route
+// this registry accepts resolves against the LIVE router (`AppRoutes.tsx`).
+//
+// Returns a react-router `to` value ("/net-worth", "/help?topic=term-xirr-twr"). Navigate through
+// react-router (<Link to> / useNavigate), NEVER a manual `window.location.hash` write — the
+// HashRouter renders `to` as `#<to>`, and a hash write mounts the destination before the router's
+// location reflects the query (§14ac-2). A link that cannot resolve returns **null**: tier-1
+// declines rather than inventing a destination — a link that resolves to nothing is a dead
+// affordance with extra steps (§0-F dead-affordance 3).
+
+import { NAV_GROUPS } from "../components/ui/nav";
+
+/** The kinds the backend serves. MUST equal `KNOWN_KINDS` in `test_served_link_ids.py`; the
+ *  bidirectional guard reads this literal so a backend kind the frontend cannot map reds. */
+export const KNOWN_LINK_KINDS = ["help", "page"] as const;
+
+/** Every route a `page:` ID may target — the BUILT nav pages, derived from the one nav model
+ *  (D-043) rather than hand-listed a second time. A `page:` key IS a route ("/net-worth"), so a
+ *  served route outside this set is refused here and reds in the guard, never navigated blindly. */
+export const KNOWN_PAGE_ROUTES: ReadonlySet<string> = new Set(
+  NAV_GROUPS.flatMap((g) => g.items).filter((i) => i.built).map((i) => i.path),
+);
+
+/**
+ * Resolve a served `<kind>:<key>` link ID to a react-router `to` value, or `null` if it names no
+ * destination this registry knows (unknown kind, unbuilt/unknown page route, or a malformed ID).
+ *
+ * `help:` topic validity is NOT checked here — it is resolved by `Help.tsx` against the SERVED
+ * catalogue on arrival (`Help.tsx:334`), and the backend served-half guard already guarantees every
+ * served `help:` ID names a real entry. This builder trusts that guarantee and only shapes the URL.
+ */
+export function resolveAskLink(linkId: string | null | undefined): string | null {
+  if (!linkId) return null;
+  const sep = linkId.indexOf(":");
+  if (sep <= 0) return null; // no kind, or empty kind
+  const kind = linkId.slice(0, sep);
+  const key = linkId.slice(sep + 1);
+  if (!key) return null; // kind but no key
+
+  if (kind === "help") return `/help?topic=${encodeURIComponent(key)}`;
+  if (kind === "page") return KNOWN_PAGE_ROUTES.has(key) ? key : null;
+  return null; // unknown kind → no destination (honest, never a guess)
+}

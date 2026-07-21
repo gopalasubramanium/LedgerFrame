@@ -120,6 +120,69 @@ def test_every_registry_row_declares_a_canonical_page():
     assert not missing, f"rows with no declared canonical_page: {missing}"
 
 
+# ── FORWARD CLOSURE: every served ID is REGISTERED in the frontend (R-54 §9-D, Phase 1 delta 3) ─
+#
+# The route checks above assert `canonical_page` names a route AppRoutes REGISTERS. But the
+# frontend registry (`frontend/src/nav/askLinks.ts`) only resolves the BUILT NAV PAGES — a strict
+# subset of AppRoutes (which also carries /kitchen-sink, redirects, /instrument/:symbol). So a
+# `canonical_page` that is a real route but NOT a nav page would pass every check above and still
+# resolve to `null` in the panel — a silent dead link. These close that gap by reading the
+# frontend registry's OWN accepted sets, so the served IDs and the resolver can never diverge.
+
+
+def _frontend_page_routes() -> set[str]:
+    """The routes `askLinks.ts` will actually resolve — parsed from the frontend nav model."""
+    src = (REPO / "frontend" / "src" / "components" / "ui" / "nav.ts").read_text(encoding="utf-8")
+    # NAV_GROUPS items are one-per-line `{ label: "...", path: "/x", built: true }`.
+    return set(re.findall(r'path:\s*"([^"]+)",\s*built:\s*true', src))
+
+
+def _frontend_link_kinds() -> set[str]:
+    """The kinds `askLinks.ts` maps — parsed from its `KNOWN_LINK_KINDS` literal."""
+    src = (REPO / "frontend" / "src" / "nav" / "askLinks.ts").read_text(encoding="utf-8")
+    m = re.search(r"KNOWN_LINK_KINDS\s*=\s*\[([^\]]*)\]", src)
+    assert m, "could not find KNOWN_LINK_KINDS in askLinks.ts — the parser drifted, guard is blind"
+    return set(re.findall(r'"([^"]+)"', m.group(1)))
+
+
+def test_every_canonical_page_resolves_in_the_frontend_registry():
+    """Every served `page:` route is one the frontend registry accepts — not merely a live route."""
+    frontend_routes = _frontend_page_routes()
+    assert frontend_routes, "no nav routes parsed from nav.ts — the parser drifted, guard is blind"
+    for f in REGISTRY:
+        if f.canonical_page:
+            assert f.canonical_page in frontend_routes, (
+                f"{f.figure_id} declares canonical_page {f.canonical_page!r}, which the frontend "
+                f"registry (nav.ts built pages) will not resolve — the panel would omit the link "
+                f"silently even though AppRoutes registers the route"
+            )
+
+
+def test_every_frontend_nav_route_is_a_route_the_router_registers():
+    """Registered → live: every route the frontend registry accepts is one AppRoutes registers.
+
+    Closes the last leg of the loop. The forward guard above proves `canonical_page ⊆ nav routes`;
+    this proves `nav routes ⊆ AppRoutes routes`, so a served `page:` ID resolves to a route that
+    actually mounts — not merely one the nav model names. (Parsed in Python because the resolver's
+    accepted set is `nav.ts`, which jsdom/vitest cannot read as a file here.)
+    """
+    nav_routes = _frontend_page_routes()
+    live = _registered_routes()
+    assert nav_routes and live, "a parser drifted — one of the sets is empty and this guard is blind"
+    orphans = nav_routes - live
+    assert not orphans, f"nav routes the router does not register (dead links): {sorted(orphans)}"
+
+
+def test_the_served_kinds_and_the_frontend_resolver_kinds_are_the_SAME_set():
+    """Bidirectional kind closure: a backend kind the resolver lacks is a dead link; an extra
+    resolver kind is dead code. The two literals — KNOWN_KINDS here, KNOWN_LINK_KINDS in
+    askLinks.ts — are pinned equal so neither can drift without the other going red."""
+    assert _frontend_link_kinds() == KNOWN_KINDS, (
+        f"served kinds {KNOWN_KINDS} != frontend resolver kinds {_frontend_link_kinds()} — "
+        f"one side can serve/resolve an ID the other cannot"
+    )
+
+
 # ── Capability probes: real questions → the link a user would follow ─────────────────────────
 
 @pytest.mark.parametrize("question,expected_link", [

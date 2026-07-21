@@ -196,7 +196,9 @@ def test_the_reverse_index_is_one_to_many_and_says_so():
     row would silently pick a winner.
     """
     assert {f.figure_id for f in figures_for_term("term-xirr-twr")} == {"xirr", "twr"}
-    assert len(figures_for_term("term-allocation-weight")) == 4
+    # ⊕ F-2 (2026-07-22): term-allocation-weight now reverse-indexes to the PER-CLASS census — one
+    # row per positive AssetClass (12), enum-derived — not the four deleted hardcoded buckets.
+    assert len(figures_for_term("term-allocation-weight")) == 12
     assert {f.figure_id for f in figures_for_term("term-concentration")} == {
         "largest_position", "concentration_top5"
     }

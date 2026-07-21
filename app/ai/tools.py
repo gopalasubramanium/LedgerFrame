@@ -590,20 +590,18 @@ async def term_figure_facts(session: AsyncSession, term_ids: set[str]) -> list[G
 
     ONE DERIVATION, never a second. The values are not recomputed here — they are read from the
     SAME canonical producers `gather_facts` already uses (`performance_facts` for the stats metrics,
-    `portfolio_facts`/`networth_facts` for the summary figures), matched back to the wanted figures
-    by declared identity. The producer is chosen from the figure's DECLARED endpoint, not guessed.
+    `portfolio_facts`/`networth_facts` for the summary headline figures, `allocation_facts` for the
+    per-class allocation weights — F-2), matched back to the wanted figures by declared identity.
 
     ⚠ NULL IS SAID, NOT SWALLOWED. A reachable figure whose value is null (XIRR/TWR are date-aware
-    and null on an uncovered window — the coverage gate that deferred the ratio kind at 0a-i)
-    renders an **"unavailable"-style served fact**, the watchlist/GLD pattern (`:180`) — NOT a
-    silent omission the way `performance_facts` drops a None metric. §7-B: a term with no live
-    figure *"explains the term and SAYS SO"*, and "says so" wants a visible statement. The string
-    itself is PROPOSED and ratified by looking at 0a-ii (both states on camera).
+    and null on an uncovered window) renders an **"unavailable"-style served fact**, the watchlist/GLD
+    pattern (`:180`) — NOT a silent omission the way `performance_facts` drops a None metric. §7-B: a
+    term with no live figure *"explains the term and SAYS SO"*. The string is PROPOSED, ratified by
+    looking at 0a-ii.
 
-    UNREACHABLE figures are skipped, not marked unavailable: `pack_reachable=False` means the pack
-    structurally does not serve the figure (its page does), which is a different fact from a null
-    value — so the four allocation buckets (deferred to F-2) yield no fact here, not an
-    "unavailable" one.
+    ⚠ ONE EXCEPTION — an UNHELD asset class (F-2). Allocation is a census, not a date-aware metric:
+    a class the user does not hold is genuinely ABSENT, not uncovered, so it is OMITTED rather than
+    marked "unavailable". The allocation answer shows the classes held, and their weights sum to 100.
     """
     # Wanted = the reachable figures the term(s) explain, deduped, in registry order.
     wanted: list = []
@@ -621,6 +619,12 @@ async def term_figure_facts(session: AsyncSession, term_ids: set[str]) -> list[G
     if SUMMARY_ENDPOINT in endpoints:
         produced += await portfolio_facts(session)
         produced += await networth_facts(session)
+    # ⊕ R-54 F-2: the per-class allocation figures are SUMMARY-endpoint but produced by
+    # `allocation_facts` (the donut's source), not the summary HEADLINE producers above. Gather the
+    # real per-class weights so term surfacing of `term-allocation-weight` shows them rather than an
+    # "unavailable" that would clobber the real weights at the dedupe layer.
+    if any(f.figure_id.startswith("alloc_") for f in wanted):
+        produced += await allocation_facts(session, "asset_class")
 
     # Index produced facts by declared figure identity; first-wins keeps the canonical value (e.g.
     # portfolio_facts' summary copy over a stats duplicate), mirroring `_dedupe`'s ordering.
@@ -638,6 +642,12 @@ async def term_figure_facts(session: AsyncSession, term_ids: set[str]) -> list[G
             # The survivor keeps its value and wears the canonical GLOSSARY spelling.
             out.append(hit if hit.label == fig.canonical_label
                        else hit.model_copy(update={"label": fig.canonical_label}))
+        elif fig.figure_id.startswith("alloc_"):
+            # An UNHELD asset class is not a coverage gap — it is genuinely absent from the census,
+            # not date-aware-null the way XIRR is. So it is OMITTED, not marked "unavailable": the
+            # allocation answer shows the classes the user holds, and the served weights sum to 100
+            # over exactly those. (R2's "unavailable" is for a reachable-but-uncovered figure.)
+            continue
         else:
             out.append(GroundingFact(label=fig.canonical_label, value="unavailable",
                                      entitlement="unavailable", timestamp=now))

@@ -167,23 +167,11 @@ REGISTRY: tuple[Figure, ...] = (
     # moment a pack_reachable count row appears without a registered renderer.
     Figure("positions", "Positions", _STATS, "Positions", value_kind="count", term_id=None, pack_reachable=False, canonical_page="/portfolio"),
 
-    # ── Allocation buckets. NOT pack-reachable, and DEMANDED-BUT-DEFERRED rather than undemanded:
-    #    `term-allocation-weight` reaches all four through the reverse index, so ruling item 1 would
-    #    extend the pack for them — except **F-2 is open on these exact four buckets** (bond, other
-    #    and retirement fall into none of them, so the weights sum to 92.1% on the demo set).
-    #    Extending grounding to a census known to be incomplete would feed the model figures that do
-    #    not add up. They are extended by F-2's own delta, which owns the census. The model is not
-    #    blind to allocation meanwhile: `allocation_facts` already grounds it, under
-    #    `Allocation — <served class label>` labels (F-7 2026-07-22). Their labels are MASTER-DATA asset-class names, not GLOSSARY terms;
-    #    the shared `term-allocation-weight` entry explains what a weight IS. ──
-    Figure("alloc_cash_deposits", "Cash & deposits", _STATS, "Cash & deposits", value_kind="pct",
-           term_id="term-allocation-weight", pack_reachable=False, canonical_page="/portfolio"),
-    Figure("alloc_equities_etfs", "Equities & ETFs", _STATS, "Equities & ETFs", value_kind="pct",
-           term_id="term-allocation-weight", pack_reachable=False, canonical_page="/portfolio"),
-    Figure("alloc_crypto", "Crypto", _STATS, "Crypto", value_kind="pct",
-           term_id="term-allocation-weight", pack_reachable=False, canonical_page="/portfolio"),
-    Figure("alloc_alternatives", "Alternatives", _STATS, "Alternatives", value_kind="pct",
-           term_id="term-allocation-weight", pack_reachable=False, canonical_page="/portfolio"),
+    # ── Allocation figures are PER-CLASS and ENUM-DERIVED (R-54 F-2, owner ruling 2026-07-22) —
+    #    generated below (`_alloc_figures`) and appended to REGISTRY, rather than a hardcoded coarse
+    #    grouping. The four `alloc_cash_deposits`/`…_equities_etfs`/`…_crypto`/`…_alternatives` rows
+    #    that stood here were DELETED with the dead `key_stats` grouping they mirrored: it omitted
+    #    bond/retirement/other (weights summed to 92.1%) and rendered on no surface. See below. ──
 )
 
 
@@ -199,13 +187,10 @@ REGISTRY: tuple[Figure, ...] = (
 # a reason attached, and it hides the next real one. `test_exemptions_are_not_stale` now reds on any
 # entry whose label IS in GLOSSARY, so this list can only ever contain entries that are load-bearing.
 LABELS_NOT_IN_GLOSSARY: dict[str, str] = {
-    # Asset-class bucket names come from MASTER-DATA, not GLOSSARY. `term-allocation-weight`
-    # explains the weight; the bucket names are vocabulary, not terms.
-    "Equities & ETFs": "MASTER-DATA asset class, not a GLOSSARY term",
-    "Crypto": "MASTER-DATA asset class, not a GLOSSARY term",
-    "Alternatives": "MASTER-DATA asset class, not a GLOSSARY term",
     # Metric headings that pair a term with its parenthetical expansion or window, exactly as
-    # `_HEADING_NOT_A_TERM` already declares for the Help store.
+    # `_HEADING_NOT_A_TERM` already declares for the Help store. (The three coarse-bucket exemptions —
+    # "Equities & ETFs" / "Crypto" / "Alternatives" — were REMOVED with the four dead buckets, F-2;
+    # the per-class allocation labels get their exemptions from `_alloc_figures` below.)
     "Money-weighted return (XIRR)": "term plus its parenthetical expansion (GLOSSARY: XIRR)",
     "Time-weighted return (TWR)": "term plus its parenthetical expansion (GLOSSARY: TWR)",
     "1Y return": "a windowed instance of Period return",
@@ -214,6 +199,49 @@ LABELS_NOT_IN_GLOSSARY: dict[str, str] = {
     "Income (div/int)": "sanctioned GLOSSARY-first at ai-surfaces §17-3",
     "Top 5 concentration": "a windowed instance of Concentration",
 }
+
+
+def _alloc_figures() -> tuple[Figure, ...]:
+    """Per-class allocation figures — ENUM-DERIVED (R-54 F-2, owner ruling 2026-07-22).
+
+    One row per POSITIVE `AssetClass` value, so the census is **enum-complete by construction** — no
+    class can be silently dropped (the four hardcoded buckets omitted bond/retirement/other). The
+    registry **RE-POINTS, it does not recompute**: `endpoint` is the EXISTING canonical derivation
+    (`allocation_by_class` on `/portfolio/summary`, the donut's source), the `field` names the class
+    within it, and the label reuses `label_for` — the SAME served /refdata truth `allocation_facts`
+    and the donut render (F-7's reuse; no coinage). `liability` is excluded: liabilities are not an
+    allocation weight (negatives never enter the gross-asset share). Pack-reachable per narrow-by-
+    demand: `term-allocation-weight` demands them through the reverse index, and — now that the
+    served weights sum to 100 — grounding the model in them is honest.
+    """
+    from app.api.v1.routes.refdata import label_for  # local: refdata pulls many services; keep the leaf clean
+    from app.models import AssetClass
+
+    return tuple(
+        Figure(
+            f"alloc_{ac.value}",
+            f"Allocation — {label_for('asset_class', ac.value)}",
+            _SUMMARY,
+            f"allocation_by_class.{ac.value}",
+            value_kind="pct",
+            term_id="term-allocation-weight",
+            pack_reachable=True,
+            canonical_page="/portfolio",
+        )
+        for ac in AssetClass
+        if ac.value != "liability"
+    )
+
+
+# Generate once, append to the registry, and declare each label's MASTER-DATA exemption from the
+# SAME rows (the label is `label_for`'s output, never hand-typed — so the exemption can never drift
+# from the row it exempts).
+_ALLOC_FIGURES = _alloc_figures()
+REGISTRY = (*REGISTRY, *_ALLOC_FIGURES)
+for _af in _ALLOC_FIGURES:
+    LABELS_NOT_IN_GLOSSARY[_af.canonical_label] = (
+        "MASTER-DATA asset-class allocation weight (F-2), not a GLOSSARY term"
+    )
 
 
 _BY_ID = {f.figure_id: f for f in REGISTRY}

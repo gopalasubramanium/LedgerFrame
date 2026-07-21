@@ -107,16 +107,13 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
             else:
                 realised_historical += gh
 
-    # Allocation weights.
-    alloc = val.allocation("asset_class")
-
-    def weight(*cls: str) -> float:
-        return float(sum((alloc.get(c, ZERO) for c in cls), ZERO) / gross * 100)
-
-    cash_pct = weight("cash", "fixed_deposit")
-    equity_pct = weight("equity", "etf", "mutual_fund")
-    crypto_pct = weight("crypto")
-    alt_pct = weight("commodity", "property", "private")
+    # ⊖ R-54 F-2 (owner ruling 2026-07-22) — THE FOUR HARDCODED ALLOCATION BUCKETS ARE DELETED.
+    # `weight("cash","fixed_deposit")` etc. omitted bond/retirement/other, so the four served
+    # metrics summed to 92.1% — an untrue census, and rendered on NO surface (Portfolio takes only
+    # the concentration metrics; Home/Net worth use per-class `allocation_by_class`). The census the
+    # product actually shows is per-class (the donut, enum-complete, sums to 100), and the AI grounds
+    # it through `allocation_facts` off that same source. The dead grouping is removed, not left
+    # served-but-unrendered; the registry's allocation rows re-point to the per-class derivation.
 
     # Concentration.
     priced = sorted((h for h in val.holdings if h.market_value_base > 0),
@@ -232,10 +229,7 @@ async def key_stats(session: AsyncSession, base_currency: str, benchmark: str = 
              "basis": "date-aware", "note": da_note},
             {"label": "Max drawdown (1Y)", "value": (ps.get("max_drawdown_pct", 0.0) if da_computable else None), "kind": "pct", "signed": True,
              "basis": "date-aware", "note": da_note},
-            {"label": "Cash & deposits", "value": round(cash_pct, 1), "kind": "pct"},
-            {"label": "Equities & ETFs", "value": round(equity_pct, 1), "kind": "pct"},
-            {"label": "Crypto", "value": round(crypto_pct, 1), "kind": "pct"},
-            {"label": "Alternatives", "value": round(alt_pct, 1), "kind": "pct"},
+            # ⊖ F-2: the four hardcoded allocation-bucket metrics were removed here (see above).
             {"label": "Largest position", "value": (float(largest.market_value_base / gross * 100) if largest else 0.0), "kind": "pct",
              "note": largest.label if largest else None},
             {"label": "Top 5 concentration", "value": float(top5 / gross * 100), "kind": "pct"},

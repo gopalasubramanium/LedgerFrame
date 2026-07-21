@@ -372,7 +372,9 @@ async def test_value_kind_matches_analytics_for_every_stats_metric():
             f"kind={m['kind']!r} for {m['label']!r}. Analytics is the authority; the registry cites it."
         )
         checked += 1
-    assert checked >= 19, f"only {checked} analytics metrics checked — the parity guard went blind"
+    # ⊕ F-2 (2026-07-22): the four hardcoded allocation-bucket metrics were deleted (19 → 15), and
+    # allocation moved to the per-class SUMMARY-served census (not stats). 15 is the live count.
+    assert checked >= 15, f"only {checked} analytics metrics checked — the parity guard went blind"
 
 
 def test_every_registry_row_declares_a_known_value_kind():

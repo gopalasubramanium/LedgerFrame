@@ -740,3 +740,31 @@ conformed TO them.
 allocation` served every bucket as `Allocation — <human label>` at 2dp; the Ask panel rendered them
 live with **0 console errors**; pack `80.55%` == the page's largest concentration. The formal
 movers-on-camera is owed at R-54 0a-ii (owner's look).
+
+## DELTA NOTE — 2026-07-22 (R-54 F-2 · the dead four-bucket census deleted; registry re-points per-class)
+
+**Portfolio is CLOSED/accepted; dated delta note under the guard-REDs-an-accepted-surface rite (owner
+F-2 ruling 2026-07-22) — not a re-opening. The rendered page did NOT change.**
+
+`key_stats` computed four hardcoded allocation buckets (Cash & deposits / Equities & ETFs / Crypto /
+Alternatives) that **omitted bond, retirement and other** — the weights summed to **92.1%** on the
+demo set — and were **rendered on no surface** (Portfolio consumes only the concentration metrics;
+the donut and Home use per-class `allocation_by_class`). F-2 **DELETES** the dead grouping and its four
+served `/portfolio/stats` metrics, and **RE-POINTS** the four `alloc_*` registry rows to the **per-class,
+enum-derived** census — one row per positive `AssetClass`, endpoint = `allocation_by_class` (the donut's
+own source), labels via `label_for`. Enum-complete + sums to 100 **by construction**, because it literally
+IS the census this page already renders. The `DEFERRED_TO_F2` exemption and its companion tripwire test
+are deleted (the deferral's reason — "figures that don't add up" — is satisfied); the alloc rows go
+`pack_reachable=True`, and `term-allocation-weight` now pulls the per-class figures into the AI answer.
+
+**The page did NOT change.** The **"By class" donut here is exactly the per-class census the registry now
+points to** — Cash 2.05% · Fixed deposit 4.15% · Bond 2.50% · Retirement 5.34% · Property 80.55% ·
+Equity 2.94% · ETF 1.28% · Mutual fund 0.13% · Crypto 1.04% (sums to 100) — unchanged. The deleted
+metrics rendered nowhere, so removing them moves no pixel on Portfolio.
+
+**Contract:** `/portfolio/stats` is `-> dict` (untyped); the four metrics lived in the `metrics` list,
+not a typed schema, so the regen produced **no diff — 141/71 unchanged** (the §3b untyped-shape situation,
+stated not silent, per the ruling). **Verification (isolated, spare ports, `.env` restored):**
+`/portfolio/stats` no longer serves the four buckets; the census guard proves the served per-class weights
+sum to 100 on the 92.1% demo set; the Portfolio allocation card drove clean at 1366×950, **0 console
+errors**, unchanged. **Formal movers-on-camera (the AI answer now pulling per-class figures) owed at 0a-ii.**

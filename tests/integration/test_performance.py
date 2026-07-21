@@ -73,8 +73,12 @@ async def test_key_stats_term_ids_map_to_catalogue(app_client):
     assert metrics["Time-weighted return (TWR)"]["term_id"] == "term-xirr-twr"
     assert metrics["Largest position"]["term_id"] == "term-concentration"
     assert metrics["Top 5 concentration"]["term_id"] == "term-concentration"
+    # ⊖ R-54 F-2 (2026-07-22): the four hardcoded allocation-bucket metrics (Cash & deposits /
+    # Equities & ETFs / Crypto / Alternatives) were DELETED — they omitted bond/retirement/other
+    # (summed to 92.1%) and rendered nowhere. Allocation now grounds per-class through
+    # `allocation_facts`; the stats response no longer carries them (pinned in test_pack_reachability).
     for lbl in ("Cash & deposits", "Equities & ETFs", "Crypto", "Alternatives"):
-        assert metrics[lbl]["term_id"] == "term-allocation-weight"
+        assert lbl not in metrics, f"the deleted four-bucket metric {lbl!r} still reaches /portfolio/stats (F-2)"
 
 
 async def test_key_stats_term_id_is_purely_additive(app_client):

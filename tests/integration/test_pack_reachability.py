@@ -62,12 +62,20 @@ async def test_every_row_declared_reachable_can_actually_be_produced(app_client)
                 if fig:
                     produced.add(fig.figure_id)
 
-    claimed = {f.figure_id for f in REGISTRY if f.pack_reachable}
+    # The per-class allocation rows (F-2) are pack_reachable but HELD-CONDITIONAL: `allocation_facts`
+    # produces one per HELD positive class, so a class absent from the demo (commodity/private/other)
+    # is legitimately not produced here. Their reachability + enum-completeness is proven by the F-2
+    # census guard below (`test_the_allocation_census_is_enum_complete_and_sums_to_100`); this guard
+    # keeps its exact meaning for the non-conditional rows.
+    claimed = {f.figure_id for f in REGISTRY if f.pack_reachable and not f.figure_id.startswith("alloc_")}
     missing = sorted(claimed - produced)
     assert not missing, (
         f"rows declare pack_reachable=True but the pack does not produce them: {missing}. "
         f"The census has drifted from the code — a map you trust is worse than no map."
     )
+    # And every HELD class's allocation row IS produced — the conditional half, asserted not assumed.
+    produced_alloc = {fid for fid in produced if fid.startswith("alloc_")}
+    assert produced_alloc, "no per-class allocation figure was produced — the F-2 re-point is unexercised"
 
 
 def test_unreachable_rows_are_declared_deliberately_not_by_omission():
@@ -174,22 +182,19 @@ def test_no_tier1_term_resolves_to_an_unreachable_figure():
     an unreachable row, the panel would name a number it cannot show — which is exactly the
     dead-affordance shape, in figures rather than links.
 
-    **The four allocation-bucket rows are the live exception, and it is DECLARED rather than
-    tolerated**: `term-allocation-weight` reaches them, they are unreachable, and they are
-    knowingly deferred to F-2's delta because that census is incomplete (bond/other/retirement fall
-    into no bucket). Grounding the model in figures that do not sum to 100 would be worse than not
-    grounding it in them at all. The exemption names them, so when F-2 lands this guard tightens by
-    deleting the exemption rather than by someone remembering.
+    **⊕ F-2 LANDED 2026-07-22 — the DEFERRED_TO_F2 exemption is DELETED.** The allocation rows were
+    the live exception (unreachable; deferred because the four hardcoded buckets summed to 92.1%);
+    F-2 re-pointed them to the per-class enum-derived census (sums to 100) and made them
+    `pack_reachable=True`, so the carve-out — and the companion `test_the_f2_deferral_list_is_not_stale`
+    that was built to red at this moment — are gone. This guard now runs with NO exemption: every
+    figure a `term-*` entry resolves to must be pack-reachable, full stop.
     """
-    DEFERRED_TO_F2 = {"alloc_cash_deposits", "alloc_equities_etfs",
-                      "alloc_crypto", "alloc_alternatives"}
-
     term_ids = {f.term_id for f in REGISTRY if f.term_id}
     offenders = [
         f.figure_id
         for term_id in term_ids
         for f in figures_for_term(term_id)
-        if not f.pack_reachable and f.figure_id not in DEFERRED_TO_F2
+        if not f.pack_reachable
     ]
     assert not offenders, (
         f"tier-1(a) can resolve these terms to figures the pack cannot produce: {offenders}. "
@@ -197,15 +202,53 @@ def test_no_tier1_term_resolves_to_an_unreachable_figure():
     )
 
 
-def test_the_f2_deferral_list_is_not_stale():
-    """When F-2 makes the buckets reachable, the exemption above must be deleted, not left."""
-    still_deferred = [
-        f.figure_id for f in REGISTRY
-        if f.figure_id.startswith("alloc_") and not f.pack_reachable
-    ]
-    assert still_deferred, (
-        "the allocation buckets are now pack-reachable — F-2 has landed, so delete DEFERRED_TO_F2 "
-        "from the boundary guard above; a stale exemption is a hole with a reason attached"
+# ── F-2 THE CENSUS GUARD (owner ruling 2026-07-22) — enum-complete + sums to 100 ─────────────
+#
+# The four hardcoded key_stats buckets (`analytics.py`) omitted bond/retirement/other and summed to
+# 92.1% — an untrue census, rendered nowhere. F-2 DELETES them and RE-POINTS the registry to the
+# per-class, enum-derived census (allocation_by_class, the donut's source — one derivation). Two
+# halves, both asserted here:
+
+
+async def test_the_allocation_census_is_enum_complete_and_sums_to_100(app_client):
+    """F-2 census guard. (a) ENUM-COMPLETE — the registry has an allocation row for EVERY positive
+    AssetClass value, so no class can be silently dropped. (b) SUMS TO 100 — the SERVED allocation
+    weights (per-class `allocation_facts`) sum to ~100 on real-shaped multi-class demo data (the set
+    the four buckets rendered as 92.1%).
+
+    FAIL-FIRST: RED today on (a) — the registry declares four COARSE `alloc_*` rows (cash_deposits /
+    equities_etfs / crypto / alternatives), not per-class, so bond/retirement/other/… have no row.
+    """
+    from app.models import AssetClass
+
+    positive = {ac.value for ac in AssetClass if ac is not AssetClass.LIABILITY}
+    alloc_classes = {f.figure_id[len("alloc_"):] for f in REGISTRY if f.figure_id.startswith("alloc_")}
+    assert positive <= alloc_classes, (
+        f"the allocation census is not enum-complete — no registry row for: "
+        f"{sorted(positive - alloc_classes)}. A class in no bucket is a silent drop (F-2 no-silent-drop)."
+    )
+
+    weights = []
+    for f in await _pack_labels(app_client, "what is my allocation"):
+        m = re.search(r"\(([\d,.]+)%\)$", f["value"])
+        if f["label"].startswith("Allocation") and m:
+            weights.append(float(m.group(1).replace(",", "")))
+    assert weights, "no allocation weight facts served — (b) is vacuous"
+    total = sum(weights)
+    assert 99.5 <= total <= 100.5, (
+        f"served allocation weights sum to {total:.2f}%, not ~100 — the F-2 shortfall survives"
+    )
+
+
+async def test_the_dead_four_buckets_no_longer_reach_the_stats_response(app_client):
+    """F-2 fail-first (b): the four hardcoded bucket metrics are GONE from `/portfolio/stats` — the
+    dead census is deleted, not merely bypassed. RED before removal (they were served)."""
+    stats = (await app_client.get("/api/v1/portfolio/stats")).json()
+    labels = {m["label"] for m in stats.get("metrics", [])}
+    dead = {"Cash & deposits", "Equities & ETFs", "Crypto", "Alternatives"} & labels
+    assert not dead, (
+        f"the deleted four-bucket metrics still reach /portfolio/stats: {sorted(dead)} — F-2 removes "
+        f"the dead census, it does not leave it served-but-unrendered"
     )
 
 

@@ -420,6 +420,41 @@ def route(
     return _finish(d)
 
 
+def fetch_chain(
+    diag: RouteDiagnostic, asset_class: str,
+    availability: dict[str, ProviderAvailability] | None,
+) -> list[str]:
+    """The R-63 §9-1 EXECUTION chain: the ordered list of market providers the refresh path
+    should actually fetch, HEAD-FIRST then down the priority chain.
+
+    Pin-head-keep-net: ``diag.source_selected`` (the head an override / matrix cell / active
+    lane chose) is tried first, but it never removes the net — every following capable + keyed
+    market lane remains a fallback. Excludes:
+
+    * terminal entries (manual/statement/accrual/cache) — not fetchable providers;
+    * cache-publish adapters (amfi_nav/coingecko) — owned/served elsewhere, never fetched here;
+    * providers that can't quote, don't cover this asset class, or aren't keyed on this instance
+      (``no_key`` lanes are SKIPPED, never stalled on — §0-B(iv)).
+
+    Pure/testable — no network, no construction. The caller builds each name via
+    :func:`app.providers.market.build_provider` and walks the list until one prices.
+    """
+    head = diag.source_selected
+    ordered = ([head] if head else []) + [c for c in diag.priority_chain if c != head]
+    out: list[str] = []
+    for name in ordered:
+        if name in _TERMINAL_SOURCES or name in _CACHE_PUBLISH:
+            continue
+        caps = capabilities_for(name)
+        if not caps.quote or not _covers_class(caps.asset_classes, asset_class):
+            continue
+        if not _is_keyed(name, availability, when_unknown=False):
+            continue
+        if name not in out:
+            out.append(name)
+    return out
+
+
 class PriceSourceRouter:
     """Convenience wrapper around the active provider (delegates 1:1) for callers that
     just need "the current provider". Per-instrument routing lives in :func:`route`;

@@ -635,6 +635,11 @@ class QuoteRefresh(NamedTuple):
     quote: Quote
     outcome: str                  # "fetched" | "not_owned" | "no_data" | "error"
     reason: str | None = None
+    # §9-1 provenance: the source the route CHOSE (head) vs the source that actually PRICED it
+    # (priced-by). They differ exactly when the execution net fell through from a failed head to
+    # a fallback lane — carried so Pricing Health / the refresh report can be honest about it.
+    route_head: str | None = None
+    priced_by: str | None = None
 
     @property
     def fetched(self) -> bool:
@@ -659,54 +664,79 @@ async def refresh_quote_detailed(
     from the stored quote so a live equity feed never overwrites a NAV / canonical-id
     price with a wrong one.
     """
+    from app.providers.market.router import _CACHE_PUBLISH, _TERMINAL_SOURCES, capabilities_for
+
     provider = get_provider()
     instrument = await _get_or_create_instrument(session, symbol, exchange)
     diag = await route_for_instrument(session, instrument)
-    if diag.source_selected != getattr(provider, "name", "mock"):
-        # Authoritative source is a cache-publish adapter, manual, or unavailable —
-        # never let the active provider fetch/overwrite it. But first honour a ROUTE
-        # CHANGE (§18-R3 (F-7a)): a cached quote whose source is not the source the route
-        # NOW names is route-mismatched, and serving it verbatim strands the holding on
-        # the previous provider forever (the owner's BTC/XRP: corrected to CoinGecko,
-        # Source stayed alphavantage across every refresh). Refetch from the new route
-        # regardless of freshness; fall back to the cache only if that can't be done.
-        refetched = await _refetch_route_mismatched(session, instrument, diag)
-        if refetched is not None:
-            return QuoteRefresh(refetched, "fetched")
-        active = getattr(provider, "name", "mock")
-        owner = diag.source_selected or "no configured source"
-        return QuoteRefresh(
-            await get_cached_quote(session, symbol, exchange), "not_owned",
-            diag.reason or f"served from cache — {owner} owns this price, not the active "
-                           f"provider ({active})")
-    try:
-        q = await provider.get_quote(symbol, exchange)
-        if q.price is None:
-            # Provider couldn't deliver (e.g. rate-limited). Do NOT write a null
-            # price (the column is NOT NULL, and a null would poison the session).
-            # Return the last cached quote, or an explicit "unavailable".
-            return QuoteRefresh(
-                await get_cached_quote(session, symbol, exchange), "no_data",
-                f"no data from {getattr(provider, 'name', 'the provider')} "
-                "(unsupported on this provider, or limit hit)")
-        # Race-safe upsert: concurrent dashboard requests often refresh the same
-        # symbol at once (SPY appears on Home, Markets and Global). A check-then-
-        # insert would hit "UNIQUE constraint failed: quotes.instrument_id"; an
-        # atomic ON CONFLICT DO UPDATE can't.
-        from app.db.upsert import upsert
+    head = diag.source_selected
 
+    # §9-1 — a MARKET-FETCHABLE head goes through the EXECUTION NET: fetch the head, then walk
+    # the priority chain through every capable+keyed market lane. A cache-publish adapter, a
+    # manual/terminal lane, or "no configured source" is NOT fetched here — it keeps the existing
+    # cache-owning behaviour below (the route-change refetch remains coingecko's per-instrument path).
+    if head and head not in _TERMINAL_SOURCES and head not in _CACHE_PUBLISH \
+            and capabilities_for(head).quote:
+        return await _refresh_via_net(session, instrument, diag, exchange)
+
+    # Authoritative source is a cache-publish adapter, manual, or unavailable — never let the
+    # active provider fetch/overwrite it. But first honour a ROUTE CHANGE (§18-R3 (F-7a)): a
+    # cached quote whose source is not the source the route NOW names is route-mismatched, and
+    # serving it verbatim strands the holding on the previous provider forever (the owner's
+    # BTC/XRP: corrected to CoinGecko, Source stayed alphavantage across every refresh). Refetch
+    # from the new route regardless of freshness; fall back to the cache only if that can't be done.
+    refetched = await _refetch_route_mismatched(session, instrument, diag)
+    if refetched is not None:
+        return QuoteRefresh(refetched, "fetched")
+    active = getattr(provider, "name", "mock")
+    owner = head or "no configured source"
+    return QuoteRefresh(
+        await get_cached_quote(session, symbol, exchange), "not_owned",
+        diag.reason or f"served from cache — {owner} owns this price, not the active "
+                       f"provider ({active})")
+
+
+async def _refresh_via_net(
+    session: AsyncSession, instrument, diag, exchange: str | None,
+) -> QuoteRefresh:
+    """§9-1 execution net. Walk :func:`fetch_chain` (head-first, capable+keyed market lanes),
+    fetching from each until one prices the instrument. Pin-head-keep-net: the head is tried
+    first, but a failed head falls through to the fallback lanes — the priority chain is now
+    REAL at fetch time, not a display artefact. Records ``priced_by`` so a net catch is honest
+    (head=X, priced-by=Y). Never writes a null price; never raises."""
+    from app.db.upsert import upsert
+    from app.providers.market import build_provider
+    from app.providers.market.router import fetch_chain
+
+    ac = instrument.asset_class.value if hasattr(instrument.asset_class, "value") \
+        else str(instrument.asset_class)
+    head = diag.source_selected
+    active_name = getattr(get_provider(), "name", "mock")
+    candidates = fetch_chain(diag, ac, provider_availability())
+    last_reason: str | None = None
+
+    for name in candidates:
+        # Reuse the cached active provider; build any other lane fresh (None → skip, never mock).
+        prov = get_provider() if name == active_name else build_provider(name)
+        if prov is None:
+            continue
+        try:
+            q = await prov.get_quote(instrument.symbol, exchange)
+        except Exception as exc:  # noqa: BLE001 — a lane that errors is skipped; the net walks on
+            last_reason = f"{name}: {str(exc)[:120]}"
+            log.warning("net: %s could not price %s: %s", name, instrument.symbol, exc)
+            continue
+        if q.price is None:
+            last_reason = f"no data from {name}"
+            continue
+        priced_by = q.source or name
         values = {
-            "instrument_id": instrument.id,
-            "price": q.price,
-            "previous_close": q.previous_close,
-            "currency": q.currency,
-            "source": q.source,
-            "entitlement": q.entitlement.value,
-            "market_time": q.market_time,
-            "received_at": datetime.now(UTC),
+            "instrument_id": instrument.id, "price": q.price,
+            "previous_close": q.previous_close, "currency": q.currency,
+            "source": priced_by, "entitlement": q.entitlement.value,
+            "market_time": q.market_time, "received_at": datetime.now(UTC),
         }
-        stmt = upsert(QuoteRow).values(**values)
-        stmt = stmt.on_conflict_do_update(
+        stmt = upsert(QuoteRow).values(**values).on_conflict_do_update(
             index_elements=[QuoteRow.instrument_id],
             set_={k: v for k, v in values.items() if k != "instrument_id"},
         )
@@ -714,11 +744,15 @@ async def refresh_quote_detailed(
         await session.flush()
         q.is_stale = False
         q.price_display = format_price_display(q.price, instrument.asset_class)  # D-105
-        return QuoteRefresh(q, "fetched")
-    except Exception as exc:  # noqa: BLE001
-        log.warning("quote refresh failed for %s: %s", symbol, exc)
-        return QuoteRefresh(
-            await get_cached_quote(session, symbol, exchange), "error", str(exc)[:160])
+        reason = None if priced_by == head else (
+            f"{head} could not price this — the fallback net priced it via {priced_by}")
+        return QuoteRefresh(q, "fetched", reason, route_head=head, priced_by=priced_by)
+
+    # Head and every fallback failed → honest no-data (last cached, never a null/fabricated price).
+    return QuoteRefresh(
+        await get_cached_quote(session, instrument.symbol, exchange), "no_data",
+        last_reason or f"no configured source could price {instrument.symbol}",
+        route_head=head, priced_by=None)
 
 
 async def get_cached_quote(

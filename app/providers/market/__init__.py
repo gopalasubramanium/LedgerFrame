@@ -62,10 +62,49 @@ def get_provider() -> MarketDataProvider:
     return _PROVIDER
 
 
+def build_provider(name: str) -> MarketDataProvider | None:
+    """Construct a market provider BY NAME (not the configured one), for the R-63 §9-1
+    execution net — which walks the routing chain and must fetch from a lane other than the
+    active provider. Unlike :func:`get_provider` this never caches and never degrades to demo:
+    it returns ``None`` when the named provider can't be built (missing key/dependency), so the
+    net simply skips that lane rather than silently substituting mock data.
+
+    Keys still come from the single configured slot (per-provider keys are R-41, post-release);
+    the caller gates keyed lanes on :func:`app.services.market.provider_availability` first, so a
+    keyed lane only reaches here when this instance actually holds its credential.
+    """
+    settings = get_settings()
+    name = (name or "").lower()
+    try:
+        if name == "csv":
+            return CSVMarketDataProvider(settings.imports_dir)
+        if name in ("mock", "demo", ""):
+            return MockMarketDataProvider()
+        if name == "yahoo":
+            from app.providers.market.yahoo import YahooMarketDataProvider
+
+            return YahooMarketDataProvider()
+        if name == "eodhd":
+            from app.providers.market.eodhd import EodhdProvider
+
+            return EodhdProvider(name, settings.market_api_key)
+        if name == "kite":
+            from app.providers.market.kite import KiteProvider
+
+            return KiteProvider(settings.kite_api_key, settings.kite_access_token)
+        if name in ("alphavantage", "av"):
+            from app.providers.market.external import ExternalMarketDataProvider
+
+            return ExternalMarketDataProvider(name, settings.market_api_key)
+    except Exception:  # noqa: BLE001 — an un-buildable lane is skipped by the net, never mocked
+        return None
+    return None
+
+
 def reset_provider() -> None:
     """Drop the cached provider (used by settings changes & tests)."""
     global _PROVIDER
     _PROVIDER = None
 
 
-__all__ = ["MarketDataProvider", "get_provider", "reset_provider"]
+__all__ = ["MarketDataProvider", "build_provider", "get_provider", "reset_provider"]

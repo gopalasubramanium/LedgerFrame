@@ -158,8 +158,15 @@ pinned by a served-shape test, not the contract). Ledger I-1/I-2/I-3/I-7 DISCHAR
 done, Settings verified-tier display → Phase 4. Frontend `npm run check` PASS. **R-65 Phase 1 survey
 DONE** (rode the Phase-2 verdict + static analysis): zero test sleeps, runtime is per-test DB DDL +
 heavy integration derivation; xdist feasible with per-worker DB isolation (see ROADMAP R-65).
-**Rite consolidated to Phase 4** (Pricing Health + Settings, one discharge). **Next: Phase 3 —
-free-first ordering (§9-6).**
+**Rite consolidated to Phase 4** (Pricing Health + Settings, one discharge).
+
+**⊕ 2026-07-24 — Phase 3 (free-first ordering + budget, §9-6) COMPLETE.** `DEFAULT_PRIORITY`
+reordered free/keyless-before-paid within capability (chain/net order; the head — override/matrix/
+active — still wins but keeps the net); refresh budget spends holdings before overview proxies.
+Backend **2135 solo, ordered AND randomized (seed 6363)**. **R-65 Phase 2 (xdist) slotted after the
+R-63 close, before R-59.** **Next: Phase 4 — Pricing Health head/priced-by labelling + the recut
+Settings routing sentence + verified-tier display, all under the ONE accepted-surface rite discharge
+(Pricing Health + Settings); then Phase 5 provider doctor, 0a/3a/3b, close.**
 
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`

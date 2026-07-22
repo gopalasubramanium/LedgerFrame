@@ -337,8 +337,13 @@ backend suite passes ordered AND randomized (declared seeds)**; the close requir
 | --- | --- | --- |
 | **1 — execution net** (`95df927`) | **2121 passed, 15 skipped** (22:37) | **2121 passed, 15 skipped** (21:52) |
 | **2 — failure taxonomy** (`9d54f4f`·`34974b6`·`c882648`) | **2130 passed, 15 skipped** (18:01, `--durations=30`) | **2130 passed, 15 skipped** (18:17) |
+| **3 — free-first + budget** (`2a9fa1e`) | **2135 passed, 15 skipped** (17:16) | **2135 passed, 15 skipped** (17:09) |
 
-**Phase 1 COMPLETE**; **Phase 2 COMPLETE** — both on the full-suite verdict (both orders), not a subset.
+**Phase 1 · 2 · 3 all COMPLETE** — each on the full-suite verdict (both orders), not a subset.
+Reconciliation: 2121 → 2130 (+9, Phase 2) → **2135 (+5, Phase 3:** 3 free-first ordering + 1
+budget counted-calls + 1 override-wins-keeps-net). Backend **2135 solo, ordered AND randomized**.
+Help currency: **no impact, guard-corroborated** (Phase 3 is internal chain policy + refresh order;
+the Settings "Market data provider" card meaning-shift copy is Phase 4, under the rite).
 
 **Suite-count reconciliation:** **2121 → 2130 (+9)**, all attributable to R-63 Phase 2 tests:
 Delta 2.1 — 6 taxonomy tests in `test_av_quote_envelope.py` (priced-no-state · empty · parse_error ·

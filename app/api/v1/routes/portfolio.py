@@ -239,6 +239,44 @@ async def portfolio_transactions_csv(session: AsyncSession = Depends(get_db)) ->
     return _csv_response(await export_transactions_csv(session), "ledgerframe-transactions.csv")
 
 
+# R-63 §9-2 Delta 2.2 — served copy for each failure state. ⚠ PROPOSED (owner ratifies the exact
+# wording at the 0a look; GLOSSARY-first). Held here, not invented at render time (D-105 — the
+# frontend renders served copy verbatim). Names a FACT about pricing; no endpoint, no trade.
+_FAILURE_NOTE_PROPOSED = {
+    "throttled": "The data provider is rate-limiting requests — will retry.",
+    "empty": "The provider returned no price for this symbol.",
+    "errored": "Could not reach the data provider.",
+    "parse_error": "The provider's response could not be read.",
+    "unmapped": "Needs an identifier mapping before it can be priced.",
+    "no_key": "The routed provider needs an API key this install does not hold.",
+    "unsupported": "No configured source can price this instrument.",
+}
+
+
+def _routing_failure_state(diag) -> str | None:
+    """The failure state derivable from ROUTING alone (no live call) — for a never-priced
+    instrument with no persisted provider failure."""
+    if diag is None:
+        return None
+    if diag.mapping_required:
+        return "unmapped"
+    if diag.auth_required:
+        return "no_key"
+    if diag.source_selected is None:
+        return "unsupported"
+    return None
+
+
+def _failure_note_proposed(state: str | None, failure_at: str | None) -> str | None:
+    """The PROPOSED served note for a failure state, with 'last at T' for a throttle (§9-9)."""
+    if not state:
+        return None
+    note = _FAILURE_NOTE_PROPOSED.get(state)
+    if note and state == "throttled" and failure_at:
+        note = f"{note[:-1]} (last at {failure_at})."
+    return note
+
+
 @router.get("/portfolio/pricing-health")
 async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
     """Per-holding pricing diagnostics: valuation, method, source, entitlement,
@@ -259,6 +297,17 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
             await session.execute(select(Instrument).where(Instrument.symbol.in_(syms)))
         ).scalars()
     } if syms else {}
+    # R-63 §9-2 Delta 2.2: the persisted last-refresh FAILURE per instrument, so we can name the
+    # distinct cause (throttled/empty/…) — and say when — WITHOUT a live call from this read.
+    from app.models import Quote as QuoteRow
+    _iids = [i.id for i in instr_by_sym.values()]
+    fail_by_iid = {
+        r.instrument_id: r for r in (await session.execute(
+            select(QuoteRow.instrument_id, QuoteRow.last_failure_state,
+                   QuoteRow.last_failure_at, QuoteRow.last_failure_reason)
+            .where(QuoteRow.instrument_id.in_(_iids))
+        )).all()
+    } if _iids else {}
     from app.services.confidence import score_holding, summarise
 
     rows = []
@@ -281,6 +330,15 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
         diag = await route_for_instrument(session, instr) if instr is not None else None
         if diag and diag.reason and not reason:
             reason = diag.reason
+        # R-63 §9-2 Delta 2.2 — the TYPED failure state (never a flat "none"): the persisted
+        # last-refresh cause if one is recorded, else derived from routing at request time. And
+        # a served note (⚠ PROPOSED copy, held for the 0a look — GLOSSARY-first, Phase 4 rite).
+        fail = fail_by_iid.get(instr.id) if instr is not None else None
+        failure_state = (fail.last_failure_state if fail and fail.last_failure_state
+                         else _routing_failure_state(diag))
+        failure_at = (fail.last_failure_at.isoformat()
+                      if fail and fail.last_failure_at else None)
+        failure_note = _failure_note_proposed(failure_state, failure_at)
         counts[status] += 1
         conf = score_holding(h, mapping_required=bool(diag and diag.mapping_required))
         scored.append((abs(h.market_value_base), conf["confidence"]))
@@ -293,6 +351,9 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
             "source": h.source, "entitlement": h.entitlement,
             "price_ts": h.price_ts.isoformat() if h.price_ts else None,
             "is_stale": h.is_stale, "failure_reason": reason,
+            # §9-2 Delta 2.2: the typed cause + when + a PROPOSED served note (throttled/empty/…).
+            "failure_state": failure_state, "failure_at": failure_at,
+            "failure_note": failure_note,
             "source_override": h.source_override,
             # Phase A1: per-instrument routing decision.
             "route_lane": diag.lane if diag else "manual_only",

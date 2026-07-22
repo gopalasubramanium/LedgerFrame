@@ -36,3 +36,15 @@ async def test_pricing_health_stale_flag_reconciles_with_summary_count(app_clien
     assert "stale_count" in summary
     marked = sum(1 for h in ph["holdings"] if h["is_stale"])
     assert marked == summary["stale_count"]
+
+
+async def test_pricing_health_carries_typed_failure_state(app_client):
+    """R-63 §9-2 Delta 2.2: every row carries the typed failure fields; when a state is present it
+    is one of the taxonomy values and it has a served (PROPOSED) note — never a bare 'none'."""
+    _TAXONOMY = {"throttled", "empty", "errored", "parse_error", "unmapped", "no_key", "unsupported"}
+    body = (await app_client.get("/api/v1/portfolio/pricing-health")).json()
+    for h in body["holdings"]:
+        assert "failure_state" in h and "failure_at" in h and "failure_note" in h
+        if h["failure_state"] is not None:
+            assert h["failure_state"] in _TAXONOMY
+            assert h["failure_note"], "a typed failure state must carry a served note"

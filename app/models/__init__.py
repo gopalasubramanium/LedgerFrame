@@ -339,6 +339,13 @@ class Quote(Base):
     entitlement: Mapped[str] = mapped_column(String(20), default="delayed")  # see EntitlementStatus
     market_time: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     received_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    # R-63 §9-2 (Delta 2.2): the LAST refresh FAILURE for this instrument, so Pricing Health can
+    # name it (throttled/empty/…) and say "last throttled at T — will retry" WITHOUT a live call.
+    # A successful refresh CLEARS these (→ NULL). None here == no recorded failure. (A never-priced
+    # instrument has no row at all; its state is derived from routing at request time.)
+    last_failure_state: Mapped[str | None] = mapped_column(String(20), nullable=True)  # FailureState
+    last_failure_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    last_failure_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
 
 class InstrumentAcquisition(Base):

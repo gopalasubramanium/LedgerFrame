@@ -690,6 +690,7 @@ async def refresh_quote_detailed(
     # from the new route regardless of freshness; fall back to the cache only if that can't be done.
     refetched = await _refetch_route_mismatched(session, instrument, diag)
     if refetched is not None:
+        await _record_failure(session, instrument.id, None, None)  # success clears any failure
         return QuoteRefresh(refetched, "fetched")
     active = getattr(provider, "name", "mock")
     owner = head or "no configured source"
@@ -698,11 +699,29 @@ async def refresh_quote_detailed(
                      else FailureState.NO_KEY if diag.auth_required
                      else FailureState.UNSUPPORTED if head is None
                      else None)
+    await _record_failure(session, instrument.id, routing_state, diag.reason)
     return QuoteRefresh(
         await get_cached_quote(session, symbol, exchange), "not_owned",
         diag.reason or f"served from cache — {owner} owns this price, not the active "
                        f"provider ({active})",
         route_head=head, failure_state=routing_state)
+
+
+async def _record_failure(
+    session: AsyncSession, instrument_id: int, state: FailureState | None, reason: str | None,
+) -> None:
+    """§9-2 Delta 2.2: persist (or clear when ``state is None``) the last refresh failure on the
+    quote row, so Pricing Health names it without a live call. A no-op when no quote row exists
+    yet (a never-priced instrument — its state is derived from routing at request time)."""
+    from sqlalchemy import update
+
+    vals = (
+        {"last_failure_state": None, "last_failure_at": None, "last_failure_reason": None}
+        if state is None else
+        {"last_failure_state": state.value, "last_failure_at": datetime.now(UTC),
+         "last_failure_reason": ((reason or "")[:200] or None)})
+    await session.execute(
+        update(QuoteRow).where(QuoteRow.instrument_id == instrument_id).values(**vals))
 
 
 async def _refresh_via_net(
@@ -748,6 +767,8 @@ async def _refresh_via_net(
             "previous_close": q.previous_close, "currency": q.currency,
             "source": priced_by, "entitlement": q.entitlement.value,
             "market_time": q.market_time, "received_at": datetime.now(UTC),
+            # A successful refresh CLEARS any recorded failure (§9-2 Delta 2.2).
+            "last_failure_state": None, "last_failure_at": None, "last_failure_reason": None,
         }
         stmt = upsert(QuoteRow).values(**values).on_conflict_do_update(
             index_elements=[QuoteRow.instrument_id],
@@ -763,11 +784,12 @@ async def _refresh_via_net(
 
     # Head and every fallback failed → honest no-data (last cached, never a null/fabricated price).
     # Carry the last lane's TYPED reason so the refresh outcome names throttled/empty/errored.
+    final_state = last_state or (FailureState.UNSUPPORTED if not candidates else None)
+    await _record_failure(session, instrument.id, final_state, last_reason)
     return QuoteRefresh(
         await get_cached_quote(session, instrument.symbol, exchange), "no_data",
         last_reason or f"no configured source could price {instrument.symbol}",
-        route_head=head, priced_by=None,
-        failure_state=last_state or (FailureState.UNSUPPORTED if not candidates else None))
+        route_head=head, priced_by=None, failure_state=final_state)
 
 
 async def get_cached_quote(

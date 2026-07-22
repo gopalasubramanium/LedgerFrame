@@ -42,8 +42,8 @@ row lacks a disposition.** This plan is the rule's first user.*
 | **F-7** | Finding | **Per-item annotation rendering is still inline** — 5 sites in `tools.py` format a pct annotation inline and are NOT registry figures (no declared `value_kind`): allocation weight `.1f%` (`:118`), market/instrument quote change `+.2f%` (`:171,499`), holdings weight `.1f%` (`:425`), series change `+.1f%` (`:516`) | Filed at the F-5 delta (Q1 ruling 2026-07-21) — the residue of scoping F-5 to value_kind-dispatched registry figures; the ruled mechanism (registry `value_kind` dispatch) structurally cannot apply to a quantity with no `figure_id`. **⊕ WIDENED by W-2 (owner's 0a-i look, 2026-07-21):** the 0a-i frame showed `Largest position 80.55%` beside its annotation `(80.6%)` — the two-faces question live on ONE frame — and `Allocation (asset_class)` **leaks an internal token** into user copy | **⚑ OPEN — REQUIRED SURVEY BEFORE ANY RULING (r2 + W-2).** For each annotated quantity, compare against the **canonical page's rendering of the SAME quantity** on **BOTH axes: precision AND label vocabulary** — the real question is not *"which file owns the f-string"* but whether the same figure **wears two faces** (the F-3 species) and whether the label is the **canonical page's** term or an internal token (`asset_class`); bespoke precisions/labels may be deliberate or drift, and only the survey table can say. **Byte-identity asserted for all five sites at the F-5 delta** (`test_allocation_weight_annotation_is_unchanged` pins the one-decimal `.1f` weight form on the served pack). Not release-blocking; own delta after F-5. ✅ **SURVEYED + RULED + FIXED 2026-07-22** (owner, chat — five ruling items). **Q1** sites 1/4/5 → **2dp** via money.py (two-faces ends; site 4's `largest_position` collision dissolves — pack `Allocation — Property 80.55%` == registry `Largest position 80.55%`, proven live). **Q2** site 1 → **`Allocation — <served class label>`** via `label_for` (the `(asset_class)` token + raw enum gone; `label_for` covers every AssetClass value → no STOP-for-chat). **Q3** sites 2/3/5 → the canonical **signed-% variant (U+2212, explicit sign)**; site 3 keeps `" today"`. **Q4** sites 4/5 KEPT + **DECLARED**: `PackContext` tier (WEIGHT/CHANGE) + `format_pack_context`, **census guard** `test_no_ambient_pct_fstring_survives_in_the_pack` (no ambient annotation f-string survives — registry = named/term-resolvable tier, pack-context = declared second tier). **THE RITE**: F-5 pin updated deliberately + dated note; dated notes in `page-portfolio.md`/`page-markets.md`/`page-instrument-detail.md`; movers enumerated by class; **formal movers-on-camera owed at 0a-ii**. Shipped as its own commit pair; delta 5 proceeds next |
 
 | **F-8** | Finding | **The fabricated `0.00%` on a genuine perf-series timeout** — `key_stats` rendered `1Y return` / `1Y volatility` / `Max drawdown (1Y)` as **`0.00%`** on a covered-window (`da_computable`) perf timeout, because empty `ps` + `ps.get(...) or 0.0` / `.get(..., 0.0)` conflated MISSING with zero (Guarantee-3); TWR and the ratio already dropped honestly | Carried as I-1's ADJACENT LATENT FINDING + §-lesson candidate #6; **FILED + RULED F-8 by owner+architect chat 2026-07-23** (FIX IN-MILESTONE) | ✅ **RESOLVED + FIXED 2026-07-23** (`7824327`). **Scope kept to the timeout path's fabrication sites only** (`analytics.py:206-208,257`): value → `None` when absent, so the **established honest shapes** render — the frontend's `metricDisplay` → `"—"` (the same shape TWR already uses, `metrics.ts:20`), the AI pack **omits** the `None` metric (`performance_facts`, `tools.py:562`). **No new rendering coined.** A genuine `0.0` from a populated `ps` still renders `0.00%` as the real value it is. **FAIL-FIRST (RED-first):** `test_covered_window_perf_timeout_nulls_not_fabricated_zeros` forces the perf-series timeout and asserts the three metrics are `None` — **RED pre-fix** (`1Y return fabricated 0.0`), GREEN post-fix; **blindness pin:** a `da_computable` assertion, so the metrics can't null for the *coverage* reason instead of the timeout reason. I-1 recovery + risk-wiring green. **RITE — page-portfolio dated note + pre-pass re-run OWED with Phase 3a** (the code fix + guard are done; the live Portfolio pre-pass folds into the pending 3a, stated not silently dropped). **AI-pack sibling** covered by the same `None`-omit. **⊕ Broader-ambiguity survey answer → F-9** |
-| **F-9** | Finding | **The Help "`0.0` can mean 'no data'" ambiguity is a WIDER, DIFFERENT code site than F-8** — `performance_series` fabricates `0.0` for **thin** history (`analytics.py:341` `... if len(daily_returns) > 1 else 0.0`, `:342` `ret_pct`), which feeds a **real-looking `0.0`** into the rendered `key_stats` metric and **survives F-8** (to `key_stats`, a returned `0.0` is indistinguishable from a genuine zero). This is exactly what `GLOSSARY.md:164` + `help.py:1024,1042,1084` document (*"0.0 can mean 'no data' rather than a flat year"*) | The ruling's *"survey, don't absorb"* on F-8 — report whether the documented ambiguity is the same site. **It is not: WIDER** | **⚑ OPEN — OWNER RULING OWED (normative).** Fixing it changes a **rendered Portfolio output** (thin-history → `"—"`/omit instead of `0.0`) — same class as F-8 but at a different site, and the Help copy would then move **with** the behavior (Currency Law), which is a product-content decision, not a refactor. **Help copy does NOT move now** — the behavior at `performance_series:341` is unchanged, so the *"0.0 can mean no data"* copy stays true. Note edge-reachability: a covered window with exactly 2 axis points → 1 daily return → `else 0.0`; the common thin-history case (`len(axis) < 2`) already yields empty `stats` → F-8's `None` path. Not release-blocking; files as its own delta after a ruling |
-| **F-10** | Finding | **The restored randomized verdict revealed SYSTEMIC test-isolation order-dependence** — module-level process globals are reset **only** in the `app_client` fixture (`conftest.py:85-105`: `reset_provider`/`fx.clear_cache`/`ratelimit.reset`/`metrics.reset`), so `session`-only and unit tests inherit **dirty globals** under randomization. **Multi-vector, confirmed:** the full randomized run failed **3 `test_backfill.py` cost-FX tests** (`fx._CACHE`/`ecb_fx._RATES` vector); **seed=1** (`tests/unit`+`test_backfill.py`) fails **4 different** tests — `test_yahoo_provider.py` ×3 (provider cool-down streak) + `test_ai_health.py` (AI-health global). All **pass in isolation and in integration-only randomized** (seed 2796713921 GREEN) | Surfaced by item-2's restored `pytest-randomly` — **its job, done**; the deps were dormant while the randomizer was uninstalled. **NOT caused by F-8** (yahoo/ai-health are unrelated; F-8 is green in both orders) | **⚑ OPEN — OWNER SCOPE RULING OWED, and it BLOCKS THE CLOSE** (the randomized gate is red until fixed; both verdicts are required at every gate). **Deterministic reproduction pinned:** `--randomly-seed=1` over `tests/unit tests/integration/test_backfill.py`. **Recommended fix:** an **autouse fixture** that resets the process globals `app_client` already resets **plus the ones it doesn't** (`ecb_fx._RATES`/`_ASOF`, the yahoo provider cool-down module state, the AI-health global) — **fail-first PER VECTOR** (each order-dependence reproduced RED, then GREEN), then a many-seed sample. **Why FILED not fixed here:** it is multi-vector, `app_client`'s reset list is provably incomplete for it, and completeness cannot be proven in one session (unknown latent-vector count) — this is R-58-class isolation work deserving its own fail-first delta, and whether it lands **inside R-54 or as its own row** is a scope decision for the owner. **⚠ Note:** F-8's new guard is a `session` test that warms `fx._CACHE` — it **participates in** this latent debt but does not uniquely cause it (the pre-existing I-1 `session` test has the same shape); the autouse fix covers both |
+| **F-9** | Finding | **The Help "`0.0` can mean 'no data'" ambiguity is a WIDER, DIFFERENT code site than F-8** — `performance_series` fabricates `0.0` for **thin** history (`analytics.py:341` `... if len(daily_returns) > 1 else 0.0`, `:342` `ret_pct`), which feeds a **real-looking `0.0`** into the rendered `key_stats` metric and **survives F-8** (to `key_stats`, a returned `0.0` is indistinguishable from a genuine zero). This is exactly what `GLOSSARY.md:164` + `help.py:1024,1042,1084` document (*"0.0 can mean 'no data' rather than a flat year"*) | The ruling's *"survey, don't absorb"* on F-8 — report whether the documented ambiguity is the same site. **It is not: WIDER** | **⚑ OPEN — OWNER RULING OWED (normative).** Fixing it changes a **rendered Portfolio output** (thin-history → `"—"`/omit instead of `0.0`) — same class as F-8 but at a different site, and the Help copy would then move **with** the behavior (Currency Law), which is a product-content decision, not a refactor. **Help copy does NOT move now** — the behavior at `performance_series:341` is unchanged, so the *"0.0 can mean no data"* copy stays true. Note edge-reachability: a covered window with exactly 2 axis points → 1 daily return → `else 0.0`; the common thin-history case (`len(axis) < 2`) already yields empty `stats` → F-8's `None` path. Not release-blocking; files as its own delta after a ruling. ✅ **RULED 2026-07-23 (owner+architect): DEFERRED → ROADMAP `R-62` (POST-RELEASE).** Rationale on the row: unlike F-8 this ambiguity is **DOCUMENTED** — the product tells the truth about it in Help/GLOSSARY — so it is a **quality improvement, not an honesty defect**, and its blast radius (Portfolio figures + ratified Help copy + volatility semantics) outsizes its urgency. When fixed: thin-history renders null-not-`0.0` and Help copy moves **with** the behavior (Currency Law). Reversal: `F-9 pre-release` (RD-9 amendment) or `F-9 fix now` |
+| **F-10** | Finding | **The restored randomized verdict revealed SYSTEMIC test-isolation order-dependence** — module-level process globals are reset **only** in the `app_client` fixture (`conftest.py:85-105`: `reset_provider`/`fx.clear_cache`/`ratelimit.reset`/`metrics.reset`), so `session`-only and unit tests inherit **dirty globals** under randomization. **Multi-vector, confirmed:** the full randomized run failed **3 `test_backfill.py` cost-FX tests** (`fx._CACHE`/`ecb_fx._RATES` vector); **seed=1** (`tests/unit`+`test_backfill.py`) fails **4 different** tests — `test_yahoo_provider.py` ×3 (provider cool-down streak) + `test_ai_health.py` (AI-health global). All **pass in isolation and in integration-only randomized** (seed 2796713921 GREEN) | Surfaced by item-2's restored `pytest-randomly` — **its job, done**; the deps were dormant while the randomizer was uninstalled. **NOT caused by F-8** (yahoo/ai-health are unrelated; F-8 is green in both orders) | **⚑ OPEN — OWNER SCOPE RULING OWED, and it BLOCKS THE CLOSE** (the randomized gate is red until fixed; both verdicts are required at every gate). **Deterministic reproduction pinned:** `--randomly-seed=1` over `tests/unit tests/integration/test_backfill.py`. **Recommended fix:** an **autouse fixture** that resets the process globals `app_client` already resets **plus the ones it doesn't** (`ecb_fx._RATES`/`_ASOF`, the yahoo provider cool-down module state, the AI-health global) — **fail-first PER VECTOR** (each order-dependence reproduced RED, then GREEN), then a many-seed sample. **Why FILED not fixed here:** it is multi-vector, `app_client`'s reset list is provably incomplete for it, and completeness cannot be proven in one session (unknown latent-vector count) — this is R-58-class isolation work deserving its own fail-first delta, and whether it lands **inside R-54 or as its own row** is a scope decision for the owner. **⚠ Note:** F-8's new guard is a `session` test that warms `fx._CACHE` — it **participates in** this latent debt but does not uniquely cause it (the pre-existing I-1 `session` test has the same shape); the autouse fix covers both. ✅ **RULED 2026-07-23 (owner+architect): STANDALONE DELTA, NOT R-54 SCOPE** — the F10-race precedent exactly (release-blocking-class defect, reviewed in isolation, sequenced before the thing it gates). Suite-wide isolation debt in **non-R-54 modules**; absorbing it into a feature milestone puts the fix where no reviewer is looking. **This row DISPOSITIONS as: carried to the standalone isolation delta; the R-54 CLOSE IS GATED ON THAT DELTA'S GREEN** (both verdicts; randomized now meaning "green across the sampled seeds"). **Name disambiguation: "F-10 (R-54 ledger)"** — distinct from the historical F10 settings-race delta (`63ec86a`). **⊕ INVESTIGATION FOUNDATION (this session) — the census + the CORRECTED per-vector mechanisms + the ruled shape are recorded at [§F-10 FOUNDATION](#f-10-r-54-ledger--standalone-isolation-delta--foundation--ruled-shape) below; the earlier "AI-health global" guess in this row is SUPERSEDED there by the traced mechanism.** |
 
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
@@ -2652,11 +2652,16 @@ STOP-worthy finding needing an owner scope ruling). **DONE this session:** **F-8
 owed); **`pytest-randomly` RESTORED + declared** (`aa43af6`) and the prior "ADR-gated" claim corrected on
 the record; **both verdicts run solo** — ordered **2108/15 exit 0**, randomized **RED → F-10** (systemic
 pre-existing test-isolation order-dependence, not F-8, not a product defect; deterministic repro
-`--randomly-seed=1`). **OWED / NEXT:** (i) **F-10 scope ruling** — the randomized gate is red until an
-isolation-reset delta lands, and both verdicts are required at every gate incl. the close, so F-10 blocks
-the close; (ii) **F-8's page-portfolio pre-pass re-run + dated note** — folds into (iii); (iii) **Phase 3a**
-(the full Ask-surface scripted pre-pass), then **Phase 3b → CLOSE**. **F-9** (the wider `0.0`) also owes a
-ruling. Records commit follows the two delta commits per the two-commit pattern.
+`--randomly-seed=1`). **⊕ RULED 2026-07-23 (owner+architect, second chat):**
+**F-10 = STANDALONE ISOLATION DELTA** (not R-54 scope; F10-race precedent) — foundation built this session
+(census + traced per-vector mechanisms + ruled shape, at [§F-10 FOUNDATION](#f-10-r-54-ledger--standalone-isolation-delta--foundation--ruled-shape));
+**close gated on its green.** **F-9 = DEFERRED → ROADMAP `R-62` (post-release).** **SEQUENCE:** F-10 standalone
+delta → **Phase 3a** (carrying F-8's page-portfolio pre-pass + dated note) → **Phase 3b** → **CLOSE** (both
+verdicts, randomized = "green across the sampled seeds"). **OWED / NEXT:** (i) execute the **F-10 delta** per
+its ruled shape 2a–2f — the fix (autouse reset + schema baseline) + fail-first per vector + **≥10-seed
+full-suite sampling** (≈10×16 min, the reason it exceeds one session) + census guard; (ii) then Phase 3a with
+F-8's Portfolio pre-pass folded in; (iii) then 3b → close. Records commit follows the delta commits per the
+two-commit pattern.
 
 **⊕ ACCUMULATING §-LESSON CANDIDATES (for the close — MECHANISED there, not written here):**
 1. **A flake's mechanism must be REPRODUCED, not inferred.** I-1's Phase-0 seed-state hypothesis was
@@ -2692,9 +2697,77 @@ ruling. Records commit follows the two delta commits per the two-commit pattern.
    the manifest, not from a warm venv. The mirror-drift lesson (KB-SYNC) applied to the test toolchain.
 9. **RESTORING A DORMANT GUARD CAN LIGHT UP LATENT DEBT — that is the guard WORKING (F-10).** The moment
    randomization came back it exposed **multi-vector** test-isolation order-dependence (process globals reset
-   only in `app_client`): fx/ecb → 3 backfill tests; provider-cooldown + ai-health → 4 more at seed=1; all
-   green in isolation. The disciplined response is fail-first PER VECTOR and a declared reset owner, not a
-   blanket patch that can't be proven complete — filed for its own delta, scope ruling owed.
+   only in `app_client`): fx/ecb → 3 backfill tests; a leaked-schema class → 4 more at seed=1; all green in
+   the ordered suite. The disciplined response is fail-first PER VECTOR and a declared reset owner, not a
+   blanket patch that can't be proven complete — ruled its own standalone delta, close gated on its green.
+
+**⊕ TWO CLOSE-SET LESSONS, NAMED BY THE OWNER 2026-07-23 (item 5) — carry to the strike-check / TEMPLATE at close:**
+- **(a) SEED-LUCKY GREENS.** `ordered == randomized` corroboration is only as strong as the isolation underneath
+   it — a green pair can be two lucky orders over the same latent debt. The **mechanisation** is the F-10 census
+   guard (the debt can't regrow silently) + many-seed **sampling** (honestly labelled as sampling, not proof).
+- **(b) GATE TOOLING MUST BE A DECLARED DEPENDENCY.** An ad-hoc install is a gate that can silently vanish
+   (`pytest-randomly` did, and its absence was then mis-explained as ADR-gated). **TEMPLATE line at close.**
+
+### F-10 (R-54 LEDGER) — STANDALONE ISOLATION DELTA — FOUNDATION + RULED SHAPE
+
+*Ruled a **standalone delta** (owner+architect 2026-07-23), sequenced **before Phase 3a**, reviewed in
+isolation. This section is the delta's **execution-ready foundation** built this session (the analytical
+work); the fix + sampling is the delta's remaining mechanical work. **The R-54 close is gated on this
+delta's green.***
+
+**⊕ THE MECHANISM WAS TRACED, not guessed — and it CORRECTS the F-10 row's first characterization.**
+The seed=1 failures are **two distinct classes**, both deterministic (seed=1 fails the same 4 across 3/3
+runs):
+
+- **Class A — leaked-schema / missing-fixture (the 4 seed=1 failures: `test_ai_health` + `test_yahoo_provider`×3).**
+  These read the DB via `assert_egress_allowed` → `no_egress_enabled` → `SELECT … FROM settings WHERE key='privacy_mode'`
+  (`egress.py:71`, the posture check `health()` runs FIRST, `openai_compatible.py:120`). The suite shares **ONE
+  SQLite file** (`LEDGERFRAME_DATA_DIR` set once at `conftest.py:14`). These tests request **no schema-creating
+  fixture**, so `test_ai_health` **FAILS IN TRUE ISOLATION** too (`OperationalError: no such table: settings`) — it
+  passes in the ordered suite ONLY because some earlier `session`/`app_client` test left the schema in the shared
+  file. It is a test that **passes by leaked schema**, and randomization exposes the order where no schema-creator ran
+  first. (The `- sql...` in the summary was the tell.)
+- **Class B — process-global cache pollution (the full-run 3 `test_backfill.py` cost-FX failures).** `fx._CACHE` /
+  `ecb_fx._RATES` are reset **only** in `app_client` (`conftest.py:99`), so a `session`-only cost-FX test that expects
+  a rate to be UNAVAILABLE inherits a warm cache/reference set and resolves one — flipping `cost_fx_unavailable`.
+
+**2a — THE CENSUS (enumeration by AST, never by memory).** A sweep of `app/` for module-level mutable state
+(mutable-container assignments + `global`-reassigned names) found **129 candidates**; filtering to names **written
+at runtime** (subscript/aug-assign/mutating-method/`global`) yields the **process-STATE set (14)**, the reset list:
+
+| Global | Reset entry | In `app_client`? |
+|---|---|---|
+| `fx._CACHE` | `fx.clear_cache()` | ✅ |
+| `ecb_fx._RATES` / `_ASOF` | **none — ADD `ecb_fx.clear()`** (`_set_cache({}, None)`) | ❌ |
+| `ratelimit._STATE` | `ratelimit.reset()` | ✅ |
+| `metrics._dur_count/_dur_sum/_req_total/_worker_jobs` | `metrics.reset()` | ✅ |
+| `grounding._request_times` | **none — ADD `grounding.reset_rate_limit()`** (`.clear()`) | ❌ |
+| `portfolio._backfill_tasks` | clear/cancel pending tasks | ❌ |
+| `db.base._engine` / `_sessionmaker` | `dispose_engine()` | ✅ (autouse `_fresh_engine_per_test`) |
+| `providers/market._PROVIDER` | `reset_provider()` | ✅ |
+| `providers/ai._PROVIDER` | `reset_ai_provider()` | ❌ (exists, uncalled) |
+
+*(The other 115 census candidates are **frozen-by-convention lookup tables** — no runtime write; the census GUARD
+below keeps that classification honest. Census scripts preserved this session; they become the guard's basis.)*
+
+**THE RULED SHAPE (owner+architect 2026-07-23), to execute in the standalone delta:**
+- **2b — AUTOUSE RESET FIXTURE** covering the census's state set (the table above), **plus a schema baseline** that
+  guarantees the shared DB has `settings` (and the rest of `Base.metadata`) for every test — Class A's fix. **⚠ The
+  schema baseline must not break the ~15 DB/migration tests** (`test_migrations.py`, `test_db_migrate.py`,
+  `test_db_config.py`, `test_data_dir_resolution.py`, `test_reset_data.py`, …) that manage their own DB/empty-boot —
+  survey each before choosing per-test `create_all` vs a session-scoped baseline vs making the egress read tolerate
+  a missing table (the last is product code for a test artifact — **rejected**).
+- **2c — FAIL-FIRST PER VECTOR:** Class A repro = `test_ai_health` **alone** (RED `no such table`); Class B repro =
+  `--randomly-seed=1` (RED, 3/3 deterministic) and the full-run backfill order — each RED pre-fix, GREEN post.
+- **2d — MANY-SEED SAMPLING:** the **full** suite green across **≥10 seeds, seeds stated** — labelled as sampling,
+  not proof (≈10 × ~16 min solo; the reason this exceeds one session honestly).
+- **2e — THE CENSUS GUARD, PERMANENT:** a test that re-runs the sweep and asserts every runtime-mutated module global
+  is in a declared reset registry — new module-level mutable state without a reset entry turns **RED**, so the class
+  can never silently regrow.
+- **2f — two-commit record; BOTH suite verdicts stated; NO PUSH.**
+
+**Helper resets** `ecb_fx.clear()` + `grounding.reset_rate_limit()` were drafted + reverted this session (kept out of
+the tree so the standalone delta lands atomically, reviewed in isolation) — re-add them as the delta's first commit.
 
 ### Phase 3a — SCRIPTED PRE-PASS *(reset + isolated; green BEFORE the walk)*
 

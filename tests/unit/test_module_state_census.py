@@ -116,6 +116,28 @@ def _runtime_written(tree: ast.Module, names: set[str]) -> set[str]:
     return written
 
 
+def _cached_functions(tree: ast.Module) -> set[str]:
+    """Module-level functions decorated with `@lru_cache`/`@cache` — process-global mutable state
+    that is NOT a module-level assignment, so the assignment sweep misses it. It leaks across tests
+    exactly like a cache dict (F-10 Class C: `get_settings`'s cached `base_currency`)."""
+    out: set[str] = set()
+    for node in tree.body:
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for dec in node.decorator_list:
+            name = None
+            if isinstance(dec, ast.Name):
+                name = dec.id
+            elif isinstance(dec, ast.Attribute):
+                name = dec.attr
+            elif isinstance(dec, ast.Call):  # @lru_cache(maxsize=...)
+                f = dec.func
+                name = f.id if isinstance(f, ast.Name) else (f.attr if isinstance(f, ast.Attribute) else None)
+            if name in {"lru_cache", "cache"}:
+                out.add(node.name)
+    return out
+
+
 def _sweep() -> set[str]:
     found: set[str] = set()
     for path in sorted(APP.rglob("*.py")):
@@ -127,6 +149,8 @@ def _sweep() -> set[str]:
         mod = _module_name(path)
         for name in _runtime_written(tree, set(names)):
             found.add(f"{mod}.{name}")
+        for fn in _cached_functions(tree):
+            found.add(f"{mod}.{fn}")
     return found
 
 

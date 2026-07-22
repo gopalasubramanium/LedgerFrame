@@ -26,10 +26,26 @@ os.environ.pop("LEDGERFRAME_MARKET_API_KEY", None)
 def _isolate_env_file(tmp_path, monkeypatch):
     """Tests must NEVER touch the real repo `.env` (page-first-run-checklist §F-11).
     `apply_env()` (base_currency/timezone/provider writes) rewrites `envfile.ENV_PATH`;
-    point it at a per-test temp file so the suite can't mutate the developer's dev config."""
+    point it at a per-test temp file so the suite can't mutate the developer's dev config.
+
+    R-54 F-10 Class C: `apply_env` ALSO does `os.environ.update(...)` (`envfile.py:63`, so an
+    in-process reload takes effect) — and that mutation is NOT tracked by monkeypatch, so a test
+    that set e.g. `base_currency` left `LEDGERFRAME_BASE_CURRENCY` resident in `os.environ` for the
+    next test. Combined with the cached `Settings` (reset in `reset_process_globals`), a later
+    `session`-only test then ran with a foreign base and a domestic book read as cross-currency.
+    Snapshot `os.environ` here and restore it after the test so any direct mutation is undone."""
     import app.core.envfile as envfile
 
     monkeypatch.setattr(envfile, "ENV_PATH", tmp_path / ".env")
+    _env_snapshot = dict(os.environ)
+    yield
+    for k in list(os.environ):
+        if k not in _env_snapshot:
+            del os.environ[k]
+    for k, v in _env_snapshot.items():
+        if os.environ.get(k) != v:
+            os.environ[k] = v
+    return
 
 
 @pytest.fixture(autouse=True)
@@ -42,23 +58,54 @@ async def _fresh_engine_per_test():
     await dispose_engine()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _shared_db_schema_baseline():
-    """R-54 F-10 Class A — guarantee the shared test DB has the schema BEFORE any test runs.
+@pytest.fixture(autouse=True)
+def _reset_process_globals():
+    """R-54 F-10 Class B/C — reset in-process module globals at the SETUP of every test.
 
-    The suite shares ONE SQLite file (`LEDGERFRAME_DATA_DIR`, set once above). Some unit tests read
-    the DB transitively — e.g. `openai_compatible.health()` runs the egress-posture check, which does
-    `SELECT ... FROM settings WHERE key='privacy_mode'` — WITHOUT requesting a schema-creating fixture.
-    They passed only because an earlier `session`/`app_client` test happened to leave the schema in the
-    shared file; under `pytest-randomly` one of them can be scheduled first and hit `no such table:
-    settings`. (A test that passes because an earlier test leaked schema is order-dependent even when
-    nobody wrote it that way — the ordered suite's green for those tests was execution-order luck all
-    along, the same species as the seed-lucky corroborations.)
+    The reset list is the census-derived registry in `tests/isolation.py` (the single source of truth
+    the census guard also reads). Lifts the resets `app_client` already did — `reset_provider`,
+    `fx.clear_cache`, `ratelimit.reset`, `metrics.reset` — and adds the ones it never covered
+    (`ecb_fx.clear`, `grounding.reset_rate_limit`, `reset_ai_provider`, the backfill-task set, and the
+    lru_cached `Settings`), so a `session`-only or unit test can no longer inherit a global another
+    test left dirty. Runs BEFORE `_shared_db_clean_slate` so `reload_settings()` has restored the
+    default `db_path` before that fixture resets the shared DB."""
+    from tests.isolation import reset_process_globals
 
-    Fixed here by creating the schema ONCE, up front, on the shared file — via a throwaway SYNC engine
-    so there is no event-loop/global-engine coupling. Migration/db tests are UNAFFECTED: they repoint
-    `LEDGERFRAME_DATA_DIR` at their own `tmp_path` and run Alembic there, so the shared file's baseline
-    is irrelevant to them. This is fixture plumbing only — it changes no product behaviour."""
+    reset_process_globals()
+    yield
+
+
+# One reusable SYNC engine for the per-test DB reset — created once, keyed by URL, so the
+# per-test cost is the drop+create DDL only, not a fresh engine + WAL-pragma connect each time
+# (which roughly doubled the suite). Keyed by URL so a config change rebuilds it correctly.
+_RESET_ENGINE: dict[str, object] = {}
+
+
+@pytest.fixture(autouse=True)
+def _shared_db_clean_slate():
+    """R-54 F-10 Class A + committed-data leak — give EVERY test a clean shared DB.
+
+    The suite shares ONE SQLite file (`LEDGERFRAME_DATA_DIR`, set once above). Two order-dependences
+    live here, both invisible in the ordered suite because a `session`/`app_client` test usually ran
+    first and left the DB in the state the next test happened to need:
+      * SCHEMA — unit tests read the DB transitively (e.g. `openai_compatible.health()` runs the
+        egress-posture check `SELECT ... FROM settings WHERE key='privacy_mode'`) WITHOUT a
+        schema-creating fixture, so scheduled first they hit `no such table: settings`; and
+      * COMMITTED DATA — a test that `commit()`s to the shared DB (e.g. the no-egress backfill tests
+        write `privacy_mode=true`) leaks that row, because the `session` fixture teardown only rolls
+        back. A later non-fixture test then reads a stale toggle.
+    A test that passes because an earlier test left the schema/data it needed is order-dependent even
+    when nobody wrote it that way — the ordered green was execution-order luck, the same species as a
+    seed-lucky corroboration.
+
+    Fixed by drop+create-ing the shared DB before EVERY test — the robust choice: it resets away ANY
+    prior test's committed leak, not only the ones that happened to use a fixture. Done on a REUSED
+    sync engine (keyed by URL, `_RESET_ENGINE`) so the per-test cost is the drop+create DDL only
+    (~3% of the suite), not a fresh engine + WAL-pragma connect each time; and sync, so there is no
+    event-loop/global-async-engine coupling. Migration/db tests are UNAFFECTED: they repoint
+    `LEDGERFRAME_DATA_DIR` at their own `tmp_path` in their body (after this autouse setup) and run
+    Alembic there, so resetting the DEFAULT shared file is irrelevant to them. Fixture plumbing only;
+    it changes no product behaviour."""
     from sqlalchemy import create_engine
 
     from app.core.config import get_settings
@@ -67,24 +114,12 @@ def _shared_db_schema_baseline():
     settings = get_settings()
     if settings.is_sqlite:
         settings.db_path.parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(settings.sync_db_url)
+    url = settings.sync_db_url
+    engine = _RESET_ENGINE.get(url)
+    if engine is None:
+        engine = _RESET_ENGINE[url] = create_engine(url)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    engine.dispose()
-    yield
-
-
-@pytest.fixture(autouse=True)
-def _reset_process_globals():
-    """R-54 F-10 Class B — reset in-process module globals at the SETUP of every test.
-
-    The reset list is the census-derived registry in `tests/isolation.py` (the single source of truth
-    the census guard also reads). Lifts the resets `app_client` already did — `reset_provider`,
-    `fx.clear_cache`, `ratelimit.reset`, `metrics.reset` — and adds the ones it never covered
-    (`ecb_fx.clear`, `grounding.reset_rate_limit`, `reset_ai_provider`, the backfill-task set), so a
-    `session`-only or unit test can no longer inherit a global another test left dirty."""
-    from tests.isolation import reset_process_globals
-
-    reset_process_globals()
     yield
 
 

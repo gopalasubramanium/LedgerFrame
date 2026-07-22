@@ -36,6 +36,11 @@ RESET_REGISTRY: dict[str, str] = {
     "app.db.base._sessionmaker": "dispose_engine() via the _fresh_engine_per_test autouse fixture",
     "app.providers.market._PROVIDER": "reset_provider()",
     "app.providers.ai._PROVIDER": "reset_ai_provider()",
+    # lru_cache-backed process state (NOT a module-level assignment, so the AST sweep also walks
+    # @lru_cache/@cache decorators — found because it broke a domestic-book test: a prior test set
+    # base_currency via PUT /settings, the cached Settings leaked a non-SGD base to a `session`-only
+    # test, and its SGD lots read as foreign → spurious cost-FX flags. R-54 F-10 Class C.
+    "app.core.config.get_settings": "reload_settings() (get_settings.cache_clear())",
 }
 
 
@@ -48,10 +53,15 @@ def reset_process_globals() -> None:
     from app.ai import grounding
     from app.api.v1.routes import portfolio
     from app.core import metrics, ratelimit
+    from app.core.config import reload_settings
     from app.providers.ai import reset_ai_provider
     from app.providers.market import reset_provider
     from app.services import ecb_fx, fx
 
+    # FIRST — clear the lru_cached Settings (Class C): a leaked base_currency turns a later test's
+    # domestic book foreign. Re-reads the (isolated, empty) env → defaults, which _isolate_env_file
+    # has already pointed at a temp .env by the time this autouse runs.
+    reload_settings()
     fx.clear_cache()
     ecb_fx.clear()
     ratelimit.reset()

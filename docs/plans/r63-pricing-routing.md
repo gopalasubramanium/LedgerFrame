@@ -310,11 +310,11 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 | --- | --- | --- | --- |
 | I-1 | §0-A / §0-B(i,ii) | AV entitlement-envelope parse-miss (root cause) collapsed into one "empty" message | **DISCHARGED — Phase 0 `e3dd4e7`** (tolerant `Global Quote*` parse + `_raw_fx` audit; fail-first RED on the real probe-#1 envelope, green after; genuine-empty probe-#5 still no-price). The *collapse into one message* half (distinct failure STATE) is Phase 2 (I-3). |
 | I-2 | §0-B(iii) | No fetch-time fallback net — priority chain is display-only, never walked; yahoo never called | **DISCHARGED — Phase 1 `95df927`** (`fetch_chain` + `build_provider` + `_refresh_via_net`; pin-head-keep-net for override AND matrix; RED proved the net EXECUTED — yahoo fetched — not merely a price appeared; `no_key` lanes skipped). The **head=X/priced-by=Y SURFACE labelling** on Pricing Health lands in Phase 4 (data already carried via `source` vs `route_source`). |
-| I-3 | §0-B(ii) | Distinct failures collapsed at three layers (adapter / refresh / cache) | **IN PROGRESS — Delta 2.1 `9d54f4f` (adapter+refresh) + Delta 2.2 backend `34974b6` (persistence + pricing-health row: `failure_state`/`failure_at`/`failure_note`).** Remaining: the **frontend drawer** rendering of the typed state (surface). |
+| I-3 | §0-B(ii) | Distinct failures collapsed at three layers (adapter / refresh / cache) | **DISCHARGED — Phase 2** (Delta 2.1 `9d54f4f` adapter+refresh · Delta 2.2 backend `34974b6` persistence+row · Delta 2.2 frontend `c882648` drawer). Distinct causes typed adapter → refresh → pricing-health row → drawer; the flat "none" is gone. |
 | I-4 | §0-B(i) | Two-premiums conflation — `av_tier` learns only from INDEX_DATA; Settings "premium" is a coarse config claim | **IN PROGRESS — Phase 2 Delta 2.1 `9d54f4f`** (backend: `quote_entitlement` learned from the envelope, distinct from `av_tier`). Remaining: the Settings verified-tier **display** → Phase 4 (rite). |
 | I-5 | §0-A fan-out rider | 19-call refresh fan-out (overview proxies) vs AV per-sec/daily budget; free-first + holdings-first mitigates | OPEN → Phase 3 |
 | I-6 | §9-i | Duplicate TSLA instrument (id 22 / id 23) — **invariant question**: did the product permit the duplicate? If so, that is an architectural finding (root-cause it); owner cleans his live data via the UI once the cause is known | OPEN → Phase 1 (invariant probe) |
-| I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | **IN PROGRESS — Delta 2.1 `9d54f4f` (`RateLimited`→`THROTTLED` + `last_throttled_at`, real burst text) + Delta 2.2 backend `34974b6`** (persisted; `failure_note` carries "last at T", PROPOSED). Remaining: the frontend render of the retry note. |
+| I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | **DISCHARGED — Phase 2** (`RateLimited`→`THROTTLED` + `last_throttled_at`, real burst text `9d54f4f`; persisted `34974b6`; drawer renders "throttled — … will retry (last at T)" `c882648`, copy PROPOSED). |
 
 ### Accepted-surface RITE — consolidation (recorded explicitly per the owner ruling 2026-07-23)
 
@@ -336,8 +336,24 @@ backend suite passes ordered AND randomized (declared seeds)**; the close requir
 | Phase | Full-suite ordered (`-p no:randomly`) | Full-suite randomized (`--randomly-seed=6363`) |
 | --- | --- | --- |
 | **1 — execution net** (`95df927`) | **2121 passed, 15 skipped** (22:37) | **2121 passed, 15 skipped** (21:52) |
+| **2 — failure taxonomy** (`9d54f4f`·`34974b6`·`c882648`) | **2130 passed, 15 skipped** (18:01, `--durations=30`) | **2130 passed, 15 skipped** (18:17) |
 
-**Phase 1 is COMPLETE** on the full-suite verdict (both orders green), not merely the subset.
+**Phase 1 COMPLETE**; **Phase 2 COMPLETE** — both on the full-suite verdict (both orders), not a subset.
+
+**Suite-count reconciliation:** **2121 → 2130 (+9)**, all attributable to R-63 Phase 2 tests:
+Delta 2.1 — 6 taxonomy tests in `test_av_quote_envelope.py` (priced-no-state · empty · parse_error ·
+throttled · errored · two-premiums) + 1 in `test_execution_net.py` (refresh carries the typed state);
+Delta 2.2 — 1 in `test_execution_net.py` (persist-then-clear) + 1 in `test_pricing_health.py` (row
+carries typed fields). Frontend tests (vitest `PricingHealth.test.tsx`, +1 drawer test) are not in
+the backend count. Backend: **2130 solo, ordered AND randomized**.
+
+**Contract line:** **141 paths / 71 schemas — unchanged** (`scripts/check_api_contract.py` clean).
+`GET /portfolio/pricing-health` is declared **`-> dict` (UNTYPED)**, so the new
+`failure_state`/`failure_at`/`failure_note` fields are **NOT contract-pinned** (0 occurrences in
+`API-CONTRACT.json`) — the R-61/§3b discipline applies. The **served-shape pin** covering them is
+`tests/integration/test_pricing_health.py::test_pricing_health_carries_typed_failure_state` (asserts
+every row carries the fields and any state has a note) **plus** the frontend `PricingHealthDetail`
+type + its vitest drawer test. ("api-contract current" alone is not the sentence — the pin is named.)
 
 ---
 

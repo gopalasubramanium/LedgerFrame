@@ -151,6 +151,16 @@ alphavantage,eodhd,csv,manual]`; user override wins but keeps the net) · **§9-
 **R-64** (post-release umbrella, filed in ROADMAP). **Build underway: Phase 0 — the parse-miss RED on
 the real probe-#1 envelope, first.**
 
+**⊕ 2026-07-23 — R-63 progress: Phase 0 (parse fix), Phase 1 (execution net), Phase 2 (failure
+taxonomy) all COMPLETE on the full-suite verdict.** Backend **2130 solo, ordered AND randomized
+(seed 6363)**; contract **141/71 unchanged** (pricing-health is `-> dict`, the new failure fields
+pinned by a served-shape test, not the contract). Ledger I-1/I-2/I-3/I-7 DISCHARGED; I-4 backend
+done, Settings verified-tier display → Phase 4. Frontend `npm run check` PASS. **R-65 Phase 1 survey
+DONE** (rode the Phase-2 verdict + static analysis): zero test sleeps, runtime is per-test DB DDL +
+heavy integration derivation; xdist feasible with per-worker DB isolation (see ROADMAP R-65).
+**Rite consolidated to Phase 4** (Pricing Health + Settings, one discharge). **Next: Phase 3 —
+free-first ordering (§9-6).**
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

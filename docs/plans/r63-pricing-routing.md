@@ -310,11 +310,22 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 | --- | --- | --- | --- |
 | I-1 | §0-A / §0-B(i,ii) | AV entitlement-envelope parse-miss (root cause) collapsed into one "empty" message | **DISCHARGED — Phase 0 `e3dd4e7`** (tolerant `Global Quote*` parse + `_raw_fx` audit; fail-first RED on the real probe-#1 envelope, green after; genuine-empty probe-#5 still no-price). The *collapse into one message* half (distinct failure STATE) is Phase 2 (I-3). |
 | I-2 | §0-B(iii) | No fetch-time fallback net — priority chain is display-only, never walked; yahoo never called | **DISCHARGED — Phase 1 `95df927`** (`fetch_chain` + `build_provider` + `_refresh_via_net`; pin-head-keep-net for override AND matrix; RED proved the net EXECUTED — yahoo fetched — not merely a price appeared; `no_key` lanes skipped). The **head=X/priced-by=Y SURFACE labelling** on Pricing Health lands in Phase 4 (data already carried via `source` vs `route_source`). |
-| I-3 | §0-B(ii) | Distinct failures collapsed at three layers (adapter / refresh / cache) | **IN PROGRESS — Phase 2 Delta 2.1 `9d54f4f`** (`FailureState` taxonomy typed at the ADAPTER + carried to the REFRESH outcome; canonical EMPTY vs PARSE_ERROR split on real fixtures). Remaining: the **→ pricing-health row** surface (Delta 2.2, needs display-time persistence). |
+| I-3 | §0-B(ii) | Distinct failures collapsed at three layers (adapter / refresh / cache) | **IN PROGRESS — Delta 2.1 `9d54f4f` (adapter+refresh) + Delta 2.2 backend `34974b6` (persistence + pricing-health row: `failure_state`/`failure_at`/`failure_note`).** Remaining: the **frontend drawer** rendering of the typed state (surface). |
 | I-4 | §0-B(i) | Two-premiums conflation — `av_tier` learns only from INDEX_DATA; Settings "premium" is a coarse config claim | **IN PROGRESS — Phase 2 Delta 2.1 `9d54f4f`** (backend: `quote_entitlement` learned from the envelope, distinct from `av_tier`). Remaining: the Settings verified-tier **display** → Phase 4 (rite). |
 | I-5 | §0-A fan-out rider | 19-call refresh fan-out (overview proxies) vs AV per-sec/daily budget; free-first + holdings-first mitigates | OPEN → Phase 3 |
 | I-6 | §9-i | Duplicate TSLA instrument (id 22 / id 23) — **invariant question**: did the product permit the duplicate? If so, that is an architectural finding (root-cause it); owner cleans his live data via the UI once the cause is known | OPEN → Phase 1 (invariant probe) |
-| I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | **IN PROGRESS — Phase 2 Delta 2.1 `9d54f4f`** (`RateLimited` → `THROTTLED` + `last_throttled_at` recorded; fail-first uses the REAL burst-pattern text). Remaining: the "throttled — last at T, will retry" **surface** on Pricing Health → Delta 2.2. |
+| I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | **IN PROGRESS — Delta 2.1 `9d54f4f` (`RateLimited`→`THROTTLED` + `last_throttled_at`, real burst text) + Delta 2.2 backend `34974b6`** (persisted; `failure_note` carries "last at T", PROPOSED). Remaining: the frontend render of the retry note. |
+
+### Accepted-surface RITE — consolidation (recorded explicitly per the owner ruling 2026-07-23)
+
+R-63 changes two accepted surfaces across several deltas: **Pricing Health** (Phase 2 Delta 2.2 —
+typed failure state + throttle-retry surface; Phase 5 — provider doctor) and **Settings → Data
+feeds** (Phase 3 — free-first meaning shift; Phase 4 — verified-tier label + the recut routing
+sentence). **Ruling (owner, 2026-07-23):** the guard-REDs-an-accepted-surface **rite obligations
+(a dated delta note + a page pre-pass re-run) are discharged ONCE, at Phase 4, covering ALL R-63
+deltas on each page** — provided (i) this consolidation is recorded now (it is), and (ii) any served
+copy or visible-state change made ahead of Phase 4 is held **PROPOSED** and ratified at the 0a look.
+Delta 2.2's new served strings (e.g. a throttle-retry line) ship as **PROPOSED**, GLOSSARY-first.
 
 ### Phase verdicts (full backend suite — the completion gate; a phase is not complete on a subset)
 

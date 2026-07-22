@@ -359,6 +359,15 @@ export function PricingHealth() {
               status={detail.status as HealthStatus}
             />
             {detail.failure_reason && <p className="ph__note">{detail.failure_reason}</p>}
+            {/* R-63 §9-2: the TYPED failure cause + its SERVED note (rendered verbatim, D-105 —
+                copy PROPOSED pending 0a). Names the distinct reason (throttled/empty/…) instead of a
+                flat "none"; a throttle's note carries "last at T". The state token is a read-only tag. */}
+            {detail.failure_state && (
+              <p className="ph__note ph__note--failure">
+                <span className="ph__failstate">{detail.failure_state}</span>
+                {detail.failure_note ? ` — ${detail.failure_note}` : null}
+              </p>
+            )}
             <h3 className="ph__h3">Routing</h3>
             {/* Route detail (route · rule · lane · chain) — the read-only provenance MetaStrip (§9-10).
                 D1-c: the routing block uses routing vocabulary per D-028 — "Route" here (the route

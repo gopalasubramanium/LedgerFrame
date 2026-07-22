@@ -13,6 +13,7 @@ function row(over: Partial<Record<string, unknown>>) {
     currency: "USD", native_price: 190, market_value: 1900, valuation_method: "market_quote",
     valuation_label: "Market quote", status: "Fresh", source: "market", entitlement: "delayed",
     price_ts: "2026-07-11T00:00:00Z", is_stale: false, failure_reason: null, source_override: null,
+    failure_state: null, failure_at: null, failure_note: null,
     route_lane: "equity", route_source: "market", priority_chain: ["market", "manual"],
     mapping_required: false, auth_required: false, route_rule: "lane", route_reason: null,
     confidence: 92, confidence_band: "high", confidence_factors: ["Live market quote"],
@@ -303,6 +304,36 @@ test("route detail surfaces the router's OWN served reason in the Routing block 
   // The served router reason is asserted at its destination control (the Routing block) — never
   // frontend-invented (D-105).
   expect(within(dialog).getByText("awaiting NAV (refresh AMFI)")).toBeTruthy();
+});
+
+test("R-63 §9-2: the drawer names the TYPED failure state + its served note (throttled, last-at)", async () => {
+  const user = userEvent.setup();
+  // A stale holding whose last refresh was rate-limited: the typed state + served note (with
+  // 'last at T') render verbatim (D-105) — distinct causes, never a flat "none". Copy PROPOSED.
+  vi.mocked(getPricingHealth).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      base_currency: "SGD",
+      holdings: [row({
+        id: 1, symbol: "TSLA", label: "TSLA", status: "Cached", is_stale: true,
+        failure_state: "throttled",
+        failure_at: "2026-07-23T20:47:00Z",
+        failure_note: "The data provider is rate-limiting requests — will retry (last at 2026-07-23T20:47:00Z).",
+      })],
+      summary: { Cached: 1 },
+      confidence: { overall: 40, overall_band: "low", by_band: { high: { count: 0, value_pct: 0 }, medium: { count: 0, value_pct: 0 }, low: { count: 1, value_pct: 100 } } },
+      provider_tier_note: null,
+    },
+  });
+  renderPage();
+  await screen.findByText("Per-holding diagnostics");
+  const menus = await screen.findAllByRole("button", { name: /Actions for TSLA/ });
+  await user.click(menus[0]);
+  await user.click(await screen.findByText("Details"));
+  const dialog = await screen.findByRole("dialog");
+  expect(within(dialog).getByText("throttled")).toBeTruthy();
+  // The served note is rendered verbatim (never frontend-invented, D-105).
+  expect(within(dialog).getByText(/rate-limiting requests — will retry \(last at/)).toBeTruthy();
 });
 
 test("tier note: the served av_tier honest string renders only when present (§9-8)", async () => {

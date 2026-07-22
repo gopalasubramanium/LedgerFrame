@@ -30,6 +30,13 @@ export interface PricingRow {
   price_ts: string | null;
   is_stale: boolean;
   failure_reason: string | null;
+  // R-63 §9-2: the TYPED reason there is no live price — one of throttled/empty/errored/
+  // parse_error/unmapped/no_key/unsupported, never a flat "none". `failure_at` is when it was
+  // last recorded (ISO); `failure_note` is the SERVED explanation (rendered verbatim, D-105 —
+  // ⚠ PROPOSED copy pending the 0a ratification). null when there is no recorded failure.
+  failure_state: string | null;
+  failure_at: string | null;
+  failure_note: string | null;
   source_override: string | null;
   // routing (D-072 — visible, never editable)
   route_lane: string;

@@ -83,6 +83,24 @@ def _find_time_series(data: dict) -> dict:
     return {}
 
 
+def _global_quote(data: dict) -> dict:
+    """Return the ``GLOBAL_QUOTE`` payload, tolerating the DECORATED key AlphaVantage uses
+    when an ``entitlement`` is requested.
+
+    R-63 root cause: with ``entitlement=delayed`` (sent on every call, ``_get`` below), AV
+    returns the quote under ``"Global Quote - DATA DELAYED BY 15 MINUTES"``, not the plain
+    ``"Global Quote"``. Reading only the plain key saw ``{}`` on EVERY entitled response and
+    reported the price UNAVAILABLE — the price was in the payload the whole time. This mirrors
+    the :func:`_find_time_series` key-tolerance already used for history/index.
+
+    Returns ``{}`` when no ``Global Quote*`` key holds a dict (a genuine empty / unknown-symbol
+    response — ``{"Global Quote": {}}`` — stays empty → honest no-price, never fabricated)."""
+    for k, v in data.items():
+        if isinstance(v, dict) and k.lower().startswith("global quote"):
+            return v
+    return {}
+
+
 def _row_field(row: dict, name: str):
     """Pull e.g. close/open from a row whose keys may be '4. close' or 'close'."""
     for k, v in row.items():
@@ -188,7 +206,7 @@ class ExternalMarketDataProvider:
                              source=self.name, entitlement=EntitlementStatus.UNAVAILABLE,
                              received_at=now, is_stale=True)
         try:
-            data = (await self._get({"function": "GLOBAL_QUOTE", "symbol": symbol})).get("Global Quote", {})
+            data = _global_quote(await self._get({"function": "GLOBAL_QUOTE", "symbol": symbol}))
             px = data.get("05. price")
             if not px:
                 raise ValueError("empty quote (unknown symbol or rate limited)")
@@ -296,7 +314,11 @@ class ExternalMarketDataProvider:
         data = await self._get({
             "function": "CURRENCY_EXCHANGE_RATE", "from_currency": base, "to_currency": quote,
         })
-        rate = data.get("Realtime Currency Exchange Rate", {}).get("5. Exchange Rate")
+        # R-63 §9-0 audit: tolerate a decorated key here too (same fragility class as the quote
+        # envelope), so an entitlement-decorated FX response never reads as an empty rate.
+        payload = next((v for k, v in data.items()
+                        if isinstance(v, dict) and "exchange rate" in k.lower()), {})
+        rate = payload.get("5. Exchange Rate")
         if not rate:
             raise ValueError("empty fx (unsupported pair or rate limited)")
         return price(rate)

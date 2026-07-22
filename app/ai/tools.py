@@ -473,6 +473,26 @@ def help_facts(question: str) -> list[GroundingFact]:
     return facts
 
 
+def _settings_help_fact(question: str) -> GroundingFact | None:
+    """The `page-settings` help entry as a fact, pointed at the tab the question names (F-11).
+
+    Built exactly as `help_facts` builds any help fact — full entry from `HELP`, the same projected
+    value, `_help_link_id` for the `?tab=` query — so an INJECTED settings answer is indistinguishable
+    from one `search_help` surfaced on its own (the "theme" phrasing). Returns None only if the entry
+    or its projection is missing, which the Pages-category corpus guards make impossible in practice.
+    """
+    from app.services.help import HELP
+
+    entry = next((e for e in HELP if e["id"] == "page-settings"), None)
+    if entry is None:
+        return None
+    value = _render_help_fact(entry)
+    if not value:
+        return None
+    return GroundingFact(label=f"Help · {entry['title']}", value=value, source="help",
+                         fact_type="help", link_id=_help_link_id("page-settings", question))
+
+
 async def data_quality_facts(session: AsyncSession) -> list[GroundingFact]:
     """Honest data-quality signals (B4): stale/unpriced holdings, unmapped funds/crypto,
     and missing provider credentials. Lets the AI say what is missing or needs action."""
@@ -954,15 +974,23 @@ async def gather_facts(
     if (intent in (Intent.SETTINGS_HELP, Intent.EXPLANATION_OF_METRIC, Intent.UNKNOWN_GENERAL_QUESTION)
             or _re_help.search(r"\b(how (do|can|to|does)|what (is|are|does)|where (do|is|can)|explain|what's|help( me)?)\b", q)):
         hf = help_facts(question)
+        # W-5 (owner 2026-07-22) + F-11 (owner 2026-07-23): a SETTINGS_HELP question that NAMES a
+        # control — "theme" → appearance, "base currency" → general — is answered by the
+        # page-settings entry pointed at that control's TAB, and it must LEAD so the tier-1 pointer
+        # below scopes to it. `search_help` surfaces that entry for some phrasings ("theme") but
+        # ranks it BELOW Glossary currency terms for others ("base currency" returned Gross assets /
+        # Realised P/L / Reports and no Settings entry at all — F-11 finding 1(c)). REORDERING what
+        # search returned can promote nothing when it returned nothing to promote, so we INJECT the
+        # page-settings fact for the resolved tab when it is absent, then sort it first. Gated on
+        # SETTINGS_HELP + a resolved tab, so a data question that merely contains a tab word
+        # ("currency allocation" → ALLOCATION_ANALYSIS, not SETTINGS_HELP) is untouched.
+        if intent is Intent.SETTINGS_HELP and _settings_tab_for(question):
+            if not any((f.link_id or "").startswith("page:/settings") for f in hf):
+                sf = _settings_help_fact(question)
+                if sf is not None:
+                    hf = [sf, *hf]
+            hf = sorted(hf, key=lambda f: 0 if (f.link_id or "").startswith("page:/settings") else 1)
         if hf:
-            # W-5 (owner 2026-07-22): a SETTINGS/how-do-I question that names a Settings control
-            # ("theme" → appearance) is a Settings question — the page-settings entry is its
-            # canonical answer, so it LEADS. A fuzzy search match (Heatmap ranks on "colour") must
-            # not outrank the explicit settings-tab signal, or the tier-1 pointer below would point
-            # at the wrong page. Reorder only (stable), never inject; gated on SETTINGS_HELP so a
-            # data question that merely contains a tab word ("currency allocation") is untouched.
-            if intent is Intent.SETTINGS_HELP and _settings_tab_for(question):
-                hf = sorted(hf, key=lambda f: 0 if (f.link_id or "").startswith("page:/settings") else 1)
             # R-54 delta 4a / R2: a TERM question surfaces the term's own canonical figure(s)
             # beside the explanation. Scoped to the TOP-RANKED help hit — search_help's #1 is what
             # the question is most about, so an action question whose top hit is a PAGE gathers no

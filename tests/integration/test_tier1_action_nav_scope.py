@@ -57,6 +57,41 @@ async def test_nav_answer_promotes_settings_over_a_fuzzy_match_and_scopes(app_cl
     assert facts[0]["link_id"] == "page:/settings?tab=appearance"
 
 
+async def test_nav_answer_INJECTS_settings_when_the_ranker_misses_the_control(app_client):
+    """F-11 (owner ruling 2026-07-23, 3b finding 1(c)) — "how do I change the base currency" →
+    Help · Settings pointing at the GENERAL tab, scoped, exactly like the "theme" case.
+
+    THE DEFECT THIS PINS: for "theme" `search_help` surfaces the page-settings entry, so W-5's
+    reorder had something to promote. For "base currency" `search_help` ranks Glossary currency
+    terms above it and returns NO Settings entry at all (Gross assets / Realised P/L / Reports),
+    so reordering promoted nothing and the answer fell through to the broad 8-fact portfolio pack —
+    a settings-control question with no Settings link. The fix INJECTS the page-settings fact for
+    the resolved tab when the ranker misses it.
+
+    FAIL-FIRST: on the pre-fix build this is RED — `["Net worth", "Unrealised P/L", ...]`, a pack of
+    eight, no `Help · Settings`, no `page:/settings?tab=general`.
+    """
+    facts = await _facts_event(app_client, "how do I change the base currency")
+    labels = [f["label"] for f in facts]
+    assert labels == ["Help · Settings"], f"base-currency nav answer not scoped to Settings: {labels}"
+    assert not (_HEADLINE & set(labels)), "an action/nav tier-1 answer must carry NO headline figures"
+    assert facts[0]["link_id"] == "page:/settings?tab=general"
+
+
+async def test_settings_injection_covers_the_other_general_controls(app_client):
+    """F-11 sibling-keyword coverage — the General tab's OTHER controls (timezone · long-term
+    threshold · reporting currency) route to the same GENERAL tab, so the fix is the control-set,
+    not one keyword. Blindness pin: if the injection ever regressed to promote-only, these (which
+    the ranker also misses) would fall back to the broad pack and RED here."""
+    for q in ("how do I change the timezone",
+              "how do I set the long-term threshold",
+              "how do I change my reporting currency"):
+        facts = await _facts_event(app_client, q)
+        labels = [f["label"] for f in facts]
+        assert labels == ["Help · Settings"], f"{q!r} not scoped to Settings: {labels}"
+        assert facts[0]["link_id"] == "page:/settings?tab=general", f"{q!r} -> {facts[0]['link_id']}"
+
+
 async def test_term_answer_is_NOT_scoped_the_discriminator(app_client):
     """The scope is action/nav ONLY — a TERM answer (a) still carries its figures + headline.
 

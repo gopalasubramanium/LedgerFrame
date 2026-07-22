@@ -1,8 +1,10 @@
 # R-54 — Deterministic answer intelligence: the two-tier Ask panel
 
-**Status: ✅ §9 CLOSED 2026-07-20 (owner one-pass, in chat) — BUILD AUTHORIZED.** §7 and §8 are
-completed from the resolutions; Phase 0 begins backend-first. **The §-ledger below governs the close:
-no CLOSED claim is admissible while any I-row lacks a disposition.**
+**Status: ✅ MILESTONE CLOSED 2026-07-23 (owner-accepted; 3b walked, F-11 fixed before close).** §9 closed
+2026-07-20 (owner one-pass); built backend-first through Phases 0→2; Phase 3a scripted pre-pass (45/45, both
+themes, 0 console errors); Phase 3b owner walk RATIFIED. **§-ledger CLOSED** — every I-row/F-row (I-1..I-3,
+F-1..F-11) dispositioned; F-9→R-62, F-11 fixed (`07ffd97`). See the [§CLOSE RECORD](#close-record--2026-07-23-under-the-help-currency-law).
+`RATIFICATION.md §6` row appended. **NEXT: R-63** (RD-9 Amendment 11).
 
 *History: written §0–§9 as a plan-only survey session (`ac8ea65`), then closed at the one-pass.*
 
@@ -44,6 +46,8 @@ row lacks a disposition.** This plan is the rule's first user.*
 | **F-8** | Finding | **The fabricated `0.00%` on a genuine perf-series timeout** — `key_stats` rendered `1Y return` / `1Y volatility` / `Max drawdown (1Y)` as **`0.00%`** on a covered-window (`da_computable`) perf timeout, because empty `ps` + `ps.get(...) or 0.0` / `.get(..., 0.0)` conflated MISSING with zero (Guarantee-3); TWR and the ratio already dropped honestly | Carried as I-1's ADJACENT LATENT FINDING + §-lesson candidate #6; **FILED + RULED F-8 by owner+architect chat 2026-07-23** (FIX IN-MILESTONE) | ✅ **RESOLVED + FIXED 2026-07-23** (`7824327`). **Scope kept to the timeout path's fabrication sites only** (`analytics.py:206-208,257`): value → `None` when absent, so the **established honest shapes** render — the frontend's `metricDisplay` → `"—"` (the same shape TWR already uses, `metrics.ts:20`), the AI pack **omits** the `None` metric (`performance_facts`, `tools.py:562`). **No new rendering coined.** A genuine `0.0` from a populated `ps` still renders `0.00%` as the real value it is. **FAIL-FIRST (RED-first):** `test_covered_window_perf_timeout_nulls_not_fabricated_zeros` forces the perf-series timeout and asserts the three metrics are `None` — **RED pre-fix** (`1Y return fabricated 0.0`), GREEN post-fix; **blindness pin:** a `da_computable` assertion, so the metrics can't null for the *coverage* reason instead of the timeout reason. I-1 recovery + risk-wiring green. **RITE — page-portfolio dated note + pre-pass re-run ✅ DISCHARGED 2026-07-23 at Phase 3a** (dated note in `page-portfolio.md` citing `7824327`; live re-run on `:8399` proved absent 1Y metrics render `"—"` not fabricated `0.00%`, genuine `Today's change 0.00 SGD` renders — `r54-3a-portfolio-keystats-*`). **AI-pack sibling** covered by the same `None`-omit (verified live: "what is XIRR" served `TWR unavailable`, no `0.00%`). **⊕ Broader-ambiguity survey answer → F-9** |
 | **F-9** | Finding | **The Help "`0.0` can mean 'no data'" ambiguity is a WIDER, DIFFERENT code site than F-8** — `performance_series` fabricates `0.0` for **thin** history (`analytics.py:341` `... if len(daily_returns) > 1 else 0.0`, `:342` `ret_pct`), which feeds a **real-looking `0.0`** into the rendered `key_stats` metric and **survives F-8** (to `key_stats`, a returned `0.0` is indistinguishable from a genuine zero). This is exactly what `GLOSSARY.md:164` + `help.py:1024,1042,1084` document (*"0.0 can mean 'no data' rather than a flat year"*) | The ruling's *"survey, don't absorb"* on F-8 — report whether the documented ambiguity is the same site. **It is not: WIDER** | **⚑ OPEN — OWNER RULING OWED (normative).** Fixing it changes a **rendered Portfolio output** (thin-history → `"—"`/omit instead of `0.0`) — same class as F-8 but at a different site, and the Help copy would then move **with** the behavior (Currency Law), which is a product-content decision, not a refactor. **Help copy does NOT move now** — the behavior at `performance_series:341` is unchanged, so the *"0.0 can mean no data"* copy stays true. Note edge-reachability: a covered window with exactly 2 axis points → 1 daily return → `else 0.0`; the common thin-history case (`len(axis) < 2`) already yields empty `stats` → F-8's `None` path. Not release-blocking; files as its own delta after a ruling. ✅ **RULED 2026-07-23 (owner+architect): DEFERRED → ROADMAP `R-62` (POST-RELEASE).** Rationale on the row: unlike F-8 this ambiguity is **DOCUMENTED** — the product tells the truth about it in Help/GLOSSARY — so it is a **quality improvement, not an honesty defect**, and its blast radius (Portfolio figures + ratified Help copy + volatility semantics) outsizes its urgency. When fixed: thin-history renders null-not-`0.0` and Help copy moves **with** the behavior (Currency Law). Reversal: `F-9 pre-release` (RD-9 amendment) or `F-9 fix now` |
 | **F-10** | Finding | **The restored randomized verdict revealed SYSTEMIC test-isolation order-dependence** — module-level process globals are reset **only** in the `app_client` fixture (`conftest.py:85-105`: `reset_provider`/`fx.clear_cache`/`ratelimit.reset`/`metrics.reset`), so `session`-only and unit tests inherit **dirty globals** under randomization. **Multi-vector, confirmed:** the full randomized run failed **3 `test_backfill.py` cost-FX tests** (`fx._CACHE`/`ecb_fx._RATES` vector); **seed=1** (`tests/unit`+`test_backfill.py`) fails **4 different** tests — `test_yahoo_provider.py` ×3 (provider cool-down streak) + `test_ai_health.py` (AI-health global). All **pass in isolation and in integration-only randomized** (seed 2796713921 GREEN) | Surfaced by item-2's restored `pytest-randomly` — **its job, done**; the deps were dormant while the randomizer was uninstalled. **NOT caused by F-8** (yahoo/ai-health are unrelated; F-8 is green in both orders) | **⚑ OPEN — OWNER SCOPE RULING OWED, and it BLOCKS THE CLOSE** (the randomized gate is red until fixed; both verdicts are required at every gate). **Deterministic reproduction pinned:** `--randomly-seed=1` over `tests/unit tests/integration/test_backfill.py`. **Recommended fix:** an **autouse fixture** that resets the process globals `app_client` already resets **plus the ones it doesn't** (`ecb_fx._RATES`/`_ASOF`, the yahoo provider cool-down module state, the AI-health global) — **fail-first PER VECTOR** (each order-dependence reproduced RED, then GREEN), then a many-seed sample. **Why FILED not fixed here:** it is multi-vector, `app_client`'s reset list is provably incomplete for it, and completeness cannot be proven in one session (unknown latent-vector count) — this is R-58-class isolation work deserving its own fail-first delta, and whether it lands **inside R-54 or as its own row** is a scope decision for the owner. **⚠ Note:** F-8's new guard is a `session` test that warms `fx._CACHE` — it **participates in** this latent debt but does not uniquely cause it (the pre-existing I-1 `session` test has the same shape); the autouse fix covers both. ✅ **RULED 2026-07-23 (owner+architect): STANDALONE DELTA, NOT R-54 SCOPE** — the F10-race precedent exactly (release-blocking-class defect, reviewed in isolation, sequenced before the thing it gates). Suite-wide isolation debt in **non-R-54 modules**; absorbing it into a feature milestone puts the fix where no reviewer is looking. **This row DISPOSITIONS as: carried to the standalone isolation delta; the R-54 CLOSE IS GATED ON THAT DELTA'S GREEN** (both verdicts; randomized now meaning "green across the sampled seeds"). **Name disambiguation: "F-10 (R-54 ledger)"** — distinct from the historical F10 settings-race delta (`63ec86a`). **⊕ INVESTIGATION FOUNDATION (this session) — the census + the CORRECTED per-vector mechanisms + the ruled shape are recorded at [§F-10 FOUNDATION](#f-10-r-54-ledger--standalone-isolation-delta--foundation--ruled-shape) below; the earlier "AI-health global" guess in this row is SUPERSEDED there by the traced mechanism.** ✅ **RESOLVED + FIXED + SAMPLED GREEN 2026-07-23** (`36955a6` + `306cf6e`). **FOUR vector classes**, each fail-first RED→GREEN: **A** leaked-schema (shared-DB clean-slate), **B** cache pollution (autouse `_reset_process_globals` over the census registry), **C** leaked config — `base_currency` in the **lru_cached Settings AND `os.environ`** (`reload_settings()` + os.environ snapshot/restore; the census guard now also walks `@lru_cache`), and the **committed-data leak** (clean-slate drop+creates every test). **Census guard permanent** (`test_module_state_census.py`, RED on a specimen incl. an unregistered lru_cache). **BOTH VERDICTS GREEN (solo): ordered 2109/15; randomized 2109/15 across 10 pre-declared seeds** — `1, 2, 3, 42, 100, 777, 1234, 31337, 8675309, 2796713921` (seed=1 = the known repro, in by construction; sampling not proof). **The R-54 close gate is now satisfiable.** Details: [§F-10 FOUNDATION](#f-10-r-54-ledger--standalone-isolation-delta--foundation--ruled-shape). |
+
+| **F-11** | Finding | **A settings-control question the ranker misses gets no Settings link** — "how do I change the base currency" returned the broad **8-fact portfolio pack**, not the scoped `Settings·General` labeled link that "how do I change the theme" produces. `search_help` surfaces the page-settings entry for "theme" but ranks **Glossary currency terms above it** for "base currency" and returns none (Gross assets / Realised P/L / Reports), so W-5's *reorder-to-promote* had nothing to lift (`tools.py:964`, promote-not-inject) | 3b walk **finding 1(c)** (owner, live, on his instance) → **FILED F-11, FIX BEFORE CLOSE** (owner ruling 2026-07-23) | ✅ **RESOLVED + FIXED 2026-07-23** (`07ffd97`). Root cause traced live: intent IS `SETTINGS_HELP` and `_settings_tab_for` resolves `general` (its keywords already cover base/reporting currency · timezone · long-term — the General tab's whole control set, surveyed), but the page-settings fact was **absent from `help_facts`**, so reordering promoted nothing. **FIX: INJECT** the page-settings fact for the resolved tab (built identically to `help_facts` via `_settings_help_fact`) when absent, then sort first → the DETERMINISTIC scope returns the single `Settings·<tab>` hit + its labeled link. **Gated on `SETTINGS_HELP` + a resolved tab**, so a data question that merely contains a tab word (`"currency allocation"` → `ALLOCATION_ANALYSIS`) is untouched (regression-verified). Generalises to every tab (PIN→system, no-egress→privacy, api key→data-feeds). **FAIL-FIRST (RED-first):** `test_nav_answer_INJECTS_settings_when_the_ranker_misses_the_control` + `test_settings_injection_covers_the_other_general_controls` — RED pre-fix (base currency→8-fact pack; timezone→`['Help · Heatmap']`), GREEN post; scope file **6/6**. **Live re-verify both themes:** single `Help · Settings` + **"Open General settings"** → navigates `#/settings?tab=general`, 0 console errors (`r54-f11-basecurrency-{light,dark}`). No frontend change (askLinks already maps `general`→"General settings"); no contract change. |
 
 *Rows F-n (walk findings) are appended below this table as the milestone runs. **The CLOSED claim
 enumerates I-rows, F-rows and lettered sub-findings alike.***
@@ -2896,6 +2900,27 @@ With 3a green, the walk is for **judgment** — copy, feel, semantics, ratificat
 3a should have caught. Each finding becomes a numbered **F-n row in the §-ledger**, fixed and
 **re-verified live**. **The owner closes the phase.**
 
+#### ✅ RECORDED 2026-07-23 — the owner's 3b walk (chat ruling, dispositions verbatim intent)
+
+The owner walked the three accepted steps on his instance. **RATIFIED as walked:** the tier-1 **(b)
+action answers** (the scoped labeled links), the **honest miss**, and the **posture strings**. Three
+items came off the walk, each dispositioned:
+
+- **Posture truth under a LIVE model (walk item 2)** — verifying the posture line's truth when an
+  actual model is configured (the `local_openai` / `remote` states this isolated no-model instance
+  could not reach) is **CARRIED to R-57 acceptance** (AI model management — the milestone that ships
+  provider configuration, so the live-model posture is verifiable there on its own surface).
+- **Finding 1(a) — answer relevance ordering + fact-group separators** → **pre-release backlog row
+  "Ask answer relevance ordering + fact-group separators"** (a refinement of how the fact pack is
+  ordered/grouped for readability; not release-blocking, not an honesty defect).
+- **Finding 1(c) — the base-currency settings link** → **F-11** (FIX BEFORE CLOSE; see the ledger
+  row — RESOLVED `07ffd97`).
+
+**The owner closed the phase** with F-11 as the one fix-before-close and the other two dispositioned
+forward. **The close proceeds.**
+
+#### ✅ CLOSE EXECUTED 2026-07-23 — see the [§CLOSE record](#close--under-the-help-currency-law) below.
+
 ### CLOSE — under the Help Currency Law
 
 - **§-ledger CLOSED** — enumerating **I-1, I-2, I-3** and every **F-n**. **⚠ I-1 (contention
@@ -2912,6 +2937,59 @@ With 3a green, the walk is for **judgment** — copy, feel, semantics, ratificat
 - **The two-commit hash-citation pattern** where a record must cite its delta's hash: **delta, then
   records-only citation. Never amend-to-substitute — an amended citation dangles.**
 - **NO PUSH** (harness classifier; the owner pushes).
+
+#### ✅ CLOSE RECORD — 2026-07-23 (under the Help Currency Law)
+
+**§-LEDGER CLOSED — every intake row, F-row and sub-finding carries a disposition** (the §19-K bar;
+this plan was the rule's first user, so the enumeration is exhaustive, not a sample):
+
+| Row | Disposition | Cite |
+|---|---|---|
+| **I-1** contention robustness | ✅ RESOLVED+FIXED — session-poison rollback recovery + ORM-reads-ahead | `95d14a5` |
+| **I-2** fixture hygiene | ✅ RESOLVED+FIXED — posture mocks obviously synthetic; the 3rd byte-identical served string handled | `c124eda` |
+| **I-3** posture descriptor | ✅ DISPOSITIONED — UNIFY on "Ollama-compatible"; "Hailo" left served copy | §9-G |
+| **F-1** `Total liabilities` not a GLOSSARY term | ✅ RATIFIED+CLOSED — GLOSSARY `Liabilities` added spec-first; carve-out deleted | `2c0016d`/`fa7b656` |
+| **F-2** allocation weights omit 3 classes (92.1%) | ✅ SURVEYED+RULED+FIXED — dead grouping deleted, registry re-points per-class enum-derived (sums to 100) | `125cac5` |
+| **F-3** pack money formatter destroys sub-cent | ✅ RULED+FIXED — `_fmt` deleted, `money.py` owns all rendering | `33f57bf` |
+| **F-4** watchlist fact fidelity (no order_by) | ✅ FIXED — explicit sort in the AI path | `7ba669f` |
+| **F-5** pct/ratio/count rendered inline | ✅ RULED+FIXED — declared `value_kind` dispatch, `money.py` variants | `a8c89f5` |
+| **F-6** ⛔ word-boundary regression killed stems | ✅ FIXED — stems carry `\w*`; 0/16 misrouted; inflected-form probes | `7ba669f` |
+| **F-7** per-item annotations inline (two-faces) | ✅ SURVEYED+RULED+FIXED — the declared PackContext tier + census guard | `46a9d05` |
+| **F-8** fabricated `0.00%` on a perf timeout | ✅ RESOLVED+FIXED + RED-first guard; **page-portfolio rite discharged at 3a** | `7824327` / `0198179` |
+| **F-9** thin-history `0.0` (WIDER site) | ✅ RULED DEFERRED → ROADMAP **R-62** (documented ambiguity = quality, not honesty defect) | R-62 |
+| **F-10** systemic test-isolation order-dependence | ✅ RESOLVED+FIXED (4 vector classes) + permanent census guard; **BOTH VERDICTS sampled green** | `36955a6`/`306cf6e` |
+| **F-11** base-currency → no Settings link | ✅ RESOLVED+FIXED — inject page-settings fact for the resolved tab; RED-first; live re-verified | `07ffd97` |
+
+**3b walk dispositions** (owner, 2026-07-23): (b)/misses/posture **RATIFIED as walked**; walk item 2
+(posture truth under a live model) → **R-57 acceptance**; finding **1(a)** (answer relevance ordering +
+fact-group separators) → **pre-release backlog**; finding **1(c)** → **F-11** (fixed above).
+
+**STRIKE-CHECK — every claim reconciled against the actual diff.** F-11 is the diff `07ffd97`
+(`tools.py` inject + 2 fail-first guards + 2 live-re-verify shots), not a claim. The Help delta is a
+real byte change (below). The 3a pre-pass is 15 committed screenshots + DOM assertions, not a report.
+No CLOSED disposition rests on a change absent from a commit.
+
+**HELP CURRENCY (§9-I) — the delta that shipped, guard-corroborated.** R-54's Help delta shipped in
+Phase 1 `caa23da` (W-7: `term-xirr-twr` body/improves *"not applicable"* → *"unavailable"*, aligning Help
+with the tier-1 rendering; and the `POSTURE_NO_EGRESS` served string recut to *"no model narration"*). **The
+close ships one further currency fix caught by the strike-check:** the `ask` entry's `interpret` prose still
+described no-egress as *"no AI narration"* — the exact phrasing W-7(ii) rejected for the served string
+(built-in intelligence *is* AI and still answers) — now brought into line: *"no **model** narration"*
+(`help.py`). **HELP CURRENCY SUITE green** (`test_help_content_accuracy` + `test_glossary_parity` + the
+built-page/casing guards) — guard-corroborated; *"no Help impact" was never available to this milestone.*
+No new sanctioned term (no GLOSSARY change); the frontend `glossary.ts` popover is untouched.
+
+**GATES.** Backend **2111 passed / 15 skipped, exit 0 — SOLO, ordered AND randomized** (ordered
+`-p no:randomly` 18:58; randomized `--randomly-seed=1` 19:04 — the F-10 known-hard order, in by
+construction; both on the final tree incl. F-11 + the Help fix). 2111 = 2109 baseline + 2 F-11 tests.
+`make lint` (ruff) **PASS** on the changed files · contract **141 paths / 71 schemas unchanged** (no
+`response_model` added — R-54 pins the AI shapes via its own served-shape tests, R-61 owns the durable
+typing) · **Help currency suite green** (in the backend verdicts). **Frontend untouched** (F-11 backend-only;
+askLinks already mapped `general`→"General settings") — no `frontend/src` file in the diff, so `npm run
+check` is unchanged from the last green run. **F-10 close gate satisfied** — both verdicts green.
+
+**KB-SYNC** at the session-report tail, derived from the diff. **Two-commit hash-citation pattern** honoured
+(delta `07ffd97`, then records citing it). **`CURRENT.md` flipped in the close commit's diff.** **NO PUSH.**
 
 ---
 

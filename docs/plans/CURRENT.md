@@ -92,34 +92,50 @@ The product shell + every built page + the platform milestones, owner-accepted:
   `feeds.py:72–78`, **`briefing.py:201–207`** (a generic helper, so widest blast radius),
   `settings.py:131–135`, `system.py:617–621` (plus `seed/demo.py:327`, adjacent variant).
 
+- **R-54 — deterministic answer intelligence, the two-tier Ask panel (D-067)** — **CLOSED 2026-07-23**,
+  `r54-deterministic-answers.md` §-ledger **CLOSED** (I-1..I-3 + F-1..F-11, every disposition) · Phase 3a
+  scripted pre-pass (45/45, both themes, 0 console errors, 15 shots) · Phase 3b owner walk RATIFIED · §16
+  CLOSE record. **THE TWO-TIER ASK PANEL** — tier-1 deterministic answering (intent routing + canonical
+  endpoints, **zero network calls by construction**, works under no-egress **local, not dark**) vs tier-2
+  model narration (egress-gated, R-22 amendment). **The panel EXPLAINS AND POINTS** — figure facts carry a
+  trailing pointer, a scoped action/nav answer carries a labeled link line ("Open Holdings" / "Open General
+  settings"); an unroutable question is an **honest miss** (`REFUSAL_UNROUTABLE`), never a nearest match.
+  **ONE registry** (`figure_registry.py`) — term → canonical GLOSSARY label → canonical endpoint, analytics'
+  `term_id` a derived reverse index. **ONE router** (`classify_intent`, word-boundary; the substring hazards
+  are RED specimens). **Every figure via the fact-pack projection, never recomputed** (one-derivation law;
+  pack == canonical proven live). **F-8** — perf-timeout metrics render `"—"`, never a fabricated `0.00%`.
+  **F-11** (3b finding, fixed before close, `07ffd97`) — a settings-control question the ranker misses now
+  injects the page-settings fact for the resolved tab → the scoped `Settings·<tab>` link. Backend **2111
+  solo, ordered AND randomized**; contract **141/71** unchanged; Help currency (`ask` entry current, W-7
+  vocabulary consistency). `RATIFICATION.md §6` row appended. **⚑ Filed/deferred:** **F-9→R-62** (thin-history
+  `0.0`, post-release) · **R-61** (typed AI response models, post-release) · walk item 2 (posture under a live
+  model) → **R-57 acceptance** · finding 1(a) (answer relevance ordering + fact-group separators) →
+  pre-release backlog. **⊕ R-63 FILED** at the close (RD-9 Amendment 11, ⚡ pre-release, see NEXT).
+
 ---
 
-## NEXT — R-54 (deterministic answer intelligence, the two-tier Ask panel) — **§9 CLOSED, BUILD AUTHORIZED**
+## NEXT — R-63 (Pricing routing reliability) — **⚡ PRE-RELEASE, RD-9 Amendment 11**
 
-**⊕ 2026-07-20 — F10 is SHIPPED (`63ec86a`, see DONE above); the release train moves to R-54.**
+**⊕ 2026-07-23 — R-54 is CLOSED (owner-accepted; see DONE below); the release train moves to R-63.**
 
-**⊕ 2026-07-20 — §9 CLOSED (owner one-pass, in chat).** All ten items plus the carried intake ruled;
-`r54-deterministic-answers.md` §9 carries each resolution with the owner's verbatim rationale. **Build
-is authorized**, backend-first from Phase 0. Two rows filed from the §0-F dead-affordance findings:
-**R-59** (add-holding form URL-addressable — ⚡ v2.0.0, RD-9 **Amendment 10**) and **R-60**
-(control-level Settings deep linking — post-release). The plan's §-ledger carries **I-1** (contention
-robustness), **I-2** (fixture hygiene) and **I-3** (posture descriptors, resolved as §9-G); **no CLOSED
-claim is admissible until each has a disposition.**
+**⊕ 2026-07-23 — R-63 FILED (owner ruling at the R-54 close, RD-9 Amendment 11).** *"data is the core
+of this platform, can't leave it so loose" / "needs to be fixed once and for all."* Pricing routing can
+leave holdings unpriced in ways reported as a flat "none", masking distinct causes. **INVESTIGATION-FIRST
+— a hard gate:** the milestone opens with a **read-only diagnosis on the owner's live instance** (logs +
+one instrumented refresh; **never mutate his data, never print keys**), then the fix is shaped by five
+recorded survey inputs — (a) a rule pins the chain's head, never removes the fallback net; (b) failure
+states named precisely (throttled/unmapped/errored/empty ≠ one "none"); (c) per-symbol empty-result honesty
+(the `.BSE` suspect); (d) provider preflight + a "provider doctor" live-chain test on Pricing Health;
+(e) cache staleness honesty for forming bars. **Plan-file gate standard.** See `ROADMAP.md` R-63,
+`release-readiness.md` RD-9 Amendment 11.
 
-RD-9 Amendment 7 scope. Carries the plan-file gate standard: own plan file,
-survey-first, §9 one-pass, full loop. **Its tier-1 SEED already shipped** — the no-egress
-deterministic answering built at AI-surfaces 0a (`ai-surfaces.md` §12-3 records the string as its
-first artifact), and **R-54 owns the posture-copy amendment** when tier-1 formally lands. Stated
-here because it is the cross-reference easiest to lose between milestones.
+## THEN — the road to v2.0.0 (RD-9 Amendment 4 + 5 + 6 + **7** + **8** + **9** + **10** + **11**)
 
-## THEN — the road to v2.0.0 (RD-9 Amendment 4 + 5 + 6 + **7** + **8**)
+The remaining v2.0.0 set, in sequence (**R-54 is CLOSED** — see DONE; the active NEXT above is **R-63**):
 
-The remaining v2.0.0 set, in sequence (**AI-surfaces is CLOSED** and **F10 is SHIPPED** — see DONE;
-the active NEXT above is the **R-54 kickoff**):
-
-> **R-54 → R-59 → R-58 → R-57 → R-55 → R-45 → R-46 → R-39 → pre-release walk → Gates C→F → tag v2.0.0**
-> *(RD-9 Amendment 8, extended by **Amendment 9** — R-58 after R-54 — and by **Amendment 10** —
-> R-59 phase 1 inserted immediately after R-54, before R-58.)*
+> **R-63 → R-59 → R-58 → R-57 → R-55 → R-45 → R-46 → R-39 → pre-release walk → Gates C→F → tag v2.0.0**
+> *(R-54 CLOSED 2026-07-23; RD-9 Amendment 8/9/10, extended by **Amendment 11** — R-63 leads the
+> post-R-54 set, owner-ruled fix-once-and-for-all; architect sequencing under delegation, reversible.)*
 
 **⊕ RD-9 SCOPE AMENDMENT 7 (owner, 2026-07-20) — the set GREW by two**, both raised by the owner
 **using the shipped Ask panel** at the 0a walk: **R-54** (deterministic answer intelligence — the
@@ -139,12 +155,12 @@ strings rather than moving ones** (architect sequencing under delegation, **reve
 2. ~~**Legal**~~ — **CLOSED 2026-07-20** (DONE above).
 3. ~~**AI-surfaces**~~ — **CLOSED 2026-07-20** (DONE above).
 4. ~~**F10**~~ — the fresh-DB `get_history_cached` race — **SHIPPED 2026-07-20** (DONE above).
-5. **R-54** — deterministic answer intelligence, the two-tier Ask panel (RD-9 Amendment 7).
-   **§9 CLOSED 2026-07-20** (owner one-pass, in chat); build authorized. **Carries three intake
-   items as numbered §-ledger rows** (chat ruling 2026-07-20, `ROADMAP.md` R-54): **I-1** the
-   **contention-robustness fix** re-assigned from AI-surfaces (`ai-surfaces.md` §19-K), **I-2**
-   **fixture hygiene** in `AskPanel.test.tsx:27` (⚠ premise corrected — the string is **live**, not
-   retired; r54 §0-K), and **I-3** **posture-descriptor unification**, resolved as §9-G.
+5. ~~**R-54**~~ — deterministic answer intelligence, the two-tier Ask panel — **CLOSED 2026-07-23**
+   (owner-accepted; see DONE above). §-ledger CLOSED (I-1..I-3, F-1..F-11); F-9→R-62, F-11 fixed
+   (`07ffd97`). `RATIFICATION.md §6` row appended.
+5a. **R-63** — **Pricing routing reliability** (RD-9 **Amendment 11**, owner ruling at the R-54 close).
+   ⚡ pre-release, **investigation-first** (read-only live diagnosis before code); data-integrity is the
+   platform's core, ruled fix-once-and-for-all. **Leads the post-R-54 set.** See `ROADMAP.md` R-63.
 6. **R-59** — **URL-addressable add-holding form, phase 1** (RD-9 **Amendment 10**, from R-54's
    §0-F dead-affordance finding). Completes the owner's tier-1(b) example, which is **unbuildable
    until this route exists**. Delta-scale; Holdings is closed, so it ships under the

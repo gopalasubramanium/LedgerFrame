@@ -673,6 +673,42 @@ tests. Never assemble the page against an endpoint that does not exist.*
 > render**. Likewise a **mutation proof run against the hot-reloading dev server can measure a STALE
 > module** — wait for the rebuild, or the proof is worthless.
 
+> **THE R-54 CLOSE LESSON SET (owner, 2026-07-23) — mechanised here so they run rather than get remembered:**
+>
+> - **SEED-LUCKY GREENS.** `ordered == randomized` corroboration is only as strong as the isolation beneath it
+>   — a green pair can be two lucky orders over the same latent debt (R-54 F-10: a whole class of tests passed
+>   by *leaked* schema/data/config until randomization moved the order). **Mechanism:** a **module-state census
+>   guard** (`test_module_state_census.py` — every runtime-mutated module global must be in a declared reset
+>   registry, RED on an unregistered one *incl. `@lru_cache`*) **+ many-seed sampling, honestly labelled as
+>   sampling, not proof** (seeds pre-declared, no re-rolls). *What turns red:* a new unreset global; a sampled seed.
+> - **A GATE'S TOOLING MUST BE A DECLARED DEPENDENCY.** An ad-hoc `pip install` is a gate that can silently
+>   vanish — `pytest-randomly` did, and its absence was then mis-explained as ADR-gated (invented-citation class).
+>   The randomized verdict is only reproducible if the randomizer is in `pyproject.toml [dev]`. *What turns red:*
+>   nothing automatically — so this is a **close-checklist line**: name the gate tools and confirm each is a
+>   manifest dependency, not a warm-venv accident.
+> - **CAPABILITY vs PROPERTY — a test that verifies a property has not verified the capability.** R-54 Phase 0-4:
+>   the whole suite stayed green while 6/9 intent probes misrouted, because the one performance test reached its
+>   assertion by a *second* route (its question also contained "risk"). **A test that can reach its assertion two
+>   ways cannot tell you one broke.** *What turns red:* probe the **capability through its real inputs** (inflected
+>   real questions), not the property in the abstract; add a **blindness pin** that reds if the probe stops probing.
+> - **NULL SAID, NOT SWALLOWED.** `x = ps.get(k) or 0.0` conflates MISSING with a genuine zero and fabricates a
+>   figure (R-54 F-8: `1Y volatility 0.00%` on a covered-window timeout — Guarantee 3). Keep `None`, let the
+>   **established honest shape** render (frontend `"—"`, AI-pack omit) — **coin no new rendering**; a genuine `0.0`
+>   still renders its zero. *What turns red:* a RED-first forced-absence guard with a **blindness pin** so the value
+>   can't null for the wrong reason.
+> - **SPECIMEN/FIXTURE HAZARDS — a byte-identical served string in a test is a grep-and-specimen trap.** A fixture
+>   that mocks a *live* served string (R-54 I-2) means a grep for that string finds a test file and a specimen can't
+>   tell fixture copy from product copy. **Sweep the WHOLE fixture object, not the named literals** (I-2's row named
+>   two; a third byte-identical string sat in the same object). Make where-only-*a*-string-is-needed copy **obviously
+>   synthetic**; keep non-tautological pins pinning **the** served string.
+> - **UTF-8-SAFE EDITS ON KB-MIRRORED FILES.** Specs carry `—` `↗` `−`(U+2212) `·` — a byte-level or mojibake-prone
+>   edit corrupts them silently and the KB mirror then teaches the corruption. Edit KB-mirrored files (`docs/`,
+>   `ROADMAP.md`, `CLAUDE.md`, `DECISIONS.md`) UTF-8-safe; a rendered `?`/`�` where a glyph belongs is a defect.
+> - **DELIBERATE ROTATION — a dedicated fresh session for a re-drive-prone task.** The careful isolated pre-pass
+>   (both themes, whole surface, camera-over-green) is worth **rotating into its own session** rather than rushing
+>   at a tired session's tail; a hasty green on a pre-pass is worse than none, because the pre-pass exists to catch
+>   what the owner's walk otherwise would. *Mechanism:* the SESSION-END STATE hands off in **files, not memory**.
+
 ## 9. NEEDS DECISION
 
 *Everything the specs under-specify, listed for the owner **before** build. Do

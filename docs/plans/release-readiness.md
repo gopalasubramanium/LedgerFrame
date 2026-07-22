@@ -3,10 +3,35 @@
 **Status: ⏸ GATES C–F STANDING/DORMANT. GATE A CLOSED (+ A9–A11 addendum) · GATE B CLOSED
 (owner-ratified). RELEASE REQUIRES FULL COMPLETION (RD-9 Amendment 3, as REFINED by Amendment 4 and
 EXTENDED by Amendments 5 + 6, owner 2026-07-18, by Amendment 7, owner 2026-07-20, by
-Amendment 8, owner 2026-07-20, by Amendment 9, owner 2026-07-20, and by **Amendment 10, owner
-2026-07-20** — Voice is POST-RELEASE; the v2.0.0 set is enumerated below,
-now incl. R-45 + R-46 + R-43 (with R-8) + R-54 + R-55 + R-57 + R-58 + **R-59 (phase 1)**; the R-41/R-43/R-44 ruling is now RESOLVED by Amendment 6 — R-43 IN, R-41 + R-44
+Amendment 8, owner 2026-07-20, by Amendment 9, owner 2026-07-20, by **Amendment 10, owner
+2026-07-20**, and by **Amendment 11, owner 2026-07-23** — Voice is POST-RELEASE; the v2.0.0 set is enumerated below,
+now incl. R-45 + R-46 + R-43 (with R-8) + R-54 + R-55 + R-57 + R-58 + **R-59 (phase 1)** + **R-63**; the R-41/R-43/R-44 ruling is now RESOLVED by Amendment 6 — R-43 IN, R-41 + R-44
 POST-RELEASE).**
+
+> ## ⚠ RD-9 SCOPE AMENDMENT 11 (owner, 2026-07-23, chat — **at the R-54 close**) — **v2.0.0 scope += R-63.**
+>
+> The enumerated set grows by one — **R-63, Pricing routing reliability** (`ROADMAP.md` R-63).
+>
+> **Origin.** At the R-54 close the owner ruled pricing-routing reliability a **pre-release** milestone:
+> *"data is the core of this platform, can't leave it so loose"* / *"needs to be fixed once and for all."*
+> The routing chain can leave holdings unpriced in ways reported as a single flat "none", masking distinct
+> causes (throttled / unmapped / errored / empty).
+>
+> **INVESTIGATION-FIRST — a hard gate on the fix.** The milestone opens with a **read-only diagnosis on the
+> owner's LIVE instance** (logs + one instrumented refresh) to see the real failure distribution before any
+> code is shaped. **Never mutate his data; never print keys/secrets.** The fix is then shaped by **five
+> recorded survey inputs** (owner's sources — Vibe-Trading review, MIT, *ideas-not-code*): **(a)** a rule pins
+> the chain's HEAD, never removes the fallback net (the shipped Settings routing sentence becomes true);
+> **(b)** failure states named precisely (throttled/unmapped/errored/empty ≠ one "none"), surfaced in Pricing
+> Health diagnostics; **(c)** per-symbol empty-result honesty (the `.BSE` suspect); **(d)** provider preflight
+> + a "provider doctor" live-chain test on Pricing Health; **(e)** cache staleness honesty for forming bars.
+>
+> **Sequencing: R-54 close → R-63 → R-59 → R-58 → R-57 → R-55 → R-45 → R-46 → R-39 → walk → tag**
+> *(architect sequencing under standing delegation, 2026-07-23 — **reversible**; an ordering judgement, not a
+> scope ruling)*. R-63 leads the post-R-54 set because data integrity is the platform's core and the owner
+> ruled it fix-once-and-for-all.
+>
+> **The release gate remains FULL COMPLETION of the enumerated set (Amendment 3).**
 
 > ## ⚠ RD-9 SCOPE AMENDMENT 10 (owner, 2026-07-20, chat — **R-54 §9 one-pass**) — **v2.0.0 scope += R-59 phase 1.**
 >

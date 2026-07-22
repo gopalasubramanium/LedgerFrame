@@ -308,7 +308,7 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 
 | Row | Source | Item | Disposition |
 | --- | --- | --- | --- |
-| I-1 | §0-A / §0-B(i,ii) | AV entitlement-envelope parse-miss (root cause) collapsed into one "empty" message | OPEN → Phase 0 |
+| I-1 | §0-A / §0-B(i,ii) | AV entitlement-envelope parse-miss (root cause) collapsed into one "empty" message | **DISCHARGED — Phase 0 `e3dd4e7`** (tolerant `Global Quote*` parse + `_raw_fx` audit; fail-first RED on the real probe-#1 envelope, green after; genuine-empty probe-#5 still no-price). The *collapse into one message* half (distinct failure STATE) is Phase 2 (I-3). |
 | I-2 | §0-B(iii) | No fetch-time fallback net — priority chain is display-only, never walked; yahoo never called | OPEN → Phase 1 |
 | I-3 | §0-B(ii) | Distinct failures collapsed at three layers (adapter / refresh / cache) | OPEN → Phase 2 |
 | I-4 | §0-B(i) | Two-premiums conflation — `av_tier` learns only from INDEX_DATA; Settings "premium" is a coarse config claim | OPEN → Phase 2 |

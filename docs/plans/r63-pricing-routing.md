@@ -316,6 +316,18 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 | I-6 | §9-i | Duplicate TSLA instrument (id 22 / id 23) — **invariant question**: did the product permit the duplicate? If so, that is an architectural finding (root-cause it); owner cleans his live data via the UI once the cause is known | OPEN → Phase 1 (invariant probe) |
 | I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | OPEN → Phase 2 |
 
+### Phase verdicts (full backend suite — the completion gate; a phase is not complete on a subset)
+
+Verdict cadence (owner ruling 2026-07-23): mid-phase deltas may gate on (new tests both seeds) +
+a stated domain subset as an INNER-LOOP signal, but a **phase is complete only when the FULL
+backend suite passes ordered AND randomized (declared seeds)**; the close requires it regardless.
+
+| Phase | Full-suite ordered (`-p no:randomly`) | Full-suite randomized (`--randomly-seed=6363`) |
+| --- | --- | --- |
+| **1 — execution net** (`95df927`) | **2121 passed, 15 skipped** (22:37) | **2121 passed, 15 skipped** (21:52) |
+
+**Phase 1 is COMPLETE** on the full-suite verdict (both orders green), not merely the subset.
+
 ---
 
 ## 9. NEEDS DECISION — **CLOSED 2026-07-23 (owner one-pass, in chat).**

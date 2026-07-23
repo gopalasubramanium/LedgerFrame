@@ -231,6 +231,16 @@ no key survives the logs. Inner-loop green (AV+doctor 18, pricing-health 4, ruff
 **Full backend suite both orders running** on the final code (W-b checkpoint was 2150). **NEXT: report the
 both-orders verdict → 3a → STOP for the owner's live 3b → close.**
 
+**⊕ 2026-07-24 (3a) — CLOSE VERDICT + scripted pre-pass DONE → HARD STOP for the owner's live 3b.**
+Full backend suite **2154 passed, 15 skipped — BOTH orders, SOLO, seed 6363** (ordered 28:07 · randomized
+20:15). Reconciliation 2135→2154 (+19): P3.5 +8, P4 +1, P5 +6, W-b +0 (rename), F-A +1, F-B +3; **15 skips
+= longstanding baseline, R-63 added ZERO**. **F-A/F-B DISCHARGED** as ledger **I-8/I-9** (`05be910`/`a1793d8`);
+F-B has the distinct URL-`apikey=` redaction test. **3a scripted pre-pass 28/28**, both themes, 0 console
+errors — F-A refreshed frame on camera (manual rows read `manual`); shots `r63-3a-*`. Discharges the rite's
+re-run half for F-A. **HARD STOP — the 3b is the owner's, live, in chat** (his TSLA cleanup, his Refresh,
+the entitled verified-tier cell). Then the full close ritual (I-1..I-9 all DISCHARGED, strike-check, Help
+currency, RATIFICATION row).
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

@@ -783,3 +783,51 @@ Full backend suite (both orders, seed 6363) running on the final F-A/F-B/W-b cod
 F-A). **Next: report the both-orders verdict → 3a scripted pre-pass → STOP for the owner's live 3b (his
 TSLA cleanup via Holdings, his real Refresh, the entitled verified-tier cell on his real key) → close per
 the full ritual.** F-A's refreshed manual-rows frame lands in the close's final specimen set.
+
+---
+
+## SESSION — 2026-07-24 (3a) — CLOSE VERDICT + scripted pre-pass → HARD STOP for the owner's live 3b
+
+### Full backend-suite CLOSE VERDICT — both orders, SOLO/uncontended, seed declared
+| Order | Result | Time |
+| --- | --- | --- |
+| ordered (`-p no:randomly`) | **2154 passed, 15 skipped** | 28:07 |
+| randomized (`--randomly-seed=6363`) | **2154 passed, 15 skipped** | 20:15 |
+
+Both runs **SOLO** (no overlapping pytest — the verdict was captured before any browser drive; census/3a
+ran only after). **Seed 6363** declared. Count matches the pre-stated **2154** exactly.
+
+**Suite-count reconciliation (2135 → 2154, +19, itemized per test file — the WHOLE post-Phase-3 delta):**
+- **Phase 3.5 (+8)** → 2143 — `test_instrument_identity_guard.py` (**8**: 7 guard + 1 `test_resolver_recovers_from_locked_writer` hardening).
+- **Phase 4 (+1)** → 2144 — `test_data_source.py` (verified-tier `quote_entitlement` distinct from `av_tier`).
+- **Phase 5 (+6)** → 2150 — `test_provider_doctor.py` (**6**).
+- **W-b (+0)** → 2150 — `test_provider_doctor.py` test RENAMED (`test_proposed…` → `test_unprobed…`), assertions changed in place; net 0.
+- **F-A (+1)** → 2151 — `test_pricing_health.py::test_manual_holdings_serve_a_source_word_never_null`.
+- **F-B (+3)** → 2154 — `test_av_quote_envelope.py`: `test_quote_error_…`, `test_index_error_…` (observed path), `test_urlembedded_apikey_form_…` (the URL `apikey=<KEY>` form).
+
+**15-skip census:** the **15 skips are the LONGSTANDING milestone baseline, unchanged** — Phase 1 was
+`2121 passed, 15 skipped`; every phase since reports `… 15 skipped`; **R-63 introduced ZERO new skips**
+(+33 passed / +0 skipped across the whole milestone). Known conditional skips include
+`test_fact_pack_kinds.py:123` (return/vol shape date-dependent) and `test_glossary_parity.py:114`
+(a declared heading that is not a term); the remainder are pre-existing `skipif`/optional-path skips
+constant across the milestone. (Contract line unchanged this loop: **143 paths / 71 schemas** — no new
+endpoint; the doctor stays `-> dict`, F-A/F-B touch no contract.)
+
+### 3a scripted pre-pass — 28/28 assertions PASSED, both themes, 0 non-benign console errors
+Driven on the isolated stack (temp DATA_DIR + the seeded DB; his live stack/key never used — key
+overridden to `INVALID-DOCTOR-TEST`; `.env` hash-verified identical; stack torn down, ports free,
+throwaway deleted). Assertions cover: head=X/priced-by=Y present; **NO `null (head manual)` token
+anywhere + manual rows read `manual`** (F-A, on camera — `r63-3a-manual-source-row-*`); duplicate banner;
+throttled drawer copy + "last at"; **unsupported drawer = no source + served note** (SGB2032); doctor
+**alphavantage FAIL** + **coingecko `not_run`** + `total_calls≥1`; recut routing sentence; provider-head
+card; verified-tier "not yet verified / free"; **0 console errors** each theme. Shots:
+`docs/plans/assets/r63-3a-{pricing-health,manual-source-row,unsupported,doctor-fail,settings-datafeeds}-{light,dark}.png`
+— the **close's final specimen set**, including the refreshed F-A frame. **This discharges the re-run
+half of the accepted-surface rite for the F-A delta** (delta-note half already in `page-pricing-health.md`).
+
+### HARD STOP — the 3b is the owner's, live, in chat
+Remaining before close, all **owner-hands / live**: his **TSLA duplicate cleanup** via Holdings, his
+**real Refresh** (proving the parse-fix + execution net price his TSLA/SBICARD.BSE/AARK), and the
+**entitled verified-tier cell** on his real premium key ("Quotes: delayed / Indices: premium"). After
+his live 3b: the **full close ritual** (§-ledger CLOSED — I-1..I-9 all DISCHARGED; strike-check; Help
+currency; `RATIFICATION.md §6` row; KB-sync). **No 3b executed here. HARD STOP.**

@@ -287,7 +287,9 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
     from app.core.provenance import health_status as _status
     from app.core.provenance import valuation_label
     from app.models import Instrument
+    from app.providers.market import get_provider
     from app.services.market import (
+        _DEMO_SOURCES,
         _repair_once_per_install,
         repair_quote_demo_residue,
         route_for_instrument,
@@ -296,11 +298,13 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
     # R-63 F-C (I-10, the migration rider): one-time served purge of stored demo/synthetic quote
     # rows on a LIVE instance (idempotent, guarded by a Setting marker so it scans once per install).
     # Runs BEFORE valuation so a phantom mock price never reaches this diagnostic surface or the
-    # headline; a fresh/clean DB has none, so it is a cheap no-op there. Gated on the active provider
-    # inside the repair (a no-op in demo mode). Surfaces honestly: the row then reads its true
-    # unpriced/typed state instead of a high-confidence fabrication.
-    await _repair_once_per_install(
-        session, "quote_demo_residue_repaired_v1", repair_quote_demo_residue)
+    # headline; a fresh/clean DB has none, so it is a cheap no-op there. The NON-DEMO gate is at the
+    # CALL SITE (not just inside the repair) so the once-per-install marker is never claimed while in
+    # demo mode — otherwise a later demo→live switch would find the marker set and skip the purge of
+    # the demo seed's mock rows. Surfaces honestly: a purged holding reads its true unpriced state.
+    if getattr(get_provider(), "name", "mock") not in _DEMO_SOURCES:
+        await _repair_once_per_install(
+            session, "quote_demo_residue_repaired_v1", repair_quote_demo_residue)
 
     base = get_settings().base_currency
     val = await value_portfolio(session, base)

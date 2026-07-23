@@ -60,3 +60,16 @@ async def test_manual_holdings_serve_a_source_word_never_null(app_client):
     for h in manual:
         assert h["source"] == "manual", f"manual holding served source={h['source']!r} (F-A)"
         assert h["route_source"] == "manual"  # the pair the Source column joins — now consistent
+
+
+async def test_quote_demo_residue_repair_is_inert_in_demo_mode(app_client):
+    """R-63 F-C (I-10) — the migration rider is gated to LIVE instances. The demo seed is the mock
+    provider, so its ``source='mock'`` quotes are legitimate; a pricing-health read must NOT purge
+    them (and must not claim the once-per-install marker, or a later demo→live switch would skip the
+    real purge). Route-level pin: the mock-priced demo holdings survive the read, twice."""
+    first = (await app_client.get("/api/v1/portfolio/pricing-health")).json()
+    priced = [h for h in first["holdings"] if h.get("source") == "mock"]
+    assert priced, "the demo seed should carry mock-sourced quotes"
+    second = (await app_client.get("/api/v1/portfolio/pricing-health")).json()
+    still = [h for h in second["holdings"] if h.get("source") == "mock"]
+    assert len(still) == len(priced), "demo mock quotes must survive the pricing-health read (not purged)"

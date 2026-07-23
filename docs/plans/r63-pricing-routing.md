@@ -242,11 +242,11 @@ decision (copy hygiene: name a fact, never an endpoint).
   refresh can starve a holding of its one daily call.
 
 **Doctor (§9-4).**
-- [ ] **AC-13** Provider doctor is an **on-demand button**, spends **≤1 egress call per lane per
+- [x] **AC-13** Provider doctor is an **on-demand button**, spends **≤1 egress call per lane per
   run**, **counts calls on screen**, verdicts **redacted** (key presence / reachability /
   known-symbol resolve — never the key, never a holding value). *Red when:* it auto-runs, exceeds
   the budget, or leaks a secret/value.
-- [ ] **AC-14** The doctor **would have caught this bug** — a lane returning 200-with-data that
+- [x] **AC-14** The doctor **would have caught this bug** — a lane returning 200-with-data that
   parses empty reports **FAIL (parse)**, not PASS. *Red when:* a parse-empty lane reports healthy.
 
 **Instrument-identity guard (I-6, §9-i ADDENDUM — Phase 3.5).** *(All met — `e7a7e94`.)*
@@ -368,6 +368,7 @@ backend suite passes ordered AND randomized (declared seeds)**; the close requir
 | **2 — failure taxonomy** (`9d54f4f`·`34974b6`·`c882648`) | **2130 passed, 15 skipped** (18:01, `--durations=30`) | **2130 passed, 15 skipped** (18:17) |
 | **3 — free-first + budget** (`2a9fa1e`) | **2135 passed, 15 skipped** (17:16) | **2135 passed, 15 skipped** (17:09) |
 | **3.5 — instrument-identity guard** (`e7a7e94` + hardening `e2ab16e`) | **2143 passed, 15 skipped** (17:43) | **2143 passed, 15 skipped** (17:07, seed 6363) |
+| **4 + 5 — surface deltas + provider doctor** (`7ef6f15` · `b72ee18`) | *(running — combined pair, solo)* | *(owed after ordered)* |
 
 **Phase 1 · 2 · 3 · 3.5 all COMPLETE** — each on the full-suite verdict (both orders), not a subset.
 **Phase 3.5 reconciliation:** 2135 → **2143 (+8):** 7 in `test_instrument_identity_guard.py`

@@ -367,9 +367,14 @@ backend suite passes ordered AND randomized (declared seeds)**; the close requir
 | **1 — execution net** (`95df927`) | **2121 passed, 15 skipped** (22:37) | **2121 passed, 15 skipped** (21:52) |
 | **2 — failure taxonomy** (`9d54f4f`·`34974b6`·`c882648`) | **2130 passed, 15 skipped** (18:01, `--durations=30`) | **2130 passed, 15 skipped** (18:17) |
 | **3 — free-first + budget** (`2a9fa1e`) | **2135 passed, 15 skipped** (17:16) | **2135 passed, 15 skipped** (17:09) |
-| **3.5 — instrument-identity guard** (`e7a7e94` + hardening `e2ab16e`) | *(re-running on final code — solo)* | *(owed after ordered)* |
+| **3.5 — instrument-identity guard** (`e7a7e94` + hardening `e2ab16e`) | **2143 passed, 15 skipped** (17:43) | **2143 passed, 15 skipped** (17:07, seed 6363) |
 
-**Phase 1 · 2 · 3 all COMPLETE** — each on the full-suite verdict (both orders), not a subset.
+**Phase 1 · 2 · 3 · 3.5 all COMPLETE** — each on the full-suite verdict (both orders), not a subset.
+**Phase 3.5 reconciliation:** 2135 → **2143 (+8):** 7 in `test_instrument_identity_guard.py`
+(guard-off dupe repro + surface · NULL-twin blocked · case-variant blocked · distinct-listing allowed ·
+market+csv resolve to one · concurrent-create recovery · migration dupe-tolerance) + 1
+`test_resolver_recovers_from_locked_writer` (the hardening). Backend **2143 solo, ordered AND
+randomized (seed 6363)**; the first-run spillover is gone on the hardened code (0 errors both orders).
 Reconciliation: 2121 → 2130 (+9, Phase 2) → **2135 (+5, Phase 3:** 3 free-first ordering + 1
 budget counted-calls + 1 override-wins-keeps-net). Backend **2135 solo, ordered AND randomized**.
 Help currency: **no impact, guard-corroborated** (Phase 3 is internal chain policy + refresh order;

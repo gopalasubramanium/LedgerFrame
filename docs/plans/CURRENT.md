@@ -164,9 +164,25 @@ heavy integration derivation; xdist feasible with per-worker DB isolation (see R
 reordered free/keyless-before-paid within capability (chain/net order; the head — override/matrix/
 active — still wins but keeps the net); refresh budget spends holdings before overview proxies.
 Backend **2135 solo, ordered AND randomized (seed 6363)**. **R-65 Phase 2 (xdist) slotted after the
-R-63 close, before R-59.** **Next: Phase 4 — Pricing Health head/priced-by labelling + the recut
-Settings routing sentence + verified-tier display, all under the ONE accepted-surface rite discharge
-(Pricing Health + Settings); then Phase 5 provider doctor, 0a/3a/3b, close.**
+R-63 close, before R-59.**
+
+**⊕ 2026-07-24 — Phase-4 re-entry reconciliation + Phase 3.5 (I-6 instrument-identity guard) COMPLETE.**
+The ledger↔records grep at Phase-4 re-entry caught two drifts: **I-5** mislabelled OPEN after Phase 3
+shipped it (corrected → DISCHARGED); **I-6** (duplicate-instrument invariant probe) had **aged
+silently** — the assigned Phase-1 probe never ran. Root-caused: **the product PERMITTED the
+duplicate** (nullable `exchange` + SQL NULL-distinct UNIQUE + two inconsistent get-or-create keys →
+the live TSLA id-22/id-23 pair). **Owner ruled (chat 2026-07-24, §9-i ADDENDUM): FOLD into R-63,
+exactly two fixes, six riders.** Shipped as **Phase 3.5** (`e7a7e94` + hardening `e2ab16e`): one
+`resolve_or_create_instrument` (all create paths) + a functional UNIQUE index
+`uq_instr_identity_ci` on `(upper(symbol),coalesce(exchange,''))` with a **dupe-tolerant** migration
+(does not brick a live DB holding the dupe) + `GET /system/instrument-duplicates` + a Pricing Health
+"Resolve on Holdings" banner (PROPOSED). Fail-first through the real path; the guard's concurrency
+serialization surfaced (then fixed) a lock-spillover via a resolver **lost-race recovery**. Backend
+**2143 solo, ordered AND randomized (seed 6363)**; contract **142/71** (+1 UNTYPED path); frontend
+green (PricingHealth 17/17, tsc/ruff clean). **I-6 DISCHARGED; owner's live-data cleanup carried to
+0a.** **Next: Phase 4 — Pricing Health head/priced-by labelling + the recut Settings routing sentence
++ verified-tier display (I-4), all under the ONE accepted-surface rite discharge (Pricing Health +
+Settings); then Phase 5 provider doctor, 0a/3a/3b, close.**
 
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`

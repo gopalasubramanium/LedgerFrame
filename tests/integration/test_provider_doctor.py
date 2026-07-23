@@ -167,9 +167,10 @@ async def test_redaction_no_key_or_holding_price_leaks(session, monkeypatch):
         assert "api_key" not in blob and "secret" not in blob and "access_token" not in blob
 
 
-async def test_proposed_lanes_are_listed_not_probed(session, monkeypatch):
-    """The keyless-but-not-yet-buildable egress lanes are LISTED with verdict 'proposed', calls 0,
-    and never probed this milestone (their live probe is proposed for the 0a look)."""
+async def test_unprobed_lanes_report_the_honest_not_run_state(session, monkeypatch):
+    """The keyless lanes build_provider cannot construct yet are LISTED with the real state
+    'not_run' (calls 0) — a truthful "not probed on this instance", never the scaffolding
+    "proposed" that leaked onto the served surface (0a W-b)."""
     monkeypatch.setattr("app.providers.market.build_provider",
                         lambda name: _PassStub(name, []))
 
@@ -177,4 +178,6 @@ async def test_proposed_lanes_are_listed_not_probed(session, monkeypatch):
 
     for lane in ("coingecko", "ecb_fx", "amfi_nav"):
         entry = _lane(r, lane)
-        assert entry["verdict"] == "proposed" and entry["calls"] == 0
+        assert entry["verdict"] == "not_run" and entry["calls"] == 0
+        # blindness pin: the honest note must actually be served, never an empty string.
+        assert entry["note"] and "proposed" not in entry["note"].lower()

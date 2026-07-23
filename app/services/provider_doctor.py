@@ -42,10 +42,11 @@ _PROBE_SYMBOLS: dict[str, str] = {
     "kite": "INFY",
 }
 
-# The keyless egress lanes that are NOT ``build_provider``-able yet — LISTED honestly with a
-# "proposed" verdict so the response is complete, but never probed this milestone (their live
-# probe is proposed for the 0a look). PROPOSED public probe identifiers.
-_PROPOSED_LANES: list[tuple[str, str]] = [
+# The keyless egress lanes that ``build_provider`` cannot construct yet (so the doctor has no live
+# probe path to them). LISTED honestly so the response is complete, but reported with the real state
+# ``not_run`` — they were genuinely not probed on this instance. (0a W-b: "proposed" was
+# specimen-scaffolding language on a served surface; ``not_run`` is a truthful state, not a plan.)
+_UNPROBED_LANES: list[tuple[str, str]] = [
     ("coingecko", "bitcoin"),
     ("ecb_fx", "EUR/USD"),
     ("amfi_nav", "120503"),
@@ -62,7 +63,7 @@ _FAIL_NOTES: dict[FailureState, str] = {
     FailureState.UNSUPPORTED: "reached, but this lane cannot price the symbol",
 }
 
-_PROPOSED_NOTE = "live probe proposed for the 0a look"
+_NOT_RUN_NOTE = "not probed on this instance — no live probe is wired for this lane yet"
 _NO_EGRESS_NOTE = (
     "No-egress is on — the doctor made zero outbound calls, so the live provider chain cannot be "
     "tested. This is the privacy posture working, not a provider failure."
@@ -103,7 +104,7 @@ async def run_provider_doctor(session: AsyncSession) -> dict:
             lanes.append(_lane_verdict(
                 lane=lane, needs_key=needs_key, key_present=False, known_symbol=sym,
                 verdict="skipped_no_egress", calls=0, note=_NO_EGRESS_NOTE))
-        for lane, sym in _PROPOSED_LANES:
+        for lane, sym in _UNPROBED_LANES:
             lanes.append(_lane_verdict(
                 lane=lane, needs_key=False, key_present=True, known_symbol=sym,
                 verdict="skipped_no_egress", calls=0, note=_NO_EGRESS_NOTE))
@@ -157,10 +158,11 @@ async def run_provider_doctor(session: AsyncSession) -> dict:
                 lane=lane, needs_key=needs_key, key_present=key_present, known_symbol=symbol,
                 verdict="fail", calls=1, note=note))
 
-    # The keyless-but-not-yet-buildable lanes: listed honestly, never probed this milestone.
-    for lane, symbol in _PROPOSED_LANES:
+    # The keyless lanes build_provider cannot construct yet: listed honestly with the real state
+    # ``not_run`` (genuinely not probed on this instance), never a scaffolding "proposed".
+    for lane, symbol in _UNPROBED_LANES:
         lanes.append(_lane_verdict(
             lane=lane, needs_key=False, key_present=True, known_symbol=symbol,
-            verdict="proposed", calls=0, note=_PROPOSED_NOTE))
+            verdict="not_run", calls=0, note=_NOT_RUN_NOTE))
 
     return {"no_egress": False, "total_calls": total_calls, "note": None, "lanes": lanes}

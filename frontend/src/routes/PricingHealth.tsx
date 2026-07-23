@@ -62,7 +62,7 @@ function bandTone(band: string): StatusChipTone {
 
 // R-63 Phase 5 — the provider-doctor verdict tone (colour is never the sole signal; the served
 // verdict word is always shown alongside). pass=positive, fail=negative, everything else neutral
-// (no_key / proposed / skipped_no_egress are honest not-run states, never alarmist).
+// (no_key / not_run / skipped_no_egress are honest not-run states, never alarmist).
 function doctorTone(verdict: string): StatusChipTone {
   if (verdict === "pass") return "positive";
   if (verdict === "fail") return "negative";

@@ -177,7 +177,7 @@ export async function refreshAllMarketData(): Promise<LaneResult[]> {
 // verdict + a visible live-call count. ≤1 call per lane; zero calls (honest reason) under no-egress;
 // never a key, never a holding's price. Untyped dict on the wire (§3b) — typed here for the panel.
 // ⚠ served copy is PROPOSED (ratified at the 0a look). Verdicts:
-// pass | fail | no_key | proposed | skipped_no_egress.
+// pass | fail | no_key | not_run | skipped_no_egress.
 export interface DoctorLane {
   lane: string;
   needs_key: boolean;

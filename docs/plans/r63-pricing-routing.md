@@ -1076,19 +1076,23 @@ precedent — recorded explicitly, not a standalone mid-loop re-run). New served
 
 | Order | Result | Time |
 | --- | --- | --- |
-| ordered (`-p no:randomly`) | **2165 passed, 15 skipped** | 18:14 |
-| randomized (`--randomly-seed=6363`) | **2165 passed, 15 skipped** | 19:18 |
+| ordered (`-p no:randomly`) | **2166 passed, 15 skipped** | 18:31 |
+| randomized (`--randomly-seed=6363`) | **2166 passed, 15 skipped** | 19:00 |
 
-Both runs **SOLO / uncontended** (the randomized started only after the ordered finished; no other
-pytest overlapped — the gate-solo rule). **Seed 6363** declared.
+Both runs **SOLO / uncontended, on the FINAL committed code** (`1edeee1`) — re-run after the call-site
+hardening landed, so the verdict matches the tree (an earlier 2165 pair on `d0a1c81` is superseded; the
++1 is the hardening's demo-inert pin). The randomized started only after the ordered finished; no other
+pytest overlapped (the gate-solo rule). **Seed 6363** declared.
 
-**Reconciliation 2154 → 2165 (+11), itemized per test file:**
+**Reconciliation 2154 → 2166 (+12), itemized per test file:**
 - **`test_fc_mock_price_leak.py` (+9):** Option 1 ×2 (CSV miss returns typed no-price · the Phase A
   repro now typed-no-price through the real net) · Option 3 ×2 (net guard refuses a mock price on a
   live instance — blindness pin · demo mode still serves mock) · Option 2 ×3 (live cap · real source
   untouched · demo preserved) · migration rider ×2 (purge-on-live + idempotent · no-op in demo).
 - **`test_data_source.py` (+2):** R3 served-shape pin (`*_at` keys served) · persistence round-trip
   (learned tiers survive a provider that learned nothing this process — the F-D fix).
+- **`test_pricing_health.py` (+1):** the call-site hardening pin (the residue repair is inert in demo
+  mode at the route level — the demo seed's mock quotes survive, so the marker is not claimed early).
 
 **15-skip census:** unchanged — **R-63 Phase B added ZERO skips** (the longstanding milestone baseline;
 Phase 1 was `2121 passed, 15 skipped`). **Contract line: 143 paths / 71 schemas — unchanged** (no new

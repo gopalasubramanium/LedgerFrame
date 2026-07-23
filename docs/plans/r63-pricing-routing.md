@@ -743,3 +743,41 @@ source can price this instrument." (VOO restored to a clean `yahoo (head mock)` 
 
 **Full backend-suite verdict (both orders) is OWED before close** for the W-b `provider_doctor` delta
 (inner-loop green: doctor 6/6 + ruff/tsc/vitest). **Loop-2 look next — then 3a, then the owner's live 3b.**
+
+---
+
+## SESSION — 2026-07-24 (LOOP-3) — loop-2 RATIFIED; F-A + F-B FIXED
+
+### Ruling 1 — LOOP-2 RATIFIED (owner, by looking)
+The re-cut frames are ratified: the honest **`not_run`** doctor copy, the self-consistent **SGB2032
+UNSUPPORTED** (no source, no price), and the **W-a path-parity** explanation recorded as **NOT-A-FINDING**
+with its evidence (doctor and refresh both fetch via `build_provider().get_quote()`; the yahoo mismatch
+was seeded-fixture vs live-empty).
+
+### F-A — FIXED IN R-63 (§11-I: a code token on a served surface)
+`portfolio.py` pricing-health row now serves **`source="manual"`** for a manual holding (no market
+instrument → `diag is None`), matching its `route_source="manual"` — so the Source column renders
+**`manual`**, never the literal **`null (head manual)`**. Backend-only (the frontend already renders a
+served `source` verbatim; the PricingHealth vitest fixture already used `source:"manual"`). Copy PROPOSED.
+Test: `test_pricing_health.py::test_manual_holdings_serve_a_source_word_never_null` (manual rows serve
+`"manual"`, never null; `route_source` consistent). **The refreshed frame is owed at the CLOSE's final
+specimen set** (owner ruling — "rides the next commit; frame refreshed at the close's final set").
+
+### F-B — FIXED BEFORE CLOSE (§8 secrets: provider error text could echo the key into logs)
+`ExternalMarketDataProvider._redact()` scrubs the configured key from **every** logged provider error
+(all five `log.warning("AV …", … exc/reason)` sites) — covering both AV's own key-echoing error body
+(*"… your API key as <KEY> …"*) and the `apikey=<KEY>` an httpx URL error carries. `get_quote` already
+catches every exception and returns `_no_quote(reason=str(exc))` (never raises), so no key-bearing
+exception escapes to an unredacted logger (e.g. the doctor). Tests (log-capture, using the fake key
+`INVALID-DOCTOR-TEST`): `test_av_quote_envelope.py::test_quote_error_does_not_leak_the_key_into_logs`
+and `…test_index_error_does_not_leak_the_key_into_logs` (the observed index path, `external.py:236`) —
+each asserts **the key substring is absent from the logs** AND (blindness pin) **the warning still fired**
+(`***REDACTED***` present). Inner-loop: AV-envelope + doctor **18 passed**; pricing-health **4 passed**;
+ruff clean; PricingHealth vitest **19/19** (unchanged — F-A is backend-only).
+
+### Verdict + close path
+Full backend suite (both orders, seed 6363) running on the final F-A/F-B/W-b code — the **close verdict**
+(the W-b-only checkpoint was **2150 passed, 15 skipped** ordered). Expected `+3` (2 F-B log-capture + 1
+F-A). **Next: report the both-orders verdict → 3a scripted pre-pass → STOP for the owner's live 3b (his
+TSLA cleanup via Holdings, his real Refresh, the entitled verified-tier cell on his real key) → close per
+the full ritual.** F-A's refreshed manual-rows frame lands in the close's final specimen set.

@@ -221,6 +221,16 @@ no price). Re-cut frames only (both themes, 0 console errors). **Full backend-su
 close** for the `provider_doctor` delta. **F-A (`null (head manual)`) + F-B (key-echo log) remain OPEN**
 — not dispositioned at this walk. **NEXT: loop-2 look → 3a → owner live 3b → close.**
 
+**⊕ 2026-07-24 (LOOP-3) — loop-2 RATIFIED; F-A + F-B FIXED.** Owner ratified the re-cut frames (not_run,
+self-consistent SGB2032, W-a NOT-A-FINDING). **F-A FIXED IN R-63** (§11-I): `portfolio.py` serves
+`source="manual"` for manual holdings → the Source column renders `manual`, never `null (head manual)`
+(backend-only; test added; the refreshed frame lands in the CLOSE's final specimen set per the ruling).
+**F-B FIXED BEFORE CLOSE** (§8 secrets): `external.py._redact()` scrubs the key from all five provider-error
+log sites (AV's key-echo + the `apikey=` httpx URL); two log-capture tests (fake key, blindness pin) prove
+no key survives the logs. Inner-loop green (AV+doctor 18, pricing-health 4, ruff clean, vitest 19/19).
+**Full backend suite both orders running** on the final code (W-b checkpoint was 2150). **NEXT: report the
+both-orders verdict → 3a → STOP for the owner's live 3b → close.**
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

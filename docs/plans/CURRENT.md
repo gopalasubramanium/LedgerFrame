@@ -179,10 +179,21 @@ exactly two fixes, six riders.** Shipped as **Phase 3.5** (`e7a7e94` + hardening
 "Resolve on Holdings" banner (PROPOSED). Fail-first through the real path; the guard's concurrency
 serialization surfaced (then fixed) a lock-spillover via a resolver **lost-race recovery**. Backend
 **2143 solo, ordered AND randomized (seed 6363)**; contract **142/71** (+1 UNTYPED path); frontend
-green (PricingHealth 17/17, tsc/ruff clean). **I-6 DISCHARGED; owner's live-data cleanup carried to
-0a.** **Next: Phase 4 — Pricing Health head/priced-by labelling + the recut Settings routing sentence
-+ verified-tier display (I-4), all under the ONE accepted-surface rite discharge (Pricing Health +
-Settings); then Phase 5 provider doctor, 0a/3a/3b, close.**
+green (PricingHealth 17/17, tsc/ruff clean). **I-6 DISCHARGED; owner's live-data cleanup carried to 0a.**
+
+**⊕ 2026-07-24 (unattended run) — Phases 4 + 5 COMPLETE on the combined full-suite pair.** **Phase 4**
+(`7ef6f15`): Pricing Health head=X/priced-by=Y net-catch labelling (AC-5); Settings recut routing
+sentence (§9-1, now TRUE in execution), "Market data provider" card meaning shift (§9-6, single source
+→ preferred head), and the verified-tier display (I-4 DISCHARGED — `/system/data-source` serves
+`quote_entitlement` distinct from `av_tier`; "Quotes: delayed / Indices: premium"). **Phase 5**
+(`b72ee18`): the **provider doctor** — on-demand, ≤1 egress/lane, calls counted on screen, redacted,
+**parse-empty = FAIL** (AC-13/14). All served copy **PROPOSED** (0a). The **rite delta notes** are
+written in `page-pricing-health.md` + `page-settings.md` (2026-07-24), citing every folded delta by
+commit. Backend **2150 solo, ordered AND randomized (seed 6363)**; contract **143/71** (+1 untyped
+doctor path); frontend green. **REMAINING for R-63** (see the SESSION-END HANDOFF at the tail of
+`r63-pricing-routing.md`): the rite's **pre-pass re-runs** + the **0a specimen cut** — browser-driven,
+needing seeded failure states; not attempted this run ("clean partial beats degraded full"). **R-65
+Phase 2 dropped this run** (droppable overflow), still slotted after the R-63 close.
 
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`

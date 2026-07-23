@@ -368,7 +368,7 @@ backend suite passes ordered AND randomized (declared seeds)**; the close requir
 | **2 — failure taxonomy** (`9d54f4f`·`34974b6`·`c882648`) | **2130 passed, 15 skipped** (18:01, `--durations=30`) | **2130 passed, 15 skipped** (18:17) |
 | **3 — free-first + budget** (`2a9fa1e`) | **2135 passed, 15 skipped** (17:16) | **2135 passed, 15 skipped** (17:09) |
 | **3.5 — instrument-identity guard** (`e7a7e94` + hardening `e2ab16e`) | **2143 passed, 15 skipped** (17:43) | **2143 passed, 15 skipped** (17:07, seed 6363) |
-| **4 + 5 — surface deltas + provider doctor** (`7ef6f15` · `b72ee18`) | *(running — combined pair, solo)* | *(owed after ordered)* |
+| **4 + 5 — surface deltas + provider doctor** (`7ef6f15` · `b72ee18`) | **2150 passed, 15 skipped** (16:48) | **2150 passed, 15 skipped** (17:05, seed 6363) |
 
 **Phase 1 · 2 · 3 · 3.5 all COMPLETE** — each on the full-suite verdict (both orders), not a subset.
 **Phase 3.5 reconciliation:** 2135 → **2143 (+8):** 7 in `test_instrument_identity_guard.py`
@@ -537,3 +537,62 @@ INTO R-63**, six riders (echoed verbatim-intent):
 
 **Sign-off: §9 CLOSED, no open blocker. Build begins at Phase 0 — the parse-miss RED on the real
 probe-#1 envelope, first.**
+
+---
+
+## SESSION-END HANDOFF — 2026-07-24 (unattended run) — REMAINING: pre-pass re-runs + 0a specimens
+
+**Status: Phases 0–5 are CODE-COMPLETE and verdict-backed.** Every backend/frontend delta is
+committed and gated; the accepted-surface **rite delta notes are written** (page-pricing-health.md,
+page-settings.md, 2026-07-24). **Remaining for R-63:** the rite's second obligation — the **pre-pass
+re-runs** (Pricing Health + Settings) — and the **0a specimen cut**. Both are browser-driven on an
+isolated stack. **Not attempted this run** by the unattended-run rule *"a clean partial beats a
+degraded full"* + the harness's documented fragility (memory `prepass-harness`) against a deep
+context. This block tees the next pass so it runs cleanly with full budget.
+
+**Harness (memory `prepass-harness`, the load-bearing points):** backend `uvicorn app.main:app
+--port 8399` with OS-env `LEDGERFRAME_DATA_DIR=<temp>` + `LEDGERFRAME_DEMO_SEED=true` +
+`LEDGERFRAME_SECRET_KEY=…` (`setsid … & disown`); Vite dev 5199 via a throwaway
+`frontend/vite.prepass.config.ts` (proxy `/api`+`/health`→`:8399`) — **delete before staging**;
+snapshot the repo-root `.env`, restore + hash-verify **from repo root** after; driver `.mjs`
+**inside `frontend/`** — delete before staging; HashRouter deep links (`#/pricing-health`,
+`#/settings?tab=data-feeds`, `#/holdings`); dismiss first-run (`aria-label="Dismiss setup"`) or
+`PUT /settings {values:{first_run_complete:"true"}}`; unlock reads with `POST /api/v1/legal/acceptance
+{"action":"accepted"}`; **both themes**; force a fresh mount between findings (`about:blank`→target);
+teardown by port (`ss -ltnp | grep :PORT`), verify by probe.
+
+**Pre-pass re-run (rite obligation):** Pricing Health + Settings, both themes, **0 non-benign console
+errors**, screenshots looked at → **back-link into the two 2026-07-24 delta notes.** Achievable on the
+plain demo seed (both pages render; the recut Settings copy shows; the doctor card is present; the
+free-first chain leads yahoo).
+
+**0a specimens (item 4) — file ↔ seeding ↔ ruling it ratifies:**
+1. **Settings routing sentence + provider-card meaning** `r63-0a-settings-routing-{light,dark}.png` —
+   NO seeding; render `#/settings?tab=data-feeds`. Ratifies §9-1 + §9-6.
+2. **Verified-tier display** `r63-0a-settings-verified-tier-{light,dark}.png` — needs
+   `/system/data-source` → `quote_entitlement:"delayed"` + `av_tier:"premium"`. On the mock demo both
+   are null → cell reads "Quotes: not yet verified". To show the two-product cell: (a) stub the
+   endpoint in the drive, or (b) capture on the owner's live AV instance. Ratifies I-4 / AC-9.
+3. **Free-first chain display** `r63-0a-pricing-chain-{light,dark}.png` — NO seeding; Pricing Health →
+   a holding's Details dialog → chain leads yahoo. Ratifies §9-6.
+4. **head=X / priced-by=Y net-catch row** `r63-0a-pricing-headpricedby-{light,dark}.png` — SEED a
+   quote where `route_source` (head) ≠ `source` (priced-by): a `QuoteRefresh`/`quotes` row with
+   `route_head='alphavantage'`, stored `source='yahoo'` for a seeded holding → the Source column
+   renders "yahoo (head alphavantage)". Ratifies §9-1 / AC-5.
+5. **Failure-state drawer copy** `r63-0a-pricing-failstates-{light,dark}.png` (throttled "last at T ·
+   will retry" · empty · parse_error · no_key · unsupported) — SEED per-holding quote rows with
+   `last_failure_state` + `last_failure_at` set to each state; open the drawer per row. Ratifies §9-2 +
+   §9-9.
+6. **Provider-doctor panel — call counter + a FAIL** `r63-0a-doctor-{light,dark}.png` — on the demo
+   (no keys, egress on) the doctor shows `no_key`/`proposed` lanes + "0 live calls" — NO FAIL. To show
+   a FAIL + a non-zero counter: stub `POST /portfolio/provider-doctor` in the drive to return a lane
+   with `verdict:"fail"` + `total_calls≥1`, OR run on the owner's live keyed instance (where the AV
+   lane's parse class shows). Ratifies §9-4 / AC-13 / AC-14.
+7. **Holdings duplicate surfacing** `r63-0a-holdings-dup-{light,dark}.png` — SEED a duplicate pair:
+   raw-insert a second `(TSLA, NULL)` row into the isolated DB **bypassing the resolver** (the guard
+   blocks new dupes; insert before `uq_instr_identity_ci` binds, or via raw SQL) → the Pricing Health
+   dup banner + Holdings show the pair. Ratifies I-6 / §9-i (the owner's own live cleanup stays his).
+
+Then: the specimen table (file ↔ on camera ↔ ruling) in the report; **STOP for the owner's look. Do
+NOT proceed to 3a.** **R-65 Phase 2 (queue item 5) was dropped this run** (the work order's droppable
+overflow), still slotted after the R-63 close.

@@ -190,7 +190,21 @@ class Instrument(Base):
     exchange_mic: Mapped[str | None] = mapped_column(String(10), nullable=True)       # ISO 10383 MIC
     source_override: Mapped[str | None] = mapped_column(String(40), nullable=True)    # force a provider
     last_verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
-    __table_args__ = (UniqueConstraint("symbol", "exchange", name="uq_instr_symbol_exch"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "exchange", name="uq_instr_symbol_exch"),
+        # R-63 I-6 (§9-i ADDENDUM): the constraint above does NOT stop two (TSLA, NULL) rows —
+        # SQL treats NULL as distinct in a UNIQUE constraint, and it is case-sensitive. This
+        # functional index closes the gap: one identity = (upper(symbol), coalesce(exchange,'')),
+        # so a case-variant or a second NULL-exchange row collapses to the same bucket. NULL≡''
+        # here means (TSLA, NULL) and (TSLA, NASDAQ) stay legitimately distinct, while two
+        # (TSLA, NULL) do not. Fresh DBs get it via create_all; existing DBs via the best-effort
+        # migration (dupe-tolerant — it surfaces pre-existing duplicates rather than bricking).
+        Index(
+            "uq_instr_identity_ci",
+            text("upper(symbol)"), text("coalesce(exchange, '')"),
+            unique=True,
+        ),
+    )
 
 
 class InstrumentIdentifier(Base):

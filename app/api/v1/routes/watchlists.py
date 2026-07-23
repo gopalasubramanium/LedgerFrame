@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_db, require_auth
 from app.models import Instrument, Watchlist, WatchlistItem
+from app.services.identity import resolve_or_create_instrument
 from app.services.market import get_cached_quote
 
 router = APIRouter()
@@ -48,13 +49,8 @@ async def create_watchlist(payload: WatchlistIn, session: AsyncSession = Depends
     session.add(wl)
     await session.flush()
     for i, sym in enumerate(payload.symbols):
-        instr = (
-            await session.execute(select(Instrument).where(Instrument.symbol == sym.upper()))
-        ).scalars().first()
-        if instr is None:
-            instr = Instrument(symbol=sym.upper(), name=sym.upper())
-            session.add(instr)
-            await session.flush()
+        # R-63 I-6: one shared identity resolution (case-insensitive, savepoint-tolerant).
+        instr, _ = await resolve_or_create_instrument(session, sym)
         session.add(WatchlistItem(watchlist_id=wl.id, instrument_id=instr.id, sort_order=i))
     await session.flush()
     return {"ok": True, "id": wl.id}
@@ -81,11 +77,7 @@ async def add_item(wl_id: int, payload: SymbolIn, session: AsyncSession = Depend
     wl = await session.get(Watchlist, wl_id) if wl_id else None
     if wl is None:
         wl = await _default_watchlist(session)
-    instr = (await session.execute(select(Instrument).where(Instrument.symbol == sym))).scalars().first()
-    if instr is None:
-        instr = Instrument(symbol=sym, name=sym)
-        session.add(instr)
-        await session.flush()
+    instr, _ = await resolve_or_create_instrument(session, sym)  # R-63 I-6: shared resolver
     exists = (await session.execute(
         select(WatchlistItem).where(WatchlistItem.watchlist_id == wl.id, WatchlistItem.instrument_id == instr.id)
     )).scalars().first()

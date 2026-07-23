@@ -26,12 +26,18 @@ import { formatMoney, formatPrice } from "../format/number";
 import {
   correctSource,
   getIdentifierDuplicates,
+  getInstrumentDuplicates,
   getNoEgress,
   getPricingHealth,
   refreshAllMarketData,
   refreshHolding,
 } from "../api/pricing-health";
-import type { DuplicatesResp, PricingHealthResp, PricingRow } from "../api/pricing-health";
+import type {
+  DuplicatesResp,
+  InstrumentDuplicatesResp,
+  PricingHealthResp,
+  PricingRow,
+} from "../api/pricing-health";
 
 // Pricing Health (diagnostics) — IA §5, D-038/D-072. The canonical home for provenance, confidence,
 // and routing diagnostics: the honest "why is this number what it is" view. Read-only diagnostics +
@@ -83,6 +89,7 @@ export function PricingHealth() {
 
   const [data, setData] = useState<PricingHealthResp | null>();
   const [dups, setDups] = useState<DuplicatesResp | null>();
+  const [instrDups, setInstrDups] = useState<InstrumentDuplicatesResp | null>();
   const [noEgress, setNoEgress] = useState(false);
   // The stale count is the ONE shared query the StaleBanner also reads (§12ph1-1) — the footnote
   // renders THIS value, so "matches the Stale banner" is true by construction.
@@ -105,8 +112,10 @@ export function PricingHealth() {
   const reload = useCallback(() => {
     setData(undefined);
     setDups(undefined);
+    setInstrDups(undefined);
     getPricingHealth().then((r) => setData(r.ok ? r.data : null));
     getIdentifierDuplicates().then((r) => setDups(r.ok ? r.data : null));
+    getInstrumentDuplicates().then((r) => setInstrDups(r.ok ? r.data : null));
     getNoEgress().then(setNoEgress);
   }, []);
   useEffect(() => {
@@ -280,6 +289,24 @@ export function PricingHealth() {
             <div className="ph__dupbanner" role="status">
               <strong>{d.count}</strong> identifier{d.count === 1 ? " is" : "s are"} shared across instruments —
               values are kept separate; we never guess which is correct. Correct the source per holding below.
+            </div>
+          ) : null
+        }
+      </CardBody>
+
+      {/* R-63 I-6: duplicate-instrument banner (shown only when count > 0). New duplicates are now
+          impossible (one identity resolution); this surfaces any that pre-date the guard so the
+          user can resolve them on Holdings. We never guess which row is canonical. PROPOSED copy —
+          ratified at the 0a look. */}
+      <CardBody data={instrDups} lines={1} onRetry={reload}>
+        {(d) =>
+          d.count > 0 ? (
+            <div className="ph__dupbanner" role="status">
+              <strong>{d.count}</strong> duplicate instrument{d.count === 1 ? "" : "s"} —{" "}
+              {d.duplicates.map((g) => g.symbol).join(", ")} appear{d.count === 1 ? "s" : ""} more than once.
+              Each row prices on its own, which can read as “(corrected)”.{" "}
+              <a href="#/holdings">Resolve on Holdings</a> by removing the extra row; new duplicates
+              can no longer be created.
             </div>
           ) : null
         }

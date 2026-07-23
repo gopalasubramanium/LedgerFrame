@@ -87,6 +87,20 @@ export interface DuplicatesResp {
   count: number;
 }
 
+// R-63 I-6: instruments that share one identity (same upper(symbol) + equivalent exchange,
+// NULL≡NULL) split across more than one row — the duplicate-instrument surface. Resolved on
+// Holdings; LedgerFrame never guesses which row is canonical.
+export interface InstrumentDuplicateGroup {
+  symbol: string;
+  exchange: string | null;
+  instrument_count: number;
+  instruments: { id: number; symbol: string; name: string | null; exchange: string | null }[];
+}
+export interface InstrumentDuplicatesResp {
+  duplicates: InstrumentDuplicateGroup[];
+  count: number;
+}
+
 // Bulk refresh (D-069 [S]-gated). Long-running (40s + 8s/symbol); reports updated/failed/skipped.
 export interface RefreshSummary {
   ok: boolean;
@@ -103,6 +117,8 @@ export interface RefreshSummary {
 
 export const getPricingHealth = () => apiGet<PricingHealthResp>("/portfolio/pricing-health");
 export const getIdentifierDuplicates = () => apiGet<DuplicatesResp>("/system/identifier-duplicates");
+export const getInstrumentDuplicates = () =>
+  apiGet<InstrumentDuplicatesResp>("/system/instrument-duplicates");
 // Per-holding refresh (row action) + bulk "Refresh all" — the SAME endpoints the app already
 // exposes; no banner refresh (ND-2). Both are require_auth (session [S], ND-3).
 export const refreshHolding = (id: number) =>

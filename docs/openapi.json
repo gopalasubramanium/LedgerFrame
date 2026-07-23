@@ -14794,6 +14794,74 @@
         ]
       }
     },
+    "/api/v1/system/instrument-duplicates": {
+      "get": {
+        "description": "Instruments that share one identity \u2014 same ``upper(symbol)`` + equivalent exchange\n(NULL\u2261NULL) \u2014 split across more than one row (R-63 I-6). A data-quality report the user\nresolves on Holdings; LedgerFrame never guesses which row is canonical. The\n``resolve_or_create_instrument`` guard makes NEW duplicates impossible; this surfaces any\nthat pre-date the guard (a DB the ``uq_instr_identity_ci`` index could not bind on).",
+        "operationId": "instrument_duplicates_api_v1_system_instrument_duplicates_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Instrument Duplicates Api V1 System Instrument Duplicates Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Instrument Duplicates",
+        "tags": [
+          "system"
+        ]
+      }
+    },
     "/api/v1/system/providers": {
       "get": {
         "description": "Provider capability metadata + the default source-priority policy (read-only).\n\nFoundation for the Settings \u2192 Data Sources view. Contains NO secrets \u2014 only what\neach provider can do and the ordered priority lanes routing will consult.",

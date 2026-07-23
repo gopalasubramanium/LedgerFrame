@@ -110,6 +110,19 @@ async def identifier_duplicates(session: AsyncSession = Depends(get_db)) -> dict
     return {"duplicates": dups, "count": len(dups)}
 
 
+@router.get("/system/instrument-duplicates")
+async def instrument_duplicates(session: AsyncSession = Depends(get_db)) -> dict:
+    """Instruments that share one identity — same ``upper(symbol)`` + equivalent exchange
+    (NULL≡NULL) — split across more than one row (R-63 I-6). A data-quality report the user
+    resolves on Holdings; LedgerFrame never guesses which row is canonical. The
+    ``resolve_or_create_instrument`` guard makes NEW duplicates impossible; this surfaces any
+    that pre-date the guard (a DB the ``uq_instr_identity_ci`` index could not bind on)."""
+    from app.services.identity import duplicate_instruments
+
+    dups = await duplicate_instruments(session)
+    return {"duplicates": dups, "count": len(dups)}
+
+
 @router.get("/system/data-source")
 async def get_data_source() -> dict:
     from app.core.envfile import read_env

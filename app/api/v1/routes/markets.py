@@ -16,6 +16,7 @@ from app.core.config import get_settings
 from app.core.symbols import currency_for_symbol
 from app.models import AssetClass, Holding, Instrument, WatchlistItem
 from app.providers.market import get_provider
+from app.services.identity import resolve_or_create_instrument
 from app.services.market import display_quote, refresh_quote
 
 router = APIRouter()
@@ -43,11 +44,8 @@ async def _overview_instruments(session: AsyncSession) -> list[Instrument]:
     seen: set[str] = set()
     # Defaults first (create rows if missing), then held/watchlist extras.
     for sym in _DEFAULT_OVERVIEW:
-        instr = (await session.execute(select(Instrument).where(Instrument.symbol == sym))).scalars().first()
-        if instr is None:
-            instr = Instrument(symbol=sym, name=sym)
-            session.add(instr)
-            await session.flush()
+        # R-63 I-6: one shared identity resolution (case-insensitive, savepoint-tolerant).
+        instr, _ = await resolve_or_create_instrument(session, sym)
         if instr.symbol not in seen:
             ordered.append(instr)
             seen.add(instr.symbol)

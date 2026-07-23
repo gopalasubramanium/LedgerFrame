@@ -1439,30 +1439,10 @@ async def backfill_master_names(session: AsyncSession) -> list[dict]:
 async def _get_or_create_instrument(
     session: AsyncSession, symbol: str, exchange: str | None
 ) -> Instrument:
-    stmt = select(Instrument).where(Instrument.symbol == symbol.upper())
-    if exchange:
-        stmt = stmt.where(Instrument.exchange == exchange)
-    instrument = (await session.execute(stmt)).scalars().first()
-    if instrument is None:
-        from sqlalchemy.exc import IntegrityError
+    # R-63 I-6 (§9-i ADDENDUM): one identity resolution for every create path. This used to key
+    # on ``symbol.upper()`` while csv_import keyed on the bare symbol — two keys for one identity,
+    # the whole duplicate-instrument defect. Now both delegate to the shared resolver.
+    from app.services.identity import resolve_or_create_instrument
 
-        from app.core.symbols import country_for_symbol, currency_for_symbol
-        from app.models import AssetClass
-        from app.services.identity import classify_defaults
-
-        ccy = currency_for_symbol(symbol, exchange) or "USD"
-        instrument = Instrument(
-            symbol=symbol.upper(), exchange=exchange, name=symbol.upper(), currency=ccy,
-            country=country_for_symbol(symbol, exchange, ccy),
-            **classify_defaults(AssetClass.EQUITY, is_manual_price=False, currency=ccy),
-        )
-        session.add(instrument)
-        try:
-            # Savepoint so a concurrent create (UNIQUE on symbol+exchange) can be
-            # recovered without poisoning the outer transaction.
-            async with session.begin_nested():
-                await session.flush()
-        except IntegrityError:
-            instrument = (await session.execute(stmt)).scalars().first()
-            assert instrument is not None  # the IntegrityError means a concurrent create won
+    instrument, _created = await resolve_or_create_instrument(session, symbol, exchange)
     return instrument

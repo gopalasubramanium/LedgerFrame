@@ -452,7 +452,6 @@ async def _ensure_instrument(
     holdings from defaulting to an unclassified US equity."""
     from app.core.symbols import country_for_symbol, currency_for_symbol
     from app.models import AssetClass
-    from app.services.identity import classify_defaults
 
     ac = asset_class if isinstance(asset_class, AssetClass) else (
         AssetClass(asset_class) if asset_class else AssetClass.EQUITY
@@ -469,17 +468,16 @@ async def _ensure_instrument(
     else:
         ctry = country or country_for_symbol(symbol, exchange, raw_ccy, bare_ticker_default=None)
 
-    instr = (
-        await session.execute(select(Instrument).where(Instrument.symbol == symbol))
-    ).scalars().first()
-    if instr is None:
-        instr = Instrument(
-            symbol=symbol, name=name or symbol, currency=ccy,
-            exchange=exchange, country=ctry, asset_class=ac,
-            **classify_defaults(ac, is_manual_price=False, currency=ccy),
-        )
-        session.add(instr)
-        await session.flush()
+    # R-63 I-6 (§9-i ADDENDUM): resolve identity through the ONE shared resolver — this path used
+    # to key on the bare (non-uppercased) symbol while market keyed on symbol.upper(), the two
+    # keys for one identity that let the same ticker become two rows. ``country=ctry`` is passed
+    # authoritatively (even when None) so the §14dr-27b non-equity rule above is preserved.
+    from app.services.identity import resolve_or_create_instrument
+
+    instr, created = await resolve_or_create_instrument(
+        session, symbol, exchange, name=name, asset_class=ac, currency=ccy, country=ctry,
+    )
+    if created:
         # §14dr-27(c/d): the listed Add flow sends an AMFI scheme code only as the symbol and
         # never maps it. If this fund's symbol IS a synced scheme code, link it now (stamps IN)
         # so amfi_nav owns the NAV immediately and the code persists for the edit form. A

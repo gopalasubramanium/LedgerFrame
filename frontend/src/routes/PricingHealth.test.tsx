@@ -47,6 +47,7 @@ vi.mock("../api/pricing-health", () => ({
     },
   })),
   getIdentifierDuplicates: vi.fn(async () => ({ ok: true, data: { duplicates: [], count: 0 } })),
+  getInstrumentDuplicates: vi.fn(async () => ({ ok: true, data: { duplicates: [], count: 0 } })),
   getNoEgress: vi.fn(async () => false),
   refreshHolding: vi.fn(async () => ({ ok: true, data: { ok: true, refreshed: true } })),
   refreshAllData: vi.fn(async () => ({ ok: true, data: { ok: true, refreshed: 2, total: 4, skipped: 0, succeeded: [], failed: [], still_stale: [], errors: [] } })),
@@ -72,7 +73,13 @@ vi.mock("../state/staleCount", () => ({
 }));
 
 import { PricingHealth } from "./PricingHealth";
-import { correctSource, getIdentifierDuplicates, getNoEgress, getPricingHealth } from "../api/pricing-health";
+import {
+  correctSource,
+  getIdentifierDuplicates,
+  getInstrumentDuplicates,
+  getNoEgress,
+  getPricingHealth,
+} from "../api/pricing-health";
 
 function renderPage() {
   return render(
@@ -219,6 +226,35 @@ test("identifier-duplicate banner is omitted at zero, shown when count > 0", asy
   });
   const { container: c2 } = renderPage();
   await waitFor(() => expect(c2.querySelector(".ph__dupbanner")).not.toBeNull());
+});
+
+test("duplicate-instrument banner surfaces the pair and points to Holdings (R-63 I-6)", async () => {
+  const { container, unmount } = renderPage();
+  await screen.findByText("Per-holding diagnostics");
+  await waitFor(() => expect(container.querySelector(".ph__dupbanner")).toBeNull());
+  unmount();
+  vi.mocked(getInstrumentDuplicates).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      count: 1,
+      duplicates: [
+        {
+          symbol: "TSLA",
+          exchange: null,
+          instrument_count: 2,
+          instruments: [
+            { id: 22, symbol: "TSLA", name: "Tesla", exchange: null },
+            { id: 23, symbol: "TSLA", name: "Tesla", exchange: null },
+          ],
+        },
+      ],
+    },
+  });
+  const { container: c2, getByText } = renderPage();
+  await waitFor(() => expect(c2.querySelector(".ph__dupbanner")).not.toBeNull());
+  expect(c2.textContent).toMatch(/TSLA/);
+  const link = getByText("Resolve on Holdings") as HTMLAnchorElement;
+  expect(link.getAttribute("href")).toBe("#/holdings");
 });
 
 test("no-egress disables Refresh all with an honest state (ND-3)", async () => {

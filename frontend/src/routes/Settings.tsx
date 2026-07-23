@@ -465,7 +465,9 @@ interface ProviderRow {
   key_state: "Not needed" | "SET" | "NOT SET";
   key_note: string | null;
   active: boolean;
-  tier: string | null;
+  // R-63 I-4 (two-premiums): VERIFIED capability per product, never one coarse claim.
+  quote_tier: string | null;  // verified quote entitlement (delayed / real-time / end-of-day)
+  index_tier: string | null;  // Index Data entitlement (premium / free / unknown) — a DIFFERENT product
 }
 
 function ProviderTable({ ds }: { ds: DataSource }) {
@@ -505,8 +507,11 @@ function ProviderTable({ ds }: { ds: DataSource }) {
           key_state,
           key_note,
           active,
-          // Tier is only served/meaningful for the active provider (e.g. alphavantage).
-          tier: active && ds.av_tier ? ds.av_tier : null,
+          // Tiers are only served/meaningful for the active provider (e.g. alphavantage), and are
+          // shown PER PRODUCT: a verified "delayed" quote entitlement must never read as the coarse
+          // "premium" Index-Data claim (I-4, AC-9). null → not verified / not applicable (em dash).
+          quote_tier: active ? (ds.quote_entitlement ?? null) : null,
+          index_tier: active ? (ds.av_tier ?? null) : null,
         };
       });
   }, [providers, ds, labelFor]);
@@ -530,7 +535,22 @@ function ProviderTable({ ds }: { ds: DataSource }) {
       key: "active", label: "Active", align: "right",
       render: (r) => (r.active ? <StatusChip tone="positive" label="Active" /> : <span aria-hidden>—</span>),
     },
-    { key: "tier", label: "Tier", render: (r) => r.tier ?? <span aria-hidden>—</span> },
+    {
+      // R-63 I-4: verified capability PER PRODUCT (quotes vs indices), never one coarse "premium".
+      // PROPOSED copy — the owner ratifies at the 0a look.
+      key: "quote_tier", label: "Verified tier",
+      render: (r) =>
+        r.quote_tier || r.index_tier ? (
+          <span className="set__tiercell">
+            <span className="set__fieldhelp">
+              Quotes: {r.quote_tier ?? "not yet verified"}
+            </span>
+            {r.index_tier && <span className="set__fieldhelp">Indices: {r.index_tier}</span>}
+          </span>
+        ) : (
+          <span aria-hidden>—</span>
+        ),
+    },
   ];
 
   if (providers === undefined) return <Skeleton lines={3} />;
@@ -561,7 +581,10 @@ function DataFeedsPanel() {
       <section className="lf-card set__section">
         <header className="set__cardhead"><h2 className="lf-card__title">Market data</h2></header>
         <div className="lf-card__body set__grid">
-          <Field label="Market data provider" helpTerm="term-data-provider" help="The lane prices come from.">
+          {/* R-63 Phase 4 (§9-6): meaning shift — this is no longer the SINGLE source but the
+              PREFERRED HEAD; the free-first chain still prices a holding the head can't. PROPOSED. */}
+          <Field label="Market data provider" helpTerm="term-data-provider"
+                 help="Your preferred head lane. Prices fall through the free-first chain when the head can't price a holding.">
             <Select
               options={ds.providers.map((p) => ({ value: p, label: p }))}
               value={ds.provider}
@@ -1413,9 +1436,15 @@ function RoutingMatrixCard() {
         <h2 className="lf-card__title"><GlossaryTerm term="term-routing-matrix">Routing matrix</GlossaryTerm></h2>
       </header>
       <div className="lf-card__body set__stack">
+        {/* R-63 Phase 4 (§9-1): recut so the shipped promise is now TRUE in EXECUTION, not just in
+            the decision of which provider is named — the priority chain is walked at fetch time
+            (pin-head-keep-net), free-first, and Pricing Health shows which lane actually priced each
+            holding. PROPOSED copy — ratified at the 0a look. */}
         <p className="set__fieldhelp">
-          One provider per asset-class × market. A rule only takes effect when its provider can actually
-          price the instrument; otherwise routing falls through to the default lane, exactly as today.
+          One provider per asset-class × market — the pinned head for that cell. LedgerFrame tries it
+          first, then walks the free-first chain to the next lane that can actually price the
+          instrument, so a rule pins the head without removing the fallback net. Pricing Health names
+          the lane that priced each holding.
         </p>
 
         {/* Add-rule flow: class + market + provider, capability-validated by the edit-time 400 (§9-3). */}

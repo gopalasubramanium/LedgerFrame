@@ -135,7 +135,8 @@
   color: var(--text-secondary);
 }
 /* §14 key-slot honesty — the Key cell stacks the SET/NOT SET chip over its honest shared-slot note. */
-.set__keycell {
+.set__keycell,
+.set__tiercell {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;

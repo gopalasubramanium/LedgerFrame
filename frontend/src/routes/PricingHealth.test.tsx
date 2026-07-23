@@ -257,6 +257,27 @@ test("duplicate-instrument banner surfaces the pair and points to Holdings (R-63
   expect(link.getAttribute("href")).toBe("#/holdings");
 });
 
+test("Source column shows priced-by=Y with the route head=X when the net caught (R-63 AC-5)", async () => {
+  // priced by yahoo, but the route head was alphavantage — the fallback net fired. The rendered
+  // source must NOT hide that (§9-1). PROPOSED copy — ratified at the 0a look.
+  vi.mocked(getPricingHealth).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      base_currency: "SGD",
+      holdings: [row({ id: 1, symbol: "TSLA", label: "TSLA", source: "yahoo", route_source: "alphavantage" })],
+      summary: { Fresh: 1 },
+      confidence: {
+        overall: 90, overall_band: "high",
+        by_band: { high: { count: 1, value_pct: 100 }, medium: { count: 0, value_pct: 0 }, low: { count: 0, value_pct: 0 } },
+      },
+      provider_tier_note: null,
+    },
+  });
+  const { container } = renderPage();
+  await screen.findByText("Per-holding diagnostics");
+  await waitFor(() => expect(container.textContent).toMatch(/yahoo \(head alphavantage\)/));
+});
+
 test("no-egress disables Refresh all with an honest state (ND-3)", async () => {
   vi.mocked(getNoEgress).mockResolvedValueOnce(true);
   renderPage();

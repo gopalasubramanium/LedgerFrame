@@ -136,6 +136,7 @@ async def get_data_source() -> dict:
     # probing one index, then cache it on the provider for the process lifetime.
     supports_indices = False
     av_tier: str | None = None
+    quote_entitlement: str | None = None
     if provider != "mock" and bool(env.get("LEDGERFRAME_MARKET_API_KEY", settings.market_api_key)):
         try:
             from app.providers.market import get_provider
@@ -145,6 +146,13 @@ async def get_data_source() -> dict:
                 await prov.get_quote("DJI")  # one probe; sets the learned tier
             supports_indices = bool(getattr(prov, "supports_indices", False))
             av_tier = getattr(prov, "av_tier", None)
+            # R-63 I-4 (two-premiums): the VERIFIED quote entitlement is a DIFFERENT product from
+            # the Index Data one behind ``av_tier``. It is learned from the GLOBAL_QUOTE envelope
+            # during a normal refresh and cached on the process-singleton provider, so we surface
+            # whatever has been verified so far (None = not yet verified this process). This is why
+            # Settings can no longer show a coarse "premium" while quotes are only entitled to
+            # delayed data — the label reflects what was proven per product (§9-2, AC-9).
+            quote_entitlement = getattr(prov, "quote_entitlement", None)
         except Exception:  # noqa: BLE001 — capabilities are best-effort, never fatal
             pass
 
@@ -155,7 +163,10 @@ async def get_data_source() -> dict:
         "stale_after_seconds": env.get("LEDGERFRAME_STALE_AFTER_SECONDS", str(settings.stale_after_seconds)),
         "providers": sorted(_MARKET_PROVIDERS),
         "supports_indices": supports_indices,
-        "av_tier": av_tier,  # "premium" | "free" | "unknown" | null (non-AV)
+        "av_tier": av_tier,  # "premium" | "free" | "unknown" | null (non-AV) — INDEX DATA product
+        # R-63 I-4: the VERIFIED quote entitlement, distinct from av_tier (Index Data). "delayed" |
+        # "real-time" | "end-of-day" once a quote has been parsed this process, else null.
+        "quote_entitlement": quote_entitlement,
         "restart_required": True,
         "admin_available": os.path.exists(_ADMIN_BIN),
     }

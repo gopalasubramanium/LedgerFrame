@@ -366,7 +366,10 @@ test("routing matrix: editing a cell's provider PUTs the change (§9-11)", async
 // --- §14dr-2: configured-state tables (read-only, served facts only) ---------
 test("provider table surfaces served facts — SET/NOT SET, Not needed, active marker, tier note", async () => {
   vi.mocked(getDataSource).mockResolvedValue({
-    ...DATA_SOURCE, provider: "alphavantage", has_api_key: true, av_tier: "premium",
+    // R-63 I-4: verified quote entitlement ("delayed") is a DIFFERENT product from the Index-Data
+    // tier ("premium") — the table shows them PER PRODUCT, never one coarse "premium" claim.
+    ...DATA_SOURCE, provider: "alphavantage", has_api_key: true,
+    av_tier: "premium", quote_entitlement: "delayed",
   });
   vi.mocked(getProviders).mockResolvedValue({
     active: "alphavantage",
@@ -382,9 +385,11 @@ test("provider table surfaces served facts — SET/NOT SET, Not needed, active m
   expect(within(table).getByText("SET")).toBeTruthy();
   expect(within(table).getByText("shared key slot")).toBeTruthy();
   expect(within(table).getByText("Not needed")).toBeTruthy();
-  // active marker (a positive chip) + the served tier note, both on the active row.
+  // active marker (a positive chip) + the VERIFIED-tier cell, both on the active row. I-4: the
+  // quote entitlement and the Index-Data tier are shown as distinct products — never "premium" alone.
   expect(within(table).getAllByText("Active").some((el) => el.className.includes("lf-statuschip"))).toBe(true);
-  expect(within(table).getByText("premium")).toBeTruthy();
+  expect(within(table).getByText("Quotes: delayed")).toBeTruthy();
+  expect(within(table).getByText("Indices: premium")).toBeTruthy();
 });
 
 test("provider table shows NOT SET when the active keyed provider has no stored key", async () => {

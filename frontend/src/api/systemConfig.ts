@@ -15,9 +15,13 @@ export interface DataSource {
   base_currency: string;
   providers: string[];
   admin_available: boolean;
-  /** Learned Alpha Vantage tier where served ("premium" | "free" | "unknown"), else null
-   *  (non-AV / no key). Display-only, the served string (D-105) — data-feed-routing §14dr-2. */
+  /** Learned Alpha Vantage INDEX-DATA tier where served ("premium" | "free" | "unknown"), else
+   *  null (non-AV / no key). Display-only, the served string (D-105) — data-feed-routing §14dr-2. */
   av_tier?: string | null;
+  /** R-63 I-4 (two-premiums): the VERIFIED QUOTE entitlement, a DIFFERENT product from av_tier.
+   *  "delayed" | "real-time" | "end-of-day" once a quote has been parsed this process, else null
+   *  (not yet verified). The tier label must reflect what was proven per product (§9-2, AC-9). */
+  quote_entitlement?: string | null;
 }
 
 export async function getDataSource(): Promise<DataSource | null> {

@@ -222,7 +222,18 @@ export function PricingHealth() {
         </span>
       ),
     },
-    { key: "source", label: "Source", sortable: true, render: (r) => r.source_override ? `${r.source} (corrected)` : r.source },
+    {
+      // R-63 Phase 4 (§9-1, AC-5): head=X / priced-by=Y provenance. `source` is who PRICED the row
+      // (priced-by=Y); `route_source` is the route HEAD (X). When they differ the fallback net
+      // fired, and the rendered source must not HIDE that — show "Y (head X)". The (corrected)
+      // suffix (an explicit override) is unchanged. PROPOSED copy — ratified at the 0a look.
+      key: "source", label: "Source", sortable: true,
+      render: (r) => {
+        const base = r.source_override ? `${r.source} (corrected)` : r.source;
+        const netCaught = r.route_source && r.route_source !== r.source;
+        return netCaught ? `${base} (head ${r.route_source})` : base;
+      },
+    },
     // R-38 §9-10: the served route_rule provenance chip (override | matrix | lane | active), read-only
     // (D-072). Plain served label, neutral tone — provenance is factual, never alarmist. Never recomputed.
     { key: "route_rule", label: "Rule", sortable: true, render: (r) => <StatusChip label={r.route_rule} tone="neutral" /> },

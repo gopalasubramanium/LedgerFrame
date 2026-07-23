@@ -13,6 +13,18 @@ async def test_get_data_source(app_client):
     assert "has_api_key" in body
 
 
+async def test_data_source_serves_verified_quote_entitlement_distinct_from_index_tier(app_client):
+    """R-63 I-4 (two-premiums): the endpoint serves ``quote_entitlement`` — the VERIFIED quote
+    capability — as a SEPARATE key from ``av_tier`` (the Index Data product). The Settings
+    verified-tier display renders them per product, so a coarse "premium" can never stand in for
+    a merely-delayed quote entitlement (§9-2, AC-9). Served-shape pin. On the mock provider both
+    are null — honest: nothing has been verified. (The value learning is pinned at the provider
+    level in ``tests/unit/test_av_quote_envelope.py``.)"""
+    body = (await app_client.get("/api/v1/system/data-source")).json()
+    assert "quote_entitlement" in body, "verified quote entitlement not served (I-4 display half)"
+    assert "av_tier" in body, "Index-Data tier must remain a DISTINCT key, never conflated"
+
+
 async def test_set_data_source_rejects_unknown(app_client):
     r = await app_client.put("/api/v1/system/data-source", json={"provider": "totally-made-up"})
     assert r.status_code == 400

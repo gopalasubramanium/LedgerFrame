@@ -11794,6 +11794,74 @@
         ]
       }
     },
+    "/api/v1/portfolio/provider-doctor": {
+      "post": {
+        "description": "R-63 \u00a79-4 / AC-13 / AC-14 \u2014 the PROVIDER DOCTOR. An ON-DEMAND diagnostic (never called\nautomatically) that live-tests each market provider lane with a PUBLIC known symbol and returns\na redacted, per-lane verdict + a visible live-call count. \u22641 egress call per lane; zero calls\n(and an honest reason) under no-egress; never a key, never a holding's price. Untyped dict by\n\u00a73b discipline (no contract regeneration). \u26a0 served copy PROPOSED, ratified at the 0a look.",
+        "operationId": "provider_doctor_api_v1_portfolio_provider_doctor_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Provider Doctor Api V1 Portfolio Provider Doctor Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provider Doctor",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
     "/api/v1/portfolio/purge-deleted": {
       "post": {
         "description": "Permanently hard-delete every soft-deleted holding and transaction (\"empty trash\").\n\nIrreversible and D-103-class: gated by ``require_pin`` (off API tokens / unprotected\ninstalls) AND a FRESH PIN (\u00a714dr-20) \u2014 an ambient/unlocked session never satisfies it\n(SECURITY-BASELINE \u00a73). Only rows with deleted_at set are removed \u2014 live rows are never\ntouched. Purged rows were already excluded from every computation (Unit B), so a final\nrebuild keeps the derived-holdings invariant explicit.",

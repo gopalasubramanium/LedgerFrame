@@ -57,6 +57,12 @@ vi.mock("../api/pricing-health", () => ({
     { lane: "News", ok: true, detail: "Briefing refreshed" },
   ]),
   correctSource: vi.fn(async () => ({ ok: true, data: { ok: true } })),
+  // R-63 Phase 5 — the provider doctor. Default benign result so the page mounts (the panel is
+  // hidden until the button is clicked); individual tests override with a failing lane.
+  runProviderDoctor: vi.fn(async () => ({
+    ok: true,
+    data: { no_egress: false, total_calls: 0, note: null, lanes: [] },
+  })),
 }));
 
 vi.mock("../api/client", async (orig) => ({
@@ -79,6 +85,7 @@ import {
   getInstrumentDuplicates,
   getNoEgress,
   getPricingHealth,
+  runProviderDoctor,
 } from "../api/pricing-health";
 
 function renderPage() {
@@ -391,6 +398,40 @@ test("R-63 §9-2: the drawer names the TYPED failure state + its served note (th
   expect(within(dialog).getByText("throttled")).toBeTruthy();
   // The served note is rendered verbatim (never frontend-invented, D-105).
   expect(within(dialog).getByText(/rate-limiting requests — will retry \(last at/)).toBeTruthy();
+});
+
+// --- R-63 Phase 5 — the provider doctor (on-demand; visible call count; FAIL is not a silent pass)
+test("provider doctor runs on demand: shows the live-call count and a FAIL verdict (R-63 AC-13/AC-14)", async () => {
+  const user = userEvent.setup();
+  // A lane that reached the provider but parsed no price → FAIL (never a silent pass, AC-14), plus a
+  // PASS lane and a no_key lane. total_calls counts only the probed lanes (AC-13). Copy PROPOSED.
+  vi.mocked(runProviderDoctor).mockResolvedValueOnce({
+    ok: true,
+    data: {
+      no_egress: false,
+      total_calls: 2,
+      note: null,
+      lanes: [
+        { lane: "yahoo", needs_key: false, key_present: true, known_symbol: "AAPL", verdict: "pass", calls: 1, note: "resolved AAPL" },
+        { lane: "alphavantage", needs_key: true, key_present: true, known_symbol: "IBM", verdict: "fail", calls: 1, note: "reached, parsed empty (no price)" },
+        { lane: "eodhd", needs_key: true, key_present: false, known_symbol: "AAPL.US", verdict: "no_key", calls: 0, note: "no API key for this lane" },
+      ],
+    },
+  });
+  renderPage();
+  await screen.findByText("Provider doctor");
+  // The panel is hidden until the button is clicked (never auto-run).
+  expect(screen.queryByTestId("ph-doctor-calls")).toBeNull();
+  await user.click(screen.getByRole("button", { name: "Run provider doctor" }));
+  // The VISIBLE live-call counter (AC-13).
+  const count = await screen.findByTestId("ph-doctor-calls");
+  expect(count.textContent).toBe("2");
+  // AC-14 — the parse-empty lane reads FAIL, its served reason rendered verbatim (never a pass).
+  expect(await screen.findByText("fail")).toBeTruthy();
+  expect(screen.getByText("reached, parsed empty (no price)")).toBeTruthy();
+  // The other verdicts render too (pass + no_key), redacted per-lane.
+  expect(screen.getByText("pass")).toBeTruthy();
+  expect(screen.getByText("no_key")).toBeTruthy();
 });
 
 test("tier note: the served av_tier honest string renders only when present (§9-8)", async () => {

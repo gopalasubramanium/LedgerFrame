@@ -173,6 +173,43 @@
   gap: var(--space-3);
 }
 
+/* R-63 Phase 5 — the provider-doctor results panel: a visible live-call count + a per-lane list of
+   redacted verdicts. Read-only diagnostics, styled with the page's shared tokens. */
+.ph__doctor {
+  margin-top: var(--space-3);
+}
+.ph__doctorcount {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-13);
+  color: var(--text-secondary);
+}
+.ph__doctorlanes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ph__doctorlane {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ph__doctorname {
+  min-width: 12ch;
+  font-weight: var(--font-weight-medium);
+}
+.ph__doctorsym {
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-regular);
+}
+.ph__doctornote {
+  font-size: var(--font-size-13);
+  color: var(--text-tertiary);
+}
+
 /* §14dr-8 — perceptible pending on the framed Refresh-all icon (reuses the shared spin
    keyframe from structure.css). Reduced motion stills it (the disabled state still reads). */
 .ph__spin {

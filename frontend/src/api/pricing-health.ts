@@ -172,6 +172,31 @@ export async function refreshAllMarketData(): Promise<LaneResult[]> {
 
   return lanes;
 }
+// R-63 Phase 5 — the PROVIDER DOCTOR (§9-4 / AC-13 / AC-14). An ON-DEMAND diagnostic that
+// live-tests each market provider lane with a PUBLIC known symbol and reports a redacted, per-lane
+// verdict + a visible live-call count. ≤1 call per lane; zero calls (honest reason) under no-egress;
+// never a key, never a holding's price. Untyped dict on the wire (§3b) — typed here for the panel.
+// ⚠ served copy is PROPOSED (ratified at the 0a look). Verdicts:
+// pass | fail | no_key | proposed | skipped_no_egress.
+export interface DoctorLane {
+  lane: string;
+  needs_key: boolean;
+  key_present: boolean;
+  known_symbol: string;
+  verdict: string;
+  calls: number;
+  note: string;
+}
+export interface ProviderDoctorResult {
+  no_egress: boolean;
+  total_calls: number;
+  note: string | null;
+  lanes: DoctorLane[];
+}
+// On-demand ONLY — wired to a click, never auto-run (require_auth, ND-3).
+export const runProviderDoctor = () =>
+  apiSend<ProviderDoctorResult>("/portfolio/provider-doctor", "POST");
+
 // Correct-source: a per-instrument CORRECTION (validated), never priority editing (D-072, ND-4).
 export const correctSource = (symbol: string, source_override: string) =>
   apiSend<{ ok?: boolean; source_override?: string | null }>(`/instruments/${encodeURIComponent(symbol)}`, "PATCH", { source_override });

@@ -31,12 +31,14 @@ import {
   getPricingHealth,
   refreshAllMarketData,
   refreshHolding,
+  runProviderDoctor,
 } from "../api/pricing-health";
 import type {
   DuplicatesResp,
   InstrumentDuplicatesResp,
   PricingHealthResp,
   PricingRow,
+  ProviderDoctorResult,
 } from "../api/pricing-health";
 
 // Pricing Health (diagnostics) — IA §5, D-038/D-072. The canonical home for provenance, confidence,
@@ -56,6 +58,15 @@ function statusTone(status: string): StatusChipTone {
 }
 function bandTone(band: string): StatusChipTone {
   return band === "high" ? "positive" : band === "low" ? "negative" : "attention";
+}
+
+// R-63 Phase 5 — the provider-doctor verdict tone (colour is never the sole signal; the served
+// verdict word is always shown alongside). pass=positive, fail=negative, everything else neutral
+// (no_key / proposed / skipped_no_egress are honest not-run states, never alarmist).
+function doctorTone(verdict: string): StatusChipTone {
+  if (verdict === "pass") return "positive";
+  if (verdict === "fail") return "negative";
+  return "neutral";
 }
 
 // §14dr-3 — the diagnostics rows are sorted CLIENT-side (bounded set: per-holding, tens of rows).
@@ -108,6 +119,10 @@ export function PricingHealth() {
   // §14dr-8 — async-action in-flight guards: the correct-source save and per-row refresh.
   const [savingSource, setSavingSource] = useState(false);
   const [refreshingRow, setRefreshingRow] = useState<number | null>(null);
+  // R-63 Phase 5 — the provider doctor: an ON-DEMAND diagnostic (never auto-run). Result is null
+  // until the button is clicked; `doctoring` guards a re-click while the live probe is in flight.
+  const [doctor, setDoctor] = useState<ProviderDoctorResult | null>(null);
+  const [doctoring, setDoctoring] = useState(false);
 
   const reload = useCallback(() => {
     setData(undefined);
@@ -169,6 +184,24 @@ export function PricingHealth() {
     },
     [noEgress, toast, reload, refreshingRow],
   );
+
+  // R-63 Phase 5 — run the provider doctor ON DEMAND (only on this click; never automatic). It
+  // live-tests each lane once and reports a redacted per-lane verdict + a visible live-call count.
+  // ≤1 call per lane; zero calls under no-egress (reported honestly). Re-click guarded (dr-8).
+  const onRunDoctor = useCallback(async () => {
+    if (doctoring) return;
+    setDoctoring(true);
+    try {
+      const r = await runProviderDoctor();
+      if (r.ok) {
+        setDoctor(r.data);
+      } else {
+        toast.show({ message: `Provider doctor failed: ${r.error}`, tone: "warning" });
+      }
+    } finally {
+      setDoctoring(false);
+    }
+  }, [doctoring, toast]);
 
   const onCommitSource = useCallback(async () => {
     if (!correcting?.symbol || savingSource) return;
@@ -381,6 +414,52 @@ export function PricingHealth() {
               )
             }
           </CardBody>
+        </div>
+      </section>
+
+      {/* R-63 Phase 5 — the PROVIDER DOCTOR (§9-4 / AC-13 / AC-14). An ON-DEMAND diagnostic (only
+          on click, NEVER auto-run) that live-tests each provider lane once with a public known
+          symbol and reports a redacted per-lane verdict + a VISIBLE live-call count. It catches this
+          milestone's own bug class: a lane that reaches the provider, gets a 200, and parses no
+          price reads FAIL, never a silent pass. Zero calls under no-egress, reported honestly.
+          PROPOSED copy — ratified at the 0a look. */}
+      <section className="ph__card lf-card" data-card="doctor">
+        <h2 className="ph__h2">Provider doctor</h2>
+        <div className="lf-card__body">
+          <p className="ph__note">
+            Live-tests each market provider lane once with a public known symbol and reports what
+            actually resolved — a lane that reaches the provider but parses no price reads as a
+            failure, not a silent pass. On-demand only; it makes at most one call per lane.
+          </p>
+          <div className="ph__actions">
+            <Button variant="primary" loading={doctoring} onClick={onRunDoctor}>
+              Run provider doctor
+            </Button>
+          </div>
+          {doctor && (
+            <div className="ph__doctor" role="status">
+              {/* The VISIBLE live-call counter (AC-13) — the honest count of outbound probes made. */}
+              <p className="ph__doctorcount">
+                <strong data-testid="ph-doctor-calls">{doctor.total_calls}</strong> live{" "}
+                {doctor.total_calls === 1 ? "call" : "calls"} made
+              </p>
+              {doctor.no_egress && doctor.note && (
+                <p className="ph__egress">{doctor.note}</p>
+              )}
+              <ul className="ph__doctorlanes">
+                {doctor.lanes.map((ln) => (
+                  <li key={ln.lane} className="ph__doctorlane">
+                    <span className="ph__doctorname">
+                      {ln.lane}
+                      <span className="ph__doctorsym"> · {ln.known_symbol}</span>
+                    </span>
+                    <StatusChip label={ln.verdict} tone={doctorTone(ln.verdict)} />
+                    <span className="ph__doctornote">{ln.note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 

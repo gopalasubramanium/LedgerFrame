@@ -413,6 +413,18 @@ async def refresh_holding(holding_id: int, session: AsyncSession = Depends(get_d
             "entitlement": q.entitlement.value if hasattr(q.entitlement, "value") else str(q.entitlement)}
 
 
+@router.post("/portfolio/provider-doctor", dependencies=[Depends(require_auth)])
+async def provider_doctor(session: AsyncSession = Depends(get_db)) -> dict:
+    """R-63 §9-4 / AC-13 / AC-14 — the PROVIDER DOCTOR. An ON-DEMAND diagnostic (never called
+    automatically) that live-tests each market provider lane with a PUBLIC known symbol and returns
+    a redacted, per-lane verdict + a visible live-call count. ≤1 egress call per lane; zero calls
+    (and an honest reason) under no-egress; never a key, never a holding's price. Untyped dict by
+    §3b discipline (no contract regeneration). ⚠ served copy PROPOSED, ratified at the 0a look."""
+    from app.services.provider_doctor import run_provider_doctor
+
+    return await run_provider_doctor(session)
+
+
 @router.get("/portfolio/performance")
 async def portfolio_performance(
     days: int = 365, benchmark: str = "SPY", include_manual: bool = False,

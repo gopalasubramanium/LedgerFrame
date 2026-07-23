@@ -367,7 +367,7 @@ backend suite passes ordered AND randomized (declared seeds)**; the close requir
 | **1 — execution net** (`95df927`) | **2121 passed, 15 skipped** (22:37) | **2121 passed, 15 skipped** (21:52) |
 | **2 — failure taxonomy** (`9d54f4f`·`34974b6`·`c882648`) | **2130 passed, 15 skipped** (18:01, `--durations=30`) | **2130 passed, 15 skipped** (18:17) |
 | **3 — free-first + budget** (`2a9fa1e`) | **2135 passed, 15 skipped** (17:16) | **2135 passed, 15 skipped** (17:09) |
-| **3.5 — instrument-identity guard** (`e7a7e94`) | *(running — solo)* | *(owed after ordered)* |
+| **3.5 — instrument-identity guard** (`e7a7e94` + hardening `e2ab16e`) | *(re-running on final code — solo)* | *(owed after ordered)* |
 
 **Phase 1 · 2 · 3 all COMPLETE** — each on the full-suite verdict (both orders), not a subset.
 Reconciliation: 2121 → 2130 (+9, Phase 2) → **2135 (+5, Phase 3:** 3 free-first ordering + 1
@@ -379,15 +379,21 @@ the Settings "Market data provider" card meaning-shift copy is Phase 4, under th
 `test_instrument_identity_guard.py`): **2135 → 2142**. Inner-loop signals already green: new tests
 **7/7** (`-p no:randomly`); rewired-path regression **36 passed** (identity/csv/imports/markets/
 execution-net/routing); PricingHealth vitest **17/17**; `tsc` clean; `ruff` clean.
-**⚠ Known-flaky watch:** the identity guard makes concurrent first-creates of a NEW symbol a real
-serialization point. This raises the *back-to-back* flake rate of the inherently-flaky F-10 test
-`test_history_cache_race::test_concurrent_first_load_does_not_race_on_repair_markers` — measured
-**clean HEAD ~50%** pass back-to-back (2/4), **with the guard ~20%** (1/5) back-to-back — **but it
-passed 3/3 in file/suite context**, which is how the 2135 verdicts run. Per project F-10 practice
-(memory `gate-runs-must-be-solo`; this test is not new-flaky), if the solo full-suite verdict trips
-on THIS test only, re-run; a systematic trip (fails across re-runs) is a real regression to mitigate.
-**Not** a get_history_cached transaction restructure — that is a third fix outside the §9-i ADDENDUM
-"exactly two fixes" mandate and an R-65 (test-infra) concern.
+**Concurrency contention — FOUND and HARDENED (`e2ab16e`).** The identity guard makes a concurrent
+first-create of the SAME new symbol a real serialization point. The **first ordered full-suite run
+on `e7a7e94`** (**2141 passed, 15 skipped, 1 error**) surfaced ONE flaky **spillover**: a losing
+request's INSERT could not take SQLite's writer lock within `busy_timeout` and raised
+`OperationalError('database is locked')`, which 500'd the request AND stranded the lock so the
+**next** test's clean-slate `DROP TABLE transactions` also failed (`test_backfill`). It was
+**non-deterministic** (0/3 in a targeted repro of the concurrency-test→backfill pair). Root fix:
+`resolve_or_create_instrument` now treats that `OperationalError` as the lost race it is — re-reads
+the committed winner (a WAL read needs no writer lock), re-raising only if the row is genuinely
+absent. Isolated from the unchanged `IntegrityError` path so it cannot regress it; covered by
+`test_resolver_recovers_from_locked_writer` (deterministic). **Measured on the F-10 stress test
+`test_concurrent_first_load_does_not_race_on_repair_markers`: back-to-back 1/5 → 5/5 pass, ~40s →
+~17s** (losers stop waiting out `busy_timeout`). *(R-65's per-worker DB isolation still addresses the
+shared-clean-slate root; this fix removes R-63's contribution.)* Re-verdict owed on the final code
+(`e2ab16e`) below.
 
 **Suite-count reconciliation:** **2121 → 2130 (+9)**, all attributable to R-63 Phase 2 tests:
 Delta 2.1 — 6 taxonomy tests in `test_av_quote_envelope.py` (priced-no-state · empty · parse_error ·

@@ -121,7 +121,8 @@ One concept per word; do not interchange.
 
 | Term | Scope | Canonical definition |
 |------|-------|----------------------|
-| **Source** | User-facing | The provenance term — what owns a given price. This is the word shown to users. |
+| **Source** | User-facing | The provenance term — what owns a given price (the "priced-by" on the quote badge). This is the word shown to users. |
+| **Source override** | User-facing (Instrument → Edit / Identity) | Your explicit per-instrument choice of which **Source** should own this holding's price — it pins the routing head. Distinct from **Source**: an override names your *preference*; Source names the *result* that actually priced it (they differ when the override can't price and the net falls through). Empty / "auto" clears it. **[Help]** *(R-63 F-C session, ruled 2026-07-24; disambiguates the two "Source" semantics — override vs priced-by.)* |
 | **Provider** | Settings only | The adapter/config concept (mock/csv/yahoo/alphavantage/eodhd/kite; metadata adapters amfi_nav/coingecko/ecb_fx). Appears only in Settings. |
 | **Routing / route** | Internal | The per-instrument decision of which source owns a price. Internal + **Pricing Health** diagnostics only. |
 

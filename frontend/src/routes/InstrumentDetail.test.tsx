@@ -69,6 +69,18 @@ test("renders the scoped-view header, quote and sections", async () => {
   expect(screen.getByText(/AI-surfaces milestone/)).toBeInTheDocument();
 });
 
+test("R-63 F-C rename: the Identity card labels an override 'Source override', never bare 'Source'", async () => {
+  // Owner ruling 2026-07-24: the Edit/Identity label is "Source override" (GLOSSARY vocabulary),
+  // disambiguating the two "Source" semantics — the override (a preference) vs the quote badge's
+  // priced-by (the result). A bare "Source" here collided with the badge. Copy PROPOSED.
+  vi.mocked(api.getInstrument).mockResolvedValue({
+    ok: true,
+    data: { ...DETAIL, instrument: { ...DETAIL.instrument, source_override: "alphavantage" } },
+  });
+  renderAt();
+  await waitFor(() => expect(screen.getByText("Source override")).toBeInTheDocument());
+});
+
 test("unpriced instrument shows '—' with an honest reason, never a number", async () => {
   vi.mocked(api.getInstrument).mockResolvedValue({
     ok: true,

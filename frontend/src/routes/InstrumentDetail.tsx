@@ -264,7 +264,7 @@ export function InstrumentDetail() {
                   { label: "Sector", value: meta?.sector || "—" },
                   { label: "Country", value: meta?.listing_country ?? meta?.country ?? "—" },
                   { label: "Currency", value: meta?.currency || "—" },
-                  ...(meta?.source_override ? [{ label: "Source", value: chipVal(labelFor("source_override", meta.source_override)) }] : []),
+                  ...(meta?.source_override ? [{ label: "Source override", value: chipVal(labelFor("source_override", meta.source_override)) }] : []),
                 ]}
               />
             </div>

@@ -414,3 +414,23 @@ untouched** — the pack was conformed TO it.
 
 **Verification:** unit-pinned via `format_pack_context(..., CHANGE)`; the census guard proves no ambient
 annotation f-string survives in the pack. Formal movers-on-camera owed at R-54 0a-ii.
+
+## DELTA NOTE — 2026-07-24 (R-63 §4 · the Identity-card override label "Source" → "Source override")
+
+**Instrument Detail is CLOSED/accepted; dated delta note under the guard-REDs-an-accepted-surface rite —
+not a re-opening.** Commit `96d9e4b`.
+
+The Identity card's metadata strip labelled the per-instrument override **"Source"** — the same word the
+quote badge uses for **priced-by** (provenance). One word, two semantics on the same page. **Owner ruling
+2026-07-24 (R-63 F-C session):** the Edit/Identity label is **"Source override"** (the Edit dialog already
+used it; only the Identity strip lagged). Changed `InstrumentDetail.tsx:267` `label: "Source"` →
+`"Source override"`; GLOSSARY gains the sanctioned **Source override** term in the D-028 split (distinct
+from **Source**: override = the user's *preference* pinning the routing head; Source = the *result* that
+priced it). Copy **PROPOSED** until the owner's 3b look. Vitest asserts the Identity card renders it
+(`InstrumentDetail.test.tsx`, "R-63 F-C rename …").
+
+**Rite — re-run half:** deferred to the R-63 **close's 3a scripted pre-pass** (Instrument Detail added to
+the specimen set), following the **F-A precedent** (§11-I close ruling — a PROPOSED-copy delta on an
+accepted surface refreshes its frame in the close's final set rather than a standalone re-run mid-loop).
+Recorded here so the next reader of this page sees the change on its own plan file, not only in a close
+report.

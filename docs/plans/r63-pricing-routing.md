@@ -348,7 +348,8 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 | I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | **DISCHARGED — Phase 2** (`RateLimited`→`THROTTLED` + `last_throttled_at`, real burst text `9d54f4f`; persisted `34974b6`; drawer renders "throttled — … will retry (last at T)" `c882648`, copy PROPOSED). |
 | I-8 | 0a walk finding **F-A** (2026-07-24) | Manual holdings render the code token **`null (head manual)`** on the Pricing Health Source column (§11-I — a raw null on a served surface; the netCaught head-rider on a null `source`) | **DISCHARGED — `05be910`** (owner ruled FIX-IN-R-63). `portfolio.py` serves **`source="manual"`** for a manual holding (`diag is None`), matching its `route_source="manual"` → the Source column renders `manual`, never `null (head manual)`. Backend-only (frontend renders the served `source` verbatim; vitest fixture already used `source:"manual"`). Copy **PROPOSED**. Test `test_pricing_health.py::test_manual_holdings_serve_a_source_word_never_null`. **Frame refreshed at the close's final specimen set** (owner ruling); dated note in `page-pricing-health.md`. |
 | I-9 | 0a walk finding **F-B** (2026-07-24) | Provider error text can **echo the API key into the server log** — AV's error body quotes the submitted key verbatim, and an httpx URL error carries `apikey=<KEY>` (§8 secrets) | **DISCHARGED — `05be910`** (owner ruled FIX-BEFORE-CLOSE). `ExternalMarketDataProvider._redact()` scrubs the configured key from **all five** `log.warning("AV …")` sites (both the error-body echo AND the URL form). `get_quote` never raises (catches → `_no_quote`), so no key-bearing exception escapes to an unredacted logger (doctor included). Tests (log-capture, fake key, blindness pin): `test_av_quote_envelope.py::{test_quote_error_…, test_index_error_… (the observed path), test_urlembedded_apikey_form_…}` — the last asserts the **URL-embedded `apikey=<KEY>`** form specifically resolves to `apikey=***REDACTED***`. |
-| I-10 | 3b live walk finding **F-C** (2026-07-24) | On the owner's LIVE instance **AARK** served **priced-by=`mock`** at **Confidence 100 · high** with **head=`alphavantage`**, and `mock` is **not in the drawer's priority chain** — a fabricated-confidence / phantom-source class (a settled real number was never produced, yet the row reads high-confidence from a source the chain never lists) | **OPEN — FIX IN R-63 (owner ruling 2026-07-24).** Charter for the fresh session: **diagnosis before fix scope; evidence before hypothesis** (the R-63 investigation-first gate). **Detail lives in the fresh session's prompt file**; this row records the finding + the ruling only. Its session also carries the **"Source override" rename** ruling below. |
+| I-10 | 3b live walk finding **F-C** (2026-07-24) | On the owner's LIVE instance **AARK** served **priced-by=`mock`** at **Confidence 100 · high** with **head=`alphavantage`**, and `mock` is **not in the drawer's priority chain** — a fabricated-confidence / phantom-source class (a settled real number was never produced, yet the row reads high-confidence from a source the chain never lists) | **DIAGNOSED — Phase A DONE 2026-07-24 (see the F-C PHASE A section below); STILL OPEN pending the architect/owner fix ruling + Phase B.** Root cause PROVEN on an isolated instance (repro reproduced the owner's exact number **109.878669**): **NOT** the assumed provider lazy-import degrade, **NOT** a chain fallthrough to a `mock` lane. The execution net legitimately walks the **`csv`** lane (keyless, covers etf, in the `us_equity` chain), and the CSV provider **silently substitutes mock on a CSV miss** (`csv_provider.py:64-67` → `self._mock.get_quote()` returns `source="mock"`, price = mock's default base 100 × `_walk` ≈ 109.88, entitlement `delayed`, fresh). The net writes `source="mock"`; confidence scores by the ROUTE's `valuation_method="market_quote"` (head=alphavantage, active-in-chain) → base 100, no penalty → **100/high**; badge `delayed` = mock's own entitlement. Provenance recorded the TRUTH (head=alphavantage / priced-by=mock) — the R-63 provenance work is what made it seeable. **Fix scope = numbered options in the F-C PHASE A section → HARD STOP for the ruling.** Its session also carries the **"Source override" rename** (§4, DONE `96d9e4b`). |
+| I-11 | 3b scope-addendum finding **F-D** (architect, 2026-07-24) | On the owner's real key the verified-tier cell read **"Quotes: not yet verified / Indices: premium"** after a session that DID parse a real GLOBAL_QUOTE (pre-purge TSLA) — the two learned tiers disagree | **DIAGNOSED (diagnose-only, 2026-07-24; see the F-D section below). No fix code — persistence semantics are an owner ruling.** Both tiers are **per-process instance state** on the `get_provider()` singleton, **not persisted** (`external.py:126,131`; wiped by restart / `reset_provider` on a settings change). The asymmetry is structural: **`av_tier` (Index Data) is learned by an ON-DEMAND probe the `/system/data-source` endpoint fires itself** (`system.py:145-146` → `get_quote("DJI")` → `_index_quote` → `_index_entitled=True`), so merely LOADING Settings→Data feeds learns "premium" — no holdings needed; **`quote_entitlement` (GLOBAL_QUOTE) has NO probe** — it is learned only as a passive side-effect of a real holding refresh parsing a quote (`external.py:276`), and the DJI probe **bypasses** it (indices route through `_index_quote`, never `_note_quote_entitlement` — `external.py:247-248,221`). The architect's candidate is **CONFIRMED**: post-purge **zero holdings ⇒ the refresh path fires zero GLOBAL_QUOTE calls ⇒ `quote_entitlement` stays `None`** ("not yet verified") while the self-probing `av_tier` shows premium. Owner ruling owed: persist `quote_entitlement`, and/or fire a quote-side verification probe symmetric with the index one. Dispositions with F-C. |
 
 ### Accepted-surface RITE — consolidation (recorded explicitly per the owner ruling 2026-07-23)
 
@@ -899,3 +900,107 @@ with the owner, ride the rename, gather the owner's live 3b remainder, and close
 
 **Pre-release backlog + ROADMAP filed this session:** the stale-banner/lock-timeout/long-op UX-resilience
 family → `pre-release-walk.md`; background auto-refresh → `ROADMAP.md` (post-release, egress-gated).
+
+---
+
+## F-C PHASE A — DIAGNOSIS (evidence, 2026-07-24) — root cause PROVEN; STOP for the fix ruling
+
+**Charter honoured:** diagnosis before fix; evidence before hypothesis; the obvious story proved-or-killed,
+not fixed. Phase A only — **no fix code this session** (the label §4 is a separate, already-ruled item).
+
+### Method — isolated reproduction (the owner's live stack / real key NEVER used)
+A throwaway pytest repro (`tests/integration/test_fc_repro_DELETEME.py`, **run then deleted — not committed**)
+drove the **REAL** path on a temp-DB isolated instance, no network, no key: head `alphavantage` forced to
+return no price, `yahoo` forced to return no price, and the **REAL** `build_provider("csv")` walked against an
+empty imports dir. It reproduced the owner's finding **exactly**, including his precise number.
+
+### The obvious story is KILLED
+The seductive story was: *AV can't price AARK → the provider's lazy-import/error path degrades the whole
+provider to Mock → Mock fabricates a quote → the layers launder it to 100.* **All three legs are false:**
+- The owner's provider is a healthy AlphaVantage (his live TSLA priced `2,523.22` via it, 3b). `get_provider()`
+  returns `External`, **not** a degraded Mock — no import error fired.
+- The net's `build_provider` is explicitly **fail-closed to `None`, never Mock** (`__init__.py:65-101`, docstring
+  "an un-buildable lane is skipped by the net, never mocked"). It cannot substitute mock.
+- `mock` is **in no `DEFAULT_PRIORITY` chain** and `fetch_chain` filters it out — the net never *names* a mock lane.
+
+### The PROVEN root cause — the CSV lane launders mock into the execution net
+`fetch_chain(diag, "etf", …)` for a US ETF returns **`['alphavantage', 'yahoo', 'csv']`** (`router.py:449-462`):
+`csv` is **keyless** (`_is_keyed` passes) and **covers `etf`** (`CAPABILITIES["csv"]`, `router.py:65-67`), so it is a
+legitimate fallback lane in `us_equity`/`sg_equity`/`in_equity`/`crypto` (`DEFAULT_PRIORITY`, `router.py:156-168`).
+The net (`_refresh_via_net`, `market.py:747-783`) walks it: AV head → `price None` → continue; yahoo → `price None`
+→ continue; **`csv` → `CSVMarketDataProvider.get_quote("AARK")` finds no `AARK.csv` and returns
+`await self._mock.get_quote(symbol)` (`csv_provider.py:64-67`)** — a fully-formed `Quote(source="mock",
+price=100.0×_walk, entitlement=DELAYED, is_stale=False)`. Because `q.price is not None`, the net accepts it and
+persists `source = q.source = "mock"` (`market.py:764-777`). **Reproduced number: `109.878669` — byte-identical to
+the owner's recorded "native USD 109.878669".** So the drawer's "native" figure was **mock's** number, never AV's.
+
+### The five required answers, each file:line-cited
+- **(a) Exact entry point of mock for a real holding.** `app/providers/market/csv_provider.py:64-67` — the CSV
+  provider's own internal mock fallback on a CSV miss, invoked by the live execution net at `market.py:749,753`
+  when it walks the `csv` lane that `fetch_chain` (`router.py:449-462`) legitimately includes. It is **not** the
+  provider-registry degrade (`__init__.py`), **not** the router's `active_provider == "mock"` demo branch
+  (`router.py:418`), **not** `build_provider` (fail-closed to `None`). One site.
+- **(b) Why confidence scored 100/high.** The ROUTE chose `valuation_method="market_quote"` (head=alphavantage is
+  the active provider, in-chain — `router.py:418-421`); `confidence._BASE["market_quote"]=100` (`confidence.py:16`)
+  and **no penalty fires** — the mock quote is fresh (no −20 stale), entitlement is `delayed` not `unavailable`
+  (no −15), not `mapping_required`, FX present. `band_of(100)="high"` (`confidence.py:34`). **The confidence layer
+  scores by the route's valuation_method and is BLIND to the fact `priced_by` was actually `mock`** — the seam.
+- **(c) Why the badge said "delayed".** `MockMarketDataProvider.get_quote` hard-codes
+  `entitlement=EntitlementStatus.DELAYED` (`mock.py:133`); the net stores `q.entitlement.value` = `"delayed"`
+  (`market.py:768`). It is mock's own label, not an AV entitlement.
+- **(d) What else can hit this path (an enumeration = a completeness claim).** **Any** holding whose lane chain
+  contains `csv` — i.e. **`us_equity`, `sg_equity`, `in_equity`, `crypto`** (all list `csv` in `DEFAULT_PRIORITY`;
+  `global_fund`/`bond`/fund/deposit/derivative do **not**) — where the head and every earlier keyed lane (AV, yahoo,
+  [kite for IN], eodhd-if-keyed) fail to price it. The CSV mock fallback fires for **every** symbol on an instance
+  with no CSV files (the normal case), so the exposure is the whole equity/etf/crypto class, not AARK alone. **Sister
+  leak:** `csv_provider.py:88-89` does the identical mock substitution for **history** — but that is already caught
+  by the demo-residue repair machinery (`_hist_row_is_demo`/`repair_history_demo_residue`, `market.py:866,894`);
+  the **quote** path has **no** such repair, which is why the mock quote persisted and scored high.
+- **(e) Did stored provenance record the truth?** **YES** — `route_head="alphavantage"` and `priced_by="mock"` were
+  both stored and shown (drawer: mock absent from the chain; Identity: override alphavantage). **The R-63 Phase-1/4
+  provenance work is precisely what made this defect SEEABLE.** The defect is not the provenance; it is that a mock
+  price is **served at all** for a real holding and then **scored 100/high**.
+
+### F-D (diagnose-only, architect scope-addendum 2026-07-24) — the verified-tier disagreement
+See ledger **I-11**. Summary: both learned tiers are **per-process** (`external.py:126,131`; not persisted).
+`av_tier` is learned by an **on-demand probe the `/system/data-source` endpoint fires itself** (`system.py:145-146`
+`get_quote("DJI")` → `_index_quote` → `_index_entitled=True`) — so viewing Settings learns "premium" with **zero
+holdings**. `quote_entitlement` has **no probe**; it is learned only passively from a real holding refresh
+(`external.py:276`), and the DJI probe bypasses it (indices route through `_index_quote`, never
+`_note_quote_entitlement` — `external.py:247-248,221`). The architect's candidate is **confirmed**: post-purge
+**zero holdings ⇒ zero GLOBAL_QUOTE calls ⇒ `quote_entitlement` stays None** while `av_tier` self-probes to premium.
+**No fix code** — whether to persist `quote_entitlement` and/or add a symmetric quote-side probe is an **owner ruling**.
+
+### FIX-SCOPE OPTIONS (F-C) — numbered, with blast radius + test plan; STOP for the ruling
+The evidence localises the defect to **one site** (`csv_provider.py:64-67`) plus **one blind seam** (confidence
+scores the route method, not `priced_by`). Sizing three options against that (do not pre-commit):
+
+- **Option 1 — Sever the CSV→mock QUOTE fallback (tightest, root-cause).** On a CSV miss, return a no-price
+  `Quote` typed `unsupported`/`empty` instead of `self._mock.get_quote()`. The net's existing `q.price is None →
+  continue` then skips csv and walks to `manual`/no_data, so AARK reads honestly (estimated-from-cost, **low**
+  confidence, typed state) instead of a fabricated 100/high. *Blast radius:* the CSV provider is real only when
+  (i) `market_provider=csv` (a local/testing mode — dashboards would show *unpriced* rather than demo numbers; the
+  docstring's "never go blank" was a demo nicety, arguably wrong for a keyed instance) or (ii) it is a net fallback
+  lane (the leak). Leaves the **history** mock fallback (`:88-89`) untouched — already repaired elsewhere — or
+  handles it in the same spirit. *Test plan:* the deleted repro becomes the **fail-first RED** (net never stores
+  `source="mock"` for a real holding); + csv-mode still prices from a REAL `AARK.csv`; + AARK now scores low, typed
+  `unsupported`. **Recommended core.**
+- **Option 2 — Confidence law: a `mock`/`demo`-served price can never score "high" outside demo mode
+  (defense-in-depth).** Teach `score_holding` (or the row it reads) about `priced_by`/`source` and cap/penalise a
+  mock-served value. *Blast radius:* `confidence.py` + its callers must thread `source` (today it reads only
+  `valuation_method`). Treats the **symptom** (the 100) not the **cause** (mock served at all) — **weaker alone**,
+  good as a belt-and-braces companion to Option 1, and it also covers any *future* mock leak.
+- **Option 3 — Standing guard: the net never persists `source ∈ {mock,demo}` on a non-demo instance (a blindness
+  pin).** A guard/assert around the net's write (`market.py:764`) + a test that reds if any lane re-introduces a
+  mock leak. *Blast radius:* tiny; makes Option 1 **regression-proof** (turns the invariant red, satisfying "what
+  turns red?"). *Test plan:* the pin fails loudly if a mock-sourced quote is ever written by the net.
+- **Migration / re-score rider (independent of which option):** the owner's live AARK `quotes` row already holds a
+  `source="mock"` value scored high. A one-time repair — mirroring `repair_history_demo_residue` but for the
+  **quotes** table (`source ∈ {mock,demo}` on a non-demo instance → delete the row so valuation falls to estimated
+  and re-scores low) — clears the stored fabrication. Fail-first + blindness pin.
+
+**RECOMMENDATION:** **Option 1 (sever the CSV quote→mock fallback, typed `unsupported`/`empty`) + Option 3 (standing
+no-mock-in-net guard) + the quotes-table migration rider.** Option 2 optional as defense-in-depth. This is the
+tight two-fixes-plus-guard shape the charter prefers, and it maps the mock case onto the existing seven-state
+taxonomy rather than inventing a new surface. **HARD STOP — the architect reviews in chat and the owner rules before
+any Phase B fix code. Phase A ends here.**

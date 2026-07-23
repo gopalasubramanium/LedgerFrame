@@ -256,6 +256,26 @@ background auto-refresh → `ROADMAP.md` **R-66** (post-release, egress-gated, t
 deviation:** `a1793d8` mixed work+records (noted, not rewritten). **The owner /clears and starts the F-C
 session from its prompt file.**
 
+**⊕ 2026-07-24 (F-C session) — F-C + F-D DIAGNOSED (evidence-backed); §4 label DONE → HARD STOP for the fix
+ruling.** **F-C (I-10) root cause PROVEN** on an isolated repro (reproduced the owner's exact `109.878669`):
+NOT the assumed provider-degrade — the execution net legitimately walks the keyless **`csv`** lane, and the
+CSV provider **silently substitutes mock on a CSV miss** (`csv_provider.py:64-67`), laundering a
+`source="mock"` quote into the net; confidence scores by the route's `market_quote` method (blind to
+`priced_by`) → **100/high**; badge `delayed` = mock's own label. Provenance recorded the truth (the R-63
+work is what made it seeable). Enumeration: fires for any `us_equity`/`sg_equity`/`in_equity`/`crypto`
+holding the keyed lanes can't price. **Fix scope = 3 numbered options + recommendation** (Option 1 sever the
+CSV quote→mock fallback + Option 3 standing no-mock-in-net guard + a quotes-table migration rider) in the
+plan's **F-C PHASE A** section — **HARD STOP for the architect/owner ruling; no Phase B code this session.**
+**F-D (I-11, diagnose-only):** the verified-tier disagreement is a **per-process, probe-asymmetry** artefact
+— `av_tier` self-probes on the Settings load (DJI index probe), `quote_entitlement` has no probe and is only
+learned from a real holding refresh, so post-purge (zero holdings) it stays "not yet verified". **Persistence
+semantics = owner ruling, no fix code.** **§4 (`96d9e4b`):** Identity card override label "Source" →
+**"Source override"** (owner-ruled; GLOSSARY term added; vitest; accepted-surface delta note in
+`page-instrument-detail.md`, re-run rides the close's 3a per the F-A precedent). Copy PROPOSED. **Also pending
+owner ruling (architect):** the routing-matrix picker placeholder "Select source override…" (collides with
+rule/pin vocabulary) — if ruled, rides §4's commit family. **OPEN before close unchanged:** F-C Phase B (after
+the ruling), owner's live verified-tier strings + copy verdict on all PROPOSED strings, then the full close.
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

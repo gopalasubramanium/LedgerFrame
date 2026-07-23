@@ -1418,6 +1418,7 @@ function RoutingMatrixCard() {
           options={providerOptions}
           value={c.provider}
           onChange={(v) => onChangeProvider(c, v)}
+          placeholder="Select provider…"
           aria-label={`Provider for ${labelFor("asset_class", c.asset_class)} · ${marketLabel(c.listing_country)}`}
         />
       ),
@@ -1472,7 +1473,7 @@ function RoutingMatrixCard() {
             <Select options={marketOptions} value={draftMarket} onChange={setDraftMarket} aria-label="New rule — market" />
           </Field>
           <Field label="Provider">
-            <MasterSelect master="source_override" options={providerOptions} value={draftProvider} onChange={setDraftProvider} aria-label="New rule — provider" />
+            <MasterSelect master="source_override" options={providerOptions} value={draftProvider} onChange={setDraftProvider} placeholder="Select provider…" aria-label="New rule — provider" />
           </Field>
           <Button icon={Plus} variant="primary" onClick={onAdd} disabled={!canAdd} loading={adding}>Add rule</Button>
         </div>

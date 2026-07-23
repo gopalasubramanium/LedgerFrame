@@ -648,3 +648,17 @@ Backend-only; **copy PROPOSED**. *(The `:642` line above stays as accurate 0a hi
 walk.)* **The refreshed manual-rows frame lands in the CLOSE's final specimen set**, and **the 3a scripted
 pre-pass re-run discharges the re-run half of the accepted-surface rite for this F-A delta** (the delta-note
 half is this note).
+
+**⊕ PHASE B ADDENDUM — 2026-07-24 (F-C / I-10, `275852f`).** A live-instance behaviour change on this
+page, under the same consolidated rite. The AARK defect (F-C): a `mock`-sourced quote laundered through
+the CSV lane rendered here at Confidence **100/high**. The fix removes it — a **once-per-install
+`repair_quote_demo_residue`** now runs at the **top of the pricing-health read** (before valuation, gated
+to live instances), deleting stored demo/synthetic quote rows. So a formerly-phantom holding now renders
+its **true unpriced/typed state** (Estimated / the typed failure note) instead of a high-confidence
+fabrication; the confidence law (Option 2) additionally caps any residual mock price below "high". **No
+new served string on this page** (existing typed-state copy carries it). **Rite re-run half:** rides the
+**close's final 3a specimen set** (the severed-fallback typed states on camera), F-A precedent.
+
+**⊕ R5 RATIFICATION FLIP — 2026-07-24 (owner).** The PROPOSED Pricing Health strings above — the
+head=X/priced-by=Y provenance, the failure-state drawer copies, and the duplicate-instrument banner — are
+**RATIFIED** (rendered confirmation still at the close's final look).

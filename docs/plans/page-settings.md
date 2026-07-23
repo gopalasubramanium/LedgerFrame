@@ -1348,3 +1348,22 @@ and the **verified-tier truthful demo state** ("Quotes: not yet verified / Indic
 not-verified readout; the **entitled** "Quotes: delayed / Indices: premium" cell stays the owner's 3b on
 his real premium key). The PROPOSED copy stands as walked; full ratification is logged at the R-63 close
 after 3a/3b.
+
+**⊕ PHASE B ADDENDUM — 2026-07-24 (F-C session; R3 `d0a1c81`, R4 `d0a1c81`).** Two further changes to
+`/settings → Data feeds`, under the same consolidated rite.
+- **R3 (I-11 / F-D fix) — the verified-tier cell now carries a LEARNED-AT date.** The learned tiers are
+  **persisted** (they were per-process, so a post-purge zero-holdings read showed "not yet verified"
+  despite an earlier verify — F-D). `/system/data-source` now also serves `quote_entitlement_at` /
+  `av_tier_at`; the cell reads **"Quotes: delayed · verified 24 Jul"**. **New served string — PROPOSED**
+  (it postdates R5's ratified list). No new probe (budget discipline): the value is only ever saved from
+  a call that already happened.
+- **R4 — the routing-matrix picker placeholder** reads **"Select provider…"** (was "Select source
+  override…", which collided with the matrix's rule/pin vocabulary). **PROPOSED.**
+
+**Rite re-run half:** rides the **close's final 3a specimen set** (the entitled verified-tier cell with
+its "· verified" date is the owner's 3b on his real key), F-A precedent — recorded explicitly.
+
+**⊕ R5 RATIFICATION FLIP — 2026-07-24 (owner).** The PROPOSED Settings → Data-feeds strings above — the
+recut Routing-matrix sentence, the "Market data provider" preferred-head card, and the verified-tier
+truthful state — are **RATIFIED** (rendered confirmation still at the close's final look). The **R3/R4
+strings above stay PROPOSED** (they postdate the ratified list).

@@ -276,6 +276,25 @@ owner ruling (architect):** the routing-matrix picker placeholder "Select source
 rule/pin vocabulary) — if ruled, rides §4's commit family. **OPEN before close unchanged:** F-C Phase B (after
 the ruling), owner's live verified-tier strings + copy verdict on all PROPOSED strings, then the full close.
 
+**⊕ 2026-07-24 (F-C session, Phase B) — F-C + F-D FIXED (owner rulings R1–R5) → HARD STOP for architect
+review; close ritual follows separately.** **F-C (I-10) DISCHARGED — `275852f`:** four fixes, all fail-first
+on the Phase A repro — **Option 1** (CSV miss returns typed `EMPTY`, never a mock substitution; restores
+`05-PROVIDERS-AND-ROUTING §A.3`), **Option 3** (standing net guard: never persist `source∈{mock,demo}` on a
+live instance; blindness-pinned), **Option 2** (confidence law: a mock/demo price can never read "high"
+outside demo mode), **migration rider** (`repair_quote_demo_residue` at the pricing-health read removes the
+owner's stored AARK mock row; dupe-tolerant, gated non-demo). **F-D (I-11) DISCHARGED at the code layer —
+`d0a1c81` (R3 option (a)):** learned tiers `quote_entitlement`/`av_tier` **persisted** with learned-at
+stamps (no new probes — budget discipline), so a post-purge zero-holdings read reports the durable verify;
+`/system/data-source` serves the durable values + `*_at`; Settings cell reads "Quotes: delayed · verified
+24 Jul". **R4:** matrix picker placeholder → "Select provider…". **R5:** the ratified PROPOSED strings flipped
+in both page files (R3/R4's new strings stay PROPOSED — they postdate the list). **Rites:** consolidated
+dated notes appended to `page-pricing-health.md` + `page-settings.md`; re-run half rides the close's final
+3a set (F-A precedent). **Contract 143/71 unchanged** (data-source stays `-> dict`; served-shape pins named).
+**Full-suite verdict** SOLO both orders (seed 6363) captured this session; reconciliation from 2154/15.
+**REMAINING for close:** the final 3a specimen set (F-A manual frame + severed-fallback typed states + the
+new verified-tier cell) → owner's final look (his live entitled verified-tier + copy verdict) → full close
+ritual (I-1..I-11 all DISCHARGED, strike-check, Help currency, RATIFICATION §6, KB-sync).
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

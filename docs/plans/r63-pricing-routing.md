@@ -348,8 +348,8 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 | I-7 | §0-A log 13605 | Genuine transient throttle ("Burst pattern … 5 req/sec") — secondary contributor; surfaces as `throttled` | **DISCHARGED — Phase 2** (`RateLimited`→`THROTTLED` + `last_throttled_at`, real burst text `9d54f4f`; persisted `34974b6`; drawer renders "throttled — … will retry (last at T)" `c882648`, copy PROPOSED). |
 | I-8 | 0a walk finding **F-A** (2026-07-24) | Manual holdings render the code token **`null (head manual)`** on the Pricing Health Source column (§11-I — a raw null on a served surface; the netCaught head-rider on a null `source`) | **DISCHARGED — `05be910`** (owner ruled FIX-IN-R-63). `portfolio.py` serves **`source="manual"`** for a manual holding (`diag is None`), matching its `route_source="manual"` → the Source column renders `manual`, never `null (head manual)`. Backend-only (frontend renders the served `source` verbatim; vitest fixture already used `source:"manual"`). Copy **PROPOSED**. Test `test_pricing_health.py::test_manual_holdings_serve_a_source_word_never_null`. **Frame refreshed at the close's final specimen set** (owner ruling); dated note in `page-pricing-health.md`. |
 | I-9 | 0a walk finding **F-B** (2026-07-24) | Provider error text can **echo the API key into the server log** — AV's error body quotes the submitted key verbatim, and an httpx URL error carries `apikey=<KEY>` (§8 secrets) | **DISCHARGED — `05be910`** (owner ruled FIX-BEFORE-CLOSE). `ExternalMarketDataProvider._redact()` scrubs the configured key from **all five** `log.warning("AV …")` sites (both the error-body echo AND the URL form). `get_quote` never raises (catches → `_no_quote`), so no key-bearing exception escapes to an unredacted logger (doctor included). Tests (log-capture, fake key, blindness pin): `test_av_quote_envelope.py::{test_quote_error_…, test_index_error_… (the observed path), test_urlembedded_apikey_form_…}` — the last asserts the **URL-embedded `apikey=<KEY>`** form specifically resolves to `apikey=***REDACTED***`. |
-| I-10 | 3b live walk finding **F-C** (2026-07-24) | On the owner's LIVE instance **AARK** served **priced-by=`mock`** at **Confidence 100 · high** with **head=`alphavantage`**, and `mock` is **not in the drawer's priority chain** — a fabricated-confidence / phantom-source class (a settled real number was never produced, yet the row reads high-confidence from a source the chain never lists) | **DIAGNOSED — Phase A DONE 2026-07-24 (see the F-C PHASE A section below); STILL OPEN pending the architect/owner fix ruling + Phase B.** Root cause PROVEN on an isolated instance (repro reproduced the owner's exact number **109.878669**): **NOT** the assumed provider lazy-import degrade, **NOT** a chain fallthrough to a `mock` lane. The execution net legitimately walks the **`csv`** lane (keyless, covers etf, in the `us_equity` chain), and the CSV provider **silently substitutes mock on a CSV miss** (`csv_provider.py:64-67` → `self._mock.get_quote()` returns `source="mock"`, price = mock's default base 100 × `_walk` ≈ 109.88, entitlement `delayed`, fresh). The net writes `source="mock"`; confidence scores by the ROUTE's `valuation_method="market_quote"` (head=alphavantage, active-in-chain) → base 100, no penalty → **100/high**; badge `delayed` = mock's own entitlement. Provenance recorded the TRUTH (head=alphavantage / priced-by=mock) — the R-63 provenance work is what made it seeable. **Fix scope = numbered options in the F-C PHASE A section → HARD STOP for the ruling.** Its session also carries the **"Source override" rename** (§4, DONE `96d9e4b`). |
-| I-11 | 3b scope-addendum finding **F-D** (architect, 2026-07-24) | On the owner's real key the verified-tier cell read **"Quotes: not yet verified / Indices: premium"** after a session that DID parse a real GLOBAL_QUOTE (pre-purge TSLA) — the two learned tiers disagree | **DIAGNOSED (diagnose-only, 2026-07-24; see the F-D section below). No fix code — persistence semantics are an owner ruling.** Both tiers are **per-process instance state** on the `get_provider()` singleton, **not persisted** (`external.py:126,131`; wiped by restart / `reset_provider` on a settings change). The asymmetry is structural: **`av_tier` (Index Data) is learned by an ON-DEMAND probe the `/system/data-source` endpoint fires itself** (`system.py:145-146` → `get_quote("DJI")` → `_index_quote` → `_index_entitled=True`), so merely LOADING Settings→Data feeds learns "premium" — no holdings needed; **`quote_entitlement` (GLOBAL_QUOTE) has NO probe** — it is learned only as a passive side-effect of a real holding refresh parsing a quote (`external.py:276`), and the DJI probe **bypasses** it (indices route through `_index_quote`, never `_note_quote_entitlement` — `external.py:247-248,221`). The architect's candidate is **CONFIRMED**: post-purge **zero holdings ⇒ the refresh path fires zero GLOBAL_QUOTE calls ⇒ `quote_entitlement` stays `None`** ("not yet verified") while the self-probing `av_tier` shows premium. Owner ruling owed: persist `quote_entitlement`, and/or fire a quote-side verification probe symmetric with the index one. Dispositions with F-C. |
+| I-10 | 3b live walk finding **F-C** (2026-07-24) | On the owner's LIVE instance **AARK** served **priced-by=`mock`** at **Confidence 100 · high** with **head=`alphavantage`**, and `mock` is **not in the drawer's priority chain** — a fabricated-confidence / phantom-source class (a settled real number was never produced, yet the row reads high-confidence from a source the chain never lists) | **DIAGNOSED — Phase A DONE 2026-07-24 (see the F-C PHASE A section below); STILL OPEN pending the architect/owner fix ruling + Phase B.** Root cause PROVEN on an isolated instance (repro reproduced the owner's exact number **109.878669**): **NOT** the assumed provider lazy-import degrade, **NOT** a chain fallthrough to a `mock` lane. The execution net legitimately walks the **`csv`** lane (keyless, covers etf, in the `us_equity` chain), and the CSV provider **silently substitutes mock on a CSV miss** (`csv_provider.py:64-67` → `self._mock.get_quote()` returns `source="mock"`, price = mock's default base 100 × `_walk` ≈ 109.88, entitlement `delayed`, fresh). The net writes `source="mock"`; confidence scores by the ROUTE's `valuation_method="market_quote"` (head=alphavantage, active-in-chain) → base 100, no penalty → **100/high**; badge `delayed` = mock's own entitlement. Provenance recorded the TRUTH (head=alphavantage / priced-by=mock) — the R-63 provenance work is what made it seeable. **Fix scope = numbered options in the F-C PHASE A section → HARD STOP for the ruling.** Its session also carries the **"Source override" rename** (§4, DONE `96d9e4b`). **DISCHARGED — Phase B `275852f` (owner rulings R1+R2, 2026-07-24).** Four fixes, all fail-first on the Phase A repro: **Option 1** (`csv_provider.py` — a CSV miss returns typed `EMPTY`, never a mock substitution; restores `05-PROVIDERS-AND-ROUTING §A.3`); **Option 3** (standing net guard — never persist `source∈{mock,demo}` on a live instance; blindness-pinned); **Option 2** (confidence law — a mock/demo price can never read "high" outside demo mode, capped+named); **migration rider** (`repair_quote_demo_residue` + pricing-health once-per-install wiring — removes the owner's stored AARK mock row on a live instance, dupe-tolerant, gated non-demo). See the F-C PHASE B section. |
+| I-11 | 3b scope-addendum finding **F-D** (architect, 2026-07-24) | On the owner's real key the verified-tier cell read **"Quotes: not yet verified / Indices: premium"** after a session that DID parse a real GLOBAL_QUOTE (pre-purge TSLA) — the two learned tiers disagree | **DIAGNOSED (diagnose-only, 2026-07-24; see the F-D section below). No fix code — persistence semantics are an owner ruling.** Both tiers are **per-process instance state** on the `get_provider()` singleton, **not persisted** (`external.py:126,131`; wiped by restart / `reset_provider` on a settings change). The asymmetry is structural: **`av_tier` (Index Data) is learned by an ON-DEMAND probe the `/system/data-source` endpoint fires itself** (`system.py:145-146` → `get_quote("DJI")` → `_index_quote` → `_index_entitled=True`), so merely LOADING Settings→Data feeds learns "premium" — no holdings needed; **`quote_entitlement` (GLOBAL_QUOTE) has NO probe** — it is learned only as a passive side-effect of a real holding refresh parsing a quote (`external.py:276`), and the DJI probe **bypasses** it (indices route through `_index_quote`, never `_note_quote_entitlement` — `external.py:247-248,221`). The architect's candidate is **CONFIRMED**: post-purge **zero holdings ⇒ the refresh path fires zero GLOBAL_QUOTE calls ⇒ `quote_entitlement` stays `None`** ("not yet verified") while the self-probing `av_tier` shows premium. Owner ruling owed: persist `quote_entitlement`, and/or fire a quote-side verification probe symmetric with the index one. Dispositions with F-C. **RULED R3 (owner 2026-07-24): option (a) — PERSIST both learned tiers, NO new probes** (budget discipline on a ~25/day tier). **DISCHARGED — `d0a1c81`.** `market.persist_av_tiers`/`read_persisted_av_tiers` store `quote_entitlement`/`av_tier` + a learned-at stamp in `settings`; the net refresh persists what a real quote call taught the singleton and the data-source endpoint persists the existing DJI index-probe result — **no new egress**. `/system/data-source` serves the durable values + `*_at` stamps (served-shape pins; stays `-> dict`, 143/71 unchanged). A post-purge zero-holdings read now reports the durable verification, not "not yet verified". Cell copy "Quotes: delayed · verified 24 Jul" (PROPOSED, postdates R5). |
 
 ### Accepted-surface RITE — consolidation (recorded explicitly per the owner ruling 2026-07-23)
 
@@ -1004,3 +1004,98 @@ no-mock-in-net guard) + the quotes-table migration rider.** Option 2 optional as
 tight two-fixes-plus-guard shape the charter prefers, and it maps the mock case onto the existing seven-state
 taxonomy rather than inventing a new surface. **HARD STOP — the architect reviews in chat and the owner rules before
 any Phase B fix code. Phase A ends here.**
+
+---
+
+## F-C PHASE B — the fix (owner rulings 2026-07-24, architect work order) → HARD STOP for review
+
+### Rulings recorded (dated; basis: the architect's recommendation sheet, owner-endorsed)
+- **R1 — Option 1 + Option 3 + the migration rider.** Sever the CSV quote→mock substitution; add a
+  standing net guard; repair stored mock quote rows on a live instance.
+- **R2 — Option 2 taken** (defense-in-depth against future leak classes; *fabricated confidence is the
+  charter's core trust defect*). A mock/demo-served price can never read "high" outside demo mode.
+- **R3 — option (a): persist the learned tiers, no new probes** (budget discipline over probe symmetry
+  on a ~25/day tier). Discharges I-11's fix half.
+- **R4 — matrix picker placeholder → "Select provider…"** (it read "Select source override…", which
+  collided with the matrix's rule/pin vocabulary).
+- **R5 — the PROPOSED strings listed in chat are RATIFIED 2026-07-24** (drawer states, provenance
+  "(head …)", dup banner, doctor copy, routing sentence, "Source override" label). **The flip is
+  recorded.** Rendered confirmation still happens at the close's final specimen look. **New strings that
+  POSTDATE R5's list stay PROPOSED:** the verified-tier "· verified \<date\>" (R3) and "Select provider…"
+  (R4).
+
+### What shipped (backend-first; fail-first on the Phase A repro; every guard blindness-pinned)
+- **Option 1 — CSV sever (`275852f`, `csv_provider.py`).** A CSV MISS returns a **typed no-price**
+  (`FailureState.EMPTY`), never `self._mock.get_quote()`. Mapping justified: `fetch_chain` only walks
+  `csv` for a **covered** class (equity/etf), so a miss is a source that responded with no price for
+  this symbol — **`empty`**, not `unsupported` (`unsupported` is "no configured source can price this",
+  which the net decides after the whole chain, not one lane). **Restores the spec** —
+  `05-PROVIDERS-AND-ROUTING.md:35`/§A.3 sanctioned the mock fallback for **FX/search/news only**, never a
+  quote. Fail-first RED = the Phase A repro (`test_net_no_longer_launders_mock_through_the_csv_lane`):
+  mock-priced → typed-no-price through the **real** net.
+- **Option 3 — standing net guard (`275852f`, `_refresh_via_net`).** The net **never persists
+  `source ∈ {mock,demo}` on a live instance** (active provider ≠ mock). Blindness pin
+  (`test_net_guard_refuses_a_mock_sourced_price_on_a_live_instance`): a lane is forced to return a
+  mock-priced quote; the guard refuses it → `no_data`. Remove the guard and the pin fails loudly (it
+  would persist `source=mock` at a real price) — so the guard provably protects something. Demo mode
+  (`test_net_allows_mock_in_demo_mode`) is untouched.
+- **Option 2 — the confidence law (`275852f`, `confidence.py`).** A `mock`/`demo`-sourced price is
+  **capped to the estimated tier (40)** and named ("demo/synthetic price — not from a live source
+  (capped)") **outside demo mode** — `score_holding` reads `hv.source` and derives demo-mode from the
+  active provider (override via `demo_mode=`). Independent tests (live cap · real source untouched ·
+  demo preserved), not folded into the guard's.
+- **Migration rider (`275852f`, `market.repair_quote_demo_residue` + pricing-health once-per-install
+  wiring).** Removes stored demo/synthetic **quote** rows on a live instance — the `quotes` table had
+  **no** demo-residue repair (why the owner's AARK `source=mock` row persisted and scored high). Mirrors
+  `repair_history_demo_residue`; **dupe-tolerant** (gated on the active provider — a no-op in demo mode
+  so seed data survives — best-effort, audited, idempotent). Runs **before valuation** on the
+  Pricing-Health read, so the phantom value never reaches the surface it is named for; deleting the row
+  lets valuation fall to cost (ESTIMATED) and Pricing Health then shows the true unpriced/typed state.
+  Tests: purge-on-live + idempotent · no-op-in-demo.
+- **R3 — persist the learned tiers (`d0a1c81`, `market.persist_av_tiers`/`read_persisted_av_tiers` +
+  `/system/data-source` + Settings).** Both tiers persist to `settings` with a **learned-at stamp**
+  (first-seen/changed only — an unchanged re-persist keeps the original date). Learned **without a new
+  probe**: the net refresh persists what a real quote call taught the AV singleton; the data-source
+  endpoint persists the existing DJI index probe's result and serves the **durable** values +
+  `*_at` ISO stamps. **F-D is now closed at the code layer:** a post-purge zero-holdings read reports
+  the durable verification instead of "not yet verified". Cell copy → "Quotes: delayed · verified 24
+  Jul" (PROPOSED, postdates R5). **Contract: `/system/data-source` stays `-> dict` (untyped, R-61
+  discipline) — 143/71 unchanged; served-shape pins** `test_data_source.py::{test_data_source_serves_
+  learned_at_stamps, test_learned_tiers_persist_and_survive_a_provider_with_no_in_process_value}`.
+- **R4 — matrix placeholder (`d0a1c81`).** `MasterSelect` gains an optional `placeholder`; the routing
+  matrix passes "Select provider…". Vitest pin in `ui.test.tsx`.
+
+### Accepted-surface RITE — consolidated (per the standing R-63 consolidation)
+Phase B touches two accepted surfaces again — **Pricing Health** (the quote-residue repair changes what
+a mock-priced holding renders: now its true unpriced/typed state) and **Settings → Data feeds** (the
+verified-tier cell gains "· verified \<date\>"). Dated delta notes added to **`page-pricing-health.md`**
+and **`page-settings.md`**; the **rite's re-run half rides the close's final 3a specimen set** (F-A
+precedent — recorded explicitly, not a standalone mid-loop re-run). New served copy held **PROPOSED**.
+
+### Verdict — full backend suite, SOLO, both orders, seed 6363 (reconciled from 2154/15)
+
+| Order | Result | Time |
+| --- | --- | --- |
+| ordered (`-p no:randomly`) | **2165 passed, 15 skipped** | 18:14 |
+| randomized (`--randomly-seed=6363`) | **2165 passed, 15 skipped** | 19:18 |
+
+Both runs **SOLO / uncontended** (the randomized started only after the ordered finished; no other
+pytest overlapped — the gate-solo rule). **Seed 6363** declared.
+
+**Reconciliation 2154 → 2165 (+11), itemized per test file:**
+- **`test_fc_mock_price_leak.py` (+9):** Option 1 ×2 (CSV miss returns typed no-price · the Phase A
+  repro now typed-no-price through the real net) · Option 3 ×2 (net guard refuses a mock price on a
+  live instance — blindness pin · demo mode still serves mock) · Option 2 ×3 (live cap · real source
+  untouched · demo preserved) · migration rider ×2 (purge-on-live + idempotent · no-op in demo).
+- **`test_data_source.py` (+2):** R3 served-shape pin (`*_at` keys served) · persistence round-trip
+  (learned tiers survive a provider that learned nothing this process — the F-D fix).
+
+**15-skip census:** unchanged — **R-63 Phase B added ZERO skips** (the longstanding milestone baseline;
+Phase 1 was `2121 passed, 15 skipped`). **Contract line: 143 paths / 71 schemas — unchanged** (no new
+endpoint; `/system/data-source` stays `-> dict`, its new keys pinned by served-shape tests, not the
+contract, per R-61 discipline).
+
+**HARD STOP — report for architect review.** The close sequence follows separately: the final 3a
+specimen set (the F-A manual frame + the severed-fallback typed states + the new verified-tier cell) →
+the owner's final look → the full close ritual (I-1..I-11 all DISCHARGED, strike-check, Help currency,
+`RATIFICATION.md §6`, KB-sync).

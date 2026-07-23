@@ -640,3 +640,11 @@ instrument banner**, and the **no-egress provider-doctor copy**. **Loop-2 fix (W
 `proposed`); **(W-c):** the UNSUPPORTED specimen was re-seeded self-consistently (a `bond` with no source
 and no price). The PROPOSED copy stands as walked; full ratification is logged at the R-63 close after
 3a/3b. *(F-A `null (head manual)` and F-B key-echo logging remain OPEN — not dispositioned at this walk.)*
+
+**✅ F-A FIXED — 2026-07-24 (`05be910`, owner ruled fix-in-R-63).** The Source column no longer renders
+the `null (head manual)` code token (§11-I): the pricing-health row serves **`source="manual"`** for a
+manual holding (no market instrument), matching its `route_source="manual"`, so the cell reads **`manual`**.
+Backend-only; **copy PROPOSED**. *(The `:642` line above stays as accurate 0a history — F-A WAS open at the
+walk.)* **The refreshed manual-rows frame lands in the CLOSE's final specimen set**, and **the 3a scripted
+pre-pass re-run discharges the re-run half of the accepted-surface rite for this F-A delta** (the delta-note
+half is this note).

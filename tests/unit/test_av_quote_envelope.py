@@ -230,3 +230,30 @@ async def test_index_error_does_not_leak_the_key_into_logs(monkeypatch, caplog):
     blob = "\n".join(r.getMessage() for r in caplog.records)
     assert "AV index unavailable" in blob, "blindness pin: the warning must still be emitted"
     assert _FAKE_KEY not in blob, "the API key leaked into the logs via the index path (F-B)"
+
+
+# The SECOND leak FORM (distinct from AV's error-body echo above): an httpx transport/HTTP error
+# carries the REQUEST URL, and every AV request URL embeds ``apikey=<KEY>`` (external.py ``_get``).
+# That URL-in-exception form must be redacted too — not just AV's prose echo.
+_URL_WITH_KEY = (f"Client error '401 Unauthorized' for url 'https://www.alphavantage.co/query"
+                 f"?function=GLOBAL_QUOTE&symbol=IBM&entitlement=delayed&apikey={_FAKE_KEY}'")
+
+
+async def test_urlembedded_apikey_form_is_redacted_from_logs(monkeypatch, caplog):
+    """F-B, the URL-embedded ``apikey=<KEY>`` form specifically (an httpx error carries the request
+    URL, which always contains the key) — distinct from AV's error-BODY echo. Must be redacted; the
+    warning still fires (blindness pin)."""
+    p = ExternalMarketDataProvider("alphavantage", _FAKE_KEY)
+
+    async def fake_get(params):
+        raise RuntimeError(_URL_WITH_KEY)  # an httpx-style error whose str() is the request URL
+
+    monkeypatch.setattr(p, "_get", fake_get)
+    with caplog.at_level(logging.WARNING, logger="app.providers.market.external"):
+        q = await p.get_quote("IBM")
+
+    assert q.price is None
+    blob = "\n".join(r.getMessage() for r in caplog.records)
+    assert "AV quote unavailable" in blob, "blindness pin: the warning must still be emitted"
+    assert _FAKE_KEY not in blob, "the URL-embedded apikey=<KEY> leaked into the logs (F-B)"
+    assert "apikey=***REDACTED***" in blob, "the URL's key value must be scrubbed in place"

@@ -101,6 +101,7 @@ function MatrixEditor() {
           options={PROVIDERS}
           value={draft[row.key] ?? row.provider}
           onChange={(v) => setDraft((d) => ({ ...d, [row.key]: v }))}
+          placeholder="Select provider…"
           aria-label={`Provider for ${row.assetClass} · ${row.market}`}
         />
       ),

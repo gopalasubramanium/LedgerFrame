@@ -62,6 +62,12 @@ test("MasterSelect resolves options from the master registry, not an inline list
   expect(select.value).toBe("equity");
 });
 
+test("MasterSelect honours a custom placeholder (R-63 R4: routing matrix reads 'Select provider…')", () => {
+  render(<MasterSelect master="source_override" value="" placeholder="Select provider…" onChange={() => {}} />);
+  const opt = screen.getAllByRole("option").find((o) => (o as HTMLOptionElement).value === "");
+  expect(opt?.textContent).toBe("Select provider…");
+});
+
 test("MasterSelect offers create only for extensible masters", () => {
   const { rerender } = render(
     <MasterSelect master="sector" value="Financials" allowCreate onChange={() => {}} />,

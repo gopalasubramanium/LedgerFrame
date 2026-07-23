@@ -18,10 +18,16 @@ export interface DataSource {
   /** Learned Alpha Vantage INDEX-DATA tier where served ("premium" | "free" | "unknown"), else
    *  null (non-AV / no key). Display-only, the served string (D-105) — data-feed-routing §14dr-2. */
   av_tier?: string | null;
+  /** R-63 R3(a)/I-11: ISO learned-at timestamp for av_tier — persisted so the tier survives restart
+   *  (it was per-process). Renders as "· verified <date>". Null until an index tier is verified. */
+  av_tier_at?: string | null;
   /** R-63 I-4 (two-premiums): the VERIFIED QUOTE entitlement, a DIFFERENT product from av_tier.
-   *  "delayed" | "real-time" | "end-of-day" once a quote has been parsed this process, else null
-   *  (not yet verified). The tier label must reflect what was proven per product (§9-2, AC-9). */
+   *  "delayed" | "real-time" | "end-of-day" once a quote has been parsed (this process OR persisted),
+   *  else null (not yet verified). The tier label must reflect what was proven per product (§9-2, AC-9). */
   quote_entitlement?: string | null;
+  /** R-63 R3(a)/I-11: ISO learned-at timestamp for quote_entitlement — persisted so the verification
+   *  survives restart / a post-purge zero-holdings state (F-D). Renders as "· verified <date>". */
+  quote_entitlement_at?: string | null;
 }
 
 export async function getDataSource(): Promise<DataSource | null> {

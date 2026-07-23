@@ -124,35 +124,47 @@ async def instrument_duplicates(session: AsyncSession = Depends(get_db)) -> dict
 
 
 @router.get("/system/data-source")
-async def get_data_source() -> dict:
+async def get_data_source(session: AsyncSession = Depends(get_db)) -> dict:
     from app.core.envfile import read_env
+    from app.services.market import persist_av_tiers_safe, read_persisted_av_tiers
 
     env = read_env()
     settings = get_settings()
     provider = env.get("LEDGERFRAME_MARKET_PROVIDER", settings.market_provider)
 
+    # R-63 R3(a)/I-11: the learned tiers are PERSISTED (they were per-process, so a restart or a
+    # post-purge zero-holdings state read "not yet verified" despite an earlier verify — F-D). Start
+    # from what was durably verified; the live probe below only ADDS to it, never resets it.
+    persisted = await read_persisted_av_tiers(session)
+
     # Capabilities: does the *live* provider give real index levels? Alpha Vantage
     # only does on a premium (Index Data) plan — we learn the tier from the key by
     # probing one index, then cache it on the provider for the process lifetime.
     supports_indices = False
-    av_tier: str | None = None
-    quote_entitlement: str | None = None
+    av_tier: str | None = persisted["av_tier"]
+    av_tier_at: str | None = persisted["av_tier_at"]
+    quote_entitlement: str | None = persisted["quote_entitlement"]
+    quote_entitlement_at: str | None = persisted["quote_entitlement_at"]
     if provider != "mock" and bool(env.get("LEDGERFRAME_MARKET_API_KEY", settings.market_api_key)):
         try:
             from app.providers.market import get_provider
 
             prov = get_provider()
             if provider == "alphavantage" and getattr(prov, "_index_entitled", "n/a") is None:
-                await prov.get_quote("DJI")  # one probe; sets the learned tier
+                await prov.get_quote("DJI")  # one probe; sets the learned index tier (R3: no NEW probe)
             supports_indices = bool(getattr(prov, "supports_indices", False))
-            av_tier = getattr(prov, "av_tier", None)
-            # R-63 I-4 (two-premiums): the VERIFIED quote entitlement is a DIFFERENT product from
-            # the Index Data one behind ``av_tier``. It is learned from the GLOBAL_QUOTE envelope
-            # during a normal refresh and cached on the process-singleton provider, so we surface
-            # whatever has been verified so far (None = not yet verified this process). This is why
-            # Settings can no longer show a coarse "premium" while quotes are only entitled to
-            # delayed data — the label reflects what was proven per product (§9-2, AC-9).
-            quote_entitlement = getattr(prov, "quote_entitlement", None)
+            # R-63 R3(a): persist whatever the probe (or an earlier refresh) taught the singleton, then
+            # re-read — so a value learned THIS request is served with its fresh learned-at stamp.
+            await persist_av_tiers_safe(session, prov)
+            persisted = await read_persisted_av_tiers(session)
+            # R-63 I-4 (two-premiums): the VERIFIED quote entitlement is a DIFFERENT product from the
+            # Index Data one behind ``av_tier``, learned from the GLOBAL_QUOTE envelope. Prefer the
+            # live in-process value when present, else the durable persisted one (None = never verified).
+            av_tier = getattr(prov, "av_tier", None) if getattr(prov, "av_tier", None) in ("premium", "free") \
+                else persisted["av_tier"]
+            av_tier_at = persisted["av_tier_at"]
+            quote_entitlement = getattr(prov, "quote_entitlement", None) or persisted["quote_entitlement"]
+            quote_entitlement_at = persisted["quote_entitlement_at"]
         except Exception:  # noqa: BLE001 — capabilities are best-effort, never fatal
             pass
 
@@ -164,9 +176,12 @@ async def get_data_source() -> dict:
         "providers": sorted(_MARKET_PROVIDERS),
         "supports_indices": supports_indices,
         "av_tier": av_tier,  # "premium" | "free" | "unknown" | null (non-AV) — INDEX DATA product
+        # R-63 R3(a)/I-11: the learned-at ISO timestamps, so the cell can say "verified <date>".
+        "av_tier_at": av_tier_at,
         # R-63 I-4: the VERIFIED quote entitlement, distinct from av_tier (Index Data). "delayed" |
-        # "real-time" | "end-of-day" once a quote has been parsed this process, else null.
+        # "real-time" | "end-of-day" once a quote has been parsed (this process OR persisted), else null.
         "quote_entitlement": quote_entitlement,
+        "quote_entitlement_at": quote_entitlement_at,
         "restart_required": True,
         "admin_available": os.path.exists(_ADMIN_BIN),
     }

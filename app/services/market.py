@@ -680,7 +680,11 @@ async def refresh_quote_detailed(
     # cache-owning behaviour below (the route-change refetch remains coingecko's per-instrument path).
     if head and head not in _TERMINAL_SOURCES and head not in _CACHE_PUBLISH \
             and capabilities_for(head).quote:
-        return await _refresh_via_net(session, instrument, diag, exchange)
+        result = await _refresh_via_net(session, instrument, diag, exchange)
+        # R-63 R3(a)/I-11: a real quote fetch through the net may have taught the AV singleton its
+        # verified quote entitlement — persist it so it survives restart (no new probe; only saved).
+        await persist_av_tiers_safe(session, provider)
+        return result
 
     # Authoritative source is a cache-publish adapter, manual, or unavailable — never let the
     # active provider fetch/overwrite it. But first honour a ROUTE CHANGE (§18-R3 (F-7a)): a
@@ -973,6 +977,79 @@ async def repair_quote_demo_residue(session: AsyncSession) -> dict:
         await session.flush()
     log.info("R-63 F-C quote demo-residue repair: removed %d demo/synthetic quote row(s)", purged)
     return {"purged": purged, "instruments": purged}
+
+
+# R-63 R3(a) / I-11 — persist AlphaVantage's LEARNED capability tiers so they survive restart.
+# quote_entitlement (GLOBAL_QUOTE product) and av_tier (Index Data product) were per-process instance
+# state on the provider singleton, so a restart or a settings change wiped them — and post-purge (zero
+# holdings ⇒ no quote call) the verified-tier cell read "not yet verified" even though an earlier
+# refresh had verified it (F-D). Persisting them (with a learned-at stamp) makes the verification a
+# durable fact. Budget discipline (owner ruling R3): NO new probes — we only save what a real call
+# ALREADY learned.
+_AV_TIER_SETTINGS = {
+    "quote": ("av_quote_entitlement", "av_quote_entitlement_at"),
+    "index": ("av_index_tier", "av_index_tier_at"),
+}
+
+
+async def _upsert_setting(session: AsyncSession, key: str, value: str) -> None:
+    from app.models import Setting
+
+    existing = (await session.execute(
+        select(Setting).where(Setting.key == key))).scalars().first()
+    if existing is None:
+        session.add(Setting(key=key, value=value))
+    else:
+        existing.value = value
+
+
+async def persist_av_tiers(session: AsyncSession, provider) -> None:
+    """Persist the provider's learned quote/index tiers (value + learned-at) when first seen or
+    changed. A no-op for anything the provider hasn't verified this process. Never raises out."""
+    from app.models import Setting
+
+    pairs = (
+        ("quote", getattr(provider, "quote_entitlement", None)),
+        ("index", (getattr(provider, "av_tier", None) if getattr(provider, "av_tier", None)
+                   in ("premium", "free") else None)),
+    )
+    changed = False
+    for kind, value in pairs:
+        if not value:
+            continue
+        vkey, atkey = _AV_TIER_SETTINGS[kind]
+        existing = (await session.execute(
+            select(Setting).where(Setting.key == vkey))).scalars().first()
+        if existing is not None and existing.value == value:
+            continue  # unchanged → keep the ORIGINAL verified-at stamp
+        await _upsert_setting(session, vkey, value)
+        await _upsert_setting(session, atkey, datetime.now(UTC).isoformat())
+        changed = True
+    if changed:
+        await session.flush()
+
+
+async def read_persisted_av_tiers(session: AsyncSession) -> dict:
+    """The persisted learned tiers (value + learned-at) for the verified-tier cell."""
+    from app.models import Setting
+
+    keys = tuple(k for pair in _AV_TIER_SETTINGS.values() for k in pair)
+    rows = {r.key: r.value for r in (await session.execute(
+        select(Setting).where(Setting.key.in_(keys)))).scalars()}
+    return {
+        "quote_entitlement": rows.get("av_quote_entitlement"),
+        "quote_entitlement_at": rows.get("av_quote_entitlement_at"),
+        "av_tier": rows.get("av_index_tier"),
+        "av_tier_at": rows.get("av_index_tier_at"),
+    }
+
+
+async def persist_av_tiers_safe(session: AsyncSession, provider) -> None:
+    """Best-effort :func:`persist_av_tiers` — persistence must never break a refresh/read."""
+    try:
+        await persist_av_tiers(session, provider)
+    except Exception:  # noqa: BLE001 — a caching write is never worth failing the caller
+        log.debug("persist_av_tiers skipped (non-fatal)", exc_info=True)
 
 
 # W-3 (R-42 3b): US regular trading session (DST-correct via the zone). Intraday is a

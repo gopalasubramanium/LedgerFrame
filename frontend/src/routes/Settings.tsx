@@ -468,6 +468,18 @@ interface ProviderRow {
   // R-63 I-4 (two-premiums): VERIFIED capability per product, never one coarse claim.
   quote_tier: string | null;  // verified quote entitlement (delayed / real-time / end-of-day)
   index_tier: string | null;  // Index Data entitlement (premium / free / unknown) — a DIFFERENT product
+  // R-63 R3(a)/I-11: ISO learned-at stamps — persisted, so the cell can say "· verified <date>".
+  quote_tier_at: string | null;
+  index_tier_at: string | null;
+}
+
+// R-63 R3(a): render a persisted learned-at stamp as "· verified 24 Jul" (PROPOSED copy). Empty when
+// there is nothing verified yet — the "not yet verified" wording carries that case.
+function verifiedSuffix(at: string | null): string {
+  if (!at) return "";
+  const d = new Date(at);
+  if (Number.isNaN(d.getTime())) return "";
+  return ` · verified ${d.toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
 }
 
 function ProviderTable({ ds }: { ds: DataSource }) {
@@ -512,6 +524,8 @@ function ProviderTable({ ds }: { ds: DataSource }) {
           // "premium" Index-Data claim (I-4, AC-9). null → not verified / not applicable (em dash).
           quote_tier: active ? (ds.quote_entitlement ?? null) : null,
           index_tier: active ? (ds.av_tier ?? null) : null,
+          quote_tier_at: active ? (ds.quote_entitlement_at ?? null) : null,
+          index_tier_at: active ? (ds.av_tier_at ?? null) : null,
         };
       });
   }, [providers, ds, labelFor]);
@@ -543,9 +557,11 @@ function ProviderTable({ ds }: { ds: DataSource }) {
         r.quote_tier || r.index_tier ? (
           <span className="set__tiercell">
             <span className="set__fieldhelp">
-              Quotes: {r.quote_tier ?? "not yet verified"}
+              Quotes: {r.quote_tier ?? "not yet verified"}{r.quote_tier ? verifiedSuffix(r.quote_tier_at) : ""}
             </span>
-            {r.index_tier && <span className="set__fieldhelp">Indices: {r.index_tier}</span>}
+            {r.index_tier && (
+              <span className="set__fieldhelp">Indices: {r.index_tier}{verifiedSuffix(r.index_tier_at)}</span>
+            )}
           </span>
         ) : (
           <span aria-hidden>—</span>

@@ -392,6 +392,24 @@ test("provider table surfaces served facts — SET/NOT SET, Not needed, active m
   expect(within(table).getByText("Indices: premium")).toBeTruthy();
 });
 
+test("R-63 R3: the verified-tier cell shows the persisted learned-at date (· verified …)", async () => {
+  // Learned tiers are persisted with a learned-at stamp so the verification survives restart (F-D).
+  // The cell renders "Quotes: delayed · verified <date>". PROPOSED copy.
+  vi.mocked(getDataSource).mockResolvedValue({
+    ...DATA_SOURCE, provider: "alphavantage", has_api_key: true,
+    av_tier: "premium", quote_entitlement: "delayed",
+    quote_entitlement_at: "2026-07-24T10:00:00Z", av_tier_at: "2026-07-24T10:00:00Z",
+  });
+  vi.mocked(getProviders).mockResolvedValue({
+    active: "alphavantage",
+    capabilities: { alphavantage: { asset_classes: ["equity", "etf"], regions: ["US", "*"], needs_key: true } },
+    default_priority: {},
+  });
+  renderAt("/settings?tab=data-feeds");
+  const table = (await screen.findByText("Configured market-data providers (read-only).")).closest("table")!;
+  expect(within(table).getByText(/Quotes: delayed · verified /)).toBeTruthy();
+});
+
 test("provider table shows NOT SET when the active keyed provider has no stored key", async () => {
   vi.mocked(getDataSource).mockResolvedValue({ ...DATA_SOURCE, provider: "eodhd", has_api_key: false });
   vi.mocked(getProviders).mockResolvedValue({

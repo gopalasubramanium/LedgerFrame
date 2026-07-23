@@ -31,6 +31,10 @@ export interface MasterSelectProps {
    *  source — the institution master reads its live list this way (create-new is handled by
    *  the caller's `onChange`, which POSTs to the master endpoint and re-selects the row). */
   options?: RefOption[];
+  /** Overrides the empty-state placeholder option. Default: `Select <master label>…`. The routing
+   *  matrix passes "Select provider…" so the picker doesn't read "Select source override…" — which
+   *  collided with the matrix's own rule/pin vocabulary (R-63 R4, owner ruling 2026-07-24). */
+  placeholder?: string;
   "aria-label"?: string;
 }
 
@@ -43,6 +47,7 @@ export function MasterSelect({
   disabled,
   include,
   options: optionsSource,
+  placeholder,
   "aria-label": ariaLabel,
 }: MasterSelectProps) {
   const def = useMemo(() => getMaster(master), [master]);
@@ -117,7 +122,7 @@ export function MasterSelect({
         }}
       >
         <option value="" disabled>
-          Select {def.label.toLowerCase()}…
+          {placeholder ?? `Select ${def.label.toLowerCase()}…`}
         </option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

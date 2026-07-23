@@ -25,6 +25,44 @@ async def test_data_source_serves_verified_quote_entitlement_distinct_from_index
     assert "av_tier" in body, "Index-Data tier must remain a DISTINCT key, never conflated"
 
 
+async def test_data_source_serves_learned_at_stamps(app_client):
+    """R-63 R3(a)/I-11: the endpoint serves the persisted LEARNED-AT timestamps so the verified-tier
+    cell can say "· verified <date>". Served-shape pin — the keys must exist (null when unverified)."""
+    body = (await app_client.get("/api/v1/system/data-source")).json()
+    assert "quote_entitlement_at" in body, "learned-at stamp for quote entitlement not served (R3)"
+    assert "av_tier_at" in body, "learned-at stamp for the index tier not served (R3)"
+
+
+async def test_learned_tiers_persist_and_survive_a_provider_with_no_in_process_value(session):
+    """R-63 R3(a)/I-11 (the F-D fix): the learned tiers are PERSISTED, not per-process. Once a real
+    call has verified them they survive — a later read that goes through a provider which has learned
+    NOTHING this process (the post-purge zero-holdings case) still reports the durable verification."""
+    from app.services.market import persist_av_tiers, read_persisted_av_tiers
+
+    class _Learned:
+        quote_entitlement = "delayed"
+        av_tier = "premium"
+
+    await persist_av_tiers(session, _Learned())
+    got = await read_persisted_av_tiers(session)
+    assert got["quote_entitlement"] == "delayed" and got["quote_entitlement_at"]
+    assert got["av_tier"] == "premium" and got["av_tier_at"]
+
+    # An unchanged re-persist keeps the ORIGINAL learned-at stamp (verification isn't re-dated).
+    first_at = got["quote_entitlement_at"]
+    await persist_av_tiers(session, _Learned())
+    assert (await read_persisted_av_tiers(session))["quote_entitlement_at"] == first_at
+
+    # A provider that has learned nothing this process does NOT erase the durable value (F-D).
+    class _Blank:
+        quote_entitlement = None
+        av_tier = "unknown"
+
+    await persist_av_tiers(session, _Blank())
+    still = await read_persisted_av_tiers(session)
+    assert still["quote_entitlement"] == "delayed", "a per-process blank must not wipe the persisted verify"
+
+
 async def test_set_data_source_rejects_unknown(app_client):
     r = await app_client.put("/api/v1/system/data-source", json={"provider": "totally-made-up"})
     assert r.status_code == 400

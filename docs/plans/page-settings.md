@@ -1341,3 +1341,10 @@ on a non-entitled test key). **The entitled two-product readout ("Quotes: delaye
 requires the owner's real premium AV key and is DEFERRED to his 3b live walk** — not stubbed at 0a.
 Assets `docs/plans/assets/r63-prepass-settings-datafeeds-{light,dark}.png` +
 `r63-0a-settings-{routing,provider-head,verified-tier}-{light,dark}.png`.
+
+**✅ 0a RATIFIED AS WALKED — 2026-07-24 (owner, by looking).** The R-63 Settings → Data-feeds deltas are
+**ratified**: the **recut Routing-matrix sentence**, the **"Market data provider" preferred-head card**,
+and the **verified-tier truthful demo state** ("Quotes: not yet verified / Indices: free" — the honest
+not-verified readout; the **entitled** "Quotes: delayed / Indices: premium" cell stays the owner's 3b on
+his real premium key). The PROPOSED copy stands as walked; full ratification is logged at the R-63 close
+after 3a/3b.

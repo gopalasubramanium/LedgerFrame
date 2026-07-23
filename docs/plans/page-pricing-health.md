@@ -631,3 +631,12 @@ on camera). Assets `docs/plans/assets/r63-prepass-pricing-health-{light,dark}.pn
 manual)` in the Source column (the netCaught branch on a null `source`); (ii) the AV adapter logs AV's
 error text verbatim, which can echo the submitted key into the server log on the index-fetch path
 (the doctor *response* is redacted; this is a separate adapter behavior).
+
+**✅ 0a RATIFIED AS WALKED — 2026-07-24 (owner, by looking).** The R-63 Pricing Health deltas are
+**ratified**: the **head=X / priced-by=Y provenance**, the **failure-state drawer copies**
+(throttled/empty/parse_error/no_key/unsupported/unmapped, `_FAILURE_NOTE_PROPOSED`), the **duplicate-
+instrument banner**, and the **no-egress provider-doctor copy**. **Loop-2 fix (W-b):** the doctor's
+`coingecko`/`ecb_fx`/`amfi_nav` lanes now report the honest **`not_run`** state (was the scaffolding
+`proposed`); **(W-c):** the UNSUPPORTED specimen was re-seeded self-consistently (a `bond` with no source
+and no price). The PROPOSED copy stands as walked; full ratification is logged at the R-63 close after
+3a/3b. *(F-A `null (head manual)` and F-B key-echo logging remain OPEN — not dispositioned at this walk.)*

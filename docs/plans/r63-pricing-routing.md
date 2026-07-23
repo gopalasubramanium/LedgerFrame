@@ -678,3 +678,68 @@ bound. **Both themes; 0 non-benign console errors** on every drive.
   disposition his: fold a redaction into R-63, or file to R-58/R-64.)*
 
 **HARD STOP for the owner's look, walked in chat. Do NOT proceed to 3a. Expect 1–3 revision loops.**
+
+---
+
+## SESSION — 2026-07-24 (LOOP-2) — 0a WALK RULING applied; re-cut frames → next look
+
+The owner walked the 0a (chat 2026-07-24) and ruled. No further product behavior changed beyond the
+one W-b copy/state fix below. Re-cut frames only (ruling 5). **Next: loop-2 look → 3a → owner 3b → close.**
+
+### Ruling 1 — RATIFIED AS WALKED (owner, by looking)
+The **recut Settings sentences** (routing-matrix sentence + "Market data provider" preferred-head card),
+**head=X / priced-by=Y provenance**, the **five failure-state drawer copies** (throttled/empty/parse_error/
+no_key/unsupported — the sixth, `unmapped`, also walked), the **duplicate-instrument banner**, the
+**verified-tier truthful demo state** ("Quotes: not yet verified / Indices: free"), and the **no-egress
+doctor copy** are **RATIFIED**. Dated ratification notes appended to `page-pricing-health.md` and
+`page-settings.md`.
+
+### W-a — the doctor-vs-page yahoo "contradiction": EXPLAINED, path parity CONFIRMED (not a finding)
+**One-line result:** the doctor and the refresh net fetch through the **identical path** —
+`build_provider(lane).get_quote(symbol[, exchange])` (`_refresh_via_net` `market.py:749-753` vs
+`provider_doctor.py:120/137`); same construction, same adapter method, **same parse**. So the doctor
+**does** diagnose the real refresh path — **not a finding**. The apparent contradiction was an artifact
+of the **specimen seed**: the page's `yahoo`-priced rows were **raw-inserted DB fixtures** (to show the
+net-catch provenance), **never live-fetched**; the doctor made a **real** live `yahoo` call to `AAPL`
+that genuinely returned empty (Yahoo blocks/limits unauthenticated automated quotes from this host).
+That is the doctor **working** — faithfully reporting that the live `yahoo` lane does not resolve on this
+instance, exactly what the refresh would hit. Evidence: doctor `total_calls=3`, `yahoo` FAIL "reached,
+parsed empty"; the page's yahoo values were the seeded `quotes.source='yahoo'` rows.
+
+### W-b — DONE: doctor "proposed" → honest `not_run` (a served surface may not carry scaffolding)
+`coingecko`/`ecb_fx`/`amfi_nav` are the keyless lanes `build_provider` cannot construct yet (no live
+probe path), so they were **listed** but reported `verdict="proposed"` / *"live probe proposed for the
+0a look"* — dev-planning language on a served surface. **Replaced with the real state `not_run`** +
+honest note *"not probed on this instance — no live probe is wired for this lane yet"* (copy PROPOSED,
+ratified loop-2). Code: `app/services/provider_doctor.py` (`_UNPROBED_LANES`, `_NOT_RUN_NOTE`,
+`verdict="not_run"`); test `test_unprobed_lanes_report_the_honest_not_run_state` (asserts `not_run`,
+calls 0, **blindness pin**: note served + no "proposed"); frontend `doctorTone` already neutrals it
+(comment + type-doc updated). Doctor suite **6/6** ordered; `ruff`/`tsc` clean; PricingHealth vitest
+**19/19**. *(Chose `not_run` over wiring a live probe: these three lanes aren't in `build_provider`, and
+R-63 is a reliability fix, not a provider-expansion — an honest not-run state is the tight, truthful
+choice the ruling offered.)*
+
+### W-c — DONE: UNSUPPORTED re-seeded self-consistently (no source, no price)
+The old specimen (VOO with a live `yahoo` price **and** `unsupported`) was self-contradictory. Re-seeded
+as a genuine unsupported holding: **`SGB2032` (a `bond`)** — `bond ∉ _ALL` and no configured lane
+(`eodhd` doesn't list bond) prices it, so `route()` returns `source_selected=None` → `unsupported`
+naturally, with **no quote row → source `none`, native price `—`, valued from cost (Estimated)**. The
+drawer now reads the state's true shape: Source **none**, Route **—**, Native price **—**, "No configured
+source can price this instrument." (VOO restored to a clean `yahoo (head mock)` matrix net-catch.)
+
+### Re-cut frames (loop-2 deliverable) — `docs/plans/assets/`, both themes, 0 console errors
+- `r63-0a-doctor-fail-{light,dark}` — `coingecko`/`ecb_fx`/`amfi_nav` now **`not_run`** (W-b).
+- `r63-0a-pricing-failstate-unsupported-{light,dark}` — the self-consistent bond (W-c).
+- `r63-prepass-pricing-health-{light,dark}`, `r63-0a-pricing-headpricedby-{light,dark}` — refreshed for
+  the VOO-clean + bond-added table.
+- (`r63-0a-doctor-noegress-*` unchanged — byte-identical; `not_run` only appears egress-on.)
+
+### Still OPEN (findings the 0a ruling did not disposition — carried to the owner)
+- **F-A** — manual holdings render `null (head manual)` in the Source column (netCaught rider on a null
+  `source`). Visible on `r63-prepass-pricing-health-*`. **NOT fixed** (head/priced-by ratified as walked;
+  no ruling to touch the manual-row rider). Awaits the owner's disposition.
+- **F-B** — the AV adapter logs AV's key-echoing error text (a real key could reach the server log; the
+  doctor *response* is redacted). **NOT fixed.** Awaits disposition (fold into R-63 redaction, or R-58/R-64).
+
+**Full backend-suite verdict (both orders) is OWED before close** for the W-b `provider_doctor` delta
+(inner-loop green: doctor 6/6 + ruff/tsc/vitest). **Loop-2 look next — then 3a, then the owner's live 3b.**

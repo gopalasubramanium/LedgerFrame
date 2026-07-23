@@ -209,6 +209,18 @@ key-echoing error text (could leak a real key to the server log; doctor *respons
 after the owner's look: 3a scripted pre-pass → 3b owner walk on his LIVE symptoms → close.** Also
 deferred to 3b: the entitled verified-tier cell, his live duplicate cleanup, his live Refresh.
 
+**⊕ 2026-07-24 (LOOP-2) — 0a WALK RULING applied.** Owner **RATIFIED AS WALKED** the recut Settings
+sentences, head/priced-by provenance, the failure-state drawer copies, the duplicate banner, the
+verified-tier truthful state, and the no-egress doctor copy (dated notes in both page files). **W-a:**
+the provider-doctor and the refresh net fetch through the **identical** `build_provider().get_quote()`
+path — not a finding; the yahoo "contradiction" was that the page's yahoo prices were seeded fixtures
+while the doctor's yahoo call was live-empty. **W-b DONE:** doctor `coingecko`/`ecb_fx`/`amfi_nav`
+`proposed` → honest **`not_run`** (`provider_doctor.py` + test + frontend; doctor 6/6, ruff/tsc clean,
+PricingHealth vitest 19/19). **W-c DONE:** UNSUPPORTED re-seeded self-consistently (a `bond`, no source/
+no price). Re-cut frames only (both themes, 0 console errors). **Full backend-suite verdict owed before
+close** for the `provider_doctor` delta. **F-A (`null (head manual)`) + F-B (key-echo log) remain OPEN**
+— not dispositioned at this walk. **NEXT: loop-2 look → 3a → owner live 3b → close.**
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

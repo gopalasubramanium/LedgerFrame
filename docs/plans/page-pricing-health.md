@@ -586,3 +586,31 @@ The first attempt rendered **no `h1` at all** and logged a 500. The cause was in
 the explanatory JSX comment had been placed **inside** `{noEgress && ( … )}`, and a parenthesised
 JSX expression admits exactly one child — so the file did not parse and the whole route was dead.
 A diff review reads that comment as obviously inert. **It broke the page.**
+
+## DELTA NOTE — 2026-07-24 (R-63 pricing-routing reliability — the CONSOLIDATED accepted-surface rite)
+
+**Pricing Health is CLOSED/accepted; this is the dated delta note the guard-REDs-an-accepted-surface
+rite requires (CLAUDE.md), discharged ONCE for ALL R-63 changes to this page** per the recorded rite
+consolidation (`r63-pricing-routing.md` §-ledger, owner ruling 2026-07-23). Every served string added
+here is **PROPOSED** and is ratified only at the owner's 0a look.
+
+**Folded R-63 deltas on this page, each by commit:**
+- **Phase 2 Delta 2.2 (`c882648`)** — the per-holding **typed-failure drawer**: distinct causes
+  (`parse_error · throttled · unmapped · errored · empty · no_key · unsupported`) named where the old
+  flat "none" stood; `throttled` carries "last throttled at T — will retry".
+- **Phase 3 (`2a9fa1e`)** — the read-only **priority-chain display** now leads **free-first**
+  (yahoo-before-paid within capability); a visible-state change on this page.
+- **Phase 3.5 (`e7a7e94`)** — the **duplicate-instrument banner** (mirrors the identifier-duplicate
+  banner): "N duplicate instruments … Resolve on Holdings; new duplicates can no longer be created."
+  Surfaces any pair that pre-dates the identity guard; the owner resolves it on Holdings (§9-i).
+- **Phase 4 (`7ef6f15`)** — **head=X / priced-by=Y** provenance: the Source column shows "Y (head X)"
+  when the route head (`route_source`) differs from who priced the row (`source`), so a fallback-net
+  catch is never hidden (§9-1, AC-5).
+- **Phase 5 (the provider doctor)** — the on-demand **provider-doctor panel** (≤1 egress call per lane,
+  calls counted on screen, verdicts redacted, parse-empty = FAIL); folded here (see the commit in the
+  R-63 close record).
+
+**Pre-pass re-run (the rite's second obligation):** run ONCE after Phase 5 so the single drive covers
+every delta above **including the doctor** — Pricing Health on an isolated demo instance, **both
+themes**, 0 non-benign console errors, screenshots looked at. Recorded in the R-63 Phase-5 / 0a report
+and back-linked here on completion. *(A close-report flag is explicitly NOT sufficient — CLAUDE.md.)*

@@ -1290,3 +1290,40 @@ restored):** `/settings?tab=general&keep=me` driven through Appearance → Priva
 **`keep=me` preserved on every switch**, each tab set correctly, **0 console errors**. The stale
 `AppRoutes.tsx` comment ("four URL-addressable tabs" → **seven**) was corrected in the same commit
 under the records-truth bar (no plan note owed for a comment).
+
+## DELTA NOTE — 2026-07-24 (R-63 pricing-routing reliability — the CONSOLIDATED accepted-surface rite)
+
+**Settings is CLOSED/accepted; this is the dated delta note the accepted-page convention requires
+(§16 machinery), discharged ONCE for ALL R-63 changes to `/settings → Data feeds`** per the recorded
+rite consolidation (`r63-pricing-routing.md` §-ledger, owner ruling 2026-07-23). Every served string
+added here is **PROPOSED** and is ratified only at the owner's 0a look.
+
+**Folded R-63 deltas on this surface, each by commit (`7ef6f15`, Phase 4):**
+- **Routing-matrix sentence RECUT so the shipped promise is TRUE in EXECUTION (§9-1).** Before, the
+  sentence described a fallthrough that existed only in the *decision* of which provider was named,
+  never in the *execution* of fetching (§0-B iii) — yahoo was never called. Phase 1 built the
+  execution net; the sentence now reads: *"One provider per asset-class × market — the pinned head
+  for that cell. LedgerFrame tries it first, then walks the free-first chain to the next lane that can
+  actually price the instrument, so a rule pins the head without removing the fallback net. Pricing
+  Health names the lane that priced each holding."* This **makes the GLOSSARY "Routing matrix" promise
+  true, not reworded away** (§6; the GLOSSARY fallback clause is now honored).
+- **"Market data provider" card meaning shift (§9-6):** help copy *"The lane prices come from."* →
+  *"Your preferred head lane. Prices fall through the free-first chain when the head can't price a
+  holding."* The provider is the PREFERRED HEAD, not the single source.
+- **VERIFIED-TIER display (I-4, two-premiums fix, AC-9):** the provider table's tier cell shows
+  capability **per product** — *"Quotes: delayed"* (the VERIFIED quote entitlement, learned from the
+  GLOBAL_QUOTE envelope and newly served by `/system/data-source` as `quote_entitlement`) and
+  *"Indices: premium"* (the Index-Data `av_tier`, a DIFFERENT product) — so a coarse "premium" can
+  never stand in for a merely-delayed quote entitlement. Discharges I-4's remaining (display) half.
+
+**Help currency (Help Currency Law):** the Settings Help entry (`help.py`) describes these Data-feeds
+controls **structurally** (it lists the provider, key, masters, feeds, routing matrix) and makes no
+behavioral claim these deltas contradict; the GLOSSARY "Routing matrix" fallback promise is now
+*honored* (not reworded) and "Data provider" is compatible with "preferred head." **No stale claim
+found.** Full guard-corroborated Help-currency corroboration lands at the R-63 close, when the PROPOSED
+copy is ratified; any GLOSSARY addition for the verified-tier vocabulary is PROPOSED then, GLOSSARY-first.
+
+**Pre-pass re-run (the rite's second obligation):** a **Settings pre-pass re-run** on an isolated demo
+instance (spare ports, `.env` hash-verified restore), **both themes**, 0 non-benign console errors,
+screenshots looked at — run with the Pricing Health drive as one consolidated pass after Phase 5.
+Recorded in the R-63 Phase-5 / 0a report and back-linked here on completion.

@@ -22,6 +22,7 @@ day ``entitlement=delayed`` (F-4) shipped.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from app.providers.market.external import (
@@ -181,3 +182,51 @@ async def _mk_impl(data):
 
 def _mk(data):
     return _mk_impl(data)
+
+
+# --- R-63 0a F-B: provider error text must NOT echo the API key into the logs (§8 secrets) --- #
+
+# AV's REAL error body echoes the submitted key verbatim (captured shape, key slot filled with the
+# fake test key). An httpx error would similarly carry the request URL with ``apikey=<KEY>``.
+_FAKE_KEY = "INVALID-DOCTOR-TEST"
+_AV_KEY_ECHO = (f"We have detected your API key as {_FAKE_KEY} and our standard API rate limit is "
+                "25 requests per day. Please visit https://www.alphavantage.co/premium/ to instantly "
+                "remove all daily rate limits.")
+
+
+async def test_quote_error_does_not_leak_the_key_into_logs(monkeypatch, caplog):
+    """A quote-path provider error that echoes the key must be REDACTED before it is logged —
+    the key never reaches ``~/.ledgerframe-data/logs/`` (F-B). Blindness pin: the warning MUST
+    still fire (redaction, not silence)."""
+    p = ExternalMarketDataProvider("alphavantage", _FAKE_KEY)
+
+    async def fake_get(params):
+        raise RateLimited(_AV_KEY_ECHO)
+
+    monkeypatch.setattr(p, "_get", fake_get)
+    with caplog.at_level(logging.WARNING, logger="app.providers.market.external"):
+        q = await p.get_quote("IBM")
+
+    assert q.price is None  # the error still resolves to an honest no-price
+    blob = "\n".join(r.getMessage() for r in caplog.records)
+    assert "AV quote unavailable" in blob, "blindness pin: the warning must still be emitted"
+    assert _FAKE_KEY not in blob, "the API key leaked into the logs (F-B redaction failed)"
+    assert "***REDACTED***" in blob
+
+
+async def test_index_error_does_not_leak_the_key_into_logs(monkeypatch, caplog):
+    """The OBSERVED leak path (the index fetch, external.py:236): AV's index error echoes the key;
+    it must be redacted. This is the exact line the 0a run caught leaking the fake key."""
+    p = ExternalMarketDataProvider("alphavantage", _FAKE_KEY)
+
+    async def fake_get(params):
+        raise RateLimited(_AV_KEY_ECHO)
+
+    monkeypatch.setattr(p, "_get", fake_get)
+    with caplog.at_level(logging.WARNING, logger="app.providers.market.external"):
+        q = await p.get_quote("DJI")  # an index symbol → _index_quote path
+
+    assert q.price is None
+    blob = "\n".join(r.getMessage() for r in caplog.records)
+    assert "AV index unavailable" in blob, "blindness pin: the warning must still be emitted"
+    assert _FAKE_KEY not in blob, "the API key leaked into the logs via the index path (F-B)"

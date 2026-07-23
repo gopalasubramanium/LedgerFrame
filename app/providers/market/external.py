@@ -133,6 +133,16 @@ class ExternalMarketDataProvider:
         # "throttled — will retry" honestly rather than reading a throttle as "no price".
         self._last_throttled_at: datetime | None = None
 
+    def _redact(self, text: object) -> str:
+        """F-B (§8 secrets): never let a provider error echo our API key into the logs. Alpha
+        Vantage's own error bodies quote the submitted key verbatim ("… your API key as <KEY> …"),
+        and an httpx error carries the request URL with ``apikey=<KEY>`` — both would land our key
+        in ``~/.ledgerframe-data/logs/``. Scrub the key from any string before it is logged."""
+        s = str(text)
+        if self._key:
+            s = s.replace(self._key, "***REDACTED***")
+        return s
+
     @property
     def supports_indices(self) -> bool:
         # Attempt indices until a response proves the key isn't entitled; after that
@@ -170,7 +180,7 @@ class ExternalMarketDataProvider:
     def _no_quote(self, symbol: str, exchange: str | None, now: datetime,
                   state: FailureState, reason: str) -> Quote:
         """Build an UNAVAILABLE quote that NAMES why (R-63 §9-2) — never a bare 'none'."""
-        log.warning("AV quote unavailable for %s: %s (%s)", symbol, reason, state.value)
+        log.warning("AV quote unavailable for %s: %s (%s)", symbol, self._redact(reason), state.value)
         return Quote(
             symbol=symbol.upper(), exchange=exchange, price=None,
             currency=currency_for_symbol(symbol, exchange) or "USD", source=self.name,
@@ -223,7 +233,7 @@ class ExternalMarketDataProvider:
             not_entitled = "entitle" in str(exc).lower()
             if not_entitled:
                 self._index_entitled = False
-            log.warning("AV index unavailable for %s: %s", sym, exc)
+            log.warning("AV index unavailable for %s: %s", sym, self._redact(exc))
             return Quote(symbol=sym, exchange=exchange, price=None, currency="USD",
                          source=self.name, entitlement=EntitlementStatus.UNAVAILABLE,
                          failure_state=(FailureState.UNSUPPORTED if not_entitled
@@ -345,7 +355,7 @@ class ExternalMarketDataProvider:
         except Exception as exc:  # noqa: BLE001
             # No mock fallback for a live provider — return empty so charts show
             # "no data" rather than fabricated history.
-            log.warning("AV history unavailable for %s: %s", instrument_id, exc)
+            log.warning("AV history unavailable for %s: %s", instrument_id, self._redact(exc))
             return []
 
     async def search_instruments(self, query: str) -> list[Instrument]:
@@ -361,7 +371,7 @@ class ExternalMarketDataProvider:
                 ))
             return out or await self._mock.search_instruments(query)
         except Exception as exc:  # noqa: BLE001
-            log.warning("AV search failed: %s", exc)
+            log.warning("AV search failed: %s", self._redact(exc))
             return await self._mock.search_instruments(query)
 
     async def get_market_status(self, market: str) -> MarketStatus:
@@ -389,7 +399,7 @@ class ExternalMarketDataProvider:
         except Exception as exc:  # noqa: BLE001
             # FX is needed for currency conversion across the app, so fall back to
             # the (approximate) mock rate rather than breaking valuation.
-            log.warning("AV fx fell back to approx for %s/%s: %s", base, quote, exc)
+            log.warning("AV fx fell back to approx for %s/%s: %s", base, quote, self._redact(exc))
             return await self._mock.get_fx_rate(base, quote)
 
     async def get_news(self, instruments: list[str]) -> list[NewsItem]:

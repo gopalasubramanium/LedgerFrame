@@ -348,7 +348,11 @@ async def pricing_health(session: AsyncSession = Depends(get_db)) -> dict:
             "exchange": h.exchange, "currency": h.native_currency,
             "native_price": to_display(h.price), "market_value": to_display(h.market_value_base),
             "valuation_method": h.valuation_method, "valuation_label": label, "status": status,
-            "source": h.source, "entitlement": h.entitlement,
+            # F-A (§11-I, 0a): a manual holding has no market instrument (diag is None) and so no
+            # market source — serve the honest word "manual" (matching its route_source), never a
+            # null that the Source column would render as the literal "null (head manual)". PROPOSED.
+            "source": h.source if h.source is not None else ("manual" if diag is None else "none"),
+            "entitlement": h.entitlement,
             "price_ts": h.price_ts.isoformat() if h.price_ts else None,
             "is_stale": h.is_stale, "failure_reason": reason,
             # §9-2 Delta 2.2: the typed cause + when + a PROPOSED served note (throttled/empty/…).

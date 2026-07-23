@@ -48,3 +48,15 @@ async def test_pricing_health_carries_typed_failure_state(app_client):
         if h["failure_state"] is not None:
             assert h["failure_state"] in _TAXONOMY
             assert h["failure_note"], "a typed failure state must carry a served note"
+
+
+async def test_manual_holdings_serve_a_source_word_never_null(app_client):
+    """R-63 0a F-A (§11-I): a manual holding has no market instrument and so no market source —
+    it must serve the honest word 'manual' (matching its route_source), never a null that the
+    Pricing Health Source column renders as the literal 'null (head manual)'."""
+    body = (await app_client.get("/api/v1/portfolio/pricing-health")).json()
+    manual = [h for h in body["holdings"] if h["status"] == "Manual"]
+    assert manual, "demo seeds manual holdings (cash/property)"
+    for h in manual:
+        assert h["source"] == "manual", f"manual holding served source={h['source']!r} (F-A)"
+        assert h["route_source"] == "manual"  # the pair the Source column joins — now consistent

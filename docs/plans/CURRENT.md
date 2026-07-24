@@ -114,25 +114,23 @@ The product shell + every built page + the platform milestones, owner-accepted:
 
 ---
 
-## NEXT — R-65 Phase 2 (xdist, inner-loop) → R-59 (URL-addressable add-holding form)
+## NEXT — F-G diagnosis (pre-release-walk 9e) → R-59 (URL-addressable add-holding form)
 
-**⊕ 2026-07-24 — R-63 is CLOSED (owner final look PASSED; see the R-63 record below + RATIFICATION §6);
-the release train moves on.** NEXT = **R-65 Phase 2, then R-59** (owner sequencing, restated):
+**⊕ 2026-07-24 — R-65 Phase 2 is DONE (`740bac6`; full record in `ROADMAP.md` R-65 + `docs/plans/r65-test-runtime.md`).**
+pytest-xdist per-worker DB isolation for the INNER LOOP (`make test-fast` = `pytest -n 8`, ≈3.5× vs
+solo); gate/close verdicts stay SOLO ordered+randomized (2176/16 both orders, seed 6363). The release
+train moves on. NEXT = **F-G diagnosis, then R-59** (architect sequencing 2026-07-24, reversible):
 
-- **R-65 Phase 2 — pytest-xdist, INNER-LOOP ONLY.** Parallelism is a developer inner-loop speed-up;
-  **gate and close verdicts STAY SOLO, ordered AND randomized (declared seeds)** — promoting parallel
-  runs to verdict status needs a paired-run equivalence baseline + a **separate chat ruling** (doubt →
-  slow path). Quality-invariant by construction (clock-mock incidental time only); xdist needs per-worker
-  DB isolation (the F-10 `RESET_REGISTRY` census). See `ROADMAP.md` R-65.
+- **F-G — coingecko crypto holding stays stale through Refresh-all** (pre-release-walk 9e). Filed at
+  the R-63 close; its own **pre-release** fix item (diagnose-first), NOT folded into R-63.
 - **R-59 — URL-addressable add-holding form, phase 1** (RD-9 Amendment 10). Completes R-54's tier-1(b)
   example (unbuildable until the route exists); ships under the guard-REDs-an-accepted-surface rite
   (dated note in `page-holdings.md` + that page's pre-pass re-run). **The R-54 link registry gains the
   form ID its guard has been waiting for.**
 
 **⚑ CARRIED FORWARD (visible):** the **18 hardcoded-port smoke specs** must fail closed
-(`08-TECH-DEBT.md`) — recommendation: **slot before R-39**. Also filed at the R-63 close: **F-G** (a
-coingecko crypto holding stays stale through Refresh-all — diagnose-first, its own **pre-release** fix item,
-alongside this sequence, NOT folded into R-63); **pre-release backlog** page-load perf profiling.
+(`08-TECH-DEBT.md`) — recommendation: **slot before R-39**. **F-G** is now promoted into NEXT (above).
+**Pre-release backlog:** page-load perf profiling.
 
 ---
 

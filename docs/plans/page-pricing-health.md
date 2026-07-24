@@ -722,3 +722,13 @@ indices)… · {s} still stale"*. The AppShell StaleBanner copy (*"…price is s
 tsc/eslint/ruff clean. Full-suite verdict (both orders, seed 6363) captured at the close. **Pre-pass re-run:
 DISCHARGED at the closing session's final pre-pass** (§6 of `r63-pricing-routing.md`) — back-linked here when
 cut. *(A close-report flag alone is NOT sufficient — CLAUDE.md; this is the on-page record.)*
+
+**⊕ TOKEN-GUARD CORRECTION — 2026-07-24 (closing session; the NetWorth.css `--radius-2` precedent).** Running
+the full frontend guard suite this session surfaced a **pre-existing `check:tokens` RED on this page**, red
+since the Phase-5 provider-doctor CSS shipped (`b72ee18`) and NOT introduced by F-E/F-F: `.ph__doctorname`
+and `.ph__doctorsym` referenced **undefined** tokens `var(--font-weight-medium)` / `var(--font-weight-regular)`
+(the sanctioned names are `--weight-medium: 500` / `--weight-regular: 400`), so the doctor labels rendered at
+the browser default weight — a real cosmetic defect the standing guard flags. Fixed to the defined tokens in
+the same delta. Per CLAUDE.md (*"a new guard that reds an accepted surface is a delta on that surface, not a
+footnote"* — the same handling the Help close used for `var(--radius-2)` in `NetWorth.css`): this is the dated
+on-page record; `check:tokens` is now green (89 tokens, all defined); the pre-pass re-run rides §6.

@@ -213,11 +213,11 @@
 }
 .ph__doctorname {
   min-width: 12ch;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--weight-medium);
 }
 .ph__doctorsym {
   color: var(--text-tertiary);
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--weight-regular);
 }
 .ph__doctornote {
   font-size: var(--font-size-13);

@@ -123,6 +123,11 @@ train moves on. NEXT = **F-G diagnosis, then R-59** (architect sequencing 2026-0
 
 - **F-G — coingecko crypto holding stays stale through Refresh-all** (pre-release-walk 9e). Filed at
   the R-63 close; its own **pre-release** fix item (diagnose-first), NOT folded into R-63.
+  **⟶ DIAGNOSED 2026-07-24 (diagnose-only, HARD STOP): NOT a routing defect — routing is correct-by-design
+  and test-pinned; the defects are (1) an explainer that contradicts the design and (2) a refresh-all gap.
+  Option sheet (copy-only / wire-lane-sync / hybrid-RECOMMENDED) + Riders A (taxonomy default-leak,
+  `identity.py:91/46/96`) & B (title casing, `InstrumentDetail.tsx:276`) in `pre-release-walk.md` 9e —
+  awaiting owner ruling before any fix.**
 - **R-59 — URL-addressable add-holding form, phase 1** (RD-9 Amendment 10). Completes R-54's tier-1(b)
   example (unbuildable until the route exists); ships under the guard-REDs-an-accepted-surface rite
   (dated note in `page-holdings.md` + that page's pre-pass re-run). **The R-54 link registry gains the

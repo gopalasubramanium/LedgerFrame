@@ -117,6 +117,91 @@
     R-63 close alongside the R-65-Phase-2/R-59 sequencing. Cross-ref: `r63-pricing-routing.md` (OWNER
     VERDICT, R10).
 
+    ---
+
+    **⟶ DIAGNOSIS (2026-07-24, diagnose-only — instrumented on an isolated repro; HARD STOP for owner
+    ruling). VERDICT: NOT a routing defect — the routing is correct-by-design and TEST-PINNED. The real
+    defects are (1) a served explainer that CONTRADICTS the design and (2) a genuine gap: "Refresh all"
+    has no path to trigger the cache-publish lanes' own quote fetch. (R-63 lesson applied — the obvious
+    story "coingecko isn't wired into refresh" is FALSE; the path was instrumented before ruling.)**
+
+    - **(a) Does refresh walk the coingecko lane, and where does it drop out?** YES it routes the crypto
+      to coingecko, then drops out. `POST /system/refresh-data` (`system.py:744`) → per-symbol
+      `refresh_quote_detailed` (`market.py:660`). For a crypto, `route_for_instrument` returns
+      `head="coingecko"`. But **`market.py:681`** excludes it from the execution net —
+      `head not in _CACHE_PUBLISH` is FALSE (`_CACHE_PUBLISH = {"amfi_nav", "coingecko"}`,
+      `router.py:198`). It then reaches `_refetch_route_mismatched` (`market.py:695`), which returns
+      `None` at **`market.py:588-589`** because the cache is already on-route (`cached.source == "coingecko" == head`).
+      So it serves the stale cache as `outcome="not_owned"` (`market.py:707-711`). **Isolated repro
+      (mock active provider, on-route stale coingecko quote):** `route_head='coingecko' outcome='not_owned'
+      fetched=False cg_fetch_calls=[] price=64665.62 is_stale=True`. This is **pinned as intended** by
+      `tests/integration/test_route_mismatch_refetch.py::test_an_on_route_quote_is_not_refetched` —
+      "an on-route quote must not trigger a refetch … which would burn the rate budget."
+    - **(b) What does Settings "Sync now" do that refresh doesn't?** `POST /coingecko/refresh`
+      (`coingecko.py:35`, file=None branch) refetches the coins/list master **AND** calls
+      `publish_prices(fetch_prices(mapped_ids))` (`coingecko.py:60-61`) — a real price fetch that
+      UPSERTS the quote cache. So Sync-now DOES side-effect quotes (master sync + fresh prices); refresh
+      does not. (AMFI is symmetric: `amfi_refresh` publishes NAVs; refresh-all leaves amfi_nav quotes stale.)
+    - **(c) Routing defect or undocumented design?** **Undocumented design.** The net-exclusion is CORRECT
+      (the active equity provider must never price BTC/NAV) and the budget-driven on-route-no-refetch is
+      recorded in code + test (§18-R3 F-7a). What is NOT recorded, and what CONTRADICTS the design, is the
+      **served copy**: `PricingHealth.tsx:341-342` — *"refreshes quotes … Instrument masters (mutual funds,
+      coins) aren't included"* — attributes the exclusion to **masters**, but the un-refreshed thing is the
+      cache-publish-lane **QUOTE**. A user with a correctly-mapped BTC (master already synced) reads "masters
+      not included, quotes are" and expects the price to update — it doesn't. Same class as R-52/Help
+      ("describing itself falsely is a release bar"). Copy also at `PricingHealth.tsx:324` (tooltip) and the
+      design comment `pricing-health.ts:152`.
+
+    - **Fix options (owner to rule — NOTHING built):**
+      1. **Copy honesty only (release-blocking honesty fix).** Rewrite the explainer so it says
+         crypto/fund **quotes** refresh via their lane's Sync-now (Settings → Data feeds), not via
+         Refresh-all — stop misattributing the carve-out to "masters." Backend untouched.
+         *Blast radius:* `PricingHealth.tsx:324,341-342`; the pinning test
+         `PricingHealth.test.tsx:353` ("names the excluded masters"); Help currency (Pricing Health
+         entry); **closed-page rite** — dated delta note in `page-pricing-health.md` + a Pricing-Health
+         pre-pass re-run.
+      2. **Wire "Refresh all" to also publish the cache-publish lanes (budget-aware).** On the click
+         (user-triggered, so within budget discipline — one `publish_prices` per lane per click), also
+         trigger coingecko/amfi price publish. *Blast radius:* `system.refresh_data` or the frontend
+         orchestration (it currently calls only `/system/refresh-data`, `pricing-health.ts:145`); egress
+         + CoinGecko rate-budget handling; the per-lane refresh summary; new tests; reconcile against the
+         §18-R3 on-route-no-refetch pin (a separate bulk-lane sync doesn't touch that path, but state it).
+         Adjacent to **R-66** (background auto-refresh) budget/egress rulings.
+      3. **Hybrid (RECOMMENDED).** Ship Option 1 now as the pre-release honesty fix (a page describing
+         itself falsely is the release bar; the routing is already correct). File Option 2 as its own
+         roadmap item — it is a design change touching the rate-budget/egress discipline (R-66 class),
+         not a copy fix — and take it WITH the R-66/R-45 egress rulings. Feature-freeze discipline
+         (R-63 §9-10 precedent).
+
+    - **Rider A — BTC Identity Subclass "Equity" / Country "US" (taxonomy default-leak).** **Leak site:**
+      `resolve_or_create_instrument` (`identity.py:53`) — `identity.py:91` defaults an omitted
+      `asset_class` to `AssetClass.EQUITY`; `classify_defaults` (`identity.py:46`) sets
+      `asset_subclass = asset_class` → "equity"; `identity.py:96` → `country_for_symbol` bare-ticker
+      default **"US"** (`symbols.py:78`). **Trigger:** the add-holding form `POST /portfolio/transactions`
+      (`portfolio.py:689-697`) passes `asset_class=payload.asset_class`, which is `None` when the form
+      omits it (`TransactionIn.asset_class` default None, `portfolio.py:562`) — so a crypto added without
+      an explicit class leaks EQUITY/US. `coingecko.py:99` later sets `asset_subclass="crypto"` **only via
+      the explicit map endpoint**, and **nothing** corrects `listing_country`, so the "US" persists.
+      **Correct crypto shape per specs:** `asset_class = crypto` (MASTER-DATA §2, `MASTER-DATA.md:56`);
+      `asset_subclass = crypto` (DEF-2, `MASTER-DATA.md:138`). **⚠ OPEN QUESTION (do not invent):**
+      MASTER-DATA assigns crypto **no `listing_country`** (it is a listing concept; crypto is borderless).
+      The in-code precedent **§14dr-27(b)** already leaves a non-equity's country **unknown** (csv_import
+      passes `country=None`; `identity.py:93-96`). The fix should **ratify "crypto → listing_country
+      unknown"** against §14dr-27(b) rather than pick a value — owner to confirm the target (null vs a
+      sentinel). *Ties into R-59 (the add-holding form): the form should classify crypto and pass the class.*
+    - **Rider B — "crypto detail" card title casing.** **Site:** `InstrumentDetail.tsx:276` —
+      `{detailPanel[0].replace(/_/g, " ")} detail` composes the lowercase `asset_detail` key + "detail"
+      → "crypto detail" / "mutual fund detail" / "derivative detail". **Convention:** the sibling
+      `.idp__h2` titles on this same (accepted) page are all **Sentence case** — "Identity",
+      "Price history", "Your position", "Explain this instrument". *(No explicit written casing rule in
+      DESIGN-SYSTEM; the convention is de-facto from ratified sibling usage — flag.)* **One-line fix
+      scope:** uppercase the first character of the composed label (Sentence case → "Crypto detail"),
+      **not** CSS `text-transform: capitalize` (that Title-Cases every word → "Mutual Fund Detail").
+      Single line at `InstrumentDetail.tsx:276`; **closed-page rite** (dated delta in
+      `page-instrument-detail`/relevant plan + a pre-pass re-run). No test pins the current lowercase title.
+
+    ---
+
 9f. **Page-load performance profiling pass (filed R-63 close, owner, 2026-07-24).** Owner evidence:
     **Portfolio worst** (12:49 skeleton-state screenshot), **Home/Holdings sluggish**. A profiling pass —
     where the load time goes per page — with **severity assessed at the pre-release walk** (may fold into

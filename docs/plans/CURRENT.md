@@ -310,6 +310,23 @@ owner's key/stack never used (key overridden), `.env` hash-verified `460a2da0…
 throwaways deleted. 10 assets `docs/plans/assets/r63-3a-close-*`. **NEXT: owner's final look (his live
 entitled verified-tier + copy verdict on R3/R4 PROPOSED strings) → the full close ritual.** HARD STOP.
 
+**⊕ 2026-07-24 (pre-close) — R6/R7 ruled; F-E/F-F/Q3 DIAGNOSED (diagnose-only) → HARD STOP for the fix
+ruling.** **R6:** the R-63 core is ACCEPTED on the owner's live instance (entitled verified-tier on his real
+key, live pricing — 08:36–08:51 screenshots). **R7:** the PROPOSED set is CLOSED — ALL R-63 copy RATIFIED
+(R5 + R7), including the R3/R4 strings that postdated R5. **F-E (I-12):** the duplicate banner on a
+purged-then-re-added instrument — root cause PROVEN (repro): a *holdings/transactions* purge is a soft-delete
+that leaves `instruments`, so a pre-existing TSLA id-22/23 pair survives; re-add links one (`resolve_or_create`
+`.first()`), orphans the other; `duplicate_instruments` counts instrument rows blind to orphan status; and the
+banner's "Resolve on Holdings" is a **dead-end** (an orphan has no Holdings row). 3 fix options + rec (Option 2:
+make the orphan actionable). **F-F (I-13):** three stale counts = two scopes — banner+card are a TRUE shared
+holdings-scope reader (the 1-vs-0 is an async-invalidation transient); the toast counts the full refresh
+universe (~25 symbols incl. proxies). 3 fix options + rec (Option 2: scope-labelled copy). **Q3:** the
+~10-min build = cold per-instrument history fetch through the throttle (AMFI 70 MB / yahoo 1.5 s / AV 25-day),
+cached but re-evaluated every build → incremental-build optimization is **post-release**; the build **survives
+navigation** (backend `asyncio` task, status-polled) so it does **NOT** file to 9c. **Backlog:** "Alphavantage"
+capitalization → pre-release polish (9d). No fix code. Fix-option sheets in the plan's PRE-CLOSE section.
+**Close step 2 (full ritual) is cut after the owner rules F-E/F-F.**
+
 **⊕ 2026-07-23 — R-65 FILED (owner ruling, chat): "Test-suite runtime — measure, then
 parallelize" (TEST-INFRA, non-blocking).** Phase 1 = cheap survey delta (`pytest --durations`
 census · real-sleep debt census · `pytest-xdist` feasibility vs the F-10 `RESET_REGISTRY` census

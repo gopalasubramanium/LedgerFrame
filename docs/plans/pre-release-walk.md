@@ -98,6 +98,13 @@
     view in place; a long op's status survives (or is honestly re-surfaced after) a lock engage — no raw
     error strings, no silent stall. **Same fix family — take together.**
 
+9d. **Polish — the Source-override picker capitalizes "Alphavantage" (filed R-63 pre-close, 2026-07-24).**
+    The instrument Edit dialog's Source-override picker (and the Settings routing-matrix picker) renders
+    **"Alphavantage"** (title-cased by `labelFor`) while the canonical vocabulary value is lowercase
+    **`alphavantage`** (`frontend/src/mocks/refdata.ts:85`; the Identity chip renders "AlphaVantage"). A
+    cosmetic label inconsistency across the provider-name surfaces. *Verified (when taken):* one canonical
+    display form for the provider name across picker / chip / Settings. Cosmetic — pre-release polish.
+
 10. **Milestones append their own walk items here at close.** Still to ship: Help · Legal ·
     AI-surfaces (D-067/D-068) · R-45 (per-instrument + default news) · R-46 (Home summary
     cards) · chrome-sidebar-refresh (R-39). Each milestone's close ritual **adds its walk

@@ -350,6 +350,8 @@ A ledger may not claim CLOSED while any intake row lacks a disposition. Intake f
 | I-9 | 0a walk finding **F-B** (2026-07-24) | Provider error text can **echo the API key into the server log** — AV's error body quotes the submitted key verbatim, and an httpx URL error carries `apikey=<KEY>` (§8 secrets) | **DISCHARGED — `05be910`** (owner ruled FIX-BEFORE-CLOSE). `ExternalMarketDataProvider._redact()` scrubs the configured key from **all five** `log.warning("AV …")` sites (both the error-body echo AND the URL form). `get_quote` never raises (catches → `_no_quote`), so no key-bearing exception escapes to an unredacted logger (doctor included). Tests (log-capture, fake key, blindness pin): `test_av_quote_envelope.py::{test_quote_error_…, test_index_error_… (the observed path), test_urlembedded_apikey_form_…}` — the last asserts the **URL-embedded `apikey=<KEY>`** form specifically resolves to `apikey=***REDACTED***`. |
 | I-10 | 3b live walk finding **F-C** (2026-07-24) | On the owner's LIVE instance **AARK** served **priced-by=`mock`** at **Confidence 100 · high** with **head=`alphavantage`**, and `mock` is **not in the drawer's priority chain** — a fabricated-confidence / phantom-source class (a settled real number was never produced, yet the row reads high-confidence from a source the chain never lists) | **DIAGNOSED — Phase A DONE 2026-07-24 (see the F-C PHASE A section below); STILL OPEN pending the architect/owner fix ruling + Phase B.** Root cause PROVEN on an isolated instance (repro reproduced the owner's exact number **109.878669**): **NOT** the assumed provider lazy-import degrade, **NOT** a chain fallthrough to a `mock` lane. The execution net legitimately walks the **`csv`** lane (keyless, covers etf, in the `us_equity` chain), and the CSV provider **silently substitutes mock on a CSV miss** (`csv_provider.py:64-67` → `self._mock.get_quote()` returns `source="mock"`, price = mock's default base 100 × `_walk` ≈ 109.88, entitlement `delayed`, fresh). The net writes `source="mock"`; confidence scores by the ROUTE's `valuation_method="market_quote"` (head=alphavantage, active-in-chain) → base 100, no penalty → **100/high**; badge `delayed` = mock's own entitlement. Provenance recorded the TRUTH (head=alphavantage / priced-by=mock) — the R-63 provenance work is what made it seeable. **Fix scope = numbered options in the F-C PHASE A section → HARD STOP for the ruling.** Its session also carries the **"Source override" rename** (§4, DONE `96d9e4b`). **DISCHARGED — Phase B `275852f` (owner rulings R1+R2, 2026-07-24).** Four fixes, all fail-first on the Phase A repro: **Option 1** (`csv_provider.py` — a CSV miss returns typed `EMPTY`, never a mock substitution; restores `05-PROVIDERS-AND-ROUTING §A.3`); **Option 3** (standing net guard — never persist `source∈{mock,demo}` on a live instance; blindness-pinned); **Option 2** (confidence law — a mock/demo price can never read "high" outside demo mode, capped+named); **migration rider** (`repair_quote_demo_residue` + pricing-health once-per-install wiring — removes the owner's stored AARK mock row on a live instance, dupe-tolerant, gated non-demo). See the F-C PHASE B section. |
 | I-11 | 3b scope-addendum finding **F-D** (architect, 2026-07-24) | On the owner's real key the verified-tier cell read **"Quotes: not yet verified / Indices: premium"** after a session that DID parse a real GLOBAL_QUOTE (pre-purge TSLA) — the two learned tiers disagree | **DIAGNOSED (diagnose-only, 2026-07-24; see the F-D section below). No fix code — persistence semantics are an owner ruling.** Both tiers are **per-process instance state** on the `get_provider()` singleton, **not persisted** (`external.py:126,131`; wiped by restart / `reset_provider` on a settings change). The asymmetry is structural: **`av_tier` (Index Data) is learned by an ON-DEMAND probe the `/system/data-source` endpoint fires itself** (`system.py:145-146` → `get_quote("DJI")` → `_index_quote` → `_index_entitled=True`), so merely LOADING Settings→Data feeds learns "premium" — no holdings needed; **`quote_entitlement` (GLOBAL_QUOTE) has NO probe** — it is learned only as a passive side-effect of a real holding refresh parsing a quote (`external.py:276`), and the DJI probe **bypasses** it (indices route through `_index_quote`, never `_note_quote_entitlement` — `external.py:247-248,221`). The architect's candidate is **CONFIRMED**: post-purge **zero holdings ⇒ the refresh path fires zero GLOBAL_QUOTE calls ⇒ `quote_entitlement` stays `None`** ("not yet verified") while the self-probing `av_tier` shows premium. Owner ruling owed: persist `quote_entitlement`, and/or fire a quote-side verification probe symmetric with the index one. Dispositions with F-C. **RULED R3 (owner 2026-07-24): option (a) — PERSIST both learned tiers, NO new probes** (budget discipline on a ~25/day tier). **DISCHARGED — `d0a1c81`.** `market.persist_av_tiers`/`read_persisted_av_tiers` store `quote_entitlement`/`av_tier` + a learned-at stamp in `settings`; the net refresh persists what a real quote call taught the singleton and the data-source endpoint persists the existing DJI index-probe result — **no new egress**. `/system/data-source` serves the durable values + `*_at` stamps (served-shape pins; stays `-> dict`, 143/71 unchanged). A post-purge zero-holdings read now reports the durable verification, not "not yet verified". Cell copy "Quotes: delayed · verified 24 Jul" (PROPOSED, postdates R5). |
+| I-12 | pre-close finding **F-E** (owner live, 2026-07-24) | After purging ALL holdings+transactions and re-adding TSLA **once**, the duplicate banner reads **"1 duplicate instrument — TSLA"** | **DIAGNOSED (diagnose-only, 2026-07-24; live-DB-shape repro passed). No fix code — owner rules the options.** Architect hypothesis **CONFIRMED**. **(a) The purge:** a *holdings/transactions* purge is a **SOFT-DELETE** (`deleted_at`, migration `e3f8a1c92d45`) — it never touches `instruments`, so a pre-existing TSLA pair (the id-22/23 twins the dupe-tolerant guard KEPT, not removed) **survives**. *(Distinct from `POST /system/reset-data` (system.py:622), which DOES delete `instruments` — every table minus `RESET_KEEP_TABLES` (system.py:614, no `instruments`) — so a full reset would NOT reproduce this; the finding is the soft-delete path.)* **(b) The counter:** `duplicate_instruments` (identity.py:130-145) groups **instrument ROWS** by `(upper(symbol), coalesce(exchange,''))` having count>1 — **blind to holdings/orphan status**. **(c) The orphan — CONFIRMED:** re-adding TSLA calls `resolve_or_create_instrument` (identity.py:78-83) whose lookup `WHERE upper(symbol)='TSLA'` returns **`.first()`** → it LINKS to one twin and leaves the other with **0 active holdings, 0 active transactions**. **(d) The banner is a DEAD-END:** Holdings derives from transactions (`rebuild_holdings_from_transactions`, portfolio.py:690); an orphan has none, so **no Holdings row exists to remove** — the banner's *"Resolve on Holdings by removing the extra row"* (PricingHealth.tsx:349-352) cannot touch it. Repro (deleted): pair `[1,2]` survives purge → re-add links id-1 → id-2 orphan (0/0) → `duplicate_instruments`=`TSLA:2` → active Holdings point only to id-1. **Fix options in the F-E section.** |
+| I-13 | pre-close finding **F-F** (owner live 08:51, 2026-07-24) | Three disagreeing stale counts on one screen: toast **"2 still stale"**, banner **"1 price is stale"**, confidence card **"0 of 4 prices stale — the same count the Stale banner shows (one shared reader)"** | **DIAGNOSED (diagnose-only, 2026-07-24). No fix code — owner rules the options.** Two scopes, three numbers. **Banner + card ARE a true shared reader** (`useStaleCount` → `/portfolio/summary.stale_count` = `sum(1 for h in val.holdings if h.is_stale)`, portfolio.py:153 — HOLDINGS only): the StaleBanner (`AppShell.tsx:67,237`) and the card (`PricingHealth.tsx:107,388`) render the SAME `useStaleCount` snapshot (`staleCount.ts`) — the *"one shared reader"* claim is **TRUE in code**; a captured 1-vs-0 is a sub-second **async-invalidation transient** (after a refresh, `reload()` moves the card's denominator `d.holdings.length` while the shared numerator waits on a separate, `inFlight`-guarded `/portfolio/summary` re-fetch — `PricingHealth.tsx:159`, `staleCount.ts:24`). **The toast is a DIFFERENT SCOPE:** it renders the refresh-lane detail `Refreshed {refreshed} of {total} … {still_stale} still stale` (`pricing-health.ts:150-153`) from `POST /system/refresh-data`, whose universe is `_display_symbols` = **holdings + watchlist + overview/global proxies** (system.py:665-681, ~25 symbols) — so "2 still stale of 25" counts indices/FX proxies, NOT the 1 stale holding. Each number is internally correct; adjacent on screen, two scopes read as a contradiction. **Fix options in the F-F section.** |
 
 ### Accepted-surface RITE — consolidation (recorded explicitly per the owner ruling 2026-07-23)
 
@@ -1175,3 +1177,135 @@ on the 28/28 run + their earlier ratification, transferred by byte-identity.
 
 **HARD STOP — the owner's final look follows in chat** (his live entitled verified-tier on his real key;
 his copy verdict on the R3/R4 PROPOSED strings). No close ritual yet.
+
+---
+
+## PRE-CLOSE — R6/R7 rulings + F-E/F-F/Q3 diagnosis (2026-07-24) → HARD STOP for the fix ruling
+
+### Rulings recorded (dated)
+- **R6 (owner, live 3b, 2026-07-24) — the R-63 core is ACCEPTED on his real instance.** The owner's live
+  look (08:36–08:51 screenshots) confirmed the fixes on his real premium key — the entitled verified-tier
+  cell (*"Quotes: delayed / Indices: premium"*) rendering on his key, and the live pricing/provenance.
+  Closes the live-3b remainder that the prior handoff owed. *(If the architect intended R6 to carry a
+  different clause, correct here — recorded from the work-order framing.)*
+- **R7 (owner, 2026-07-24) — the PROPOSED set is CLOSED: ALL R-63 copy is RATIFIED (R5 + R7).** Final
+  rendered confirmation done on the owner's live screenshots (08:36–08:51 set). This ratifies the strings
+  that postdated R5 — the R3 verified-tier "· verified \<date\>", the R4 "Select provider…", and every
+  other served R-63 string. No R-63 copy remains PROPOSED.
+
+### F-E — the duplicate banner on a purged-then-re-added instrument (ledger I-12) — DIAGNOSIS
+**Root cause PROVEN** (live-DB-shape repro, deleted). The architect hypothesis holds in full:
+- **(a) What the purge deletes.** The owner's *"purge all holdings+transactions"* is a **soft-delete**
+  (`holdings.deleted_at` / `transactions.deleted_at`, migration `e3f8a1c92d45`). It touches **only those two
+  tables' rows** — `instruments`, `quotes`, `price_history`, identifiers, etc. are **untouched**. So a
+  **pre-existing TSLA identity pair survives** (the owner's id-22/23 twins: the Phase-3.5 dupe-tolerant
+  migration KEPT them and only *surfaced* them; the guard prevents NEW dupes, it never removed the old).
+  **Contrast:** `POST /system/reset-data` (system.py:622-662) deletes **every** user table minus
+  `RESET_KEEP_TABLES` (system.py:614-619 — `instruments` is **not** kept), so a *full reset* clears the pair
+  and would **not** reproduce F-E. The finding is specifically the holdings/transactions purge path.
+- **(b) What the counter counts.** `duplicate_instruments` (identity.py:130-145) groups **instrument rows**
+  by `(upper(symbol), coalesce(exchange,''))` `HAVING count>1` — a pure `instruments`-table query, **blind
+  to whether a row has any holding/transaction**. An orphan counts exactly like a live row.
+- **(c) The orphan — CONFIRMED.** Re-adding TSLA routes through `resolve_or_create_instrument`
+  (identity.py:77-83): `SELECT … WHERE upper(symbol)='TSLA'` → **`.scalars().first()`**. With two matching
+  rows it returns **one** (lowest id) and links the new transaction to it; the twin keeps **0 active
+  holdings + 0 active transactions**. Repro: pair `[1,2]` → re-add links id-1 → id-2 orphan (0/0).
+- **(d) The banner's resolution path is a DEAD-END for an orphan.** Holdings is **derived from
+  transactions** (`rebuild_holdings_from_transactions`, portfolio.py:690; the list reads
+  `Holding.deleted_at IS NULL`, portfolio.py:649). An orphan has no transaction → **no Holdings row is
+  built for it** → the banner's *"Resolve on Holdings by removing the extra row"* (PricingHealth.tsx:349-352)
+  points the owner at a page where **the extra row does not appear**. He cannot clear it from Holdings.
+
+**F-E FIX OPTIONS (numbered; owner rules) — blast radius each:**
+1. **Exclude orphans from the count** — `duplicate_instruments` filters to identities with ≥1 row that has
+   an active holding/transaction (or ≥2 *non-orphan* rows). *Blast radius:* `identity.py` only + its
+   served-shape test; the banner stops firing on a pure-orphan pair. **Risk:** hides a real data-integrity
+   artefact (the orphan row still exists in the DB) — the banner was meant to surface exactly these. Cheapest,
+   but it silences rather than resolves.
+2. **Offer orphan cleanup** — make the duplicate surface **actionable for orphans**: a "remove the unused
+   duplicate" affordance on Pricing Health (or a Holdings entry that lists orphan instrument rows), deleting
+   the zero-reference instrument row directly. *Blast radius:* a new (small) delete endpoint + a UI control on
+   an accepted surface (rite), + the banner copy stops promising Holdings. **Most complete** — it makes the
+   banner's promise true.
+3. **Purge cascades to orphaned instruments** — when a holdings/transaction purge (or a periodic sweep)
+   leaves an instrument with zero references, delete the instrument row too. *Blast radius:* the purge/delete
+   paths + a guard that never deletes a still-referenced or cache-published (amfi/coingecko) instrument;
+   touches identity + reclassify assumptions. **Broadest**, and changes purge semantics (an instrument the
+   user re-adds tomorrow would be re-created — usually fine, but it drops any manual metadata on the row).
+
+*Recommendation (for the ruling):* **Option 2** (make the promise true) as the primary, optionally with a
+narrow Option-1 refinement so a *pure*-orphan pair reads as "unused duplicate — remove" rather than
+"resolve on Holdings". Option 3 is a bigger semantics change better left post-release unless the owner wants
+purge to self-clean.
+
+### F-F — three disagreeing stale counts on one screen (ledger I-13) — DIAGNOSIS
+- **Banner + card = a genuine shared reader (holdings-scope).** Both read `useStaleCount()`
+  (`AppShell.tsx:67,237` and `PricingHealth.tsx:107,388`), a single module store (`staleCount.ts`) over
+  `/portfolio/summary.stale_count` = `sum(1 for h in val.holdings if h.is_stale)` (portfolio.py:153) — stale
+  **holdings** only. **The "one shared reader" claim is TRUE in code** (one variable, both components). A
+  captured **1-vs-0** is a sub-second **async-invalidation transient**: after a refresh, `onRefreshAll`
+  fires `reload()` (updates the card's denominator `d.holdings.length` immediately) **and**
+  `invalidateStaleCount()` (a *separate*, `inFlight`-guarded async `/portfolio/summary` re-fetch,
+  `staleCount.ts:23-35`) — so the shared numerator lags the reloaded page by one round-trip. Not two
+  counters; a consistency-window artefact.
+- **Toast = a different scope (refresh-universe).** The toast is the refresh-lane summary
+  `Refreshed {refreshed} of {total} … {still_stale} still stale` (`pricing-health.ts:150-153`) from
+  `POST /system/refresh-data`, whose universe is `_display_symbols` — **holdings + watchlist +
+  overview/global proxies** (system.py:665-681, the "25"). `still_stale` (system.py:769) counts stale
+  symbols across **all of them**, so "2 still stale" includes indices/FX proxies, never the 1 stale holding.
+  The **25/22/3/2** are `total / refreshed / (failed|skipped) / still_stale` over that universe.
+- **Net:** each number is internally correct; the screen shows **two scopes** (holdings vs refresh-universe)
+  with no scope labels, so three numbers read as a contradiction. The card's copy *asserts* identity with
+  the banner (true), but sits beside a toast that silently counts a superset.
+
+**F-F FIX OPTIONS (numbered; owner rules) — blast radius each:**
+1. **Align scopes** — make the toast's "still stale" count **holdings only** (or add a holdings-scoped line),
+   so all three numbers match. *Blast radius:* `system.py refresh-data` still_stale semantics + the toast
+   builder. **Risk:** loses the §18-R2 (F-7b) signal that a *proxy/index* is still stale after the pass —
+   that honesty was the point of counting the whole refreshed set.
+2. **Scope-labelled copy** (recommended) — keep the counts, **label their scope** so they never read as the
+   same fact: toast *"2 of 25 refreshed symbols still stale"*; banner unchanged (*"1 price is stale"* =
+   holdings); card unchanged (already scoped to holdings). *Blast radius:* copy-only (toast + maybe the card
+   footnote), PROPOSED strings. **Cheapest + honest.**
+3. **Both** — scope-label the copy **and** close the banner/card transient: drive the card's numerator from
+   the SAME payload as its denominator (`d.holdings` is_stale count) instead of the separately-fetched
+   `staleCount`, then relax the "same count as the banner" claim to a scope statement; or make
+   `invalidateStaleCount` await + settle before the card re-renders. *Blast radius:* `staleCount.ts` +
+   `PricingHealth.tsx` card + the refresh handlers; more surface, removes the flicker entirely.
+
+*Recommendation:* **Option 2** (scope-labelled copy) as the release fix; **Option 3's** transient-close is a
+polish worth folding in if the owner wants the flicker gone, else post-release.
+
+### Q3 — factual answers (no ledger row; filing determined below)
+- **(a) Why ~10 min to "Build history" for one added holding.** The backfill's cost is the **acquisition
+  preflight** `acquire_history` (`backfill.py:180-206` → `acquire.py:69`), which runs on **every** build and,
+  after a one-shot ECB FX-history zip fetch (skipped if today's rates are already stored, `acquire.py:114`),
+  calls **`acquire_prices`** (`acquire.py:130`) — **per-instrument price-history fetch**, routed by class:
+  equities → AV (free ~25/day; daily history), crypto → CoinGecko, funds → **AMFI's ~70 MB whole-market
+  archive** (180 s timeout × attempts, `acquire.py:53-60`), and Yahoo is **paced 1.5 s/request with 429
+  backoff** (`yahoo.py:106,143-165`). A **new** holding is a *cold* fetch of a multi-year daily series through
+  that throttle — the dominant ~10-min cost (a fund's 70 MB payload, or a paced/rate-limited equity series).
+  **Minimal vs waste:** the per-instrument fetch is **cached** (`get_history_cached`, 12 h), so warm
+  instruments are cheap — but `acquire_prices` re-evaluates **every** instrument's coverage on **every** build
+  (`acquire.py:128-130`), and the cold new-instrument series is inherently slow on a throttled/heavy lane.
+  Known-approximation/limitation, not a defect; an **incremental build** (fetch only uncovered instruments)
+  is a candidate optimization — **post-release**.
+- **(b) Does the build survive navigation?** **YES — it is a BACKEND background task.**
+  `POST /net-worth/backfill` does `asyncio.create_task(run_backfill_background(base))` tracked in
+  `_backfill_tasks` (portfolio.py:1093-1104); the UI polls `GET /net-worth/backfill-status`
+  (portfolio.py:1107-1112, `backfill.read_status()`). The **work is not frontend-killed** — navigating away
+  does not stop it. **So it does NOT belong in the 9c long-op family for "survives navigation."** *(One
+  residual UX nuance, NOT a bug: the progress indicator lives on the Net Worth page, so navigating away hides
+  the progress while the build continues — an app-wide progress surface is an optional 9c-adjacent polish, not
+  a survival fix.)*
+
+**Filing outcome:** Q3(b) does **not** file to 9c (the build already survives). Q3(a)'s incremental-build
+optimization → **post-release ROADMAP candidate** (not release-blocking). Neither is a fix this session.
+
+### Backlog filing (record only)
+- **Edit-dialog Source-override picker renders "Alphavantage" (title-cased) vs the canonical lowercase
+  `alphavantage` vocabulary** (`frontend/src/mocks/refdata.ts:85` holds the lowercase value; the picker's
+  `labelFor` capitalizes it). Cosmetic label inconsistency → **pre-release polish list**.
+
+**HARD STOP — the F-E/F-F fix-option sheets and Q3 answers are above. Close step 2 (the full close ritual)
+is cut after the owner rules the F-E/F-F options.** No fix code this session.

@@ -81,7 +81,7 @@ mechanism**. The genuine asset_class-adjacent phase-1 contribution is a **deep-l
 classification guard** — the new `?add=` entry must land on the tile picker (step 1) so a deep-linked
 add cannot bypass classification. → **verify + pin + deep-link guard; NOT a new mechanism.**
 
-**The disposition fork (owner's call — HARD STOP for the ruling):**
+**The disposition fork (RULED 2026-07-24 — owner+architect chose Option (a); recorded for history):**
 - **(a) RECOMMENDED — accept "already classified".** Treat I-3 as verified-and-pinned; R-59's only
   new asset_class work is the deep-link-preserves-classification guard. **Do NOT touch the
   `identity.py:91` EQUITY default** — a bare ticker with no class *should* resolve to a US equity
@@ -101,7 +101,7 @@ add cannot bypass classification. → **verify + pin + deep-link guard; NOT a ne
 | **I-1** | §0 intake / charter §2.1 | Add-holding dialog becomes URL-addressable (`?add=` on `/holdings`; round-trip, back-button, no residue, composes with `?account=`) | **OPEN** — the substantive phase-1 build |
 | **I-2** | §0 intake / charter §2.3 | Link registry flip: tier-1(b) `page:/holdings` → the form deep link, after the route ships | **OPEN** — after I-1 |
 | **I-2a** | derived from I-2 | New guard: the served `?add=` param is HONORED by the route (not a silent no-op — dead-affordance-3 class), making the R-54→R-59 ordering mechanical | **OPEN** — ships with I-2 |
-| **I-3** | §0 intake / charter §2.2 (F-G Rider A / R12) | Form classifies + passes `asset_class` | **VERIFIED ALREADY-DONE** (both sides pinned) — awaiting owner ruling on the disposition fork (a)/(b); on (a), residual = the deep-link-preserves-classification guard |
+| **I-3** | §0 intake / charter §2.2 (F-G Rider A / R12) | Form classifies + passes `asset_class` | **DISPOSED — Option (a), owner+architect ruled 2026-07-24.** Already-implemented-and-pinned (`Holdings.tsx:880`, `identity.py:97-104`; `test_fg_crypto_identity.py` + `Holdings.test.tsx:217` green). Residual = the **I-3 deep-link-lands-on-picker guard** (below). `identity.py:91` omission-default hardening (Option 2) **NOT taken** — remains available as its own ruled delta if ever wanted. Premise correction recorded as a dated note on the ROADMAP R-59 charter input (I-5 never-age-it-silently precedent). |
 
 ---
 

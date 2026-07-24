@@ -24,6 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.egress import egress_client
+from app.db.claim import claim_setting
 from app.models import Setting
 from app.schemas.common import NewsItem
 
@@ -73,9 +74,10 @@ async def set_feed_urls(session: AsyncSession, urls: list[str]) -> None:
     ).scalars().first()
     if row:
         row.value = value
+        await session.flush()
     else:
-        session.add(Setting(key=FEEDS_SETTING_KEY, value=value))
-    await session.flush()
+        # R-58: absent-INSERT check-then-insert race — absorb a concurrent first-save's loser.
+        await claim_setting(session, FEEDS_SETTING_KEY, value)
 
 
 def _parse_date(text: str | None) -> datetime:

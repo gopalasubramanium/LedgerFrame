@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_auth
 from app.core.config import SUPPORTED_CURRENCIES, get_settings
+from app.db.claim import claim_setting
 from app.models import AuditEvent, Setting
 
 router = APIRouter()
@@ -132,7 +133,9 @@ async def update_settings(patch: SettingsPatch, session: AsyncSession = Depends(
         if row:
             row.value = value
         else:
-            session.add(Setting(key=key, value=value))
+            # R-58: absent-INSERT check-then-insert race — two concurrent PUTs of the same
+            # never-set key both read absent and both insert; absorb the loser rather than 500.
+            await claim_setting(session, key, value)
         applied[key] = value
     session.add(AuditEvent(category="mutation", action="update_settings",
                            detail=",".join(applied.keys())))

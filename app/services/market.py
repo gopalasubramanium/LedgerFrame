@@ -14,7 +14,6 @@ from typing import NamedTuple
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -1179,29 +1178,18 @@ async def repair_wrong_class_candles(session: AsyncSession) -> dict:
 
 
 async def _claim_marker(session: AsyncSession, key: str) -> bool:
-    """Insert a ``Setting`` marker, tolerating a concurrent claimer. True if WE inserted it.
+    """Insert a timestamp marker, tolerating a concurrent claimer. True if WE inserted it.
 
-    F10. Every marker in ``get_history_cached`` was written as ``SELECT key -> if absent,
-    session.add(Setting(...)) -> flush()`` — a check-then-insert race. Two concurrent requests
-    both read the key as absent, both insert, and the loser dies on
-    ``UNIQUE constraint failed: settings.key``, 500ing a request that had done nothing wrong.
-
-    The insert goes inside a SAVEPOINT so the loser's ``IntegrityError`` rolls back to that
-    savepoint instead of poisoning the caller's transaction — the request continues and serves
-    its history. Absorbing the error is correct rather than merely convenient: the marker
-    exists afterwards either way, which is the whole contract a marker has.
-
-    Used by every marker write in this function so the four sites cannot drift apart.
+    F10 introduced this to fix the check-then-insert race on the ``get_history_cached`` markers
+    (``SELECT key -> if absent, session.add(Setting(...)) -> flush()``: two concurrent requests both
+    read absent, both insert, the loser dies on ``UNIQUE constraint failed: settings.key``). R-58
+    PROMOTED the body to the shared ``app.db.claim.claim_setting`` primitive so the five callers — the
+    markers here plus the four filed sites — cannot drift apart; this is now a thin wrapper that fixes
+    the marker's value (a write timestamp; a marker's contract is presence, not value).
     """
-    from app.models import Setting
+    from app.db.claim import claim_setting
 
-    try:
-        async with session.begin_nested():
-            session.add(Setting(key=key, value=datetime.now(UTC).isoformat()))
-        return True
-    except IntegrityError:
-        log.debug("marker %s was claimed by a concurrent request", key)
-        return False
+    return await claim_setting(session, key, datetime.now(UTC).isoformat())
 
 
 async def _repair_once_per_install(session: AsyncSession, marker_key: str, repair) -> None:

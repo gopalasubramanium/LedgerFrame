@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.disclaimer import DISCLAIMER
+from app.db.claim import claim_setting
 from app.models import Setting
 from app.services.portfolio import top_movers, value_portfolio
 
@@ -202,6 +203,9 @@ async def _set(session: AsyncSession, key: str, value: str) -> None:
     row = (await session.execute(select(Setting).where(Setting.key == key))).scalars().first()
     if row:
         row.value = value
+        await session.flush()
     else:
-        session.add(Setting(key=key, value=value))
-    await session.flush()
+        # R-58: the absent-INSERT is a check-then-insert race — two concurrent first-writes both
+        # read absent and both insert. Delegate to the shared claim primitive so the loser is
+        # absorbed, not 500'd. A generic helper, so this retires the race for every caller of _set.
+        await claim_setting(session, key, value)

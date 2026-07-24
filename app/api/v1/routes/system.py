@@ -665,6 +665,7 @@ async def reset_data(body: PinConfirm, session: AsyncSession = Depends(get_db)) 
     """
     await verify_fresh_pin(session, body.pin)
     from app.db.base import Base
+    from app.db.claim import claim_setting
     from app.models import Setting
     from app.seed.demo import SEED_FLAG_KEY
 
@@ -679,7 +680,10 @@ async def reset_data(body: PinConfirm, session: AsyncSession = Depends(get_db)) 
     if flag:
         flag.value = "1"
     else:
-        session.add(Setting(key=SEED_FLAG_KEY, value="1"))
+        # R-58: absent-INSERT check-then-insert race — absorb a concurrent reset's loser. (The
+        # preceding table.delete() loop serialises concurrent resets in practice, so this is
+        # uniformity/defence-in-depth: all five settings.key writers now share ONE shape.)
+        await claim_setting(session, SEED_FLAG_KEY, "1")
     await session.flush()
     return {"ok": True, "note": "All portfolio & market data cleared. Add your holdings to begin."}
 

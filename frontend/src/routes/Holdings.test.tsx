@@ -265,6 +265,21 @@ test("R-59: the Add button addresses the dialog via ?add=1 (openable by URL)", a
   expect(screen.getByTestId("loc-search").textContent).toBe("?add=1");
 });
 
+test("R-59 I-3: a ?add= deep link cannot bypass classification — opens at the picker, no Save until a tile is chosen", async () => {
+  const user = userEvent.setup();
+  renderPageAt(["/holdings?add=1"]);
+  await waitFor(() => expect(screen.getByText("AAPL")).toBeInTheDocument());
+  const dialog = await screen.findByRole("dialog");
+  // The deep link lands on the D-089 classification step — there is NO Save affordance until a
+  // class (tile) is chosen, so a deep-linked add cannot submit an unclassified instrument. The
+  // tile then carries asset_class on submit (pinned by the "Listed tile classifies…" test above;
+  // backend crypto/crypto/— by test_fg_crypto_identity.py). This is I-3's deep-link half.
+  expect(within(dialog).getByText("What are you adding?")).toBeInTheDocument();
+  expect(within(dialog).queryByRole("button", { name: "Save" })).toBeNull();
+  await user.click(within(dialog).getByText("Crypto"));
+  expect(within(dialog).getByRole("button", { name: "Save" })).toBeInTheDocument();
+});
+
 test("R-59: closing the add dialog clears ?add= and preserves ?account= (no residue)", async () => {
   const user = userEvent.setup();
   renderPageAt(["/holdings?account=3&add=1"]);

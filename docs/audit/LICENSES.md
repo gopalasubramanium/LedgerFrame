@@ -16,7 +16,7 @@ rubber stamp that outlives what it stamped is worse than no stamp.
 **RUNTIME** = what a user receives and runs (the scope a distribution claim is about).
 **dev** = build/test tooling; it does not ship, and is listed for completeness.
 
-- packages: **382** (41 runtime, 341 dev)
+- packages: **384** (41 runtime, 343 dev)
 - **unadjudicated** (blocks the release): **0 runtime, 0 dev**
 - adjudicated (recorded owner ruling): **4**
 - stale rulings: **0** · rejected: **0**
@@ -202,6 +202,7 @@ rubber stamp that outlives what it stamped is worse than no stamp.
 | dev | npm | `estraverse` | 5.3.0 | BSD-2-Clause | ok |
 | dev | npm | `estree-walker` | 3.0.3 | MIT | ok |
 | dev | npm | `esutils` | 2.0.3 | BSD-2-Clause | ok |
+| dev | python | `execnet` | 2.1.2 | MIT | ok |
 | dev | npm | `expect-type` | 1.4.0 | Apache-2.0 | ok |
 | dev | npm | `fast-deep-equal` | 3.1.3 | MIT | ok |
 | dev | npm | `fast-json-stable-stringify` | 2.1.0 | MIT | ok |
@@ -279,6 +280,7 @@ rubber stamp that outlives what it stamped is worse than no stamp.
 | dev | python | `pytest-asyncio` | 1.4.0 | Apache-2.0 | ok |
 | dev | python | `pytest-cov` | 7.1.0 | MIT | ok |
 | dev | python | `pytest-randomly` | 4.1.0 | MIT | ok |
+| dev | python | `pytest-xdist` | 3.8.0 | MIT | ok |
 | dev | python | `PyYAML` | 6.0.3 | MIT License | ok |
 | dev | npm | `react-is` | 17.0.2 | MIT | ok |
 | dev | npm | `react-refresh` | 0.17.0 | MIT | ok |

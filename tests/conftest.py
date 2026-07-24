@@ -10,8 +10,22 @@ from pathlib import Path
 import pytest
 
 # Point all data at a throwaway dir BEFORE app config is imported anywhere.
+#
+# R-65 Phase 2 — per-worker isolation under pytest-xdist (INNER-LOOP only). Under xdist the
+# controller sets LEDGERFRAME_DATA_DIR from ITS mkdtemp during collection and workers INHERIT it, so
+# a plain setdefault in a worker is a no-op → all N workers share ONE DB and the autouse clean-slate
+# drop+creates it from N processes (observed: OperationalError collisions). When a worker id is
+# present, FORCE a per-worker dir keyed by PYTEST_XDIST_WORKER past the inherited env var. The SOLO
+# path (worker == "") is UNCHANGED: worker_data_dir returns _TMP as-is and setdefault stands, so a
+# plain `pytest` run is byte-identical to before. Guarded by tests/unit/test_xdist_worker_isolation.
+from tests.xdist_isolation import worker_data_dir, worker_id
+
 _TMP = Path(tempfile.mkdtemp(prefix="lf-test-"))
-os.environ.setdefault("LEDGERFRAME_DATA_DIR", str(_TMP))
+_WORKER = worker_id()
+if _WORKER:
+    os.environ["LEDGERFRAME_DATA_DIR"] = str(worker_data_dir(_TMP, _WORKER))
+else:
+    os.environ.setdefault("LEDGERFRAME_DATA_DIR", str(worker_data_dir(_TMP, _WORKER)))
 os.environ.setdefault("LEDGERFRAME_ENV", "development")
 os.environ.setdefault("LEDGERFRAME_AI_ENABLED", "false")
 os.environ.setdefault("LEDGERFRAME_SECRET_KEY", "test-secret-key-not-for-production-use")

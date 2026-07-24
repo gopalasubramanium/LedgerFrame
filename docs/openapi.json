@@ -14930,6 +14930,83 @@
         ]
       }
     },
+    "/api/v1/system/instrument-duplicates/{instrument_id}/remove": {
+      "post": {
+        "description": "Remove one ORPHANED duplicate instrument (R-63 F-E / I-12, owner ruling R8). Makes the\nPricing Health duplicate banner's promise TRUE for the orphan case: a purge-then-re-add can\nstrand a legacy duplicate instrument with zero live references, and Holdings \u2014 derived from\ntransactions \u2014 can never show it, so the cleanup lives on the surface where the finding is.\n\n``require_auth`` matches the instrument-mutation family (PATCH ``/instruments/{symbol}``, the\n``map-*`` endpoints, ``refresh-data``); ``reset-data``'s ``require_pin`` guards a *bulk* wipe,\nnot a single row already proven to have no live references. The service refuses (409) a row\nthat is still in use or is not actually a duplicate \u2014 never deleting the wrong row.",
+        "operationId": "remove_instrument_duplicate_api_v1_system_instrument_duplicates__instrument_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "lf_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lf Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Remove Instrument Duplicate Api V1 System Instrument Duplicates  Instrument Id  Remove Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Instrument Duplicate",
+        "tags": [
+          "system"
+        ]
+      }
+    },
     "/api/v1/system/providers": {
       "get": {
         "description": "Provider capability metadata + the default source-priority policy (read-only).\n\nFoundation for the Settings \u2192 Data Sources view. Contains NO secrets \u2014 only what\neach provider can do and the ordered priority lanes routing will consult.",

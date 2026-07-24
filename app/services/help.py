@@ -514,10 +514,13 @@ HELP: list[dict] = [
              "source. A holding may say it needs an identifier mapping, or that a provider needs an "
              "API key. The route is shown here so you can see it, and changed in Settings. Refresh "
              "is unavailable while no-egress is on.",
-     "keywords": "pricing health source route freshness stale confidence refresh mapping api key",
+     "keywords": "pricing health source route freshness stale confidence refresh mapping api key "
+                 "provider doctor duplicate unused copy priced-by provenance failure throttled",
      "inputs": ["**Refresh all market data** — quotes, world indices, exchange rates and news",
                 "**Refresh** — on a single holding",
                 "**Correct source** — force one instrument to be priced by a chosen provider",
+                "**Run provider doctor** — test each provider lane once, on demand, and read a redacted result",
+                "**Remove unused copy** — clean up a duplicate instrument when one copy has no holdings",
                 "**Details** — why a holding scores what it scores"],
      "options": ["Corrected source offers the providers your install can actually use, plus auto "
                  "to clear the correction"],
@@ -535,7 +538,20 @@ HELP: list[dict] = [
                   "synced from Settings — the page states the difference rather than letting you "
                   "assume one button does both.\n"
                   "- While no-egress is on, refresh makes no network call at all and says so; "
-                  "prices go stale honestly instead of being filled in."},
+                  "prices go stale honestly instead of being filled in.\n"
+                  "- When a holding has no live price, the page names the specific reason — "
+                  "throttled, rate-limited, unmapped, empty, or unsupported — rather than a flat "
+                  "'no data', so you can tell a temporary limit from a real gap.\n"
+                  "- The route may fall back from your preferred source to a free lane when the "
+                  "preferred one cannot price a holding. The page shows which source actually "
+                  "served the price, not only the one at the head of the route.\n"
+                  "- The provider doctor is a check you run yourself: it makes at most one call per "
+                  "lane, counts them on screen, and never shows a key or a holding's value.\n"
+                  "- A duplicate instrument whose copy has no holdings can be removed here; the copy "
+                  "your holdings use is untouched, and new duplicates can no longer be created.\n"
+                  "- The stale count on this page is holdings only and matches the Stale banner; the "
+                  "refresh summary counts a wider set — holdings, watchlist and world indices — so "
+                  "its 'still stale' number can be larger without contradicting the banner."},
     {"id": "page-settings", "category": "Pages", "title": "Settings",
      "body": "Preferences for this install, across **seven tabs**. General covers how figures are "
              "reported. Appearance is theme, density, high contrast and reduced motion, and applies "

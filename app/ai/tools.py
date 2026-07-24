@@ -433,19 +433,42 @@ def _settings_tab_for(question: str) -> str | None:
     return None
 
 
+# R-59 §59-2. An ADD-A-HOLDING question points at the add-form DEEP LINK (`page:/holdings?add=1`),
+# not the bare Holdings page — the R-54 tier-1(b) example, buildable now the `?add=` route ships
+# (r54 §0-F dead affordance 1). Like `_settings_tab_for`, this is NOT an intent router: it selects
+# no facts and refines ONE link target. Ordered, word-boundary matched (the intent-rule discipline);
+# a generic Holdings question ("what's on the Holdings page") returns False → the plain page link.
+# The served param key `add` is guarded against a silent no-op by
+# `test_the_add_holding_deep_link_param_is_a_param_the_route_reads` (§59-2a).
+_HOLDINGS_ADD_RE = re.compile(
+    r"\b(add|adding|record|enter|create|new)\b.{0,40}?"
+    r"\b(holding|holdings|position|instrument|stock|share|shares|crypto|coin|fund|asset|transaction)\b",
+    re.I,
+)
+
+
+def _holdings_add_intent(question: str) -> bool:
+    """True when a Holdings help question is specifically about ADDING something — the `?add=` deep
+    link (R-59). A generic Holdings question keeps the plain `page:/holdings` link."""
+    return bool(_HOLDINGS_ADD_RE.search(question))
+
+
 def _help_link_id(entry_id: str, question: str) -> str:
     """The link a help fact points at (R-54 delta 4a / R1).
 
-    A PAGE help entry points at the page where the user acts (with the topic's tab for Settings);
-    every other entry keeps its own Help topic link, which resolves against the SERVED catalogue on
-    arrival. A `page:` link with a `?tab=` query is a delta-3 surface the frontend resolver is
-    extended to accept at delta 4b; the served half (the page exists) is guarded here.
+    A PAGE help entry points at the page where the user acts (with the topic's tab for Settings, or
+    the add-form deep link for a Holdings add question); every other entry keeps its own Help topic
+    link, which resolves against the SERVED catalogue on arrival. A `page:` link with a `?tab=` /
+    `?add=` query is a delta-3 surface the frontend resolver accepts (delta 4b); the served half
+    (the page exists, and — §59-2a — the param is honored) is guarded in `test_served_link_ids.py`.
     """
     route = _page_help_route(entry_id)
     if route is None:
         return f"help:{entry_id}"
     if route == "/settings" and (tab := _settings_tab_for(question)):
         return f"page:{route}?tab={tab}"
+    if route == "/holdings" and _holdings_add_intent(question):
+        return f"page:{route}?add=1"
     return f"page:{route}"
 
 

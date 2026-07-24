@@ -243,9 +243,12 @@ async def test_a_deep_link_target_still_obeys_the_acceptance_gate(app_client):
     from app.models import LegalAcceptanceEvent
 
     # The served link a user would follow, and the gated endpoint its destination page reads.
+    # R-59 §59-2: tier-1(b) now serves the form DEEP LINK (page:/holdings?add=1); the destination
+    # page is still /holdings, whose primary read is gated identically — navigation confers no
+    # authority whether or not the URL carries the ?add= param.
     links = {f.get("link_id") for f in await _facts(app_client, "how do I add a holding")}
-    assert "page:/holdings" in links, (
-        f"the deep-link premise changed — page:/holdings was not served; links were "
+    assert "page:/holdings?add=1" in links, (
+        f"the deep-link premise changed — page:/holdings?add=1 was not served; links were "
         f"{sorted(x for x in links if x)}"
     )
     holdings_data = "/api/v1/portfolio/holdings"
@@ -292,13 +295,18 @@ async def test_a_page_help_fact_points_at_the_page_not_back_at_itself(app_client
     FAIL-FIRST: RED before delta 4a — `help_facts` stamped `help:{id}` uniformly, so the
     Help·Holdings fact linked to `help:page-holdings`, re-opening the entry already shown inline.
 
+    R-59 §59-2: an ADD-A-HOLDING question now points at the form DEEP LINK (`page:/holdings?add=1`),
+    not the bare page — the R-54 tier-1(b) example, buildable now that the `?add=` route ships. The
+    ordering was mechanical (test_the_add_holding_deep_link_param_is_a_param_the_route_reads): the
+    form ID could not be registered before its param was honored.
+
     REDUNDANT-ROUTE AUDIT: asserting that SOME page: link exists would pass on the figure facts
     (Net worth → page:/net-worth) already in this pack. The Help·Holdings fact is targeted by its
     own label, so this is about the HELP fact's retargeting, not a figure's.
     """
     by_label = {f["label"]: f.get("link_id") for f in await _facts(app_client, "how do I add a holding")}
-    assert by_label.get("Help · Holdings") == "page:/holdings", (
-        f"the page-holdings help fact did not point at its page; links were {by_label}"
+    assert by_label.get("Help · Holdings") == "page:/holdings?add=1", (
+        f"the page-holdings help fact did not point at the add-form deep link; links were {by_label}"
     )
 
 
@@ -355,6 +363,20 @@ def test_every_settings_tab_the_map_emits_is_a_real_tab():
     )
 
 
+def test_holdings_add_intent_fires_on_add_questions_only():
+    """§59-2: the add-intent refinement deep-links an ADD question to `?add=1` and keeps the plain
+    `page:/holdings` link otherwise. An over-firing refinement would open the dialog for every
+    Holdings question (e.g. 'what's on the holdings page'); an under-firing one would miss tier-1(b)."""
+    from app.ai.tools import _holdings_add_intent
+
+    assert _holdings_add_intent("how do I add a holding")
+    assert _holdings_add_intent("how do I record a new position")
+    assert _holdings_add_intent("adding a crypto to my portfolio")
+    assert not _holdings_add_intent("what is on the holdings page")
+    assert not _holdings_add_intent("how do I export my holdings")
+    assert not _holdings_add_intent("where are my holdings")
+
+
 async def test_every_served_page_link_names_a_route_the_app_registers(app_client):
     """The served half of §9-D for `page:` links now that help facts serve them too: the PATH part
     (before any `?tab=` query) is a route AppRoutes registers. A dead page target reds HERE.
@@ -374,3 +396,50 @@ async def test_every_served_page_link_names_a_route_the_app_registers(app_client
                     f"{f['label']!r} served {link!r}, whose page {path!r} AppRoutes does not "
                     f"register — a link may only target a route that exists today"
                 )
+
+
+# ── R-59 §59-2a — THE BIDIRECTIONAL ORDERING GUARD, MADE MECHANICAL ────────────────────────────
+#
+# A `?tab=`-style query link is a DEAD affordance (silent no-op, dead-affordance-3 class) unless the
+# destination route actually READS the param. The Settings-tab guard proves the tab id is real; this
+# proves the Holdings form deep link's query key is a param `Holdings.tsx` reads. It is the guard the
+# R-54→R-59 ordering was waiting on: the add-form ID cannot be registered before its param is honored.
+
+
+def _holdings_search_params_read() -> set[str]:
+    """The URL search-param KEYS `Holdings.tsx` actually reads — parsed from `searchParams.get("x")`
+    calls in the route source. The R-59 `?add=` deep link is a silent no-op unless its key is here."""
+    src = (REPO / "frontend" / "src" / "routes" / "Holdings.tsx").read_text(encoding="utf-8")
+    return set(re.findall(r'searchParams\.get\(\s*"([^"]+)"\s*\)', src))
+
+
+async def test_the_add_holding_deep_link_param_is_a_param_the_route_reads(app_client):
+    """R-59 §59-2a: the served add-holding form deep link carries a query the Holdings route READS —
+    so `page:/holdings?add=1` opens the dialog rather than landing on an ignored param (dead
+    affordance 3). This makes the R-54→R-59 ordering mechanical: a form ID served with a param the
+    route does not honor reds HERE, so the flip could not ship before the `?add=` route did.
+
+    Blindness pins: an empty served-query set (the flip regressed to a bare page link) or an empty
+    read set (the route stopped using useSearchParams / the parser drifted) fails loudly rather than
+    passing by checking nothing.
+    """
+    from urllib.parse import parse_qs, urlparse
+
+    by_label = {f["label"]: f.get("link_id") for f in await _facts(app_client, "how do I add a holding")}
+    link = by_label.get("Help · Holdings") or ""
+    assert link.startswith("page:/holdings"), (
+        f"the deep-link premise changed — Help·Holdings did not serve a page:/holdings link; got {link!r}"
+    )
+    served_keys = set(parse_qs(urlparse(link[len("page:"):]).query))
+    assert served_keys, (
+        f"the served Holdings form link {link!r} carries NO query param — the R-59 form deep link is "
+        f"not being served; the registry flip (§59-2) regressed to a bare page link"
+    )
+    reads = _holdings_search_params_read()
+    assert reads, "no searchParams.get() reads parsed from Holdings.tsx — the parser drifted, guard is blind"
+    missing = served_keys - reads
+    assert not missing, (
+        f"the served form deep link {link!r} carries ?{'/'.join(sorted(missing))}= but Holdings.tsx "
+        f"reads only {sorted(reads)} — the deep link would be a SILENT no-op (dead affordance 3). A "
+        f"form ID may be registered only after its param is honored (the R-54→R-59 ordering)."
+    )

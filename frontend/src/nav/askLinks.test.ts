@@ -100,6 +100,13 @@ describe("askLinks — the frontend ID→route registry (R-54 §9-D)", () => {
       expect(resolveAskLink("page:/settings")).toBe("/settings");
       expect(resolveAskLink("page:/net-worth")).toBe("/net-worth");
     });
+
+    // ── R-59 §59-2: the add-holding form deep link (?add=1), same round-trip as ?tab= ────────────
+    test("the Holdings add-form deep link round-trips (path validated, ?add= preserved)", () => {
+      expect(resolveAskLink("page:/holdings?add=1")).toBe("/holdings?add=1");
+      // A query-less /holdings link keeps its exact prior contract.
+      expect(resolveAskLink("page:/holdings")).toBe("/holdings");
+    });
   });
 
   // ── The destination LABEL — the pointer affordance's accessible name (delta 4b) ──────────────
@@ -117,6 +124,10 @@ describe("askLinks — the frontend ID→route registry (R-54 §9-D)", () => {
       expect(askLinkLabel("page:/settings?tab=appearance")).toBe("Appearance settings");
       expect(askLinkLabel("page:/settings?tab=privacy")).toBe("Privacy settings");
       expect(askLinkLabel("page:/settings")).toBe("Settings");
+      // ⊕ R-59 §59-2: the add-holding form deep link is named for the ACTION it opens — "Add a
+      // holding", not the bare "Holdings" — so "→ Open Add a holding" says exactly where it lands.
+      expect(askLinkLabel("page:/holdings?add=1")).toBe("Add a holding");
+      expect(askLinkLabel("page:/holdings")).toBe("Holdings"); // no ?add= keeps the page label
     });
 
     test("a help: link is named for the Help page it opens", () => {

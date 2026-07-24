@@ -99,5 +99,10 @@ export function askLinkLabel(linkId: string | null | undefined): string | null {
     const tab = new URLSearchParams(query).get("tab");
     if (tab && SETTINGS_TAB_LABEL[tab]) return SETTINGS_TAB_LABEL[tab];
   }
+  // R-59 §59-2: a `page:/holdings?add=1` pointer is named for the ACTION it opens — "Add a holding"
+  // — not the bare "Holdings", so the labeled link line says exactly where it lands.
+  if (path === "/holdings" && query && new URLSearchParams(query).get("add") === "1") {
+    return "Add a holding";
+  }
   return NAV_LABEL_BY_PATH.get(path) ?? null;
 }

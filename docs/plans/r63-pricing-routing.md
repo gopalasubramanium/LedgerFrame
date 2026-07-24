@@ -1410,3 +1410,56 @@ payload — per the work order's "pin the single-path invariant" allowance.)*
 
 **Rite:** dated delta note in `page-pricing-health.md` (card clause + the toast copy home). The AppShell
 StaleBanner copy (*"1 price is stale"* = holdings) is **unchanged** — chrome, not touched.
+
+### §5 VERDICTS — full backend suite, SOLO, both orders, seed 6363 (final committed code)
+
+Both orders on the **final committed code** (`2135526`; the app/ tree is byte-identical from `1d1bbb9`
+onward — later commits are docs/assets only): **2174 passed, 15 skipped** — ordered (`-p no:randomly`,
+17:09) AND randomized (`--randomly-seed=6363`, 17:26), each **SOLO/uncontended** (verified single pytest
+process before launch; a mid-run overlap voids a verdict, [[gate-runs-must-be-solo]]). The known-flaky
+F-10 `test_concurrent_first_load_does_not_race_on_repair_markers` **passed** on seed 6363.
+
+**Reconciliation from 2166/15 (the last recorded final-code baseline, `a6b2462`):** **2166 → 2174 (+8)**,
+all attributable to this closing session, itemized per file:
+- `tests/integration/test_orphan_duplicate_cleanup.py` — **+7** (F-E, I-12): orphan-status surfaced ·
+  removal clears the count + keeps the live twin · refuse-non-orphan (pin) · refuse-lone-non-duplicate
+  (pin) · dangling-dependents purged · watchlisted-orphan re-pointed (hardening) · HTTP endpoint 200/409.
+- `tests/integration/test_pricing_health.py` — **+1** (F-F, I-13):
+  `test_summary_serves_holdings_count_as_the_stale_denominator`.
+- **Skip census: R-63 closing added ZERO skips** — 15 is the longstanding baseline, unchanged.
+- The stale-contract test (`test_committed_openapi_is_valid_and_current`) failed the FIRST ordered run
+  (new endpoint, un-regenerated contract) → contract regenerated (`2135526`, 143→144 paths / 71 schemas,
+  +1 UNTYPED path) → both final-code runs clean.
+
+**Frontend:** eslint clean · `tsc -b --noEmit` clean · **vitest 438/438** (PricingHealth 21/21, +2 across
+F-E/F-F) · guards green (`check:primitives`/`check:copy` pass; `check:tokens` fixed — see `e512853`).
+
+### §6 FINAL PRE-PASS DELTA — F-E/F-F on camera (2026-07-24, isolated, both themes)
+
+Scripted browser pre-pass on an **isolated** live stack (real backend output, **no stubs**), both themes,
+**0 non-benign console errors, 23/23 assertions**. Delta-focused: it re-cuts only the two surfaces this
+closing session changed (the duplicate banner's orphan case; the confidence-card stale clause + the
+refresh toast); every other Pricing Health surface is byte-identical since the CLOSE STEP 1 set and carries
+its acceptance forward (that reconciliation table stands).
+
+**Isolation (owner's live stack / real key NEVER used) — proven.** Backend `uvicorn :8402` (temp
+`LEDGERFRAME_DATA_DIR`, demo seed, **`LEDGERFRAME_MARKET_PROVIDER=mock`** so ZERO egress) with the key
+**OS-overridden to `INVALID-PREPASS-KEY`**; Vite dev `:5202` (throwaway `vite.prepass.config.ts`) → `:8402`;
+driver `pp-fe-ff-driver.mjs` inside `frontend/`. **Both throwaways deleted before staging** (verified
+absent). Repo-root `.env` hash-verified **identical** before/after (`460a2da0…afae6`). **Teardown proven:**
+ports 8402/5202 free; temp data dir removed. No real key, no owner data, his stack untouched.
+
+**Seeding (deterministic, real surfaces read it, no stubs).** A demo instance; then a **legacy orphaned
+duplicate** — a second `(AAPL, NULL)` instrument row with zero holdings (created by dropping the guard the
+way a pre-guard DB would not have had it; the live AAPL keeps its demo holding) — and one **stale held
+equity** (MSFT's cached quote aged 2 days → `stale_count=1` of `holdings_count=14`).
+
+| Specimen (`docs/plans/assets/…-{light,dark}.png` unless noted) | On camera | Maps to |
+| --- | --- | --- |
+| `r63-close2-orphan-banner-{dark,light}` | *"AAPL appears more than once. One copy is unused (no holdings) and can be removed here; the copy your holdings use is untouched."* + **[Remove unused copy]** + "New duplicates can no longer be created" | **F-E / I-12 (R8)** orphan case distinguished + actionable |
+| `r63-close2-stale-card-{dark,light}` | confidence card *"1 of 14 holdings have a stale price — the same count the Stale banner shows"* (scope-labelled); chrome banner *"1 price is stale"*; **agreement pinned: banner count 1 == card count 1** | **F-F / I-13 (R9)** scope-labelled card + single-snapshot agreement |
+| `r63-close2-refresh-toast-dark` | toast *"Quotes & indices: Refreshed 19 of 23 refresh targets (holdings, watchlist & indices) · 4 not refreshed · 4 still stale …"* — the "4 still stale" are **proxies**, while the holdings banner reads "1 price is stale": two scopes, no longer one fact | **F-F / I-13 (R9)** toast names its universe |
+| `r63-close2-banner-cleared-light` | after **[Remove unused copy]** → endpoint 200 → duplicate banner **gone**; toast *"Removed the unused copy of AAPL."*; card *"0 of 14 holdings have a stale price"* (agreement 0==0) | **F-E cleanup makes the promise true**; F-F transient closed |
+
+These frames join the close's final specimen set. **New strings remain PROPOSED → the owner's final look is
+IN CHAT** (architect runs it). **HARD STOP** here, before the §7 close ritual.

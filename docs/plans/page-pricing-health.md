@@ -719,9 +719,19 @@ indices)… · {s} still stale"*. The AppShell StaleBanner copy (*"…price is s
 
 **Verdicts (inner-loop, this session):** PricingHealth vitest **21/21** (+2 across F-E/F-F); backend F-E
 `test_orphan_duplicate_cleanup.py` **6/6** + F-F `test_summary_serves_holdings_count_as_the_stale_denominator`;
-tsc/eslint/ruff clean. Full-suite verdict (both orders, seed 6363) captured at the close. **Pre-pass re-run:
-DISCHARGED at the closing session's final pre-pass** (§6 of `r63-pricing-routing.md`) — back-linked here when
-cut. *(A close-report flag alone is NOT sufficient — CLAUDE.md; this is the on-page record.)*
+tsc/eslint/ruff clean. Full backend-suite verdict **2174 passed / 15 skipped, SOLO, both orders, seed 6363**
+(ordered 17:09 · randomized 17:26; reconciled 2166→2174 (+8), itemized in `r63-pricing-routing.md` §5).
+**Pre-pass re-run: DISCHARGED 2026-07-24** — the guard-REDs-an-accepted-surface rite's second obligation for
+these two closing-session deltas. Scripted browser pre-pass on an **isolated** stack (`:8402`/`:5202`, mock
+provider so ZERO egress, key overridden, `.env` hash-verified `460a2da0…afae6`, ports torn down), **both
+themes, 0 non-benign console errors, 23/23 assertions**, screenshots **looked at**. On camera: the orphan
+banner (*"one copy is unused (no holdings)"* + [Remove unused copy]); the scope-labelled card (*"1 of 14
+holdings have a stale price — the same count the Stale banner shows"*) with **banner==card agreement pinned**;
+the scope-labelled refresh toast (*"…19 of 23 refresh targets (holdings, watchlist & indices) · 4 still
+stale"* — proxies, not the 1 holding); the cleanup clearing the banner (*"Removed the unused copy of AAPL."*).
+Assets `docs/plans/assets/r63-close2-{orphan-banner,stale-card,refresh-toast,banner-cleared}-*.png`; specimen
+table in `r63-pricing-routing.md` §6. *(A close-report flag alone is NOT sufficient — CLAUDE.md; this is the
+on-page record.)*
 
 **⊕ TOKEN-GUARD CORRECTION — 2026-07-24 (closing session; the NetWorth.css `--radius-2` precedent).** Running
 the full frontend guard suite this session surfaced a **pre-existing `check:tokens` RED on this page**, red

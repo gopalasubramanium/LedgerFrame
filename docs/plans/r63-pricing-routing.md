@@ -1145,5 +1145,33 @@ MSFT re-seeded mock post-marker (the confidence-cap backstop); NVDA `source_over
 `repair_quote_demo_residue — "removed 2 demo/synthetic quote row(s) on a live instance (F-C/I-10)"`
 (captured after a marker-clear + pricing-health load). The rider fires and records honestly.
 
+### Reconciliation — 13/13 (close) vs 28/28 (first 3a) — a DELTA-FOCUSED subset, coverage proven complete
+The close driver is **deliberately delta-focused**: it re-cuts every surface **changed since the 28/28
+acceptance** (`4088326`) plus the new §4/Phase-B surfaces — it is **not** a full re-run, and the 13-vs-28
+gap is **assertion granularity + scope**, never a coverage hole on a changed surface. Enumerated:
+
+| 28/28 surface | In the close 13? | Basis |
+| --- | --- | --- |
+| head=X/priced-by=Y provenance | **RE-CUT** | AAPL `yahoo (head alphavantage)` |
+| F-A: no `null (head manual)` + manual rows `manual` | **RE-CUT** | pricing-health frame |
+| duplicate-instrument banner | **RE-CUT** | TSLA banner |
+| recut routing sentence · preferred-head card · verified-tier | **RE-CUT** (+ R3 stamp) | settings frame |
+| 0 non-benign console errors, both themes | **RE-CUT** | driver assertion |
+| **throttled** drawer copy + "last at" | **not re-cut** | render byte-UNTOUCHED |
+| **unsupported** (bond) drawer = no source + served note | **not re-cut** | render byte-UNTOUCHED |
+| **provider doctor** (AV FAIL · coingecko `not_run` · call count) | **not re-cut** | render byte-UNTOUCHED |
+| *(new)* severed-fallback typed `empty` · confidence-law cap · R3 `· verified` · R4 `Select provider…` · §4 `Source override` | **ADDED** | Phase-B/§4 deltas |
+
+**The three un-re-cut surfaces are UNTOUCHED since the 28/28 — mechanically, not by assertion:**
+`git diff 4088326..HEAD` shows **`app/services/provider_doctor.py` and `frontend/src/routes/PricingHealth.tsx`
+are byte-identical** — and `PricingHealth.tsx` is the sole renderer of the throttled/unsupported drawers
+AND the doctor panel, so those surfaces cannot have changed. The only Phase-B change on the pricing-health
+read is **mock-scoped**: `confidence.py`'s cap is guarded `if source in {mock,demo}` (a no-op on the
+non-mock throttled/unsupported rows), and `repair_quote_demo_residue` deletes only `source ∈ {mock,demo}`
+rows (a throttled row carries a real source; an unsupported row has no quote row — neither is a delete
+target); the doctor is a separate endpoint the repair never touches. **No touched surface lost coverage →
+no full re-run required (owner-ruling condition (b) not triggered).** The three surfaces' acceptance stands
+on the 28/28 run + their earlier ratification, transferred by byte-identity.
+
 **HARD STOP — the owner's final look follows in chat** (his live entitled verified-tier on his real key;
 his copy verdict on the R3/R4 PROPOSED strings). No close ritual yet.

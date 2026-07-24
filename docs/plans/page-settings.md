@@ -1379,3 +1379,10 @@ provider…"** (R4 — applied to the REAL `RoutingMatrixCard`, `0e7b6b5`, after
 first landed only on the KitchenSink mockup). Assets `docs/plans/assets/r63-3a-close-settings-datafeeds-
 {light,dark}.png`. The **entitled** two-product cell ("Quotes: delayed / Indices: premium") remains the
 owner's 3b on his real premium key. Specimen inventory in `r63-pricing-routing.md` (CLOSE STEP 1).
+
+**Scope (explicit, not implied):** delta-focused re-cut of the Settings → Data-feeds surfaces **changed
+since the 28/28 first-3a acceptance** (`4088326`) — the recut routing sentence + preferred-head card
+(Phase 4) and the R3 verified-tier stamp + R4 placeholder (Phase B). No Settings surface accepted at 28/28
+was left uncovered by a change: `git diff 4088326..HEAD` on this tab is confined to `Settings.tsx`
+(verified-tier cell + the two routing-matrix pickers) and `systemConfig.ts` (the served `*_at` fields) —
+both re-cut above. Reconciliation table in `r63-pricing-routing.md` (CLOSE STEP 1).

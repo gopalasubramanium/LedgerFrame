@@ -674,3 +674,13 @@ read `manual` (no `null (head manual)`); a **severed-fallback** row (`csv (head 
 `docs/plans/assets/r63-3a-close-{pricing-health,aark-empty,confidence-cap}-{light,dark}.png`. Specimen
 inventory in `r63-pricing-routing.md` (CLOSE STEP 1). *(A close-report flag alone is NOT sufficient —
 CLAUDE.md; this is the on-page record.)*
+
+**Scope (explicit, not implied):** this is a **delta-focused** re-cut of the Pricing Health surfaces
+**changed since the 28/28 first-3a acceptance** (`4088326`) — provenance, F-A manual rows, the duplicate
+banner, and the new severed-fallback + confidence-cap. The **throttled** drawer, the **unsupported** (bond)
+drawer, and the **provider-doctor** panel are **NOT re-cut here** and do not need to be: `git diff
+4088326..HEAD` shows this page's sole renderer (`frontend/src/routes/PricingHealth.tsx`) and
+`app/services/provider_doctor.py` are **byte-identical**, and the only Phase-B change on the pricing-health
+read is mock-scoped (the confidence cap is guarded `if source in {mock,demo}`; the residue repair deletes
+only mock/demo rows — never a throttled/unsupported/doctor row). Those three surfaces keep their 28/28
+coverage by byte-identity. Reconciliation table in `r63-pricing-routing.md` (CLOSE STEP 1).
